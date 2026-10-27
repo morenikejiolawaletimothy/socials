@@ -24,6 +24,14 @@ Rules:
 
 If the design system changes in Claude, re-sync `design-system/` and `globals.css` together.
 
+## Product docs
+
+- `docs/prd.md`: the PRD. Source of truth for stories, roles, states and edge cases.
+- `docs/implementation-plan.md`: build order by phase and batch. Update "Current position" when work moves.
+- `docs/flow-map.md`: every flow screen by screen, with review status. Only build flows marked Approved.
+
+Phase 1 is frontend only with dummy data behind one mock layer per domain (`src/lib/mock/`), so Phase 2 swaps data without redesigning screens.
+
 ## How we work
 
 The product owner is the design authority. Work flow by flow:
