@@ -2,9 +2,9 @@ import { useId, type InputHTMLAttributes } from "react";
 
 export type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   label: string;
-  help?: string;
+  help?: React.ReactNode;
   /** Plain-words message: name the problem, then the fix. */
-  error?: string;
+  error?: React.ReactNode;
 };
 
 /** Text field with a visible label. Placeholder never replaces the label. */

@@ -9,7 +9,7 @@ Source of truth: `docs/prd.md` (v2) for stories and rules, `docs/flow-map.md` fo
 - **Review gate for every UI batch:** each flow is built, then phone (390px) and desktop screenshots go to Fola. A flow is Done only after Fola signs it off. Flow status in `docs/flow-map.md` moves Approved → Built → Signed off.
 - Exit criteria define done. New asks become line items or PRD changes, never silent additions.
 
-**Current position:** Phase 1, batch 1.1 in review. Shells for all three roles, navigation, demo role switcher, mock data layer and new building blocks are built and waiting for Fola's sign-off. Next: batch 1.2 (public pages).
+**Current position:** Phase 1. Batch 1.1 (shells, now in LinkedIn's layout) and batch 1.2 (landing, create account, sign in, reset, staff invite) are built and waiting for Fola's sign-off. Next: batch 1.3 (client setup, C1 to C6).
 
 ---
 

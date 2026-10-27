@@ -12,6 +12,8 @@ export type User = {
   email: string;
   title?: string;
   timeZone: string;
+  /** Two-step sign-in. Required for staff, optional for clients. */
+  twoStep: boolean;
 };
 
 export type Client = {
@@ -30,9 +32,14 @@ export type Client = {
 export type Manager = {
   id: string;
   userId: string;
+  /** Single-use invite token while status is "invited". */
+  inviteToken?: string;
+  inviteExpiresAt?: string;
   status: "invited" | "waiting-for-training" | "active" | "suspended";
   intro: string;
   maxClients: number;
+  /** Open call slots, as "mon-morning" style keys. */
+  slots?: string[];
 };
 
 export type Notification = {

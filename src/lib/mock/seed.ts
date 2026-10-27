@@ -6,19 +6,20 @@ export function seed(): Db {
   const hoursAgo = (h: number) => new Date(now - h * 3_600_000).toISOString();
 
   return {
-    version: 1,
+    version: 2,
     session: {
       role: "client",
       userIds: { client: "u-chidi", manager: "u-ada", owner: "u-fola" },
     },
     users: [
-      { id: "u-fola", role: "owner", firstName: "Fola", lastName: "Morenikeji", email: "fola@bluecut.example", title: "Founder", timeZone: "Africa/Lagos" },
-      { id: "u-ada", role: "manager", firstName: "Ada", lastName: "Obi", email: "ada@bluecut.example", title: "Account manager", timeZone: "Africa/Lagos" },
-      { id: "u-tunde", role: "manager", firstName: "Tunde", lastName: "Bakare", email: "tunde@bluecut.example", title: "Account manager", timeZone: "Europe/London" },
-      { id: "u-chidi", role: "client", firstName: "Chidi", lastName: "Okeke", email: "chidi@paystream.example", title: "CEO, Paystream", timeZone: "Africa/Lagos" },
-      { id: "u-sarah", role: "client", firstName: "Sarah", lastName: "Mensah", email: "sarah@lumenhealth.example", title: "Co-founder, Lumen Health", timeZone: "Africa/Accra" },
-      { id: "u-david", role: "client", firstName: "David", lastName: "Adeyemi", email: "david@adeyemilaw.example", title: "Managing partner, Adeyemi & Co", timeZone: "Africa/Lagos" },
-      { id: "u-kemi", role: "client", firstName: "Kemi", lastName: "Ola", email: "kemi@northwind.example", title: "Head of product, Northwind", timeZone: "America/Toronto" },
+      { id: "u-fola", role: "owner", firstName: "Fola", lastName: "Morenikeji", email: "fola@bluecut.example", title: "Founder", timeZone: "Africa/Lagos", twoStep: true },
+      { id: "u-ada", role: "manager", firstName: "Ada", lastName: "Obi", email: "ada@bluecut.example", title: "Account manager", timeZone: "Africa/Lagos", twoStep: true },
+      { id: "u-tunde", role: "manager", firstName: "Tunde", lastName: "Bakare", email: "tunde@bluecut.example", title: "Account manager", timeZone: "Europe/London", twoStep: true },
+      { id: "u-chidi", role: "client", firstName: "Chidi", lastName: "Okeke", email: "chidi@paystream.example", title: "CEO, Paystream", timeZone: "Africa/Lagos", twoStep: false },
+      { id: "u-sarah", role: "client", firstName: "Sarah", lastName: "Mensah", email: "sarah@lumenhealth.example", title: "Co-founder, Lumen Health", timeZone: "Africa/Accra", twoStep: false },
+      { id: "u-david", role: "client", firstName: "David", lastName: "Adeyemi", email: "david@adeyemilaw.example", title: "Managing partner, Adeyemi & Co", timeZone: "Africa/Lagos", twoStep: false },
+      { id: "u-bisi", role: "manager", firstName: "Bisi", lastName: "Adebayo", email: "bisi@bluecut.example", title: "Account manager", timeZone: "Africa/Lagos", twoStep: false },
+      { id: "u-kemi", role: "client", firstName: "Kemi", lastName: "Ola", email: "kemi@northwind.example", title: "Head of product, Northwind", timeZone: "America/Toronto", twoStep: false },
     ],
     clients: [
       { id: "c-chidi", userId: "u-chidi", managerId: "m-ada", company: "Paystream", role: "CEO", country: "Nigeria", status: "active", setupProgress: 100, goal: "Be known as a leading voice on payments in West Africa and attract investor conversations." },
@@ -28,6 +29,7 @@ export function seed(): Db {
     ],
     managers: [
       { id: "m-ada", userId: "u-ada", status: "active", intro: "I help founders in fintech and health tell their story on LinkedIn.", maxClients: 10 },
+      { id: "m-bisi", userId: "u-bisi", status: "invited", intro: "", maxClients: 10, inviteToken: "demo-invite", inviteExpiresAt: new Date(now + 6 * 86_400_000).toISOString() },
       { id: "m-tunde", userId: "u-tunde", status: "active", intro: "I work with product and tech leaders in North America and the UK.", maxClients: 10 },
     ],
     notifications: [

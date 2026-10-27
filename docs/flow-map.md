@@ -54,10 +54,10 @@ These rules apply to every flow below.
 
 | ID | Flow | Role | PRD stories | Status |
 | --- | --- | --- | --- | --- |
-| P1 | Marketing landing page | Visitor | 2.1 | Approved |
-| P2 | Create account | Client | 1.1 | Approved |
-| P3 | Sign in and reset password | All | 1.3, 1.4 | Approved |
-| P4 | Accept staff invite | Manager | 1.2, 1.3 | Approved |
+| P1 | Marketing landing page | Visitor | 2.1 | Built |
+| P2 | Create account | Client | 1.1 | Built |
+| P3 | Sign in and reset password | All | 1.3, 1.4 | Built |
+| P4 | Accept staff invite | Manager | 1.2, 1.3 | Built |
 | C1 | Home and setup progress | Client | 3.9, 10.1 | Approved |
 | C2 | Connect LinkedIn and choose what we do | Client | 8.1, 8.2 | Approved |
 | C3 | Book your two calls | Client | 3.3, 3.4 | Approved |
