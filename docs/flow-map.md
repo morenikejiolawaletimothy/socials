@@ -54,33 +54,36 @@ These rules apply to every flow below.
 
 | ID | Flow | Role | PRD stories | Status |
 | --- | --- | --- | --- | --- |
-| P1 | Marketing landing page | Visitor | 2.1 | Draft |
-| P2 | Create account | Client | 1.1 | Draft |
-| P3 | Sign in and reset password | All | 1.3, 1.4 | Draft |
-| P4 | Accept staff invite | Manager | 1.2, 1.3 | Draft |
-| C1 | Home and setup progress | Client | 3.9, 10.1 | Draft |
-| C2 | Connect LinkedIn and choose what we do | Client | 8.1, 8.2 | Draft |
-| C3 | Book your two calls | Client | 3.3, 3.4 | Draft |
-| C4 | Choose a plan, sign, pay now or later | Client | 2.2, 2.3, 11.1 | Draft |
-| C5 | Set how you review | Client | 3.8, 7.5, 7.6, 14.2 | Draft |
-| C6 | Strategy call and approval | Client | 3.7, 4.6, 4.7 | Draft |
-| C7 | Review content | Client | 7.2, 7.3, 7.5 | Draft |
-| C8 | Take down or fix a live post | Client | New | Draft |
-| C9 | Progress and weekly updates | Client | 10.1 to 10.5 | Draft |
-| C10 | Messages | Client | 14.3 | Draft |
-| C11 | Control: permissions, pause, disconnect, activity | Client | 8.2, 8.4, 8.5, 8.6, 8.7, 9.3 | Draft |
-| C12 | Raise a complaint | Client | 12.3 | Draft |
-| C13 | Contract, billing and cancel | Client | 11.2 to 11.7 | Draft |
-| C14 | Account: profile, security, delete | Client | 1.6 to 1.8, 14.2 | Draft |
-| C15 | Your brand | Client | 3.2, 5.4 | Draft |
-| C16 | Paused account and reactivation | Client | 2.4, 2.5, 11.6, 11.7 | Draft |
+| P1 | Marketing landing page | Visitor | 2.1 | Approved |
+| P2 | Create account | Client | 1.1 | Approved |
+| P3 | Sign in and reset password | All | 1.3, 1.4 | Approved |
+| P4 | Accept staff invite | Manager | 1.2, 1.3 | Approved |
+| C1 | Home and setup progress | Client | 3.9, 10.1 | Approved |
+| C2 | Connect LinkedIn and choose what we do | Client | 8.1, 8.2 | Approved |
+| C3 | Book your two calls | Client | 3.3, 3.4 | Approved |
+| C4 | Choose a plan, sign, pay now or later | Client | 2.2, 2.3, 11.1 | Approved |
+| C5 | Set how you review | Client | 3.8, 7.5, 7.6, 14.2 | Approved |
+| C6 | Strategy call and approval | Client | 3.7, 4.6, 4.7 | Approved |
+| C7 | Review content | Client | 7.2, 7.3, 7.5 | Approved |
+| C8 | Take down or fix a live post | Client | New | Approved |
+| C9 | Progress and weekly updates | Client | 10.1 to 10.5 | Approved |
+| C10 | Messages | Client | 14.3 | Approved |
+| C11 | Control: permissions, pause, disconnect, activity | Client | 8.2, 8.4, 8.5, 8.6, 8.7, 9.3 | Approved |
+| C12 | Raise a complaint | Client | 12.3 | Approved |
+| C13 | Contract, billing and cancel | Client | 11.2 to 11.7 | Approved |
+| C14 | Account: profile, security, delete | Client | 1.6 to 1.8, 14.2 | Approved |
+| C15 | Your brand | Client | 3.2, 5.4 | Approved |
+| C16 | Paused account and reactivation | Client | 2.4, 2.5, 11.6, 11.7 | Approved |
 | M1 | Home: what to do next | Manager | 13.4, 12.1, 12.5 | Draft |
-| M2 | Client page | Manager | 3.8, 8.2 | Draft |
+| M2 | Clients and the client page | Manager | 3.8, 8.2 | Draft |
 | M3 | Onboard a client | Manager | 3.4 to 3.7, 4.2 to 4.5 | Draft |
-| M4 | Plan and draft a week | Manager | 5.1 to 5.7, 7.1 | Draft |
-| M5 | Feedback, scheduling and live posts | Manager | 7.4, 9.1, 9.2, 9.4, 8.6 | Draft |
+| M4 | Plan and draft content | Manager | 5.1 to 5.7, 7.1 | Draft |
+| M5 | After the client reviews | Manager | 7.4, 9.1, 9.2, 9.4 | Draft |
 | M6 | Weekly engagement | Manager | 6.1 to 6.3, 6.6, 8.3 | Draft |
-| M7 | Weekly update | Manager | 10.2 | Draft |
+| M7 | Listening for a client | Manager | New | Draft |
+| M8 | Weekly and monthly updates | Manager | 10.2 | Draft |
+| M9 | Messages | Manager | 14.3, 8.6 | Draft |
+| M10 | My calls and profile | Manager | 3.3, 1.7 | Draft |
 | A1 | Overview | Admin | 10.6 | Draft |
 | A2 | Account managers | Admin | 13.1 to 13.3, 13.5, 13.6, 13.9 | Draft |
 | A3 | Framework | Admin | 4.1 | Draft |
@@ -102,14 +105,12 @@ These rules apply to every flow below.
   2. **How it works:** 3 or 4 short steps. Connect LinkedIn, two short calls, we create and you approve, see results against your goals.
   3. **Why Bluecut:** the main selling points. A dedicated expert runs your account, with a strategy built around you. Every post is checked before you see it. Results measured against your goals, not likes.
   4. **You stay in control:** nothing is posted without your approval. You choose what we can do. We never see your password. Pause or disconnect at any time.
-  5. **Testimonials:** quotes with name, role and company, and the result they got.
+  5. **Testimonials:** short client videos and images of their LinkedIn profiles (before and after, results), each with name, role and company. Real only. Placeholder frames until real ones exist.
   6. **How it works with the contract:** choose a 3, 6 or 12-month contract. Your first 2 weeks are free, and the contract starts in week 3. Pull out any time and get unused months back. (The word "trial" is not used anywhere in the product.)
   7. **Final call to action:** Get started.
   8. **Footer:** sign in, privacy, terms, contact.
 - **States:** mobile layout, sticky Get started on mobile after the hero.
-- **Questions:**
-  1. Show prices on the page, or only the terms (3, 6, 12 months) until prices are set?
-  2. Do you have real testimonials, or do we use placeholders for now?
+- **Prices:** dummy prices in US dollars for now. All prices come from one pricing module, built so Stripe can later show each visitor's local currency (Stripe's automatic local pricing) without changing the page.
 
 ### P2. Create account
 
@@ -290,46 +291,98 @@ These rules apply to every flow below.
 
 ## 5. Account manager flows
 
-**Layout:** same web app style as the client, not a dashboard. Top bar on desktop with Home, Clients, Messages and notifications. Bottom tab bar on mobile. Everything works on a phone.
+**Status:** Draft v2, for review.
+
+**Who they are:** trained operators, not necessarily strategists, each running up to 10 clients. The platform tells them what to do next and proposes the work. They review, direct and carry it out.
+
+**Layout:** the same LinkedIn-style web app as the client, not a dashboard. Slim top bar on desktop, compact floating bottom bar on mobile: **Home, Clients, Messages**, notifications and the profile menu. Breadcrumbs inside every client ("Clients / Ada Obi / Content / Week of 3 Nov"). A manager can do the whole job on a phone.
 
 ### M1. Home: what to do next
 
-- **Steps:** a feed of task cards sorted by due time: what it is, which client, due when, and who it is waiting on. Urgent items first (fix requests, failed posts, missed deadlines). Tapping a card opens exactly the right screen.
-- **Includes:** missed-deadline questions to answer with a reason.
+- **Goal:** open the app and know exactly what to do, in order.
+- **A feed of cards across all clients, in this order:**
+  1. **Urgent:** fix requests on live posts, posts the client took down, failed posts, complaints.
+  2. **Calls today:** client, time, Join button, prep notes.
+  3. **Your work, by due time:** drafts to prepare, client changes to apply, new Moments from a client, posts to schedule, weekly updates to send.
+  4. **Waiting on clients** (collapsed): reviews due, posts held because the client has not replied. Information only.
+- **Each card:** what it is, which client, when it is due, and one button that opens exactly the right screen.
+- **Missed deadline:** if the manager misses a due time, a card asks for a short reason. Repeated misses go to the owner.
 
-### M2. Client page
+### M2. Clients and the client page
 
-- **Layout:** like a LinkedIn profile page. Header with the client's name, photo, role, status and setup progress. Sections below: In their field this week, Goals and strategy, Content, Engagement, Their brand (from C15, with new Moments highlighted), Notes and calls, Messages.
-- **Also shows:** what the client lets you do (read only), connection status, contract status.
+- **Clients:** a list of cards, one per client: name, photo, status (Setting up, Free 2 weeks, Active, Paused), and the next thing that needs doing.
+- **Client page:** like a LinkedIn profile. A header with name, photo, role, status and setup progress, then sections:
+  - **Overview:** goals, what they let us do, how they review (frequency, "Wait for me" or "Go ahead after 24 hours"), in their field this week.
+  - **Plan:** strategy and content plan.
+  - **Content:** drafts, waiting for the client, scheduled, live.
+  - **Engagement:** this week's targets and progress.
+  - **Brand:** everything from the client's Your brand, with new Moments highlighted.
+  - **Calls and notes:** both calls, transcripts or written notes, summaries.
+  - **Activity:** everything done on the account.
+- On mobile, sections are a short menu at the top of the page.
 
 ### M3. Onboard a client
 
+- **Goal:** from goals call to approved strategy in about 1 week, with the platform doing the heavy research.
 - **Steps (Stepper):**
-  1. Goals call: transcript arrives from the notetaker. If the client declined recording, the manager writes up the call notes and adds them here instead, so the strategy still has everything. AI summary of goals, audience, tone and limits. Edit and save.
-  2. Research and audit: run AI research on the client's field (sources shown) and a profile audit (each part rated with a suggestion). Review and edit.
-  3. Strategy: AI draft. Edit any section, or regenerate one section with an instruction. Share with the client.
-  4. Strategy call: agenda and follow-up questions ready. After the call, update and send "What we agreed" to the client.
+  1. **Before the goals call:** a prep sheet. A summary of the client's current LinkedIn profile and questions to ask.
+  2. **After the goals call:** the transcript arrives, or the manager writes up the notes if the client declined recording. The AI summarises goals, audience, tone and limits. The manager corrects and confirms.
+  3. **Set up listening:** the AI suggests topics and keywords (including location). The manager creates the Google Alerts and pastes each alert's feed link in. See M7.
+  4. **Research, audit and strategy:** the AI researches the field (with sources), audits the profile and drafts the strategy. The manager directs ("make topic 2 about X", "the tone is too formal") until it is right, then shares it with the client before the strategy call.
+  5. **After the strategy call:** update the strategy and send "What we agreed". When the client approves, the content plan is created.
 
-### M4. Plan and draft a week
+### M4. Plan and draft content
 
+- **Goal:** a ready set of posts for the client to review, on the rhythm the client chose (weekly, twice a week, or each post).
 - **Steps:**
-  1. The content plan for the contract, shown by week. Move a post by dragging.
-  2. Draft the week: AI proposes topic options and drafts in the client's voice, using signals, the client's brand and past feedback. The manager directs it ("change this, try this"), edits, sees versions and character count. Visual idea for each post, attach the image.
-  3. Checks: any flags (risky claim, banned phrase, sounds generic, repeat of an old post, missing alt text) must be fixed or dismissed with a reason.
-  4. Send to the client for review, with a due date.
+  1. **Ideas:** the AI proposes topics for the period, each with its reason: the goal it serves, a signal from their field, a Moment the client added, or a past preference. The manager picks, changes or asks for more.
+  2. **Drafts:** written in the client's voice. The manager directs ("shorter", "open with the story"), edits, and sees versions and the character count.
+  3. **Visuals:** a suggested visual for each post, using the client's brand photos and colours. The manager attaches the image.
+  4. **Checks:** flags for risky claims, banned phrases, generic writing, repeats of an old post, missing image descriptions. Each must be fixed or dismissed with a reason.
+  5. **Send to the client:** with a due time and a short "why this post" note for each.
 
-### M5. Feedback, scheduling and live posts
+### M5. After the client reviews
 
-- **Steps:** client feedback as a list of changes, fix with AI help, mark each done, resend. Schedule approved posts (client's time and your time shown). Failed posts with the reason and a retry. Fix requests on live posts (from C8). Ask the client for a one-off permission.
-- **States:** Schedule unavailable until approved, on hold after the client removes a permission or pauses.
+- **Approved:** the platform suggests the best time to post (from what works on LinkedIn for this client). The manager confirms or changes it. The client's local time and the manager's time are both shown.
+- **Changes asked for:** the client's feedback becomes a short list of changes. Fix them (with AI help), tick each one off, send back.
+- **No reply:** under "Wait for me" the post is held and shows in the weekly update as waiting on the client. Under "Go ahead after 24 hours" it is approved automatically and scheduled.
+- **Live posts:** fix requests (urgent), posts the client took down, failed posts with the reason and a retry.
+- **On hold:** if the client pauses, removes a permission or the account is paused, scheduled posts hold automatically. Nothing for the manager to do.
 
 ### M6. Weekly engagement
 
-- **Steps:** this week's search brief (who to look for and why). Paste a profile or post link, see how well it fits and why. Keep or drop. Drafted comments and connection notes. Connection list sent to the client to send. Done vs target this week.
+- **Steps:**
+  1. **This week's brief:** who to look for and which conversations to join, based on the goal and signals from their field.
+  2. **Add what you find:** paste a profile or post link. The platform rates the fit and says why. Keep or drop.
+  3. **Drafted comments and connection notes** in the client's voice. Routine likes and comments follow the client's review setting; others go to the client for approval.
+  4. **Connection list:** sent to the client to send from their own account.
+  5. **Progress:** done vs this week's target.
 
-### M7. Weekly update
+### M7. Listening for a client
 
-- **Steps:** AI drafts the update (what we did, best posts, progress toward goals, next week). Add your note. Send.
+- **Goal:** keep the platform aware of what is happening in the client's field.
+- **Steps:** the client's listening topics (suggested by the AI, editable). Google Alert feeds: add, check they are working, remove. "Add what I found": a link or a short note from the manager's own browsing. The latest signals, each with its source.
+- **Lives in:** the client page, and a reminder card on Home if a client has no working alerts.
+
+### M8. Weekly and monthly updates
+
+- **Steps:** the AI drafts the update: what we did vs the plan, best posts, progress toward the goal, anything held back and why, what is happening in their field, next week's focus. The manager adds a personal note and sends. The monthly update compares with last month and shows the trend toward the goal.
+
+### M9. Messages
+
+- **Steps:** one conversation per client. Text, files and voice notes. Save a client's file to their Brand with one tap. Ask the client for a one-off permission from here.
+
+### M10. My calls and profile
+
+- **Calls:** all booked calls in a simple list by day, with Join links and prep notes. Calls are booked by clients at times that suit them. If the manager truly cannot make one, they can suggest another time (the client accepts or picks again).
+- **Profile:** name, photo, short intro (shown to clients when booking), time zone, 2FA, notifications, connect Google Calendar.
+
+### Manager questions
+
+1. **Assigning clients:** does the owner assign each new client by hand, or should the platform suggest a manager (by capacity and industry experience) for the owner to confirm? I suggest the platform suggests and the owner confirms.
+2. **Calls the manager cannot make:** is "suggest another time" enough, or should managers block out times when they are never available?
+3. **What managers see about money:** I suggest only the status (Free 2 weeks, Active, Paused), never prices or payments. Agree?
+4. **Clients per manager:** keep the PRD's maximum of 10?
 
 ---
 
@@ -426,6 +479,6 @@ Once approved, these will be written into `docs/prd.md`.
 
 ## 10. Open questions
 
-None for the client flow. Ready for approval.
+Client and public flows approved. Manager questions are in section 5.
 
 **Resolved:** 3 days between calls; free 2 weeks start at signing; "Go ahead" wait fixed at 24 hours; client approval is the only validation step (no separate owner check); held content is on the client and the contract keeps running; recording needs consent, and without it the manager writes up the notes; same manager while paused and on renewal; 15-day warning and 30-day removal, keeping only invoices and payment records; reminders at 5 days, 3 days and the last day; navigation; content lifecycle; white logo (to be added to the design system in Claude, then synced).
