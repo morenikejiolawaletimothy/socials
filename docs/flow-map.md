@@ -17,7 +17,11 @@ These rules apply to every flow below.
 - **Simple first.** Few steps, few fields, one clear action per screen. Busy senior people use this. If a step can be removed or done for them, remove it.
 - **Client and account manager: a normal web app, not a dashboard.** The model is LinkedIn: a top bar, one centred content column made of cards (a feed), profile-style pages, an optional side column on wide screens. No grids of charts, no dense tables, no sidebars full of menus.
 - **Admin: dashboard.** The admin is the only role that gets a dashboard layout (side navigation, tables, metrics).
-- **Mobile first for everyone.** Clients and account managers must be able to do everything on a phone. On mobile, the top bar becomes a bottom tab bar.
+- **Mobile first for everyone.** Clients and account managers must be able to do everything on a phone.
+- **Navigation: seamless and simple.**
+  - Desktop: a slim top bar. Mobile: a compact floating bottom bar. Small, clean icons, each with a short label. Never big icons, never icons alone.
+  - Inside any flow with sub-steps or sub-pages, a breadcrumb at the top (for example "Content / Week of 3 Nov / Post 2") so people can step back out at any level. On mobile the breadcrumb shortens to the parent page.
+  - Moving back and forward must never need searching. Every sub-page has a clear way out, and multi-step flows show the Stepper.
 - **Nothing happens without the client.** The client approves content, sets what the manager may do, and can pause, take down or disconnect at any time. The product says so wherever it matters.
 
 ---
@@ -28,15 +32,17 @@ These rules apply to every flow below.
 | --- | --- | --- | --- |
 | Discover | Lands on the marketing page, clicks Get started | | |
 | Create account | Google, or email and password with first and last name | | |
-| Set up | Sees setup progress on Home. Connects LinkedIn, chooses what we do, books both calls, chooses a plan, signs and pays, sets how they review | Is assigned, fits both calls into the client's chosen times | Assigns a manager |
-| First 2 weeks (free) | | | |
+| Set up | Sees setup progress on Home. Connects LinkedIn, chooses what we do, books both calls, chooses a plan and signs (paying now is optional), sets how they review | Is assigned, fits both calls into the client's chosen times | Assigns a manager |
+| First 2 weeks (free) | Full service. Payment reminders 3 days before the end and on the last day | | |
+| End of free 2 weeks | Pays, or the account pauses until they pay. Paying reactivates it automatically | Nothing to do while paused | Sees paused accounts |
 | Goals call (30 min) | Meets their account manager. AI notetaker records | Runs the call, then AI research, audit and strategy draft | |
 | Strategy call (30 min) | Reviews strategy and content plan, approves "What we agreed" | Runs the call, finalises the plan | |
 | First posts | Reviews the first week of posts | Drafts, schedules, engages | |
 | Week 3 onward (paid contract) | | | Sees the contract run |
 | Every week | Reviews posts as often as they chose, sees what went live, reads the weekly update | Drafts, checks, schedules, engages, writes the update, reports anything held back and why | Watches accounts at risk |
 | Something is wrong | Takes a post down, asks for a fix, pauses, complains | Fixes, answers queries | Resolves complaints and refunds |
-| End | Cancels any time, unused months refunded | Unassigned | Approves the refund |
+| Contract ends | Account pauses. Renewing reactivates it automatically | Nothing to do while paused | |
+| Pull out | Cancels any time, unused months refunded | Unassigned | Approves the refund |
 
 ---
 
@@ -51,7 +57,7 @@ These rules apply to every flow below.
 | C1 | Home and setup progress | Client | 3.9, 10.1 | Draft |
 | C2 | Connect LinkedIn and choose what we do | Client | 8.1, 8.2 | Draft |
 | C3 | Book your two calls | Client | 3.3, 3.4 | Draft |
-| C4 | Choose a plan, sign and pay | Client | 2.2, 2.3, 11.1 | Draft |
+| C4 | Choose a plan, sign, pay now or later | Client | 2.2, 2.3, 11.1 | Draft |
 | C5 | Set how you review | Client | 3.8, 7.5, 7.6, 14.2 | Draft |
 | C6 | Strategy call and approval | Client | 3.7, 4.6, 4.7 | Draft |
 | C7 | Review content | Client | 7.2, 7.3, 7.5 | Draft |
@@ -62,6 +68,8 @@ These rules apply to every flow below.
 | C12 | Raise a complaint | Client | 12.3 | Draft |
 | C13 | Contract, billing and cancel | Client | 11.2 to 11.7 | Draft |
 | C14 | Account: profile, security, delete | Client | 1.6 to 1.8, 14.2 | Draft |
+| C15 | Your brand | Client | 3.2, 5.4 | Draft |
+| C16 | Paused account and reactivation | Client | 2.4, 2.5, 11.6, 11.7 | Draft |
 | M1 | Home: what to do next | Manager | 13.4, 12.1, 12.5 | Draft |
 | M2 | Client page | Manager | 3.8, 8.2 | Draft |
 | M3 | Onboard a client | Manager | 3.4 to 3.7, 4.2 to 4.5 | Draft |
@@ -123,7 +131,7 @@ These rules apply to every flow below.
 
 ## 4. Client flows
 
-**Layout:** top bar on desktop with Home, Content, Messages, notifications and the profile menu. On mobile, a bottom tab bar with the same items. Content sits in one centred column of cards.
+**Layout:** slim top bar on desktop with Home, Content, Messages, notifications and the profile menu (Your brand, Control, Contract, Account). On mobile, a compact floating bottom bar with the same main items. Content sits in one centred column of cards.
 
 ### C1. Home and setup progress
 
@@ -133,13 +141,13 @@ These rules apply to every flow below.
   2. Choose what we do for you
   3. Book your goals call
   4. Book your strategy call
-  5. Choose your plan, sign and pay
+  5. Choose your plan and sign
   6. Set how you review
 
   One button: Continue setup. Reminders by email and in-app while setup is unfinished.
 - **After setup, before the calls:** Home shows the two booked calls with your account manager (name and photo), what each call covers, and Reschedule.
 - **After the calls:** Home becomes a feed of cards, newest first: posts waiting for your review, what went live, upcoming posts, the weekly update, messages from your manager.
-- **States:** "Your first 2 weeks are free" banner with the date the contract starts, LinkedIn connection expired (Reconnect card at the top), posting paused.
+- **States:** "Your first 2 weeks are free" banner with the end date (becomes "Pay to keep going" in the last 3 days if not paid), account paused (see C16), LinkedIn connection expired (Reconnect card at the top), posting paused by you.
 
 ### C2. Connect LinkedIn and choose what we do
 
@@ -168,13 +176,15 @@ These rules apply to every flow below.
   4. **Booked:** both dates, Google Meet links, add to calendar. Reminders by email the day before and 1 hour before.
 - **States:** reschedule, cancel, notetaker declined (call goes ahead and the manager takes notes).
 
-### C4. Choose a plan, sign and pay
+### C4. Choose a plan, sign, pay now or later
 
+- **Rule:** the contract must be signed before the free 2 weeks start. Paying is optional at this point.
 - **Steps (Stepper):**
   1. **Choose your contract:** 3 months, 6 months or 12 months. Each shows the price and what you get.
-  2. **Review and sign:** your first 2 weeks are free. Your contract starts on [date, week 3] and ends on [date]. Price. What you get. **You can pull out any time** and we refund every month not yet started. Sign with your typed name.
-  3. **Pay** by card.
-  4. **Done:** receipt, and "You can pull out any time from Contract".
+  2. **Review and sign:** your first 2 weeks are free, with the full service. Your contract starts on [date] and ends on [date]. Price. What you get. **You can pull out any time** and we refund every month not yet started. If you have not paid by [end of free 2 weeks], your account pauses until you do. Sign with your typed name.
+  3. **Pay:** pay now by card, or **Skip for now**. Skipping is equal in weight to paying; nobody is pushed.
+  4. **Done:** what happens next, "You can pull out any time from Contract", and the receipt if they paid.
+- **Reminders if not paid:** email and in-app 3 days before the free 2 weeks end, and on the last day. Each links straight to payment.
 - **States:** payment failed (try again or use another card).
 
 ### C5. Set how you review
@@ -223,7 +233,7 @@ These rules apply to every flow below.
 
 ### C10. Messages
 
-- **Steps:** one conversation with your manager. Text, files and voice notes. Photos and past posts for the brand can be shared here.
+- **Steps:** one conversation with your manager. Text, files and voice notes. Files shared here can be saved to Your brand (C15) with one tap.
 
 ### C11. Control
 
@@ -239,13 +249,34 @@ These rules apply to every flow below.
 
 - **Steps:** your plan and dates, invoices and receipts, update card.
 - **Cancel (pull out):** reason (optional), then "Here is what happens": the end date, what stops, and your refund. Confirm. Refund status shown until paid.
-  - During the first 2 free weeks: everything stops, full refund.
+  - During the first 2 free weeks: everything stops, full refund if they paid early.
   - After the contract starts: service runs to the end of the current month, and every month not yet started is refunded. Example: pull out 2 weeks into a 3-month contract, service runs to the end of month 1, months 2 and 3 are refunded.
 
 ### C14. Account
 
 - **Steps:** name and photo, time zone, sign-in and 2FA, active sessions, email notifications, download my data, delete my account.
 - **Delete:** during a contract, deleting first cancels the contract (shows the refund, as in C13), then deletes.
+
+### C15. Your brand
+
+- **Goal:** one place for everything that makes content sound and look like the client. The manager uses it when creating content.
+- **Entry:** Account menu, and from Messages ("Add to your brand").
+- **Sections:**
+  - **Photos:** headshots and other pictures of you.
+  - **Logos and colours:** for you or your company.
+  - **Your voice:** how you like to sound, words you use or avoid, past posts or writing you like.
+  - **Your brand documents:** any personal brand strategy or guide you already have.
+  - **Moments:** something you want a post about, such as an event you attended. Add photos and a short note ("I spoke at this event, I want a post about it"). Your manager is notified at once and replies in Messages.
+- **States:** file too large or wrong type (inline message with the allowed types and size), empty sections with a short prompt.
+
+### C16. Paused account and reactivation
+
+- **When an account pauses:** the free 2 weeks ended without payment, or the contract ended without renewal.
+- **What pauses:** all scheduled posts, likes, comments and engagement. Nothing goes out. Drafts and settings are kept.
+- **What the client sees:** email and in-app notice: your account is paused, why, and what is waiting. A card at the top of Home: "Your account is paused. Pay to pick up where you left off." One button: Pay now (or Renew, at contract end).
+- **Reactivation:** as soon as payment succeeds, the account reactivates automatically. Posts whose dates are still ahead go back to Scheduled. Posts whose dates passed go back to the manager to reschedule.
+- **Responsibility:** time spent paused is on the client, not the manager. It is not counted as a missed delivery.
+- **Questions:** see open questions 4 and 5.
 
 ---
 
@@ -260,7 +291,7 @@ These rules apply to every flow below.
 
 ### M2. Client page
 
-- **Layout:** like a LinkedIn profile page. Header with the client's name, photo, role, status and setup progress. Sections below: Goals and strategy, Content, Engagement, Notes and calls, Messages.
+- **Layout:** like a LinkedIn profile page. Header with the client's name, photo, role, status and setup progress. Sections below: Goals and strategy, Content, Engagement, Their brand (from C15, with new Moments highlighted), Notes and calls, Messages.
 - **Also shows:** what the client lets you do (read only), connection status, contract status.
 
 ### M3. Onboard a client
@@ -318,7 +349,26 @@ Plans and prices, length of the free period, refund rules, service targets, sess
 
 ---
 
-## 7. Changes from the PRD
+## 7. Content lifecycle
+
+From the PRD, with today's additions marked **new**.
+
+| State | Meaning | Moves to |
+| --- | --- | --- |
+| AI draft | Drafted by the AI | Manager review |
+| Manager review | Manager edits and checks | Awaiting client, or Approved if it is a "Go ahead without asking" type |
+| Awaiting client | Sent for the client's review | Approved, Changes requested, or Approved automatically if the client chose "Go ahead if I have not replied" and the wait passed (**new**) |
+| Changes requested | Client asked for changes | Manager review |
+| Approved | Ready to schedule | Scheduled |
+| Scheduled | Will go out at a set time | Published, Failed (after 3 tries), On hold |
+| On hold | Client paused posting, removed a needed permission, or the account is paused (**new**: unpaid or contract ended) | Scheduled when restored, or Manager review if the date has passed |
+| Published | Live on LinkedIn | Taken down (**new**) |
+| Failed | LinkedIn rejected it 3 times | Manager review |
+| Taken down (**new**) | Client removed it from LinkedIn | End |
+
+Editing approved content sends it back to Awaiting client. Content Awaiting client past its due time under "Wait for me" is held and reported as waiting on the client.
+
+## 8. Changes from the PRD
 
 Once approved, these will be written into `docs/prd.md`.
 
@@ -327,23 +377,27 @@ Once approved, these will be written into `docs/prd.md`.
 | Plans | Separate plans page | Terms shown on the landing page; plan chosen at contract time |
 | Sign up | Name, email, password, country, time zone | Google, or name, email and password. Location from LinkedIn, time zone from the browser |
 | Intake form | Long guided form before call 1 | Removed. Goals are gathered on the goals call by the notetaker |
-| Brand assets | Upload step in onboarding | Optional, shared through Messages |
 | Calls | 90 and 60 minutes, call 2 booked later | 30 minutes each, both booked during setup at times the client picks |
-| Trial | 2-week trial, no card, pay at the end | Never called a trial. Client signs and pays during setup; the first 2 weeks are free and the contract starts in week 3. Pull out any time |
+| Trial | 2-week trial, no card, pay at the end | Never called a trial. Client signs during setup, before the free 2 weeks start. Paying then is optional. Reminders before the end. Unpaid at the end: the account pauses until payment, then reactivates automatically |
+| Contract end | Access revoked, manager unassigned | Account pauses. Renewing reactivates it automatically |
+| Brand assets (update) | Upload step in onboarding | A "Your brand" section in the account: photos, logos, voice, brand documents, and Moments for things they want posts about |
 | Approval settings | Set after call 2 | Set during setup in "How you review": how often, email or app, what needs approval |
 | Missed approvals | Never published automatically | Client chooses: "Wait for me" (held, reported as waiting on client) or "Go ahead if I have not replied" |
 | Decision record and strategy approval | Two separate steps | One "What we agreed" approval after the strategy call |
 | Client home | Dashboard | Feed of cards, LinkedIn style |
 | Manager layout | Panels and workspace tabs | Feed of tasks and profile-style client pages |
 | Live posts | No client action | Client can take a post down now or ask for a fix |
+| Client account states | Trial, Onboarding, Active, Paused, Ended | Setting up, Free 2 weeks, Active, Paused (by client, unpaid or contract ended), Ended |
 
 ---
 
-## 8. Open questions
+## 9. Open questions
 
 1. **Gap between the calls.** How many days does a manager need between the goals call and the strategy call to prepare the strategy? I suggest at least 3 working days, so both calls fit inside the free 2 weeks.
 2. **Contract dates.** If someone signs today but books their calls for next week, does the free period start at signing or at the goals call? I suggest at signing, so the contract start date shown when they sign is exact.
 3. **"Go ahead if I have not replied":** is 24 hours the right wait, or should the client pick (12, 24 or 48 hours)?
-4. **Navigation icons.** The design system says no decorative icons in navigation, but LinkedIn-style top bars and mobile tab bars use an icon above each label. I suggest allowing icons with labels in the main navigation only, since the icon helps people find things on a small screen. Agree?
-5. **Content lifecycle.** The PRD's 8-state content lifecycle diagram did not export. Please share the states.
-6. **White logo** for dark surfaces, if it exists.
+4. **Contract end.** While an account is paused after a contract ends, does the client keep the same account manager when they renew? I suggest yes, for up to 30 days, then the manager is freed for other clients.
+5. **How long can an account stay paused** before it ends and the data retention period starts? I suggest 30 days, set by the admin.
+6. **Reminder timing:** 3 days before the free 2 weeks end and on the last day. Add one at 5 days too?
+
+**Resolved:** navigation (section 0), content lifecycle (section 7), white logo (to be added to the design system in Claude, then synced here).

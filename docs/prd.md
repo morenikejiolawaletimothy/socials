@@ -648,7 +648,7 @@ The product has three separate panels plus shared public and sign-in pages; this
 
 Content follows one gated path to LinkedIn; the other key objects have the simpler lifecycles in the table below.
 
-&#91;embedded content: content item lifecycle · 8 states\]
+**Nothing reaches LinkedIn without review and approval.** Content item lifecycle, 8 states: AI draft → Manager review → Awaiting client → Approved → Scheduled → Published. From Awaiting client, the client can ask for changes (Changes requested), which loops back to Manager review. A discretion category skips the client step (Manager review → Approved). A scheduled item becomes Failed after 3 failed retries.
 
 Changes loop back through manager review. Editing approved content sends it back to Awaiting client. A scheduled item moves to On hold if the client pauses publishing or removes a needed permission, and returns to Scheduled when restored.
 
