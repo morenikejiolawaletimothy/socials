@@ -22,6 +22,7 @@ These rules apply to every flow below.
   - Desktop: a slim top bar. Mobile: a compact floating bottom bar. Small, clean icons, each with a short label. Never big icons, never icons alone.
   - Inside any flow with sub-steps or sub-pages, a breadcrumb at the top (for example "Content / Week of 3 Nov / Post 2") so people can step back out at any level. On mobile the breadcrumb shortens to the parent page.
   - Moving back and forward must never need searching. Every sub-page has a clear way out, and multi-step flows show the Stepper.
+- **The platform leads, the manager carries it out.** Bluecut's AI decides what to post about, what to engage with and when the strategy needs to change, from the client's goal, the framework and what is happening in their field (see Niche listening). The manager reviews, adjusts and executes. Managers never start from a blank page or their own taste.
 - **Nothing happens without the client.** The client approves content, sets what the manager may do, and can pause, take down or disconnect at any time. The product says so wherever it matters.
 
 ---
@@ -291,7 +292,7 @@ These rules apply to every flow below.
 
 ### M2. Client page
 
-- **Layout:** like a LinkedIn profile page. Header with the client's name, photo, role, status and setup progress. Sections below: Goals and strategy, Content, Engagement, Their brand (from C15, with new Moments highlighted), Notes and calls, Messages.
+- **Layout:** like a LinkedIn profile page. Header with the client's name, photo, role, status and setup progress. Sections below: In their field this week, Goals and strategy, Content, Engagement, Their brand (from C15, with new Moments highlighted), Notes and calls, Messages.
 - **Also shows:** what the client lets you do (read only), connection status, contract status.
 
 ### M3. Onboard a client
@@ -349,7 +350,23 @@ Plans and prices, length of the free period, refund rules, service targets, sess
 
 ---
 
-## 7. Content lifecycle
+## 7. Niche listening (runs in the background)
+
+- **Goal:** content and engagement are based on the client's goal **and** on what people in their field are talking about right now, so the strategy works in practice.
+- **How it works:**
+  1. From the strategy, the AI sets each client's listening topics: keywords, people, companies and events in their field. The manager can add or remove topics.
+  2. Sources are watched continuously: Google Alerts for each topic, news and web search, and the client's own LinkedIn performance (what is working, what is not).
+  3. The AI reads what comes in, drops noise, and turns it into signals: rising topics, conversations to join, news worth a reaction, opportunities (events, podcasts, awards).
+- **Where it shows up:**
+  - **Content plan (M4):** suggested topics tied to a signal, for example "3 founders posted about X this week, a reaction post fits your topic 2".
+  - **Weekly engagement (M6):** the search brief includes the conversations and people the signals point to.
+  - **Strategy:** when the field shifts or results stall, the AI suggests a strategy update for the manager to review and the client to approve.
+  - **Manager client page (M2):** "In their field this week", a short list of signals.
+  - **Client review (C7):** each post can show "Why this post": the goal it serves and the signal behind it.
+  - **Weekly update (C9):** "What is happening in your field" in two or three lines.
+- **Rules:** sources are shown for every signal. Nothing is posted because of a signal without the normal review path.
+
+## 8. Content lifecycle
 
 From the PRD, with today's additions marked **new**.
 
@@ -368,7 +385,7 @@ From the PRD, with today's additions marked **new**.
 
 Editing approved content sends it back to Awaiting client. Content Awaiting client past its due time under "Wait for me" is held and reported as waiting on the client.
 
-## 8. Changes from the PRD
+## 9. Changes from the PRD
 
 Once approved, these will be written into `docs/prd.md`.
 
@@ -386,12 +403,14 @@ Once approved, these will be written into `docs/prd.md`.
 | Decision record and strategy approval | Two separate steps | One "What we agreed" approval after the strategy call |
 | Client home | Dashboard | Feed of cards, LinkedIn style |
 | Manager layout | Panels and workspace tabs | Feed of tasks and profile-style client pages |
+| Research | One-off at onboarding, plus a weekly engagement brief | Continuous niche listening (Google Alerts, news and web search, the client's own performance) feeding the content plan, engagement and strategy updates |
+| Who decides | Manager reviews AI output | Explicit: the platform leads on what to post and engage with; the manager reviews and carries it out |
 | Live posts | No client action | Client can take a post down now or ask for a fix |
 | Client account states | Trial, Onboarding, Active, Paused, Ended | Setting up, Free 2 weeks, Active, Paused (by client, unpaid or contract ended), Ended |
 
 ---
 
-## 9. Open questions
+## 10. Open questions
 
 1. **Gap between the calls.** How many days does a manager need between the goals call and the strategy call to prepare the strategy? I suggest at least 3 working days, so both calls fit inside the free 2 weeks.
 2. **Contract dates.** If someone signs today but books their calls for next week, does the free period start at signing or at the goals call? I suggest at signing, so the contract start date shown when they sign is exact.
