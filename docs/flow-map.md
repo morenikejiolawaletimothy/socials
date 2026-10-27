@@ -23,7 +23,8 @@ These rules apply to every flow below.
   - Inside any flow with sub-steps or sub-pages, a breadcrumb at the top (for example "Content / Week of 3 Nov / Post 2") so people can step back out at any level. On mobile the breadcrumb shortens to the parent page.
   - Moving back and forward must never need searching. Every sub-page has a clear way out, and multi-step flows show the Stepper.
 - **AI is an in-house tool, never part of what we sell.** Clients and visitors never see the word AI. To them, an expert account manager runs their account, backed by Bluecut. Inside the product, the AI does the fast research and proposes options (topics, drafts, engagement, strategy changes), and people decide.
-- **Human in the loop, in this order:** AI proposes → the account manager (the expert) reviews, directs and adjusts ("change this, try this") → the owner validates → the client approves (or their review setting applies) → it goes live. Managers never start from a blank page or their own taste, and the AI is never the sole decider.
+- **Human in the loop, in this order:** AI proposes → the account manager (the expert) reviews, directs and adjusts ("change this, try this") → the client reads and approves, as set in "How you review" (C5) → it goes live. Managers never start from a blank page or their own taste, and the AI is never the sole decider.
+- **The client always sees it first.** Every post is shared with the client before it goes live, so nothing on their profile surprises them. If they chose "Wait for me" and do not reply, the post is held. The contract keeps running, and the time is on the client, not on Bluecut.
 - **Nothing happens without the client.** The client approves content, sets what the manager may do, and can pause, take down or disconnect at any time. The product says so wherever it matters.
 
 ---
@@ -37,11 +38,11 @@ These rules apply to every flow below.
 | Set up | Sees setup progress on Home. Connects LinkedIn, chooses what we do, books both calls, chooses a plan and signs (paying now is optional), sets how they review | Is assigned, fits both calls into the client's chosen times | Assigns a manager |
 | First 2 weeks (free) | Full service. Payment reminders 5 days and 3 days before the end, and on the last day | | |
 | End of free 2 weeks | Pays, or the account pauses until they pay. Paying reactivates it automatically | Nothing to do while paused | Sees paused accounts |
-| Goals call (30 min) | Meets their account manager. A notetaker records | Runs the call, then research, audit and strategy draft (AI-assisted, in-house) | |
-| Strategy call (30 min) | Reviews strategy and content plan, approves "What we agreed" | Runs the call, finalises the plan | Validates the strategy before the client sees it |
+| Goals call (30 min) | Meets their account manager. A notetaker records, if they agreed | Runs the call, then research, audit and strategy draft (AI-assisted, in-house) | |
+| Strategy call (30 min) | Reviews strategy and content plan, approves "What we agreed" | Runs the call, finalises the plan | |
 | First posts | Reviews the first week of posts | Drafts, schedules, engages | |
 | Week 3 onward (paid contract) | | | Sees the contract run |
-| Every week | Reviews posts as often as they chose, sees what went live, reads the weekly update | Drafts, checks, sends to the owner, schedules, engages, writes the update, reports anything held back and why | Validates content before it goes to the client. Watches accounts at risk |
+| Every week | Reviews posts as often as they chose, sees what went live, reads the weekly update | Drafts, checks, sends to the client, schedules, engages, writes the update, reports anything held back and why | Watches accounts at risk |
 | Something is wrong | Takes a post down, asks for a fix, pauses, complains | Fixes, answers queries | Resolves complaints and refunds |
 | Contract ends | Account pauses. Renewing reactivates it automatically, with the same manager | Stays assigned while paused | |
 | Paused 30 days | Account and all data removed. Coming back means starting again | Unassigned | |
@@ -86,7 +87,6 @@ These rules apply to every flow below.
 | A4 | Contracts and refunds | Admin | 2.7, 11.5 | Draft |
 | A5 | Complaints | Admin | 12.2, 12.4, 12.6 | Draft |
 | A6 | Settings and audit log | Admin | 12.7, 13.7, 13.8 | Draft |
-| A7 | Validate before it goes out | Admin | New | Draft |
 
 **Later (not in the first build):** manager training (13.2), opportunities (6.4, 6.5), benchmarks (4.4), digests (14.5).
 
@@ -174,11 +174,11 @@ These rules apply to every flow below.
   1. **Your two calls:** why we need them, in plain words.
      - Goals call (30 minutes): we agree what you want from LinkedIn. What we will ask, so you can think ahead.
      - Strategy call (30 minutes): we walk you through your strategy and content plan and agree it.
-     - You will meet your account manager, the expert who runs your account (name, photo, short intro). A notetaker joins and records both calls so nothing is missed. You are told this before booking and can say no.
+     - You will meet your account manager, the expert who runs your account (name, photo, short intro). A notetaker joins and records both calls so nothing is missed. Before booking we ask for your consent to record. Saying no is fine.
   2. **Pick a time for your goals call.** Times in your time zone, a wide range including early mornings and evenings. The account manager fits around you.
   3. **Pick a time for your strategy call.** Only times at least 3 days after the goals call are offered, so your manager has time to prepare.
   4. **Booked:** both dates, Google Meet links, add to calendar. Reminders by email the day before and 1 hour before.
-- **States:** reschedule, cancel, notetaker declined (call goes ahead and the manager takes notes).
+- **States:** reschedule, cancel, recording declined (the call goes ahead without the notetaker).
 
 ### C4. Choose a plan, sign, pay now or later
 
@@ -284,7 +284,7 @@ These rules apply to every flow below.
 - **Responsibility:** time spent paused is on the client, not the manager. It is not counted as a missed delivery.
 - **Same manager:** the client keeps the same account manager while paused and after renewing.
 - **Reminders while paused:** regular reminders. At 15 days paused, a clear notice: "If your account stays paused for 30 days, we will remove it and delete your data. To come back after that, you would start again."
-- **At 30 days paused:** the account is removed and all client data is deleted (strategy, content, brand files, messages, LinkedIn connection). The client is told by email, with a last chance to download their data before deletion. Coming back means signing up and onboarding again.
+- **At 30 days paused:** the account is removed and all client data is deleted (strategy, content, brand files, messages, LinkedIn connection). Only invoices and payment records are kept, as the law requires, with no content or personal brand data. The client is told by email, with a last chance to download their data before deletion. Coming back means signing up and onboarding again.
 
 ---
 
@@ -305,9 +305,9 @@ These rules apply to every flow below.
 ### M3. Onboard a client
 
 - **Steps (Stepper):**
-  1. Goals call: transcript arrives from the notetaker (or paste notes). AI summary of goals, audience, tone and limits. Edit and save.
+  1. Goals call: transcript arrives from the notetaker. If the client declined recording, the manager writes up the call notes and adds them here instead, so the strategy still has everything. AI summary of goals, audience, tone and limits. Edit and save.
   2. Research and audit: run AI research on the client's field (sources shown) and a profile audit (each part rated with a suggestion). Review and edit.
-  3. Strategy: AI draft. Edit any section, or regenerate one section with an instruction. Send to the owner to validate, then share with the client.
+  3. Strategy: AI draft. Edit any section, or regenerate one section with an instruction. Share with the client.
   4. Strategy call: agenda and follow-up questions ready. After the call, update and send "What we agreed" to the client.
 
 ### M4. Plan and draft a week
@@ -316,7 +316,7 @@ These rules apply to every flow below.
   1. The content plan for the contract, shown by week. Move a post by dragging.
   2. Draft the week: AI proposes topic options and drafts in the client's voice, using signals, the client's brand and past feedback. The manager directs it ("change this, try this"), edits, sees versions and character count. Visual idea for each post, attach the image.
   3. Checks: any flags (risky claim, banned phrase, sounds generic, repeat of an old post, missing alt text) must be fixed or dismissed with a reason.
-  4. Send to the owner to validate. Once validated, it goes to the client for review, with a due date.
+  4. Send to the client for review, with a due date.
 
 ### M5. Feedback, scheduling and live posts
 
@@ -352,9 +352,6 @@ Contracts by status. Extend or credit with a note. Refunds waiting for approval,
 ### A5. Complaints
 Each complaint with the full timeline (approvals, activity, messages, who caused the delay). Choose an outcome and send it to the client. Reassign with a handover summary.
 
-### A7. Validate before it goes out
-A review queue across all clients: strategies and content batches the managers have sent. For each: approve and send to the client, or return to the manager with a note. Signals and sources behind each item are shown. Mobile friendly, so the owner can validate on the go.
-
 ### A6. Settings and audit log
 Plans and prices, length of the free period, pause reminders and removal period (default 30 days), refund rules, service targets, session timeout. Every admin and system action in the audit log.
 
@@ -375,7 +372,7 @@ Plans and prices, length of the free period, pause reminders and removal period 
 - **Where it shows up (staff only):**
   - **Content plan (M4):** topic options tied to a signal, for example "3 founders in Lagos posted about X this week, a reaction post fits topic 2".
   - **Weekly engagement (M6):** conversations and people worth engaging with.
-  - **Strategy:** when the field shifts or results stall, a suggested strategy update for the manager to review, the owner to validate and the client to approve.
+  - **Strategy:** when the field shifts or results stall, a suggested strategy update for the manager to review and the client to approve.
   - **Manager client page (M2):** "In their field this week".
 - **Where clients feel it:** the manager's "why this post" note (C7) and "What is happening in your field" in the weekly update (C9), written as the manager's insight.
 - **Rules:** every signal shows its source. Nothing is posted because of a signal without the full review path.
@@ -387,8 +384,7 @@ From the PRD, with today's additions marked **new**.
 | State | Meaning | Moves to |
 | --- | --- | --- |
 | AI draft | Drafted by the AI | Manager review |
-| Manager review | Manager directs, edits and checks | Owner review |
-| Owner review (**new**) | The owner validates | Awaiting client, back to Manager review with a note, or Approved if it is a "Go ahead without asking" type |
+| Manager review | Manager directs, edits and checks | Awaiting client, or Approved if it is a "Go ahead without asking" type |
 | Awaiting client | Sent for the client's review | Approved, Changes requested, or Approved automatically if the client chose "Go ahead if I have not replied" and 24 hours passed (**new**) |
 | Changes requested | Client asked for changes | Manager review |
 | Approved | Ready to schedule | Scheduled |
@@ -398,7 +394,7 @@ From the PRD, with today's additions marked **new**.
 | Failed | LinkedIn rejected it 3 times | Manager review |
 | Taken down (**new**) | Client removed it from LinkedIn | End |
 
-Editing approved content sends it back to Awaiting client. Content Awaiting client past its due time under "Wait for me" is held and reported as waiting on the client.
+Editing approved content sends it back to Awaiting client. Content Awaiting client past its due time under "Wait for me" is held and reported as waiting on the client. The contract keeps running while content is held.
 
 ## 9. Changes from the PRD
 
@@ -419,7 +415,7 @@ Once approved, these will be written into `docs/prd.md`.
 | Client home | Dashboard | Feed of cards, LinkedIn style |
 | Manager layout | Panels and workspace tabs | Feed of tasks and profile-style client pages |
 | Research | One-off at onboarding, plus a weekly engagement brief | Continuous niche listening (manager-created Google Alerts, manager findings, web and news search including location, LinkedIn algorithm knowledge, the client's results and preferences) stored per client and used for every proposal |
-| Who decides | Manager reviews AI output | AI proposes, manager directs and reviews, owner validates, client approves |
+| Who decides | Manager reviews AI output | AI proposes, manager directs and reviews, client approves (per their review setting) |
 | AI visibility | AI notetaker and AI features named | AI is in-house only. Never mentioned to clients or on the marketing page |
 | Manager changes | Admin reassigns as needed | Same manager for the life of the account, including renewals. Changes only on client request, a complaint about the manager, or a no-show |
 | Paused accounts | Data kept 30 days after trial end | Reminders, a warning at 15 days, removal and full data deletion at 30 days. Coming back means starting again |
@@ -430,10 +426,6 @@ Once approved, these will be written into `docs/prd.md`.
 
 ## 10. Open questions
 
-1. **Owner validation and scale.** Validating every post for every client is the safest, but it means the owner reviews everything, which limits how many clients Bluecut can take on. Options:
-   - a) Owner validates every strategy and every content batch (as written now).
-   - b) Owner validates every strategy, plus every batch for a manager's first few weeks or clients in regulated fields. After that, batches go straight to the client and the owner spot-checks.
-2. **Records we must keep.** Deleting all data at 30 days fits the promise. Invoices and payment records usually have to be kept for tax and accounting by law. I suggest we keep only those, with no content or personal brand data. Agree?
-3. **Notetaker consent.** Recording a call needs the client's consent in most countries. I kept a "can say no" option before booking. Keep it?
+None for the client flow. Ready for approval.
 
-**Resolved:** 3 days between calls; free 2 weeks start at signing; "Go ahead" wait fixed at 24 hours; same manager while paused and on renewal; 15-day warning and 30-day removal; reminders at 5 days, 3 days and the last day; navigation; content lifecycle; white logo (to be added to the design system in Claude, then synced).
+**Resolved:** 3 days between calls; free 2 weeks start at signing; "Go ahead" wait fixed at 24 hours; client approval is the only validation step (no separate owner check); held content is on the client and the contract keeps running; recording needs consent, and without it the manager writes up the notes; same manager while paused and on renewal; 15-day warning and 30-day removal, keeping only invoices and payment records; reminders at 5 days, 3 days and the last day; navigation; content lifecycle; white logo (to be added to the design system in Claude, then synced).
