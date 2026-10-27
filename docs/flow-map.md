@@ -28,11 +28,13 @@ These rules apply to every flow below.
 | --- | --- | --- | --- |
 | Discover | Lands on the marketing page, clicks Get started | | |
 | Create account | Google, or email and password with first and last name | | |
-| Set up (trial week 1) | Sees setup progress on Home. Connects LinkedIn and sets permissions. Picks a time for the goals call | Is assigned, fits the call into the client's chosen time | Assigns a manager |
-| Goals call (30 min) | Joins the call. AI notetaker records | Runs the call, then AI research, audit and strategy draft | |
-| Strategy call (30 min) | Reviews strategy and content plan, approves | Runs the call, finalises the plan | |
-| Contract | Chooses 3, 6 or 12 months, signs, pays | | Sees the contract go active |
-| Every week | Reviews posts, sees what went live, reads the weekly update | Drafts, checks, schedules, engages, writes the update | Watches accounts at risk |
+| Set up | Sees setup progress on Home. Connects LinkedIn, chooses what we do, books both calls, chooses a plan, signs and pays, sets how they review | Is assigned, fits both calls into the client's chosen times | Assigns a manager |
+| First 2 weeks (free) | | | |
+| Goals call (30 min) | Meets their account manager. AI notetaker records | Runs the call, then AI research, audit and strategy draft | |
+| Strategy call (30 min) | Reviews strategy and content plan, approves "What we agreed" | Runs the call, finalises the plan | |
+| First posts | Reviews the first week of posts | Drafts, schedules, engages | |
+| Week 3 onward (paid contract) | | | Sees the contract run |
+| Every week | Reviews posts as often as they chose, sees what went live, reads the weekly update | Drafts, checks, schedules, engages, writes the update, reports anything held back and why | Watches accounts at risk |
 | Something is wrong | Takes a post down, asks for a fix, pauses, complains | Fixes, answers queries | Resolves complaints and refunds |
 | End | Cancels any time, unused months refunded | Unassigned | Approves the refund |
 
@@ -47,18 +49,19 @@ These rules apply to every flow below.
 | P3 | Sign in and reset password | All | 1.3, 1.4 | Draft |
 | P4 | Accept staff invite | Manager | 1.2, 1.3 | Draft |
 | C1 | Home and setup progress | Client | 3.9, 10.1 | Draft |
-| C2 | Connect LinkedIn and set permissions | Client | 8.1, 8.2, 3.8 | Draft |
-| C3 | Book the goals call | Client | 3.3, 3.4 | Draft |
-| C4 | Strategy call and approval | Client | 3.7, 4.6, 4.7 | Draft |
-| C5 | Choose a plan, sign and pay | Client | 2.2, 2.3, 11.1 | Draft |
-| C6 | Review content | Client | 7.2, 7.3, 7.5 | Draft |
-| C7 | Take down or fix a live post | Client | New | Draft |
-| C8 | Progress and weekly updates | Client | 10.1 to 10.5 | Draft |
-| C9 | Messages | Client | 14.3 | Draft |
-| C10 | Control: permissions, pause, disconnect, activity | Client | 8.2, 8.4, 8.5, 8.6, 8.7, 9.3 | Draft |
-| C11 | Raise a complaint | Client | 12.3 | Draft |
-| C12 | Contract, billing and cancel | Client | 11.2 to 11.7 | Draft |
-| C13 | Account: profile, security, delete | Client | 1.6 to 1.8, 14.2 | Draft |
+| C2 | Connect LinkedIn and choose what we do | Client | 8.1, 8.2 | Draft |
+| C3 | Book your two calls | Client | 3.3, 3.4 | Draft |
+| C4 | Choose a plan, sign and pay | Client | 2.2, 2.3, 11.1 | Draft |
+| C5 | Set how you review | Client | 3.8, 7.5, 7.6, 14.2 | Draft |
+| C6 | Strategy call and approval | Client | 3.7, 4.6, 4.7 | Draft |
+| C7 | Review content | Client | 7.2, 7.3, 7.5 | Draft |
+| C8 | Take down or fix a live post | Client | New | Draft |
+| C9 | Progress and weekly updates | Client | 10.1 to 10.5 | Draft |
+| C10 | Messages | Client | 14.3 | Draft |
+| C11 | Control: permissions, pause, disconnect, activity | Client | 8.2, 8.4, 8.5, 8.6, 8.7, 9.3 | Draft |
+| C12 | Raise a complaint | Client | 12.3 | Draft |
+| C13 | Contract, billing and cancel | Client | 11.2 to 11.7 | Draft |
+| C14 | Account: profile, security, delete | Client | 1.6 to 1.8, 14.2 | Draft |
 | M1 | Home: what to do next | Manager | 13.4, 12.1, 12.5 | Draft |
 | M2 | Client page | Manager | 3.8, 8.2 | Draft |
 | M3 | Onboard a client | Manager | 3.4 to 3.7, 4.2 to 4.5 | Draft |
@@ -88,7 +91,7 @@ These rules apply to every flow below.
   3. **Why Bluecut:** the main selling points. Your strategy, not generic AI posts. A real account manager checks everything. Results measured against your goals, not likes.
   4. **You stay in control:** nothing is posted without your approval. You choose what we can do. We never see your password. Pause or disconnect at any time.
   5. **Testimonials:** quotes with name, role and company, and the result they got.
-  6. **Start free, then commit:** 2-week free trial with no card. Then a 3, 6 or 12-month contract. Cancel any time and get unused months back.
+  6. **How it works with the contract:** choose a 3, 6 or 12-month contract. Your first 2 weeks are free, and the contract starts in week 3. Pull out any time and get unused months back. (The word "trial" is not used anywhere in the product.)
   7. **Final call to action:** Get started.
   8. **Footer:** sign in, privacy, terms, contact.
 - **States:** mobile layout, sticky Get started on mobile after the hero.
@@ -104,7 +107,7 @@ These rules apply to every flow below.
   2. Email path only: enter the 6-digit code we sent (proves the email is theirs).
   3. Lands on Home (C1).
 - **Not asked here:** country, location or time zone. Time zone is read quietly from the browser. Country comes from their LinkedIn profile when they connect (C2), and is asked only if LinkedIn does not provide it.
-- **States:** email already used (link to sign in), weak password, wrong or expired code, second trial blocked.
+- **States:** email already used (link to sign in), weak password, wrong or expired code, person already had their free 2 weeks (blocked with a message to contact us).
 
 ### P3. Sign in and reset password
 
@@ -125,68 +128,86 @@ These rules apply to every flow below.
 ### C1. Home and setup progress
 
 - **Goal:** the client always knows what is next, and can choose to continue now or later.
-- **While setting up:** a setup card at the top with a percentage and the steps:
-  1. Create account (done)
-  2. Connect LinkedIn
+- **While setting up:** a setup card at the top with a percentage and these steps, done in one sitting or over several visits:
+  1. Connect LinkedIn
+  2. Choose what we do for you
   3. Book your goals call
-  4. Goals call
-  5. Strategy call
-  6. Choose your plan
-  
-  One button for the current step. Steps waiting on Bluecut say so ("Your manager is preparing your strategy").
-- **After setup:** Home becomes a feed of cards, newest first: posts waiting for your review, what went live, upcoming posts, the weekly update, messages from your manager.
-- **States:** trial days left (small banner), LinkedIn connection expired (Reconnect card at the top), publishing paused.
-- **Reminders:** email and in-app reminders when setup is unfinished.
+  4. Book your strategy call
+  5. Choose your plan, sign and pay
+  6. Set how you review
 
-### C2. Connect LinkedIn and set permissions
+  One button: Continue setup. Reminders by email and in-app while setup is unfinished.
+- **After setup, before the calls:** Home shows the two booked calls with your account manager (name and photo), what each call covers, and Reschedule.
+- **After the calls:** Home becomes a feed of cards, newest first: posts waiting for your review, what went live, upcoming posts, the weekly update, messages from your manager.
+- **States:** "Your first 2 weeks are free" banner with the date the contract starts, LinkedIn connection expired (Reconnect card at the top), posting paused.
+
+### C2. Connect LinkedIn and choose what we do
 
 - **Steps:**
-  1. Why we connect: what we can do, that you approve everything, that we never see your password.
+  1. Why we connect: what we can do, that nothing happens without your say, that we never see your password.
   2. LinkedIn's own sign-in and consent screen (mocked in Phase 1).
-  3. **What should we do for you?** A short list of plain switches:
+  3. **What should we do for you?** Plain switches:
      - Post for me (on)
      - Like and comment for me (on)
      - Post to my company Page (off, connect the Page to turn on)
      - Draft connection requests for me to send (off)
      - Draft profile updates for me to apply (off)
-     
-     Under each switch that is on: "Ask me first" or "Go ahead without asking". Profile changes and sensitive topics always ask first.
-  4. Connected. Next step: book your goals call.
 - **States:** consent declined, connection failed.
+- **Note:** whether each of these needs your approval first is set in C5, in one place.
 
-### C3. Book the goals call
+### C3. Book your two calls
 
+- **Goal:** the client books both calls at times that suit them, knowing why each call matters and who they will meet.
 - **Steps:**
-  1. What this call is: 30 minutes to agree your goals. What we will ask, so you can think ahead. An AI notetaker joins so nothing is missed.
-  2. Pick a time that suits you. Times are shown in your time zone and cover a wide range, including early mornings and evenings. The manager fits around you.
-  3. Booked: date, time, Google Meet link, add to calendar. Reminders the day before and 1 hour before.
-- **States:** reschedule, cancel, notetaker declined (call goes ahead without recording).
+  1. **Your two calls:** why we need them, in plain words.
+     - Goals call (30 minutes): we agree what you want from LinkedIn. What we will ask, so you can think ahead.
+     - Strategy call (30 minutes): we walk you through your strategy and content plan and agree it.
+     - You will meet your account manager (name, photo, short intro). An AI notetaker joins both calls so nothing is missed.
+  2. **Pick a time for your goals call.** Times in your time zone, a wide range including early mornings and evenings. The account manager fits around you.
+  3. **Pick a time for your strategy call.** Only times that leave your manager enough days to prepare after the goals call are offered.
+  4. **Booked:** both dates, Google Meet links, add to calendar. Reminders by email the day before and 1 hour before.
+- **States:** reschedule, cancel, notetaker declined (call goes ahead and the manager takes notes).
 
-### C4. Strategy call and approval
+### C4. Choose a plan, sign and pay
+
+- **Steps (Stepper):**
+  1. **Choose your contract:** 3 months, 6 months or 12 months. Each shows the price and what you get.
+  2. **Review and sign:** your first 2 weeks are free. Your contract starts on [date, week 3] and ends on [date]. Price. What you get. **You can pull out any time** and we refund every month not yet started. Sign with your typed name.
+  3. **Pay** by card.
+  4. **Done:** receipt, and "You can pull out any time from Contract".
+- **States:** payment failed (try again or use another card).
+
+### C5. Set how you review
+
+- **Goal:** the client decides how involved they want to be, and understands clearly what happens if they do not respond.
+- **Steps:**
+  1. **How often do you want to review?** Once a week (default), twice a week, or every post.
+  2. **Where should we tell you?** Email, in the app, or both. (Email is on by default.)
+  3. **What needs your approval?** For each thing we do: "Ask me first" or "Go ahead without asking". Defaults: posts ask first; routine likes and comments go ahead. Profile changes and sensitive topics always ask first.
+  4. **If you do not reply by the due time:**
+     - "Wait for me" (default): nothing goes out until you approve. We remind you, but we cannot post without you. Posts not approved in time are held, and your weekly update shows what was held and why.
+     - "Go ahead if I have not replied within [24 hours]": your manager posts the reviewed drafts. You can still take any post down.
+  5. Short summary of the choices. Save. Change any time in Control.
+- **States:** changes apply to new posts only (items already sent to you keep their path).
+
+### C6. Strategy call and approval
 
 - **Before the call:** "Your strategy is ready" notice. The client can read it: who you want to reach, your 3 to 5 topics, your tone, how often we post and engage, and how we measure progress against your goals.
-- **Book the strategy call:** same as C3, 30 minutes.
 - **After the call:** one screen, "What we agreed": the final strategy and content plan, with any changes from the call. Two actions: Approve, or Ask for a change.
 - **States:** new version after a change request.
 
-### C5. Choose a plan, sign and pay
-
-- **Steps (Stepper):** Choose 3, 6 or 12 months. Review and sign the contract (dates, price, what you get, cancel any time with unused months refunded). Pay by card. Done, with receipt.
-- **States:** payment failed, trial ended without signing (posting stops, access paused, data kept 30 days).
-- **Questions:** see open question 1 on when this happens.
-
-### C6. Review content
+### C7. Review content
 
 - **Entry:** Home card, notification or email link.
 - **Steps:**
-  1. The week's posts, each shown as it will look on LinkedIn.
+  1. The posts for this review, each shown as it will look on LinkedIn. Due time shown at the top, with what happens if you do not reply (from your C5 choice).
   2. For each: Approve or Ask for changes. Changes by typing or a voice note (transcript shown and editable).
   3. Approve all remaining, with one confirmation.
-- **States:** due soon, missed (post not published, marked as waiting on you), items your manager handled without asking (shown for information).
+- **States:** due soon (reminder), not reviewed in time (held if you chose "Wait for me", or posted if you chose "Go ahead"), items your manager handled without asking (shown for information).
 - **Questions:**
   1. On mobile, one post at a time (like stories), or a scrolling list? I suggest one at a time on mobile, list on desktop.
 
-### C7. Take down or fix a live post
+### C8. Take down or fix a live post
 
 - **Goal:** if something already published is wrong, the client can act at once.
 - **Entry:** any live post (Home feed, Content).
@@ -195,34 +216,36 @@ These rules apply to every flow below.
   - **Ask for a fix:** a short note or voice note to the manager. Urgent by default.
 - **States:** taken down (logged in activity), fix requested, fix done.
 
-### C8. Progress and weekly updates
+### C9. Progress and weekly updates
 
-- **Steps:** progress toward your goals (in plain words first, numbers second), what we did vs what we promised this week, the weekly and monthly updates as readable posts, download as PDF, add a result (a lead, an invitation, an offer).
+- **Steps:** progress toward your goals (in plain words first, numbers second), what we did vs what we promised this week, anything held back and why (for example "2 posts held, waiting for your review"), the weekly and monthly updates as readable posts, download as PDF, add a result (a lead, an invitation, an offer).
 - **States:** too early for results (first weeks).
 
-### C9. Messages
+### C10. Messages
 
 - **Steps:** one conversation with your manager. Text, files and voice notes. Photos and past posts for the brand can be shared here.
 
-### C10. Control
+### C11. Control
 
-- **Steps:** the same switches as C2, editable any time. Pause all posting (one tap, with confirmation). Disconnect LinkedIn. Requests from your manager for a one-off action (approve or decline). Activity: every action on your account, who and when, with filters.
+- **Steps:** what we do for you (C2 switches) and how you review (C5 settings), editable any time. Pause all posting (one tap, with confirmation). Disconnect LinkedIn. Requests from your manager for a one-off action (approve or decline). Activity: every action on your account, who and when, with filters.
 - **States:** connection expired (Reconnect), paused, disconnected.
 
-### C11. Raise a complaint
+### C12. Raise a complaint
 
 - **Entry:** from any post, or from Control.
 - **Steps:** what went wrong (missed delivery, quality, action I did not allow, billing, other), describe it, attach a file if needed, send. Status shown afterwards.
 
-### C12. Contract, billing and cancel
+### C13. Contract, billing and cancel
 
 - **Steps:** your plan and dates, invoices and receipts, update card.
-- **Cancel:** reason (optional), then "Here is what happens": the end date, what stops, and your refund. Refund covers every full month not yet started. Example: cancel 2 weeks into a 3-month contract, service runs to the end of month 1, months 2 and 3 are refunded. Confirm. Refund status shown until paid.
+- **Cancel (pull out):** reason (optional), then "Here is what happens": the end date, what stops, and your refund. Confirm. Refund status shown until paid.
+  - During the first 2 free weeks: everything stops, full refund.
+  - After the contract starts: service runs to the end of the current month, and every month not yet started is refunded. Example: pull out 2 weeks into a 3-month contract, service runs to the end of month 1, months 2 and 3 are refunded.
 
-### C13. Account
+### C14. Account
 
 - **Steps:** name and photo, time zone, sign-in and 2FA, active sessions, email notifications, download my data, delete my account.
-- **Delete:** during a contract, deleting first cancels the contract (shows the refund, as in C12), then deletes.
+- **Delete:** during a contract, deleting first cancels the contract (shows the refund, as in C13), then deletes.
 
 ---
 
@@ -258,7 +281,7 @@ These rules apply to every flow below.
 
 ### M5. Feedback, scheduling and live posts
 
-- **Steps:** client feedback as a list of changes, fix with AI help, mark each done, resend. Schedule approved posts (client's time and your time shown). Failed posts with the reason and a retry. Fix requests on live posts (from C7). Ask the client for a one-off permission.
+- **Steps:** client feedback as a list of changes, fix with AI help, mark each done, resend. Schedule approved posts (client's time and your time shown). Failed posts with the reason and a retry. Fix requests on live posts (from C8). Ask the client for a one-off permission.
 - **States:** Schedule unavailable until approved, on hold after the client removes a permission or pauses.
 
 ### M6. Weekly engagement
@@ -291,7 +314,7 @@ Contracts by status. Extend or credit with a note. Refunds waiting for approval,
 Each complaint with the full timeline (approvals, activity, messages, who caused the delay). Choose an outcome and send it to the client. Reassign with a handover summary.
 
 ### A6. Settings and audit log
-Plans and prices, trial length, refund rules, service targets, session timeout. Every admin and system action in the audit log.
+Plans and prices, length of the free period, refund rules, service targets, session timeout. Every admin and system action in the audit log.
 
 ---
 
@@ -305,7 +328,10 @@ Once approved, these will be written into `docs/prd.md`.
 | Sign up | Name, email, password, country, time zone | Google, or name, email and password. Location from LinkedIn, time zone from the browser |
 | Intake form | Long guided form before call 1 | Removed. Goals are gathered on the goals call by the notetaker |
 | Brand assets | Upload step in onboarding | Optional, shared through Messages |
-| Calls | 90 and 60 minutes | 30 minutes each, at a time the client picks |
+| Calls | 90 and 60 minutes, call 2 booked later | 30 minutes each, both booked during setup at times the client picks |
+| Trial | 2-week trial, no card, pay at the end | Never called a trial. Client signs and pays during setup; the first 2 weeks are free and the contract starts in week 3. Pull out any time |
+| Approval settings | Set after call 2 | Set during setup in "How you review": how often, email or app, what needs approval |
+| Missed approvals | Never published automatically | Client chooses: "Wait for me" (held, reported as waiting on client) or "Go ahead if I have not replied" |
 | Decision record and strategy approval | Two separate steps | One "What we agreed" approval after the strategy call |
 | Client home | Dashboard | Feed of cards, LinkedIn style |
 | Manager layout | Panels and workspace tabs | Feed of tasks and profile-style client pages |
@@ -315,10 +341,9 @@ Once approved, these will be written into `docs/prd.md`.
 
 ## 8. Open questions
 
-1. **When does the client sign and pay?** Your note says the contract is accepted when LinkedIn is connected, and also that there is a free 2-week trial. Options:
-   - a) Sign after the strategy call, and pay at the end of the 2-week trial. (My suggestion: they sign once they have seen their strategy.)
-   - b) Sign when connecting LinkedIn, and pay at the end of the trial.
-   - c) Sign and pay when connecting LinkedIn, with no free trial.
-2. **Navigation icons.** The design system says no decorative icons in navigation, but LinkedIn-style top bars and mobile tab bars use an icon above each label. I suggest allowing icons with labels in the main navigation only, since the icon helps people find things on a small screen. Agree?
-3. **Content lifecycle.** The PRD's 8-state content lifecycle diagram did not export. Please share the states.
-4. **White logo** for dark surfaces, if it exists.
+1. **Gap between the calls.** How many days does a manager need between the goals call and the strategy call to prepare the strategy? I suggest at least 3 working days, so both calls fit inside the free 2 weeks.
+2. **Contract dates.** If someone signs today but books their calls for next week, does the free period start at signing or at the goals call? I suggest at signing, so the contract start date shown when they sign is exact.
+3. **"Go ahead if I have not replied":** is 24 hours the right wait, or should the client pick (12, 24 or 48 hours)?
+4. **Navigation icons.** The design system says no decorative icons in navigation, but LinkedIn-style top bars and mobile tab bars use an icon above each label. I suggest allowing icons with labels in the main navigation only, since the icon helps people find things on a small screen. Agree?
+5. **Content lifecycle.** The PRD's 8-state content lifecycle diagram did not export. Please share the states.
+6. **White logo** for dark surfaces, if it exists.
