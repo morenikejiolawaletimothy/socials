@@ -34,6 +34,10 @@ Rules:
 - No page titles or subtitles on client and manager pages, so the first card in every column lines up at the top. Each card carries its own title through `Card title=...`: a header strip with a divider under it (breadcrumbs go in `eyebrow`). The owner dashboard may keep page titles.
 - The owner keeps the dashboard shell (sidebar).
 
+## Landing page exception
+
+The marketing landing page (`src/app/page.tsx`, `src/components/landing/`) is built pixel-perfect from the approved Figma template (`1440w light`). It uses Inter only, with the `lp-*` type utilities in `globals.css`, and may use the template's exact pixel values (spacing, radii, shadows, blurs). Colours still come from design-system tokens. Mock-ups are drawn at template size inside `FitBox`, which scales them down on small screens. Everything else in the app follows the design-system rules above.
+
 If the design system changes in Claude, re-sync `design-system/` and `globals.css` together.
 
 ## Product docs

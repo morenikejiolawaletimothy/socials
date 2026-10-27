@@ -1,28 +1,29 @@
-import { ClosingAndFooter, Faq, Industries } from "@/components/marketing/SectionsBottom";
-import { Features, HowItWorks, Outcomes, Pricing, Testimonials } from "@/components/marketing/SectionsMiddle";
-import { Connected, Hero, MarketingNav, Problem, Statement } from "@/components/marketing/SectionsTop";
+import { ClosingAndFooter, Faq, Industries } from "@/components/landing/LandingEnd";
+import { Connected, Statement } from "@/components/landing/LandingFeatures";
+import { Features } from "@/components/landing/LandingNavy";
+import { HowItWorks, Results, Testimonials } from "@/components/landing/LandingProof";
+import { Hero, Intro, LandingNav } from "@/components/landing/LandingTop";
 import { StickyCta } from "@/components/marketing/StickyCta";
 
-/** Landing page, in the order of the approved PDF layout (1440w_light). */
+/** Landing page, built from the approved Figma template (1440w light). Inter only. */
 export default function Landing() {
   return (
-    <>
-      <MarketingNav />
+    <div className="bg-card font-sans">
+      <LandingNav />
       <main>
         <Hero />
-        <Problem />
+        <Intro />
         <Statement />
         <Connected />
         <Features />
         <Testimonials />
         <HowItWorks />
-        <Outcomes />
-        <Pricing />
+        <Results />
         <Industries />
         <Faq />
       </main>
       <ClosingAndFooter />
       <StickyCta watchId="hero" />
-    </>
+    </div>
   );
 }
