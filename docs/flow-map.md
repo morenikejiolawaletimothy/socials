@@ -258,7 +258,10 @@ These rules apply to every flow below.
 
 - **Steps:** your plan and dates, your account manager, invoices and receipts, update card.
 - **Ask for a different manager:** a short reason, sent to the owner. Managers only change when the client asks, after a complaint about the manager, or if the manager does not turn up.
-- **Cancel (pull out):** reason (optional), then "Here is what happens": the end date, what stops, and your refund. Confirm. Refund status shown until paid.
+- **Cancel (pull out), 3 short steps:**
+  1. **Why are you leaving?** Required. A few plain choices (not seeing results, too expensive, not enough time to review, not happy with my manager, no longer need it, other) plus an optional note.
+  2. **Can we fix this?** One short offer that matches the reason, for example "Talk to the owner first" (book a short call), "Change my manager", or "Pause posting instead". Always with an equally clear "No, continue to cancel". Never more than one screen.
+  3. **Here is what happens:** the end date, what stops, and your refund. Confirm. Refund status shown until paid. The owner is told at once, with the reason.
   - During the first 2 free weeks: everything stops, full refund if they paid early.
   - After the contract starts: service runs to the end of the current month, and every month not yet started is refunded. Example: pull out 2 weeks into a 3-month contract, service runs to the end of month 1, months 2 and 3 are refunded.
 
@@ -409,7 +412,7 @@ These rules apply to every flow below.
 
 ## 6. Admin flows
 
-**Status:** Draft v2, for review.
+**Status:** Draft v3, for approval.
 
 **Who:** the owner (the strategist). Runs the business: people, clients, the framework, money and rules.
 
@@ -418,7 +421,7 @@ These rules apply to every flow below.
 ### A1. Overview
 
 - **Goal:** in one look, know what needs the owner today and which accounts are at risk.
-- **Top: needs you today:** clients waiting for a manager, refunds to approve, open complaints, manager change requests, repeated missed deadlines.
+- **Top: needs you today:** clients waiting for a manager, new managers waiting for training, clients who just asked to pull out, refunds to approve, open complaints, manager change requests, repeated missed deadlines.
 - **Numbers:** active clients, clients in their free 2 weeks, paused accounts (with days paused), share of posts approved first time, delivery vs targets this week.
 - **At risk:** clients behind on their targets, slow to review, paused, or with a complaint. Each links to the client.
 
@@ -426,12 +429,19 @@ These rules apply to every flow below.
 
 - **List:** every client with status (Setting up, Free 2 weeks, Active, Paused, days paused), manager, goal progress, targets vs done this week, and an at-risk flag. Filters by status and manager.
 - **Assign a manager:** for each new client the platform suggests a manager, with the reasons (free capacity, industry experience, time zone). The owner confirms, or picks someone else from the list. Managers at their maximum (10) are shown but cannot be chosen.
-- **Client view:** the owner can open any client and see the same client page the manager sees (M2), read only, including messages.
+- **Client view:** the owner can open any client and see the same client page the manager sees (M2), including messages.
+- **Step in for a manager:** when a manager cannot or does not do the work, the owner clicks "Step in for [manager]" on one client, or on all of that manager's clients at once.
+  - The owner works in the manager's exact workspace for those clients, with the same powers, limited by the same client permissions. A small banner shows "You are covering for [manager]".
+  - Nothing changes for the client. Posts, comments and scheduling carry on as normal. In the client's activity log, staff actions show as "Your account team". Messages sent while covering are signed "Your account team".
+  - Inside Bluecut the record stays true: the audit log, complaint timelines and the manager's numbers show that the owner did the work.
+  - "Stop covering" hands back to the manager, or the owner reassigns the client (A3).
+- **The owner can also be assigned clients directly** and run them from the manager view.
 
 ### A3. Managers
 
-- **List:** each manager with status (Invited, Active, Suspended), number of clients out of 10, on-time delivery, first-time approval rate, missed deadlines, complaints.
+- **List:** each manager with status (Invited, Waiting for training, Active, Suspended), number of clients out of 10, on-time delivery, first-time approval rate, missed deadlines, complaints.
 - **Invite:** name and email. They get a single-use link valid for 7 days and set themselves up (P4).
+- **Training:** after setting up their account, each new manager has a 60-minute onboarding training video call with the owner (held off the platform). The owner sets the call date, then marks "Training done". Only then can the manager be assigned clients. Until then the manager's Home shows their training call and nothing else.
 - **Manager page:** their clients, availability, performance over time, missed-deadline reasons, complaints.
 - **Change a client's manager:** only when the client asks, after a complaint about the manager, or for a no-show. The platform prepares a handover summary (strategy, plan, open work, recent feedback, off limits) for the new manager. The client is told who their new manager is.
 - **Suspend:** access ends at once. Their clients are listed for reassignment, with suggestions.
@@ -448,7 +458,8 @@ These rules apply to every flow below.
 
 - **Contracts:** every contract with status (Free 2 weeks, Active, Ending soon, Paused, Completed, Cancelled), plan, dates, paid or not. Extend a contract or add a credit, with a required note.
 - **Payments:** payments, failed payments, invoices.
-- **Refunds:** each refund request with the calculation (months not yet started). Approve or decline with a reason. Approved refunds are paid automatically and the client is told.
+- **Refunds:** each refund with the calculation (months not yet started). Refunds below an amount the owner sets are approved automatically. Larger ones wait for the owner to approve or decline with a reason. Approved refunds are paid automatically and the client is told.
+- **Why clients pull out:** every cancellation reason, with a simple count by reason over time. Each one links to the client so the owner can follow up.
 
 ### A6. Complaints
 
@@ -458,17 +469,18 @@ These rules apply to every flow below.
 
 ### A7. Settings
 
-- Plans and prices (US dollars as the base; local currency handled by Stripe), length of the free period (2 weeks), payment reminders (5, 3 and 0 days), pause warning (15 days) and removal (30 days), "Go ahead" wait (24 hours), maximum clients per manager (10), days between calls (3), service targets, staff session timeout. Changes apply to new contracts only.
+- Plans and prices (US dollars as the base; local currency handled by Stripe), automatic refund limit, length of the free period (2 weeks), payment reminders (5, 3 and 0 days), pause warning (15 days) and removal (30 days), "Go ahead" wait (24 hours), maximum clients per manager (10), days between calls (3), service targets, staff session timeout. Changes apply to new contracts only.
 
 ### A8. Audit log
 
 - Every admin and system action: who, what, when. Includes assignments, refunds, setting changes and account deletions. Filter and export.
 
-### Admin questions
+### Decided
 
-1. **The owner as a manager:** will you also run some client accounts yourself? If yes, I suggest you can assign clients to yourself and switch to the manager view for them.
-2. **Training and certification:** the PRD has training and a test before managers get clients. That is marked "later". For the first build, are new managers active as soon as they set up their account?
-3. **Refund approval:** keep approving every refund by hand, or approve automatically below an amount you set?
+- The owner can step in for any manager through the manager's workspace, without the client noticing a change, while internal records show who really did the work.
+- The owner can be assigned clients directly.
+- Manager training is a 60-minute onboarding video call off the platform. Managers get clients only after the owner marks training done.
+- Refunds below a set amount are automatic; larger ones need the owner. A reason for pulling out is always collected.
 
 ---
 
@@ -540,6 +552,9 @@ Once approved, these will be written into `docs/prd.md`.
 | Assigning managers | Admin assigns | Platform suggests a manager by capacity and experience; the owner confirms or picks someone else |
 | Manager tasks | Task queue | Feed view and Board view of the same tasks |
 | Client co-pilot tasks | Weekly connection list handed to the client | "Quick tasks for you": timed by the strategy, 1 to 3 minutes each, copy-ready notes, mark as done, send to an assistant by email |
+| Owner stepping in | Not covered | "Step in for a manager": the owner works through the manager's workspace; client sees no change; internal records stay true |
+| Manager training | In-app modules and test | 60-minute onboarding video call off the platform; owner marks training done before any client is assigned |
+| Refunds | Every refund approved by the owner | Automatic below a set amount; reason for pulling out always collected, with one offer to fix it first |
 | Live posts | No client action | Client can take a post down now or ask for a fix |
 | Client account states | Trial, Onboarding, Active, Paused, Ended | Setting up, Free 2 weeks, Active, Paused (by client, unpaid or contract ended), Ended |
 
