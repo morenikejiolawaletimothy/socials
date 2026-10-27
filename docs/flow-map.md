@@ -74,23 +74,25 @@ These rules apply to every flow below.
 | C14 | Account: profile, security, delete | Client | 1.6 to 1.8, 14.2 | Approved |
 | C15 | Your brand | Client | 3.2, 5.4 | Approved |
 | C16 | Paused account and reactivation | Client | 2.4, 2.5, 11.6, 11.7 | Approved |
-| C17 | Quick tasks for you | Client | 6.3, 8.3, 5.8 | Draft |
-| M1 | Home: what to do next | Manager | 13.4, 12.1, 12.5 | Draft |
-| M2 | Clients and the client page | Manager | 3.8, 8.2 | Draft |
-| M3 | Onboard a client | Manager | 3.4 to 3.7, 4.2 to 4.5 | Draft |
-| M4 | Plan and draft content | Manager | 5.1 to 5.7, 7.1 | Draft |
-| M5 | After the client reviews | Manager | 7.4, 9.1, 9.2, 9.4 | Draft |
-| M6 | Weekly engagement | Manager | 6.1 to 6.3, 6.6, 8.3 | Draft |
-| M7 | Listening for a client | Manager | New | Draft |
-| M8 | Weekly and monthly updates | Manager | 10.2 | Draft |
-| M9 | Messages | Manager | 14.3, 8.6 | Draft |
-| M10 | My calls and profile | Manager | 3.3, 1.7 | Draft |
+| C17 | Quick tasks for you | Client | 6.3, 8.3, 5.8 | Approved |
+| M1 | Home: what to do next | Manager | 13.4, 12.1, 12.5 | Approved |
+| M2 | Clients and the client page | Manager | 3.8, 8.2 | Approved |
+| M3 | Onboard a client | Manager | 3.4 to 3.7, 4.2 to 4.5 | Approved |
+| M4 | Plan and draft content | Manager | 5.1 to 5.7, 7.1 | Approved |
+| M5 | After the client reviews | Manager | 7.4, 9.1, 9.2, 9.4 | Approved |
+| M6 | Weekly engagement | Manager | 6.1 to 6.3, 6.6, 8.3 | Approved |
+| M7 | Listening for a client | Manager | New | Approved |
+| M8 | Weekly and monthly updates | Manager | 10.2 | Approved |
+| M9 | Messages | Manager | 14.3, 8.6 | Approved |
+| M10 | My calls and profile | Manager | 3.3, 1.7 | Approved |
 | A1 | Overview | Admin | 10.6 | Draft |
-| A2 | Account managers | Admin | 13.1 to 13.3, 13.5, 13.6, 13.9 | Draft |
-| A3 | Framework | Admin | 4.1 | Draft |
-| A4 | Contracts and refunds | Admin | 2.7, 11.5 | Draft |
-| A5 | Complaints | Admin | 12.2, 12.4, 12.6 | Draft |
-| A6 | Settings and audit log | Admin | 12.7, 13.7, 13.8 | Draft |
+| A2 | Clients and assigning managers | Admin | 13.3, 10.6 | Draft |
+| A3 | Managers | Admin | 13.1, 13.5, 13.6, 13.9, 12.6 | Draft |
+| A4 | Framework | Admin | 4.1 | Draft |
+| A5 | Money | Admin | 2.7, 11.5 | Draft |
+| A6 | Complaints | Admin | 12.2, 12.4 | Draft |
+| A7 | Settings | Admin | 12.7, 13.7 | Draft |
+| A8 | Audit log | Admin | 13.8 | Draft |
 
 **Later (not in the first build):** manager training (13.2), opportunities (6.4, 6.5), benchmarks (4.4), digests (14.5).
 
@@ -304,7 +306,7 @@ These rules apply to every flow below.
 
 ## 5. Account manager flows
 
-**Status:** Draft v2, for review.
+**Status:** Approved.
 
 **Who they are:** trained operators, not necessarily strategists, each running up to 10 clients. The platform tells them what to do next and proposes the work. They review, direct and carry it out.
 
@@ -407,25 +409,66 @@ These rules apply to every flow below.
 
 ## 6. Admin flows
 
-**Layout:** dashboard. Side navigation, tables, filters and metrics.
+**Status:** Draft v2, for review.
+
+**Who:** the owner (the strategist). Runs the business: people, clients, the framework, money and rules.
+
+**Layout:** a dashboard, the only one in the product. Side navigation on desktop (Overview, Clients, Managers, Framework, Money, Complaints, Settings, Audit log), a menu button on mobile. Tables with filters, a few clear numbers at the top of each page. Same design system, same calm look. Works on a phone for quick actions (confirm an assignment, approve a refund).
 
 ### A1. Overview
-All clients with goal progress, delivery, approval delays, complaints and an at-risk flag. Unassigned clients at the top.
 
-### A2. Account managers
-Invite, status, how many clients each has (warning at the maximum), performance, assign and reassign clients, suspend (their clients move to Unassigned), payouts to approve.
+- **Goal:** in one look, know what needs the owner today and which accounts are at risk.
+- **Top: needs you today:** clients waiting for a manager, refunds to approve, open complaints, manager change requests, repeated missed deadlines.
+- **Numbers:** active clients, clients in their free 2 weeks, paused accounts (with days paused), share of posts approved first time, delivery vs targets this week.
+- **At risk:** clients behind on their targets, slow to review, paused, or with a complaint. Each links to the client.
 
-### A3. Framework
-The library behind the AI: strategy templates, topic models, post formats, tone rules, banned phrases, checks and industry rules. Every change saved as a new version.
+### A2. Clients
 
-### A4. Contracts and refunds
-Contracts by status. Extend or credit with a note. Refunds waiting for approval, with the calculation. Approve or decline.
+- **List:** every client with status (Setting up, Free 2 weeks, Active, Paused, days paused), manager, goal progress, targets vs done this week, and an at-risk flag. Filters by status and manager.
+- **Assign a manager:** for each new client the platform suggests a manager, with the reasons (free capacity, industry experience, time zone). The owner confirms, or picks someone else from the list. Managers at their maximum (10) are shown but cannot be chosen.
+- **Client view:** the owner can open any client and see the same client page the manager sees (M2), read only, including messages.
 
-### A5. Complaints
-Each complaint with the full timeline (approvals, activity, messages, who caused the delay). Choose an outcome and send it to the client. Reassign with a handover summary.
+### A3. Managers
 
-### A6. Settings and audit log
-Plans and prices, length of the free period, pause reminders and removal period (default 30 days), refund rules, service targets, session timeout. Every admin and system action in the audit log.
+- **List:** each manager with status (Invited, Active, Suspended), number of clients out of 10, on-time delivery, first-time approval rate, missed deadlines, complaints.
+- **Invite:** name and email. They get a single-use link valid for 7 days and set themselves up (P4).
+- **Manager page:** their clients, availability, performance over time, missed-deadline reasons, complaints.
+- **Change a client's manager:** only when the client asks, after a complaint about the manager, or for a no-show. The platform prepares a handover summary (strategy, plan, open work, recent feedback, off limits) for the new manager. The client is told who their new manager is.
+- **Suspend:** access ends at once. Their clients are listed for reassignment, with suggestions.
+- **Payouts:** each manager's active clients for the period, the payout amount, approve.
+
+### A4. Framework
+
+- **Goal:** the owner's method, written down so every manager and every AI proposal follows it.
+- **Library:** strategy templates, topic models, post formats, tone rules, banned phrases, quality checks, industry rules (for example health and law, with restricted claims and required disclaimers).
+- **What works on LinkedIn:** the owner's up-to-date notes on what LinkedIn currently rewards (formats, timing, length, engagement). Used for every proposal (section 7).
+- **Versions:** every change is saved as a new version. Each client's strategy records the version it was built on.
+
+### A5. Money
+
+- **Contracts:** every contract with status (Free 2 weeks, Active, Ending soon, Paused, Completed, Cancelled), plan, dates, paid or not. Extend a contract or add a credit, with a required note.
+- **Payments:** payments, failed payments, invoices.
+- **Refunds:** each refund request with the calculation (months not yet started). Approve or decline with a reason. Approved refunds are paid automatically and the client is told.
+
+### A6. Complaints
+
+- **List:** open complaints and manager change requests, newest first.
+- **Complaint page:** a timeline of everything relevant: approvals, activity, messages, who was waiting on whom. The platform shows whether a delay was on the client or the manager.
+- **Outcome:** no action, credit, partial refund, warning to the manager, or change of manager. The outcome is sent to the client.
+
+### A7. Settings
+
+- Plans and prices (US dollars as the base; local currency handled by Stripe), length of the free period (2 weeks), payment reminders (5, 3 and 0 days), pause warning (15 days) and removal (30 days), "Go ahead" wait (24 hours), maximum clients per manager (10), days between calls (3), service targets, staff session timeout. Changes apply to new contracts only.
+
+### A8. Audit log
+
+- Every admin and system action: who, what, when. Includes assignments, refunds, setting changes and account deletions. Filter and export.
+
+### Admin questions
+
+1. **The owner as a manager:** will you also run some client accounts yourself? If yes, I suggest you can assign clients to yourself and switch to the manager view for them.
+2. **Training and certification:** the PRD has training and a test before managers get clients. That is marked "later". For the first build, are new managers active as soon as they set up their account?
+3. **Refund approval:** keep approving every refund by hand, or approve automatically below an amount you set?
 
 ---
 
