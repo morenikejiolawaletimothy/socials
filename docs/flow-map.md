@@ -35,7 +35,7 @@ These rules apply to every flow below.
 | --- | --- | --- | --- |
 | Discover | Lands on the marketing page, clicks Get started | | |
 | Create account | Google, or email and password with first and last name | | |
-| Set up | Sees setup progress on Home. Connects LinkedIn, chooses what we do, books both calls, chooses a plan and signs (paying now is optional), sets how they review | Is assigned, fits both calls into the client's chosen times | Assigns a manager |
+| Set up | Sees setup progress on Home. Connects LinkedIn, chooses what we do, books both calls, chooses a plan and signs (paying now is optional), sets how they review | Is assigned. The client books inside the manager's open slots | Confirms the manager the platform suggests, or picks another |
 | First 2 weeks (free) | Full service. Payment reminders 5 days and 3 days before the end, and on the last day | | |
 | End of free 2 weeks | Pays, or the account pauses until they pay. Paying reactivates it automatically | Nothing to do while paused | Sees paused accounts |
 | Goals call (30 min) | Meets their account manager. A notetaker records, if they agreed | Runs the call, then research, audit and strategy draft (AI-assisted, in-house) | |
