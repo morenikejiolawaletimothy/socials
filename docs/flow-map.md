@@ -1,385 +1,324 @@
 # Bluecut Socials flow map
 
-Every user flow, end to end, screen by screen. Derived from `docs/prd.md` (stories) and `docs/implementation-plan.md` (build order).
+Every user flow, end to end, screen by screen. Built from `docs/prd.md` and Fola's design direction (review 1, Oct 27 2026).
 
-**Status:** Draft for review by Fola (design authority). Nothing below is built until its flow is marked Approved.
+**Status:** Draft v2 for review by Fola (design authority). Nothing is built until its flow is marked Approved.
 
 ## How to review
 
-For each flow, reply with one of:
+For each flow, reply **Approved**, **Change: ...**, or answer its questions. Status moves Draft → Approved → Built → Signed off.
 
-- **Approved**: build it as written.
-- **Change**: what to add, remove or reorder.
-- **Question answers**: each flow lists open questions. Answer them or say "your call".
+---
 
-Review status is tracked in the inventory table. A flow moves Draft → Approved → Built → Signed off.
+## 0. Design direction
+
+These rules apply to every flow below.
+
+- **Simple first.** Few steps, few fields, one clear action per screen. Busy senior people use this. If a step can be removed or done for them, remove it.
+- **Client and account manager: a normal web app, not a dashboard.** The model is LinkedIn: a top bar, one centred content column made of cards (a feed), profile-style pages, an optional side column on wide screens. No grids of charts, no dense tables, no sidebars full of menus.
+- **Admin: dashboard.** The admin is the only role that gets a dashboard layout (side navigation, tables, metrics).
+- **Mobile first for everyone.** Clients and account managers must be able to do everything on a phone. On mobile, the top bar becomes a bottom tab bar.
+- **Nothing happens without the client.** The client approves content, sets what the manager may do, and can pause, take down or disconnect at any time. The product says so wherever it matters.
 
 ---
 
 ## 1. The end-to-end journey
 
-The golden path the whole product serves, across all three roles.
-
 | Stage | Client | Account manager | Admin |
 | --- | --- | --- | --- |
-| Discover | Lands, compares plans, starts trial | | |
-| Trial week 1: onboarding | Intake, assets, connect LinkedIn, books call 1 | Runs call 1, research and audit, follow-up questions | Assigns a manager |
-| | Books call 2, confirms decision record, sets discretion | Runs call 2, writes decision record, drafts strategy | |
-| | Approves strategy | Generates calendar and first batch | |
-| Trial week 2: first activity | Reviews first batch, sees first post go live | Applies feedback, schedules, engages | |
-| Convert | Accepts contract, pays | | Sees contract go active |
-| Every week | Reviews batch, reads weekly report, messages | Task queue, drafts, quality checks, engagement, report | Portfolio, at-risk accounts |
-| When things go wrong | Pauses, revokes, complains | Fixes failed posts, answers missed-deadline queries | Disputes, refunds, reassignment |
-| End | Renews, or terminates with refund, exports data | Unassigned | Approves refund |
+| Discover | Lands on the marketing page, clicks Get started | | |
+| Create account | Google, or email and password with first and last name | | |
+| Set up (trial week 1) | Sees setup progress on Home. Connects LinkedIn and sets permissions. Picks a time for the goals call | Is assigned, fits the call into the client's chosen time | Assigns a manager |
+| Goals call (30 min) | Joins the call. AI notetaker records | Runs the call, then AI research, audit and strategy draft | |
+| Strategy call (30 min) | Reviews strategy and content plan, approves | Runs the call, finalises the plan | |
+| Contract | Chooses 3, 6 or 12 months, signs, pays | | Sees the contract go active |
+| Every week | Reviews posts, sees what went live, reads the weekly update | Drafts, checks, schedules, engages, writes the update | Watches accounts at risk |
+| Something is wrong | Takes a post down, asks for a fix, pauses, complains | Fixes, answers queries | Resolves complaints and refunds |
+| End | Cancels any time, unused months refunded | Unassigned | Approves the refund |
 
 ---
 
 ## 2. Flow inventory
 
-| ID | Flow | Role | Stories | Batch | Status |
-| --- | --- | --- | --- | --- | --- |
-| S1 | App shells and navigation | All | Pages by role | 1.1 | Draft |
-| P1 | Discover and compare plans | Visitor | 2.1 | 1.2 | Draft |
-| P2 | Sign up and verify email | Client | 1.1, 1.3 | 1.2 | Draft |
-| P3 | Sign in with 2FA | All | 1.3 | 1.2 | Draft |
-| P4 | Reset password | All | 1.4 | 1.2 | Draft |
-| P5 | Accept staff invite | Manager | 1.2, 1.3 | 1.2 | Draft |
-| C1 | Onboarding checklist | Client | 3.9 | 1.3 | Draft |
-| C2 | Intake form | Client | 3.1 | 1.3 | Draft |
-| C3 | Upload brand assets | Client | 3.2 | 1.3 | Draft |
-| C4 | Connect LinkedIn | Client | 8.1 | 1.3 | Draft |
-| C5 | Book a discovery call | Client | 3.3, 3.4 | 1.3 | Draft |
-| C6 | Confirm the decision record | Client | 3.7 | 1.3 | Draft |
-| C7 | Set approvals and discretion | Client | 3.8 | 1.3 | Draft |
-| C8 | Review and approve strategy | Client | 4.6, 4.7 | 1.4 | Draft |
-| C9 | Accept contract and pay | Client | 2.2, 2.3, 11.1 | 1.4 | Draft |
-| C10 | Dashboard | Client | 10.1, 10.3, 8.7 | 1.4 | Draft |
-| C11 | Review a batch | Client | 7.2, 7.3, 7.5 | 1.4 | Draft |
-| C12 | Calendar | Client | 5.2 | 1.4 | Draft |
-| C13 | Access and permissions | Client | 8.2, 8.4, 8.6, 8.7, 9.3 | 1.4 | Draft |
-| C14 | Activity log | Client | 8.5 | 1.4 | Draft |
-| C15 | Reports and outcomes | Client | 10.2, 10.4, 10.5 | 1.4 | Draft |
-| C16 | Messages | Client | 14.3 | 1.4 | Draft |
-| C17 | Opportunities | Client | 6.4 | 1.4 | Draft |
-| C18 | Billing, invoices and failed payment | Client | 11.2, 11.7 | 1.4 | Draft |
-| C19 | End contract with refund | Client | 11.3, 11.4, 11.6 | 1.4 | Draft |
-| C20 | Raise a complaint | Client | 12.3 | 1.4 | Draft |
-| X1 | Profile, security and notifications | All | 1.6, 1.7, 1.8, 14.2 | 1.4 | Draft |
-| M1 | Task queue | Manager | 13.4, 12.1 | 1.5 | Draft |
-| M2 | Client overview | Manager | 3.8, 8.2 | 1.5 | Draft |
-| M3 | Discovery call 1 to summary | Manager | 3.4 | 1.5 | Draft |
-| M4 | Research and profile audit | Manager | 4.2, 4.3, 4.4 | 1.5 | Draft |
-| M5 | Follow-up questions, call 2 and decision record | Manager | 3.5, 3.6, 3.7 | 1.5 | Draft |
-| M6 | Draft and submit strategy | Manager | 4.5, 4.8 | 1.5 | Draft |
-| M7 | Generate the calendar | Manager | 5.1, 5.2 | 1.5 | Draft |
-| M8 | Draft a batch and submit for approval | Manager | 5.3 to 5.7, 7.1 | 1.5 | Draft |
-| M9 | Apply feedback and resubmit | Manager | 7.4 | 1.5 | Draft |
-| M10 | Schedule, reschedule and failed posts | Manager | 9.1, 9.2, 9.4 | 1.5 | Draft |
-| M11 | Weekly engagement | Manager | 6.1 to 6.3, 6.6 | 1.5 | Draft |
-| M12 | LinkedIn co-pilot steps | Manager | 8.3, 5.8 | 1.5 | Draft |
-| M13 | Send the weekly report | Manager | 10.2 | 1.5 | Draft |
-| M14 | Answer a missed-deadline query | Manager | 12.5 | 1.5 | Draft |
-| M15 | Request a one-off permission | Manager | 8.6 | 1.5 | Draft |
-| M16 | Training and assessment | Manager | 13.2 | 1.5 | Draft |
-| A1 | Portfolio | Admin | 10.6 | 1.6 | Draft |
-| A2 | Manage account managers | Admin | 13.1, 13.3, 13.5, 13.6, 13.9 | 1.6 | Draft |
-| A3 | Framework editor | Admin | 4.1 | 1.6 | Draft |
-| A4 | Contracts and refund approvals | Admin | 2.7, 11.5 | 1.6 | Draft |
-| A5 | Disputes | Admin | 12.2, 12.4, 12.6 | 1.6 | Draft |
-| A6 | Settings | Admin | 12.7, 13.7 | 1.6 | Draft |
-| A7 | Audit log | Admin | 13.8 | 1.6 | Draft |
-| N1 | Notifications | All | 14.1, 14.4 | 1.7 | Draft |
+| ID | Flow | Role | PRD stories | Status |
+| --- | --- | --- | --- | --- |
+| P1 | Marketing landing page | Visitor | 2.1 | Draft |
+| P2 | Create account | Client | 1.1 | Draft |
+| P3 | Sign in and reset password | All | 1.3, 1.4 | Draft |
+| P4 | Accept staff invite | Manager | 1.2, 1.3 | Draft |
+| C1 | Home and setup progress | Client | 3.9, 10.1 | Draft |
+| C2 | Connect LinkedIn and set permissions | Client | 8.1, 8.2, 3.8 | Draft |
+| C3 | Book the goals call | Client | 3.3, 3.4 | Draft |
+| C4 | Strategy call and approval | Client | 3.7, 4.6, 4.7 | Draft |
+| C5 | Choose a plan, sign and pay | Client | 2.2, 2.3, 11.1 | Draft |
+| C6 | Review content | Client | 7.2, 7.3, 7.5 | Draft |
+| C7 | Take down or fix a live post | Client | New | Draft |
+| C8 | Progress and weekly updates | Client | 10.1 to 10.5 | Draft |
+| C9 | Messages | Client | 14.3 | Draft |
+| C10 | Control: permissions, pause, disconnect, activity | Client | 8.2, 8.4, 8.5, 8.6, 8.7, 9.3 | Draft |
+| C11 | Raise a complaint | Client | 12.3 | Draft |
+| C12 | Contract, billing and cancel | Client | 11.2 to 11.7 | Draft |
+| C13 | Account: profile, security, delete | Client | 1.6 to 1.8, 14.2 | Draft |
+| M1 | Home: what to do next | Manager | 13.4, 12.1, 12.5 | Draft |
+| M2 | Client page | Manager | 3.8, 8.2 | Draft |
+| M3 | Onboard a client | Manager | 3.4 to 3.7, 4.2 to 4.5 | Draft |
+| M4 | Plan and draft a week | Manager | 5.1 to 5.7, 7.1 | Draft |
+| M5 | Feedback, scheduling and live posts | Manager | 7.4, 9.1, 9.2, 9.4, 8.6 | Draft |
+| M6 | Weekly engagement | Manager | 6.1 to 6.3, 6.6, 8.3 | Draft |
+| M7 | Weekly update | Manager | 10.2 | Draft |
+| A1 | Overview | Admin | 10.6 | Draft |
+| A2 | Account managers | Admin | 13.1 to 13.3, 13.5, 13.6, 13.9 | Draft |
+| A3 | Framework | Admin | 4.1 | Draft |
+| A4 | Contracts and refunds | Admin | 2.7, 11.5 | Draft |
+| A5 | Complaints | Admin | 12.2, 12.4, 12.6 | Draft |
+| A6 | Settings and audit log | Admin | 12.7, 13.7, 13.8 | Draft |
+
+**Later (not in the first build):** manager training (13.2), opportunities (6.4, 6.5), benchmarks (4.4), digests (14.5).
 
 ---
 
-## 3. Flows
+## 3. Public flows
 
-Each flow lists: **Goal**, **Entry**, **Steps** (one line per screen or step), **States** to design, and **Questions** for you.
+### P1. Marketing landing page
 
-### S1. App shells and navigation
-
-- **Goal:** each role lands in its own workspace and can always tell where they are.
-- **Steps:**
-  1. Public shell: logo, "Plans", "Sign in", one primary "Start free trial".
-  2. Client shell: side navigation on desktop, bottom tab bar plus "More" on mobile. Trial banner with days left on every page. Notification bell.
-  3. Manager shell: side navigation (Tasks, Clients, Training). Inside a client, tabs: Overview, Research, Strategy, Calendar, Engagement, LinkedIn.
-  4. Admin shell: side navigation (Portfolio, Managers, Framework, Contracts, Disputes, Settings, Audit log).
-  5. Demo role switcher (Phase 1 only, removed in Phase 2).
-  6. "No access" page for links outside a role (US-1.5).
+- **Goal:** a busy senior professional understands, in seconds, what we do for them, trusts us with their account, and clicks Get started.
+- **Sections, top to bottom:**
+  1. **Hero (above the fold):** one benefit-led headline about what they get (being seen and known for the right things on LinkedIn, without spending their time on it). One supporting line. One primary button: Get started. Secondary: See how it works.
+  2. **How it works:** 3 or 4 short steps. Connect LinkedIn, two short calls, we create and you approve, see results against your goals.
+  3. **Why Bluecut:** the main selling points. Your strategy, not generic AI posts. A real account manager checks everything. Results measured against your goals, not likes.
+  4. **You stay in control:** nothing is posted without your approval. You choose what we can do. We never see your password. Pause or disconnect at any time.
+  5. **Testimonials:** quotes with name, role and company, and the result they got.
+  6. **Start free, then commit:** 2-week free trial with no card. Then a 3, 6 or 12-month contract. Cancel any time and get unused months back.
+  7. **Final call to action:** Get started.
+  8. **Footer:** sign in, privacy, terms, contact.
+- **States:** mobile layout, sticky Get started on mobile after the hero.
 - **Questions:**
-  1. Client mobile tabs: I suggest Home, Approvals, Calendar, Messages, More. Agree?
-  2. Client has 12 pages. Group "Access, Activity log, Billing" under a "Settings" area to keep navigation short?
+  1. Show prices on the page, or only the terms (3, 6, 12 months) until prices are set?
+  2. Do you have real testimonials, or do we use placeholders for now?
 
-### P1. Discover and compare plans
+### P2. Create account
 
-- **Goal:** a senior professional understands the service and starts a trial without a card.
-- **Entry:** landing page.
+- **Goal:** an account in under a minute.
 - **Steps:**
-  1. Landing: what we do, how it works (trial, onboarding, approve everything), trust and security section (you control access, we never see your password), plans preview, start free trial.
-  2. Plans: 3, 6 and 12 months side by side. Price in local currency (USD base, fixed NGN), what is included, refund rule in plain words. One primary action: Start free trial.
-- **States:** currency switch, mobile stacked plans.
-- **Questions:**
-  1. Prices are not set yet. Use placeholders like "$X / month" or realistic dummy figures?
-  2. Is the landing page a full marketing page now, or a simple page that we replace later? (Design system says reference Awwwards for marketing.)
+  1. Create your account: "Continue with Google", or first name, last name, email and password.
+  2. Email path only: enter the 6-digit code we sent (proves the email is theirs).
+  3. Lands on Home (C1).
+- **Not asked here:** country, location or time zone. Time zone is read quietly from the browser. Country comes from their LinkedIn profile when they connect (C2), and is asked only if LinkedIn does not provide it.
+- **States:** email already used (link to sign in), weak password, wrong or expired code, second trial blocked.
 
-### P2. Sign up and verify email
+### P3. Sign in and reset password
 
-- **Goal:** create a client account and start the trial.
-- **Steps:**
-  1. Sign up: full name, work email, password (12+ characters), country, time zone (detected, editable). "Continue with Google". Consent to terms and privacy.
-  2. Check your email screen with resend.
-  3. Email verified, then optional 2FA offer (recommended, skippable).
-  4. Lands in onboarding (C1).
-- **States:** duplicate email (inline error with sign-in link), weak password, second trial blocked (US-2.6), link expired.
-- **Questions:**
-  1. Should sign up use the Stepper (Account, Verify, Secure)? It is three short steps.
+- **Steps:** Google, or email and password. 6-digit code if 2FA is on (required for staff, optional for clients). Forgot password: email, link, new password, signed out everywhere else.
+- **States:** wrong details, locked after repeated tries, link expired (1 hour).
 
-### P3. Sign in with 2FA
+### P4. Accept staff invite
 
-- **Steps:** email and password, then 6-digit code if 2FA is on (or backup code), then role home.
-- **States:** wrong password, locked after repeated failures, wrong code.
-
-### P4. Reset password
-
-- **Steps:** enter email, check your email, set new password, "You are signed out everywhere else", sign in.
-- **States:** link expired (1 hour).
-
-### P5. Accept staff invite
-
-- **Steps:** open invite link, set name and password, set up 2FA (required, shows backup codes), lands in Training if not certified, else Task queue.
+- **Steps:** open invite link, set password, set up 2FA (required), lands on Home.
 - **States:** link used or expired (7 days).
 
-### C1. Onboarding checklist
+---
 
-- **Goal:** the client always knows what is done and what is next in trial week 1.
-- **Steps:** one page listing the 8 steps: intake, assets, LinkedIn connected, call 1, research (manager), call 2, decisions confirmed, strategy approved. Each shows done, current, waiting on manager, or locked, with one action for the current step.
-- **Questions:**
-  1. Show this as the client home until onboarding is complete, then switch home to the dashboard?
-  2. Use the Stepper here, or a vertical checklist? (8 steps is too many for a horizontal stepper on a phone.)
+## 4. Client flows
 
-### C2. Intake form
+**Layout:** top bar on desktop with Home, Content, Messages, notifications and the profile menu. On mobile, a bottom tab bar with the same items. Content sits in one centred column of cards.
 
-- **Goal:** the manager understands the client before call 1.
-- **Steps:** a multi-step form with the Stepper. Proposed grouping into 4 steps:
-  1. Goals (3 and 6 months).
-  2. You and your audience (industry, role, target audience).
-  3. Where you are now (challenges, past LinkedIn efforts, people you admire or compete with).
-  4. Boundaries (topics to avoid, compliance rules in your field), then review and submit.
-- **States:** autosaved indicator, leave and return, missing required fields on submit.
-- **Questions:**
-  1. Is this grouping right? Are any fields missing from your manual intake?
+### C1. Home and setup progress
 
-### C3. Upload brand assets
+- **Goal:** the client always knows what is next, and can choose to continue now or later.
+- **While setting up:** a setup card at the top with a percentage and the steps:
+  1. Create account (done)
+  2. Connect LinkedIn
+  3. Book your goals call
+  4. Goals call
+  5. Strategy call
+  6. Choose your plan
+  
+  One button for the current step. Steps waiting on Bluecut say so ("Your manager is preparing your strategy").
+- **After setup:** Home becomes a feed of cards, newest first: posts waiting for your review, what went live, upcoming posts, the weekly update, messages from your manager.
+- **States:** trial days left (small banner), LinkedIn connection expired (Reconnect card at the top), publishing paused.
+- **Reminders:** email and in-app reminders when setup is unfinished.
 
-- **Steps:** drop zone grouped by type (headshots, logos, colours and fonts, past posts and writing samples). File list with remove.
-- **States:** wrong type or over 20 MB (inline error naming the allowed types), upload progress, empty.
-
-### C4. Connect LinkedIn
+### C2. Connect LinkedIn and set permissions
 
 - **Steps:**
-  1. Explainer: what we can and cannot do, you never share your password.
-  2. LinkedIn consent screen (mocked in Phase 1).
-  3. Connected: profile name and photo. Optional: connect a company Page.
-- **States:** declined consent, connection failed, already connected.
+  1. Why we connect: what we can do, that you approve everything, that we never see your password.
+  2. LinkedIn's own sign-in and consent screen (mocked in Phase 1).
+  3. **What should we do for you?** A short list of plain switches:
+     - Post for me (on)
+     - Like and comment for me (on)
+     - Post to my company Page (off, connect the Page to turn on)
+     - Draft connection requests for me to send (off)
+     - Draft profile updates for me to apply (off)
+     
+     Under each switch that is on: "Ask me first" or "Go ahead without asking". Profile changes and sensitive topics always ask first.
+  4. Connected. Next step: book your goals call.
+- **States:** consent declined, connection failed.
 
-### C5. Book a discovery call
+### C3. Book the goals call
 
 - **Steps:**
-  1. Pick a slot (manager availability shown in the client's time zone). Call 1 is 90 minutes, call 2 is 60 minutes.
-  2. Recording consent: the AI notetaker will join and record. Agree or decline.
-  3. Booked: date, Google Meet link, add to calendar.
-- **States:** no slots this week, reschedule, cancel.
-- **Questions:**
-  1. Call 2 is only bookable after research is done. Should it appear as locked in the checklist with "Your manager is preparing your research"?
+  1. What this call is: 30 minutes to agree your goals. What we will ask, so you can think ahead. An AI notetaker joins so nothing is missed.
+  2. Pick a time that suits you. Times are shown in your time zone and cover a wide range, including early mornings and evenings. The manager fits around you.
+  3. Booked: date, time, Google Meet link, add to calendar. Reminders the day before and 1 hour before.
+- **States:** reschedule, cancel, notetaker declined (call goes ahead without recording).
 
-### C6. Confirm the decision record
+### C4. Strategy call and approval
 
-- **Steps:** summary of decisions, changes and next steps. Two actions: Confirm, Request correction (with a comment box). Confirmed records show as locked with a version number.
+- **Before the call:** "Your strategy is ready" notice. The client can read it: who you want to reach, your 3 to 5 topics, your tone, how often we post and engage, and how we measure progress against your goals.
+- **Book the strategy call:** same as C3, 30 minutes.
+- **After the call:** one screen, "What we agreed": the final strategy and content plan, with any changes from the call. Two actions: Approve, or Ask for a change.
+- **States:** new version after a change request.
 
-### C7. Set approvals and discretion
+### C5. Choose a plan, sign and pay
 
-- **Steps:** a list of action types, each with "Needs my approval" or "My manager decides". Defaults per US-3.8. Headline, About and sensitive topics are always approval and cannot be switched.
-- **States:** "Changes apply to new items only" notice after saving.
+- **Steps (Stepper):** Choose 3, 6 or 12 months. Review and sign the contract (dates, price, what you get, cancel any time with unused months refunded). Pay by card. Done, with receipt.
+- **States:** payment failed, trial ended without signing (posting stops, access paused, data kept 30 days).
+- **Questions:** see open question 1 on when this happens.
 
-### C8. Review and approve strategy
+### C6. Review content
 
-- **Steps:** positioning, audience, pillars, tone, weekly cadence, goals mapped to metrics with reasons, vanity metrics as secondary. Comment per section. Actions: Approve strategy (primary), Request changes.
-- **States:** new version awaiting approval (revision mid-contract, US-4.8).
-- **Questions:**
-  1. The PRD says strategy approval unlocks the contract offer, and also that the client is asked to pay at the end of week 2. Which one triggers the "Accept and pay" step?
-
-### C9. Accept contract and pay
-
-- **Steps:** with the Stepper: Choose plan, Review terms (dates, price, deliverables, refund rule), Pay (Stripe checkout, mocked), Receipt and contract active.
-- **States:** payment failed, trial ended without converting (scheduled posts cancelled, access paused, data kept 30 days).
-
-### C10. Dashboard
-
-- **Steps:** items awaiting me (top), goal metrics vs targets with trend, delivery vs plan this week, secondary metrics, contract or trial status.
-- **States:** empty in week 1 (no data yet), LinkedIn connection expired (Reconnect shown), publishing paused.
-
-### C11. Review a batch (key mobile flow)
-
-- **Goal:** a busy executive reviews a week of content in one sitting on a phone.
-- **Entry:** email or notification link, or Approvals page.
+- **Entry:** Home card, notification or email link.
 - **Steps:**
-  1. Batch overview: due date, items with status.
-  2. Item: LinkedIn preview (mobile and desktop toggle). Actions: Approve, Request changes, Reject.
-  3. Feedback: type, or record a voice note, then edit the transcript, then send.
-  4. Approve all remaining with one confirmation.
-  5. Done: what happens next.
-- **States:** deadline in 24 hours, missed deadline (waiting on client), items handled by discretion (shown as info only), voice note failed to transcribe.
+  1. The week's posts, each shown as it will look on LinkedIn.
+  2. For each: Approve or Ask for changes. Changes by typing or a voice note (transcript shown and editable).
+  3. Approve all remaining, with one confirmation.
+- **States:** due soon, missed (post not published, marked as waiting on you), items your manager handled without asking (shown for information).
 - **Questions:**
-  1. Item by item (swipe or next) or one scrolling list? I suggest item by item on mobile, list with a preview panel on desktop.
+  1. On mobile, one post at a time (like stories), or a scrolling list? I suggest one at a time on mobile, list on desktop.
 
-### C12. Calendar
+### C7. Take down or fix a live post
 
-- **Steps:** month, week and list views. Filter by pillar, format, status. Read only for the client.
+- **Goal:** if something already published is wrong, the client can act at once.
+- **Entry:** any live post (Home feed, Content).
+- **Actions:**
+  - **Take it down now:** removed from LinkedIn straight away, after one confirmation.
+  - **Ask for a fix:** a short note or voice note to the manager. Urgent by default.
+- **States:** taken down (logged in activity), fix requested, fix done.
 
-### C13. Access and permissions
+### C8. Progress and weekly updates
 
-- **Steps:** connection status, permission toggles per US-8.2 table (account settings always blocked), Pause all publishing, Revoke access, pending one-off permission requests (approve or decline).
-- **States:** connection expired (Reconnect), paused, revoked. Warning dialog before pause and revoke, listing affected scheduled items.
+- **Steps:** progress toward your goals (in plain words first, numbers second), what we did vs what we promised this week, the weekly and monthly updates as readable posts, download as PDF, add a result (a lead, an invitation, an offer).
+- **States:** too early for results (first weeks).
 
-### C14. Activity log
+### C9. Messages
 
-- **Steps:** list of every action (what, who, when, link). Filter by date, action type, person. Export CSV.
+- **Steps:** one conversation with your manager. Text, files and voice notes. Photos and past posts for the brand can be shared here.
 
-### C15. Reports and outcomes
+### C10. Control
 
-- **Steps:** weekly and monthly reports list, report detail (delivery vs plan, top posts, goal movement, next focus, manager commentary), download PDF, log an outcome (lead, invitation, offer).
+- **Steps:** the same switches as C2, editable any time. Pause all posting (one tap, with confirmation). Disconnect LinkedIn. Requests from your manager for a one-off action (approve or decline). Activity: every action on your account, who and when, with filters.
+- **States:** connection expired (Reconnect), paused, disconnected.
 
-### C16. Messages
+### C11. Raise a complaint
 
-- **Steps:** one thread with the manager. Text, files, voice notes.
+- **Entry:** from any post, or from Control.
+- **Steps:** what went wrong (missed delivery, quality, action I did not allow, billing, other), describe it, attach a file if needed, send. Status shown afterwards.
 
-### C17. Opportunities
+### C12. Contract, billing and cancel
 
-- **Steps:** list of events, speaking slots, podcasts, awards. Each: date, format, why it fits, link. Mark Interested or Not for me.
+- **Steps:** your plan and dates, invoices and receipts, update card.
+- **Cancel:** reason (optional), then "Here is what happens": the end date, what stops, and your refund. Refund covers every full month not yet started. Example: cancel 2 weeks into a 3-month contract, service runs to the end of month 1, months 2 and 3 are refunded. Confirm. Refund status shown until paid.
 
-### C18. Billing, invoices and failed payment
+### C13. Account
 
-- **Steps:** current plan and term, invoices and receipts, update card. Failed payment banner with retry and grace period end date.
-
-### C19. End contract with refund
-
-- **Steps:** with the Stepper: Reason (optional), Review (end date, refund amount, what stops), Confirm (warning dialog). Then "Refund awaiting approval" status, then notification when paid.
-- **States:** termination during trial (no charge).
-
-### C20. Raise a complaint
-
-- **Entry:** from any item, or from Billing.
-- **Steps:** category, description, optional attachment, submit. Then status tracking (Open, Under review, Resolved).
-
-### X1. Profile, security and notifications
-
-- **Steps:** personal details and time zone, 2FA setup, active sessions with sign out everywhere, email notification choices (security, billing and approval deadlines locked on), export data, delete account (blocked during an active contract).
-
-### M1. Task queue
-
-- **Steps:** all tasks across clients, sorted by due time, grouped by client, status and "waiting on" shown. Each task opens the right client screen.
-- **States:** overdue, missed-deadline query waiting for an answer.
-
-### M2. Client overview
-
-- **Steps:** client profile, goals, onboarding checklist, discretion settings, permissions (read only), connection status, contract status.
-
-### M3. Discovery call 1 to summary
-
-- **Steps:** call booked, transcript arrives (or paste manually), AI summary (goals, audience, tone, constraints, open points), manager edits and saves.
-- **States:** no consent (manual notes), transcript missing.
-
-### M4. Research and profile audit
-
-- **Steps:** run research, progress while generating, findings with sources (unsourced labelled), glossary. Profile audit: each section rated strong, needs work or missing with a recommendation. Benchmark (P1).
-
-### M5. Follow-up questions, call 2 and decision record
-
-- **Steps:** AI follow-up questions grouped by theme, edit, call 2 agenda (draft pillars, positioning, decisions), after call write the decision record and send to client.
-
-### M6. Draft and submit strategy
-
-- **Steps:** AI draft, edit each section, regenerate one section with instructions, submit to client. Revision creates a new version.
-
-### M7. Generate the calendar
-
-- **Steps:** generate for the contract term, review slots (date, time, pillar, format, topic, goal), drag to move, balance check per week.
-
-### M8. Draft a batch and submit for approval
-
-- **Steps:** pick the week, generate drafts, edit each (rich text, character count, versions, compare), visual direction and asset attach, quality checks (resolve or dismiss with reason), submit batch with due date.
-- **States:** blocked submit while flags are open, lock notice when another person is editing.
-
-### M9. Apply feedback and resubmit
-
-- **Steps:** feedback turned into change points, apply with AI help, mark each done, resubmit. Client sees before and after.
-
-### M10. Schedule, reschedule and failed posts
-
-- **Steps:** schedule approved items (client time and my time shown), target profile or company Page, reschedule or cancel. Failed: reason, retry, fix.
-- **States:** Schedule disabled for unapproved items, on hold after permission removed.
-
-### M11. Weekly engagement
-
-- **Steps:** weekly search brief, add profile or post links, fit score with reasons, accept or dismiss, drafted comments and connection notes, connection list sent to client, weekly totals vs targets.
-
-### M12. LinkedIn co-pilot steps
-
-- **Steps:** actions the API cannot do (profile edits, connection requests) shown as ready-to-apply steps for the client, with copy buttons. Blocked areas clearly marked.
-
-### M13. Send the weekly report
-
-- **Steps:** auto draft, add commentary, preview, send.
-
-### M14. Answer a missed-deadline query
-
-- **Steps:** notification, task shows what was missed, write a reason, submit. Repeated misses escalate.
-
-### M15. Request a one-off permission
-
-- **Steps:** choose action, reason, send. Status: pending, approved (expires after use or 7 days), declined.
-
-### M16. Training and assessment
-
-- **Steps:** modules, practice account, assessment, result. Certified managers can receive clients.
-
-### A1. Portfolio
-
-- **Steps:** all clients with goal progress, delivery rate, approval delays, open disputes, at-risk flag. Filter and open a client.
-
-### A2. Manage account managers
-
-- **Steps:** invite (name, email, time zone, max accounts), list with status (Invited, In training, Certified, Suspended), capacity, performance, payouts to approve, assign clients (warning at max), suspend (clients go to Unassigned).
-
-### A3. Framework editor
-
-- **Steps:** library sections (strategy templates, positioning formulas, pillar models, post formats, tone rules, banned phrases, quality checklists, industry rule sets). Edit, save new version, see version history.
-
-### A4. Contracts and refund approvals
-
-- **Steps:** contracts filtered by status, contract detail, extend or credit with a required note, refunds awaiting approval with the calculation, approve or decline.
-
-### A5. Disputes
-
-- **Steps:** list, workspace with timeline (approvals, activity, messages, delay attribution), choose outcome, send to client. Reassign with handover summary.
-
-### A6. Settings
-
-- **Steps:** plans and prices, trial scope, refund rules, service levels, session policy. Notice that changes apply to new contracts only.
-
-### A7. Audit log
-
-- **Steps:** every admin and system action, filter, export.
-
-### N1. Notifications
-
-- **Steps:** bell with unread count, notification centre grouped by today and earlier, each linking to the right screen. Toasts for success, warning dialogs before destructive actions.
+- **Steps:** name and photo, time zone, sign-in and 2FA, active sessions, email notifications, download my data, delete my account.
+- **Delete:** during a contract, deleting first cancels the contract (shows the refund, as in C12), then deletes.
 
 ---
 
-## 4. Open items before we start building
+## 5. Account manager flows
 
-1. **Content lifecycle diagram.** The PRD's 8-state content lifecycle was an embedded diagram that did not export. Please share the 8 states and their order.
-2. **Logo variants.** The implementation plan mentions small-wh and small-bl variants. The design system only has the blue mark. Please share the white variant for dark surfaces, if it exists.
-3. **Platform.** The implementation plan's Phase 2 mentions Lovable Cloud, Lovable Payments and Lovable AI. We are building in Next.js with Claude Code. Phase 1 (dummy data) is not affected. Before Phase 2 we choose the backend (for example Supabase plus Stripe).
-4. **Plan prices** are still open in the PRD. Phase 1 uses placeholders.
+**Layout:** same web app style as the client, not a dashboard. Top bar on desktop with Home, Clients, Messages and notifications. Bottom tab bar on mobile. Everything works on a phone.
+
+### M1. Home: what to do next
+
+- **Steps:** a feed of task cards sorted by due time: what it is, which client, due when, and who it is waiting on. Urgent items first (fix requests, failed posts, missed deadlines). Tapping a card opens exactly the right screen.
+- **Includes:** missed-deadline questions to answer with a reason.
+
+### M2. Client page
+
+- **Layout:** like a LinkedIn profile page. Header with the client's name, photo, role, status and setup progress. Sections below: Goals and strategy, Content, Engagement, Notes and calls, Messages.
+- **Also shows:** what the client lets you do (read only), connection status, contract status.
+
+### M3. Onboard a client
+
+- **Steps (Stepper):**
+  1. Goals call: transcript arrives from the AI notetaker (or paste notes). AI summary of goals, audience, tone and limits. Edit and save.
+  2. Research and audit: run AI research on the client's field (sources shown) and a profile audit (each part rated with a suggestion). Review and edit.
+  3. Strategy: AI draft. Edit any section, or regenerate one section with an instruction. Share with the client.
+  4. Strategy call: agenda and follow-up questions ready. After the call, update and send "What we agreed" to the client.
+
+### M4. Plan and draft a week
+
+- **Steps:**
+  1. The content plan for the contract, shown by week. Move a post by dragging.
+  2. Draft the week: AI drafts in the client's voice. Edit, see versions, character count. Visual idea for each post, attach the image.
+  3. Checks: any flags (risky claim, banned phrase, sounds generic, repeat of an old post, missing alt text) must be fixed or dismissed with a reason.
+  4. Send to the client for review, with a due date.
+
+### M5. Feedback, scheduling and live posts
+
+- **Steps:** client feedback as a list of changes, fix with AI help, mark each done, resend. Schedule approved posts (client's time and your time shown). Failed posts with the reason and a retry. Fix requests on live posts (from C7). Ask the client for a one-off permission.
+- **States:** Schedule unavailable until approved, on hold after the client removes a permission or pauses.
+
+### M6. Weekly engagement
+
+- **Steps:** this week's search brief (who to look for and why). Paste a profile or post link, see how well it fits and why. Keep or drop. Drafted comments and connection notes. Connection list sent to the client to send. Done vs target this week.
+
+### M7. Weekly update
+
+- **Steps:** AI drafts the update (what we did, best posts, progress toward goals, next week). Add your note. Send.
+
+---
+
+## 6. Admin flows
+
+**Layout:** dashboard. Side navigation, tables, filters and metrics.
+
+### A1. Overview
+All clients with goal progress, delivery, approval delays, complaints and an at-risk flag. Unassigned clients at the top.
+
+### A2. Account managers
+Invite, status, how many clients each has (warning at the maximum), performance, assign and reassign clients, suspend (their clients move to Unassigned), payouts to approve.
+
+### A3. Framework
+The library behind the AI: strategy templates, topic models, post formats, tone rules, banned phrases, checks and industry rules. Every change saved as a new version.
+
+### A4. Contracts and refunds
+Contracts by status. Extend or credit with a note. Refunds waiting for approval, with the calculation. Approve or decline.
+
+### A5. Complaints
+Each complaint with the full timeline (approvals, activity, messages, who caused the delay). Choose an outcome and send it to the client. Reassign with a handover summary.
+
+### A6. Settings and audit log
+Plans and prices, trial length, refund rules, service targets, session timeout. Every admin and system action in the audit log.
+
+---
+
+## 7. Changes from the PRD
+
+Once approved, these will be written into `docs/prd.md`.
+
+| Area | PRD said | Now |
+| --- | --- | --- |
+| Plans | Separate plans page | Terms shown on the landing page; plan chosen at contract time |
+| Sign up | Name, email, password, country, time zone | Google, or name, email and password. Location from LinkedIn, time zone from the browser |
+| Intake form | Long guided form before call 1 | Removed. Goals are gathered on the goals call by the notetaker |
+| Brand assets | Upload step in onboarding | Optional, shared through Messages |
+| Calls | 90 and 60 minutes | 30 minutes each, at a time the client picks |
+| Decision record and strategy approval | Two separate steps | One "What we agreed" approval after the strategy call |
+| Client home | Dashboard | Feed of cards, LinkedIn style |
+| Manager layout | Panels and workspace tabs | Feed of tasks and profile-style client pages |
+| Live posts | No client action | Client can take a post down now or ask for a fix |
+
+---
+
+## 8. Open questions
+
+1. **When does the client sign and pay?** Your note says the contract is accepted when LinkedIn is connected, and also that there is a free 2-week trial. Options:
+   - a) Sign after the strategy call, and pay at the end of the 2-week trial. (My suggestion: they sign once they have seen their strategy.)
+   - b) Sign when connecting LinkedIn, and pay at the end of the trial.
+   - c) Sign and pay when connecting LinkedIn, with no free trial.
+2. **Navigation icons.** The design system says no decorative icons in navigation, but LinkedIn-style top bars and mobile tab bars use an icon above each label. I suggest allowing icons with labels in the main navigation only, since the icon helps people find things on a small screen. Agree?
+3. **Content lifecycle.** The PRD's 8-state content lifecycle diagram did not export. Please share the states.
+4. **White logo** for dark surfaces, if it exists.

@@ -8,7 +8,7 @@ Source of truth: Bluecut Socials PRD (LinkedIn Account Management Platform). Eve
 - Exit criteria are the definition of done. A batch is not Done until every criterion holds, even if the visible work looks finished.
 - Gaps discovered during a batch are recorded as new line items in that batch (or as PRD amendments) rather than absorbed silently.
 
-**Current position:** Phase 1, batch 1.1 in progress. Next.js app set up with design tokens and base components (button, input, card, badge, stepper, logo). Flow map (`docs/flow-map.md`) drafted and awaiting review.
+**Current position:** Phase 1, batch 1.1 in progress. Next.js app set up with design tokens and base components (button, input, card, badge, stepper, logo). Flow map v2 (`docs/flow-map.md`) rewritten after design review 1 and awaiting approval.
 
 **Platform note:** the app is built in Next.js with Claude Code rather than Lovable. Phase 1 is unaffected; the Phase 2 backend choice (for example Supabase plus Stripe) is open.
 
