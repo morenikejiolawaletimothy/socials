@@ -74,6 +74,7 @@ These rules apply to every flow below.
 | C14 | Account: profile, security, delete | Client | 1.6 to 1.8, 14.2 | Approved |
 | C15 | Your brand | Client | 3.2, 5.4 | Approved |
 | C16 | Paused account and reactivation | Client | 2.4, 2.5, 11.6, 11.7 | Approved |
+| C17 | Quick tasks for you | Client | 6.3, 8.3, 5.8 | Draft |
 | M1 | Home: what to do next | Manager | 13.4, 12.1, 12.5 | Draft |
 | M2 | Clients and the client page | Manager | 3.8, 8.2 | Draft |
 | M3 | Onboard a client | Manager | 3.4 to 3.7, 4.2 to 4.5 | Draft |
@@ -151,7 +152,7 @@ These rules apply to every flow below.
 
   One button: Continue setup. Reminders by email and in-app while setup is unfinished.
 - **After setup, before the calls:** Home shows the two booked calls with your account manager (name and photo), what each call covers, and Reschedule.
-- **After the calls:** Home becomes a feed of cards, newest first: posts waiting for your review, what went live, upcoming posts, the weekly update, messages from your manager.
+- **After the calls:** Home becomes a feed of cards, newest first: quick tasks for you (C17), posts waiting for your review, what went live, upcoming posts, the weekly update, messages from your manager.
 - **States:** "Your first 2 weeks are free" banner with the end date (becomes "Pay to keep going" in the last 5 days if not paid), account paused (see C16), LinkedIn connection expired (Reconnect card at the top), posting paused by you.
 
 ### C2. Connect LinkedIn and choose what we do
@@ -288,6 +289,17 @@ These rules apply to every flow below.
 - **Reminders while paused:** regular reminders. At 15 days paused, a clear notice: "If your account stays paused for 30 days, we will remove it and delete your data. To come back after that, you would start again."
 - **At 30 days paused:** the account is removed and all client data is deleted (strategy, content, brand files, messages, LinkedIn connection). Only invoices and payment records are kept, as the law requires, with no content or personal brand data. The client is told by email, with a last chance to download their data before deletion. Coming back means signing up and onboarding again.
 
+### C17. Quick tasks for you
+
+- **Why:** LinkedIn does not let anyone act for the client on some things, such as sending connection requests or editing their profile. We never have their password, so these stay with the client. We prepare everything so each task takes 1 to 3 minutes.
+- **When:** the platform brings them up when the strategy needs them (for example "15 connection requests this week"), and the manager reviews and sends them to the client.
+- **What a task looks like:**
+  - **Connect with these people:** a short list. Each person has their name, role, a link to their profile, why they matter to your goal, and a ready-written connection note. Buttons: Open profile, Copy note, Mark as sent. Notes can be edited before copying.
+  - **Update your profile:** the new headline or About text, ready to copy, with where to paste it on LinkedIn. Mark as done.
+  - Other one-off steps the strategy calls for, written the same way.
+- **Hand it to your assistant:** "Send to my assistant" emails the task list and notes to an address you choose. They do not need an account.
+- **States:** due this week, partly done (for example 9 of 15 sent), done. Tasks not done count as waiting on you in the weekly update, the same as held posts.
+
 ---
 
 ## 5. Account manager flows
@@ -361,7 +373,7 @@ These rules apply to every flow below.
   1. **This week's brief:** who to look for and which conversations to join, based on the goal and signals from their field.
   2. **Add what you find:** paste a profile or post link. The platform rates the fit and says why, and warns if it touches the client's off limits (a topic, person or company to avoid). Keep or drop.
   3. **Drafted comments and connection notes** in the client's voice. Routine likes and comments follow the client's review setting; others go to the client for approval.
-  4. **Connection list:** sent to the client to send from their own account.
+  4. **Client quick tasks:** connection requests (person, profile link, why they matter, ready-written note) and other steps LinkedIn does not allow us to do, such as profile updates. The platform prepares them when the strategy calls for them; the manager reviews and sends them to the client (C17). Progress comes back as the client marks each one done.
   5. **Progress:** done vs this week's target.
 
 ### M7. Listening for a client
@@ -484,6 +496,7 @@ Once approved, these will be written into `docs/prd.md`.
 | Call slots | From manager availability | Managers open slots when they join; clients book inside them; managers must attend or reschedule from their side |
 | Assigning managers | Admin assigns | Platform suggests a manager by capacity and experience; the owner confirms or picks someone else |
 | Manager tasks | Task queue | Feed view and Board view of the same tasks |
+| Client co-pilot tasks | Weekly connection list handed to the client | "Quick tasks for you": timed by the strategy, 1 to 3 minutes each, copy-ready notes, mark as done, send to an assistant by email |
 | Live posts | No client action | Client can take a post down now or ask for a fix |
 | Client account states | Trial, Onboarding, Active, Paused, Ended | Setting up, Free 2 weeks, Active, Paused (by client, unpaid or contract ended), Ended |
 
