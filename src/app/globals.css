@@ -120,3 +120,9 @@ body {
   font-size: var(--text-body);
   line-height: var(--text-body--line-height);
 }
+
+/* Dotted background used behind the landing page statement. */
+@utility bg-dots {
+  background-image: radial-gradient(var(--color-neutral-150) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
