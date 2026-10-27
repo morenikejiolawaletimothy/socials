@@ -124,7 +124,7 @@ Covers: US-14.1–14.5, event catalogue.
 ### Batch 2.5 — AI engine
 Covers: US-4.1–4.5, 4.8, 5.3–5.9, 5.7, 3.4–3.5, 7.4, 10.2.
 - Framework encoding (admin library), AI research with cited sources, profile audit, strategy drafting, calendar generation, voice-matched content drafts, regenerate-with-instructions, quality-check pipeline (restricted claims, banned phrases, near-duplicates, generic-AI language, alt text), feedback-to-change-points.
-- Niche listening: per-client listening topics set by the AI from the strategy; ingest Google Alerts (RSS feeds per topic), a news and web search API, and the client's own LinkedIn performance; turn them into sourced signals that feed calendar topics, the weekly engagement brief, strategy-update suggestions and the weekly update.
+- Niche listening (in-house, never client facing): per-client knowledge base fed by manager-created Google Alerts (feed URLs added per client), manager findings, web and news search (including location), the client's LinkedIn results, review preferences, and an owner-maintained LinkedIn algorithm knowledge base. Retrieved for every proposal: topics, drafts, engagement brief, strategy-update suggestions.
 - Notetaker integration: transcript ingestion from the chosen service (Phase 0.4), manual paste fallback.
 - All co-pilot: human starts and reviews every step (PRD AI quality rules).
 **Dependencies:** 2.1, 2.3. **Exit criteria:** a manager produces a full client strategy + one-week batch through the AI pipeline, every item passing or consciously dismissing checks; sources shown on research findings.
