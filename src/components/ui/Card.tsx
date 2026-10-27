@@ -1,10 +1,16 @@
 import type { HTMLAttributes } from "react";
 
+const paddings = { none: "", sm: "p-2", md: "p-6" };
+
 /** Content container: bg-card on bg-page, border hairline, radius-lg, shadow-md, space-6 padding. */
-export function Card({ className = "", ...props }: HTMLAttributes<HTMLDivElement>) {
+export function Card({
+  className = "",
+  padding = "md",
+  ...props
+}: HTMLAttributes<HTMLDivElement> & { padding?: keyof typeof paddings }) {
   return (
     <div
-      className={`rounded-lg border border-border bg-card p-6 shadow-md ${className}`}
+      className={`rounded-lg border border-border bg-card shadow-md ${paddings[padding]} ${className}`}
       {...props}
     />
   );

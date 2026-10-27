@@ -1,0 +1,71 @@
+import {
+  BookOpen,
+  ChatCircle,
+  CurrencyCircleDollar,
+  Gear,
+  House,
+  IdentificationBadge,
+  ListChecks,
+  Megaphone,
+  SquaresFour,
+  UserCircle,
+  Users,
+  UsersThree,
+  WarningCircle,
+  type Icon,
+} from "@phosphor-icons/react";
+import type { Role } from "@/lib/mock";
+
+export type NavItem = { label: string; href: string; icon: Icon; exact?: boolean };
+
+/** Main navigation per role. Kept short: 3 items plus "Me" on mobile. */
+export const mainNav: Record<Exclude<Role, "owner">, NavItem[]> = {
+  client: [
+    { label: "Home", href: "/home", icon: House },
+    { label: "Content", href: "/content", icon: Megaphone },
+    { label: "Messages", href: "/messages", icon: ChatCircle },
+  ],
+  manager: [
+    { label: "Home", href: "/manager", icon: House, exact: true },
+    { label: "Clients", href: "/manager/clients", icon: UsersThree },
+    { label: "Messages", href: "/manager/messages", icon: ChatCircle },
+  ],
+};
+
+/** Items under the profile menu (desktop) and the Me page (mobile). */
+export const profileNav: Record<Exclude<Role, "owner">, { label: string; href: string; description: string }[]> = {
+  client: [
+    { label: "Your brand", href: "/brand", description: "Photos, voice, Moments and what is off limits" },
+    { label: "Control", href: "/control", description: "What we do for you, how you review, activity" },
+    { label: "Contract", href: "/contract", description: "Your plan, payments and invoices" },
+    { label: "Account", href: "/account", description: "Profile, sign-in and notifications" },
+  ],
+  manager: [
+    { label: "Calls and availability", href: "/manager/calls", description: "Your open slots and booked calls" },
+    { label: "Profile", href: "/manager/profile", description: "Photo, intro, sign-in and notifications" },
+  ],
+};
+
+export const meHref: Record<Exclude<Role, "owner">, string> = { client: "/me", manager: "/manager/me" };
+export const meIcon = UserCircle;
+
+export const ownerNav: NavItem[] = [
+  { label: "Overview", href: "/admin", icon: SquaresFour, exact: true },
+  { label: "Clients", href: "/admin/clients", icon: Users },
+  { label: "Managers", href: "/admin/managers", icon: IdentificationBadge },
+  { label: "Framework", href: "/admin/framework", icon: BookOpen },
+  { label: "Money", href: "/admin/money", icon: CurrencyCircleDollar },
+  { label: "Complaints", href: "/admin/complaints", icon: WarningCircle },
+  { label: "Settings", href: "/admin/settings", icon: Gear },
+  { label: "Audit log", href: "/admin/audit-log", icon: ListChecks },
+];
+
+export function isActive(pathname: string, item: { href: string; exact?: boolean }) {
+  return item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
+}
+
+/** One hover and active treatment for every navigation item in the product. */
+export const navItemClass = (active: boolean) =>
+  `rounded-md transition-colors focus-visible:focus-ring ${
+    active ? "bg-primary-50 text-primary-700" : "text-secondary hover:bg-primary-50 hover:text-primary-700"
+  }`;

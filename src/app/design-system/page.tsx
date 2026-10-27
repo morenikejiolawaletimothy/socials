@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Badge, Button, Card, CardText, CardTitle, Input, Logo, Stepper } from "@/components/ui";
+import { InteractiveComponents } from "./Interactive";
 
 export const metadata: Metadata = { title: "Design system · Bluecut Socials" };
 
@@ -115,6 +116,8 @@ export default function DesignSystemPage() {
           <Stepper steps={["Your details", "Brand goals", "Choose a plan", "Review"]} current={1} />
         </Card>
       </Section>
+
+      <InteractiveComponents />
     </main>
   );
 }

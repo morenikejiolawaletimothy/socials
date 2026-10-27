@@ -9,7 +9,7 @@ Source of truth: `docs/prd.md` (v2) for stories and rules, `docs/flow-map.md` fo
 - **Review gate for every UI batch:** each flow is built, then phone (390px) and desktop screenshots go to Fola. A flow is Done only after Fola signs it off. Flow status in `docs/flow-map.md` moves Approved → Built → Signed off.
 - Exit criteria define done. New asks become line items or PRD changes, never silent additions.
 
-**Current position:** Phase 1, batch 1.1 in progress. Next.js app, design tokens and base components exist (button, input, card, badge, stepper, logo). PRD v2 and flow map approved. Next: finish batch 1.1 (app shells, navigation, mock data layer), then batch 1.2.
+**Current position:** Phase 1, batch 1.1 in review. Shells for all three roles, navigation, demo role switcher, mock data layer and new building blocks are built and waiting for Fola's sign-off. Next: batch 1.2 (public pages).
 
 ---
 
@@ -19,15 +19,32 @@ Source of truth: `docs/prd.md` (v2) for stories and rules, `docs/flow-map.md` fo
 | --- | --- | --- |
 | Frontend | Next.js 15 (App Router), TypeScript, Tailwind v4, Phosphor icons | In use |
 | Design system | Bluecut Socials, synced from Claude into `design-system/` | In use |
-| Hosting | Vercel (preview link per pull request for reviews on a phone) | Proposed |
-| Database, auth, files | Supabase: Postgres with row-level security, Google and email sign-in, two-step sign-in, file storage | Proposed |
+| Hosting | Vercel Pro (preview link per pull request for reviews on a phone). Cloudflare kept for DNS if already used | Recommended, awaiting yes |
+| Database, auth, files | Supabase: Postgres with row-level security, Google and email sign-in, two-step sign-in, file storage | Decided |
 | Payments | Stripe (USD base, local currency via Stripe, fixed NGN) | Decided |
-| AI | Claude API (in-house only) | Proposed |
-| Email | Resend or Postmark | Proposed |
+| AI | Claude API (in-house only) | Decided |
+| Email | Resend | Decided |
 | Scheduled jobs | Supabase cron and queues, or a worker on Vercel cron | Proposed |
 | Notetaker | Fireflies, Grain or similar, with transcripts sent to the platform | To choose |
 
 "Proposed" items need Fola's yes before Phase 2. Phase 1 does not depend on them.
+
+### Before Phase 2 starts (checklist)
+
+| # | Item | Owner |
+| --- | --- | --- |
+| B1 | Confirm hosting (Vercel Pro recommended) and create the team | Fola |
+| B2 | Supabase project (production and a separate staging project) | Fola |
+| B3 | Google Cloud OAuth client for "Continue with Google" (consent screen, privacy URL, domain verified) | Fola |
+| B4 | Resend account, sending domain verified (SPF, DKIM, DMARC records on the domain) | Fola |
+| B5 | Claude API key with a spend limit; confirm no-retention terms | Fola |
+| B6 | Stripe account (US entity), products for 3, 6 and 12 months, test keys first | Fola |
+| B7 | LinkedIn app approvals (0.1, 0.2) | Fola |
+| B8 | Notetaker service chosen and connected (0.4) | Fola |
+| B9 | Web and news search service for niche listening (for example Brave Search, Tavily or Exa) | Fola, Claude to compare |
+| B10 | Plan prices, terms, privacy and refund policies | Fola |
+| B11 | Data processing agreements with Supabase, Stripe, Resend, Anthropic and the notetaker (GDPR, NDPA) | Fola |
+| B12 | Keys shared with the build through the environment settings, never in the repository | Fola and Claude |
 
 ---
 
