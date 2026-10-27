@@ -129,7 +129,7 @@ These rules apply to every flow below.
 
 ### P4. Accept staff invite
 
-- **Steps:** open invite link, set password, set up 2FA (required), lands on Home.
+- **Steps:** open invite link, set password, set up 2FA (required), set your photo and short intro, open your call slots (availability calendar), lands on Home.
 - **States:** link used or expired (7 days).
 
 ---
@@ -176,10 +176,10 @@ These rules apply to every flow below.
      - Goals call (30 minutes): we agree what you want from LinkedIn. What we will ask, so you can think ahead.
      - Strategy call (30 minutes): we walk you through your strategy and content plan and agree it.
      - You will meet your account manager, the expert who runs your account (name, photo, short intro). A notetaker joins and records both calls so nothing is missed. Before booking we ask for your consent to record. Saying no is fine.
-  2. **Pick a time for your goals call.** Times in your time zone, a wide range including early mornings and evenings. The account manager fits around you.
+  2. **Pick a time for your goals call.** Times come from your manager's open slots, shown in your time zone.
   3. **Pick a time for your strategy call.** Only times at least 3 days after the goals call are offered, so your manager has time to prepare.
   4. **Booked:** both dates, Google Meet links, add to calendar. Reminders by email the day before and 1 hour before.
-- **States:** reschedule, cancel, recording declined (the call goes ahead without the notetaker).
+- **States:** reschedule, cancel, recording declined (the call goes ahead without the notetaker), manager rescheduled (you are notified and pick a new time).
 
 ### C4. Choose a plan, sign, pay now or later
 
@@ -208,8 +208,8 @@ These rules apply to every flow below.
 
 ### C6. Strategy call and approval
 
-- **Before the call:** "Your strategy is ready" notice. The client can read it: who you want to reach, your 3 to 5 topics, your tone, how often we post and engage, and how we measure progress against your goals.
-- **After the call:** one screen, "What we agreed": the final strategy and content plan, with any changes from the call. Two actions: Approve, or Ask for a change.
+- **Before the call:** "Your strategy is ready" notice. The client can read it: who you want to reach, your 3 to 5 topics, your tone, what is off limits, and the plan in numbers (for example 2 posts, 10 comments and 15 connection requests a week), and how we measure progress against your goals.
+- **After the call:** your manager updates the strategy with anything you changed on the call, then sends "What we agreed". Two actions: Approve, or Ask for a change. Work starts only once you approve.
 - **States:** new version after a change request.
 
 ### C7. Review content
@@ -234,7 +234,7 @@ These rules apply to every flow below.
 
 ### C9. Progress and weekly updates
 
-- **Steps:** progress toward your goals (in plain words first, numbers second), what we did vs what we promised this week, anything held back and why (for example "2 posts held, waiting for your review"), the weekly and monthly updates as readable posts, download as PDF, add a result (a lead, an invitation, an offer).
+- **Steps:** progress toward your goals (in plain words first, numbers second), this week's targets from your strategy vs what was done, anything held back and why (for example "2 posts held, waiting for your review"), the weekly and monthly updates as readable posts, download as PDF, add a result (a lead, an invitation, an offer).
 - **States:** too early for results (first weeks).
 
 ### C10. Messages
@@ -273,6 +273,7 @@ These rules apply to every flow below.
   - **Logos and colours:** for you or your company.
   - **Your voice:** how you like to sound, words you use or avoid, past posts or writing you like.
   - **Your brand documents:** any personal brand strategy or guide you already have.
+  - **Off limits:** what you never want us to do or talk about. Topics to avoid, people or companies not to engage with, things your employer or profession does not allow, kinds of interaction to skip (for example "never comment on politics", "do not mention my employer's clients"). Captured on the goals call and editable here any time. We check every post and every engagement against it.
   - **Moments:** something you want a post about, such as an event you attended. Add photos and a short note ("I spoke at this event, I want a post about it"). Your manager is notified at once and replies in Messages.
 - **States:** file too large or wrong type (inline message with the allowed types and size), empty sections with a short prompt.
 
@@ -307,12 +308,15 @@ These rules apply to every flow below.
   4. **Waiting on clients** (collapsed): reviews due, posts held because the client has not replied. Information only.
 - **Each card:** what it is, which client, when it is due, and one button that opens exactly the right screen.
 - **Missed deadline:** if the manager misses a due time, a card asks for a short reason. Repeated misses go to the owner.
+- **Two views of the same tasks, switched at the top:**
+  - **Feed** (default): the list above.
+  - **Board:** columns To do, Doing, Waiting on client, Done (this week). The manager drags cards between To do and Doing. Cards move to Waiting on client and Done automatically when the work is actually sent or finished, so the board always matches reality. Filter by client. On mobile, one column at a time with a switcher at the top.
 
 ### M2. Clients and the client page
 
 - **Clients:** a list of cards, one per client: name, photo, status (Setting up, Free 2 weeks, Active, Paused), and the next thing that needs doing.
 - **Client page:** like a LinkedIn profile. A header with name, photo, role, status and setup progress, then sections:
-  - **Overview:** goals, what they let us do, how they review (frequency, "Wait for me" or "Go ahead after 24 hours"), in their field this week.
+  - **Overview:** goals, **off limits** (shown prominently), this week's targets vs done, what they let us do, how they review (frequency, "Wait for me" or "Go ahead after 24 hours"), in their field this week.
   - **Plan:** strategy and content plan.
   - **Content:** drafts, waiting for the client, scheduled, live.
   - **Engagement:** this week's targets and progress.
@@ -326,19 +330,21 @@ These rules apply to every flow below.
 - **Goal:** from goals call to approved strategy in about 1 week, with the platform doing the heavy research.
 - **Steps (Stepper):**
   1. **Before the goals call:** a prep sheet. A summary of the client's current LinkedIn profile and questions to ask.
-  2. **After the goals call:** the transcript arrives, or the manager writes up the notes if the client declined recording. The AI summarises goals, audience, tone and limits. The manager corrects and confirms.
+  2. **After the goals call:** the transcript arrives, or the manager writes up the notes if the client declined recording. The AI summarises goals, audience, tone and **off limits** (topics, people, companies and interactions the client does not want). The manager corrects and confirms. Off limits are saved to the client's Your brand, where the client can see and edit them.
   3. **Set up listening:** the AI suggests topics and keywords (including location). The manager creates the Google Alerts and pastes each alert's feed link in. See M7.
   4. **Research, audit and strategy:** the AI researches the field (with sources), audits the profile and drafts the strategy. The manager directs ("make topic 2 about X", "the tone is too formal") until it is right, then shares it with the client before the strategy call.
-  5. **After the strategy call:** update the strategy and send "What we agreed". When the client approves, the content plan is created.
+  5. **After the strategy call:** the client may have changes or corrections from the call. The manager adjusts the strategy first, then sends it as "What we agreed" for the client to approve. Nothing is implemented until the client approves.
+  6. **Approved:** the approved strategy creates the content plan and the weekly targets. Work starts.
+- **The strategy is detailed and measurable.** It sets out how we reach the goal from the goals call, in numbers both sides can track. For example: weeks 1 to 2, 2 posts a week (1 story post, 1 opinion post), 10 comments a week on posts from target people, 15 connection requests a week; from week 3, 3 posts a week and 1 article a month. These targets drive the manager's weekly work (M1), engagement (M6), what the client sees as done vs promised (C9), and the weekly update (M8).
 
 ### M4. Plan and draft content
 
 - **Goal:** a ready set of posts for the client to review, on the rhythm the client chose (weekly, twice a week, or each post).
 - **Steps:**
-  1. **Ideas:** the AI proposes topics for the period, each with its reason: the goal it serves, a signal from their field, a Moment the client added, or a past preference. The manager picks, changes or asks for more.
+  1. **Ideas:** the AI proposes topics for the period, each with its reason: the goal it serves, a signal from their field, a Moment the client added, or a past preference. Nothing that touches the client's off limits is proposed. The manager picks, changes or asks for more.
   2. **Drafts:** written in the client's voice. The manager directs ("shorter", "open with the story"), edits, and sees versions and the character count.
-  3. **Visuals:** a suggested visual for each post, using the client's brand photos and colours. The manager attaches the image.
-  4. **Checks:** flags for risky claims, banned phrases, generic writing, repeats of an old post, missing image descriptions. Each must be fixed or dismissed with a reason.
+  3. **Visuals:** open by design, because the right visual depends on the post. For each post the AI suggests what would work and why, for example: the client's event photo from their Brand, text on a brand-coloured background, a carousel or quote card from one of the client's templates, a relevant video already doing well online, or no visual at all. The manager creates, sources or uploads the actual image, carousel or video and attaches it. Each client keeps a template library (carousels, quote cards, image layouts) the manager builds over time. An optional simple text-graphic maker is there for quick cards, never applied by default.
+  4. **Checks:** flags for anything touching the client's off limits, risky claims, banned phrases, generic writing, repeats of an old post, missing image descriptions. Each must be fixed or dismissed with a reason. Off-limits flags cannot be dismissed, only fixed.
   5. **Send to the client:** with a due time and a short "why this post" note for each.
 
 ### M5. After the client reviews
@@ -353,7 +359,7 @@ These rules apply to every flow below.
 
 - **Steps:**
   1. **This week's brief:** who to look for and which conversations to join, based on the goal and signals from their field.
-  2. **Add what you find:** paste a profile or post link. The platform rates the fit and says why. Keep or drop.
+  2. **Add what you find:** paste a profile or post link. The platform rates the fit and says why, and warns if it touches the client's off limits (a topic, person or company to avoid). Keep or drop.
   3. **Drafted comments and connection notes** in the client's voice. Routine likes and comments follow the client's review setting; others go to the client for approval.
   4. **Connection list:** sent to the client to send from their own account.
   5. **Progress:** done vs this week's target.
@@ -374,15 +380,16 @@ These rules apply to every flow below.
 
 ### M10. My calls and profile
 
-- **Calls:** all booked calls in a simple list by day, with Join links and prep notes. Calls are booked by clients at times that suit them. If the manager truly cannot make one, they can suggest another time (the client accepts or picks again).
+- **Availability:** each manager sets their open call slots when they create their account (P4), and keeps them up to date here, like a calendar. Clients can only book inside these slots.
+- **Calls:** all booked calls in a simple list by day, with Join links and prep notes. Once a client books, the manager is committed to attend. If something changes, the manager reschedules from their side: the client is notified and picks a new time from the open slots.
 - **Profile:** name, photo, short intro (shown to clients when booking), time zone, 2FA, notifications, connect Google Calendar.
 
-### Manager questions
+### Decided
 
-1. **Assigning clients:** does the owner assign each new client by hand, or should the platform suggest a manager (by capacity and industry experience) for the owner to confirm? I suggest the platform suggests and the owner confirms.
-2. **Calls the manager cannot make:** is "suggest another time" enough, or should managers block out times when they are never available?
-3. **What managers see about money:** I suggest only the status (Free 2 weeks, Active, Paused), never prices or payments. Agree?
-4. **Clients per manager:** keep the PRD's maximum of 10?
+- The platform suggests a manager for each new client (by capacity and experience). The owner confirms, or picks someone else by hand (A2).
+- Managers open their call slots when they join. Clients book inside them. Once booked, the manager attends or reschedules from their side.
+- Managers see only a client's status (Free 2 weeks, Active, Paused), never prices or payments.
+- Maximum 10 clients per manager.
 
 ---
 
@@ -472,6 +479,11 @@ Once approved, these will be written into `docs/prd.md`.
 | AI visibility | AI notetaker and AI features named | AI is in-house only. Never mentioned to clients or on the marketing page |
 | Manager changes | Admin reassigns as needed | Same manager for the life of the account, including renewals. Changes only on client request, a complaint about the manager, or a no-show |
 | Paused accounts | Data kept 30 days after trial end | Reminders, a warning at 15 days, removal and full data deletion at 30 days. Coming back means starting again |
+| Strategy | Pillars, tone and cadence | Detailed and measurable: weekly targets by period, tracked by client and manager. Adjusted after the strategy call before the client approves |
+| Off limits | Topics to avoid in the intake form | A dedicated Off limits list in Your brand, captured on the goals call, checked against every post and engagement |
+| Call slots | From manager availability | Managers open slots when they join; clients book inside them; managers must attend or reschedule from their side |
+| Assigning managers | Admin assigns | Platform suggests a manager by capacity and experience; the owner confirms or picks someone else |
+| Manager tasks | Task queue | Feed view and Board view of the same tasks |
 | Live posts | No client action | Client can take a post down now or ask for a fix |
 | Client account states | Trial, Onboarding, Active, Paused, Ended | Setting up, Free 2 weeks, Active, Paused (by client, unpaid or contract ended), Ended |
 
