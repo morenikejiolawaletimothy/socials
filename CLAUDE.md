@@ -26,7 +26,7 @@ If the design system changes in Claude, re-sync `design-system/` and `globals.cs
 
 ## Product docs
 
-- `docs/prd.md`: the PRD. Source of truth for stories, roles, states and edge cases.
+- `docs/prd.md`: the PRD (v2). Source of truth for stories, roles, states and edge cases. v1 is in `docs/archive/`.
 - `docs/implementation-plan.md`: build order by phase and batch. Update "Current position" when work moves.
 - `docs/flow-map.md`: every flow screen by screen, with review status. Only build flows marked Approved.
 

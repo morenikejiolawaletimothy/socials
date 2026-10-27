@@ -2,7 +2,7 @@
 
 Every user flow, end to end, screen by screen. Built from `docs/prd.md` and Fola's design direction (review 1, Oct 27 2026).
 
-**Status:** Draft v3 for review by Fola (design authority). Nothing is built until its flow is marked Approved.
+**Status:** All flows approved by Fola (design authority), Oct 27 2026. Changes go through the same review.
 
 ## How to review
 
@@ -85,14 +85,14 @@ These rules apply to every flow below.
 | M8 | Weekly and monthly updates | Manager | 10.2 | Approved |
 | M9 | Messages | Manager | 14.3, 8.6 | Approved |
 | M10 | My calls and profile | Manager | 3.3, 1.7 | Approved |
-| A1 | Overview | Admin | 10.6 | Draft |
-| A2 | Clients and assigning managers | Admin | 13.3, 10.6 | Draft |
-| A3 | Managers | Admin | 13.1, 13.5, 13.6, 13.9, 12.6 | Draft |
-| A4 | Framework | Admin | 4.1 | Draft |
-| A5 | Money | Admin | 2.7, 11.5 | Draft |
-| A6 | Complaints | Admin | 12.2, 12.4 | Draft |
-| A7 | Settings | Admin | 12.7, 13.7 | Draft |
-| A8 | Audit log | Admin | 13.8 | Draft |
+| A1 | Overview | Admin | 10.6 | Approved |
+| A2 | Clients and assigning managers | Admin | 13.3, 10.6 | Approved |
+| A3 | Managers | Admin | 13.1, 13.5, 13.6, 13.9, 12.6 | Approved |
+| A4 | Framework | Admin | 4.1 | Approved |
+| A5 | Money | Admin | 2.7, 11.5 | Approved |
+| A6 | Complaints | Admin | 12.2, 12.4 | Approved |
+| A7 | Settings | Admin | 12.7, 13.7 | Approved |
+| A8 | Audit log | Admin | 13.8 | Approved |
 
 **Later (not in the first build):** manager training (13.2), opportunities (6.4, 6.5), benchmarks (4.4), digests (14.5).
 
@@ -412,7 +412,7 @@ These rules apply to every flow below.
 
 ## 6. Admin flows
 
-**Status:** Draft v3, for approval.
+**Status:** Approved.
 
 **Who:** the owner (the strategist). Runs the business: people, clients, the framework, money and rules.
 
