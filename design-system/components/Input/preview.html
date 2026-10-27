@@ -1,0 +1,51 @@
+<!-- @dsCard group="Forms" height=240 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body {
+    margin: 0;
+    padding: var(--space-6);
+    background: var(--bg-card);
+    font-family: var(--font-sans);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    max-width: 360px;
+  }
+  .field { display: flex; flex-direction: column; gap: var(--space-2); }
+  label { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+  .input {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    color: var(--text-primary);
+    background: var(--bg-card);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    padding: var(--space-3) var(--space-4);
+    box-shadow: var(--shadow-sm);
+  }
+  .input::placeholder { color: var(--neutral-400); }
+  .input:focus-visible { outline: none; border-color: var(--primary-600); box-shadow: var(--focus-ring); }
+  .help { font-size: 14px; color: var(--text-secondary); }
+  .input.error { border-color: var(--danger); }
+  .help.error { color: var(--danger); }
+</style>
+</head>
+<body>
+  <div class="field">
+    <label for="a">Work email</label>
+    <input class="input" id="a" placeholder="you@studio.com">
+    <span class="help">We'll only use this to send your proposal.</span>
+  </div>
+  <div class="field">
+    <label for="b">Campaign name</label>
+    <input class="input error" id="b" value="">
+    <span class="help error">This field is required.</span>
+  </div>
+</body>
+</html>

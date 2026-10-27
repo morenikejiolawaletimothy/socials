@@ -1,0 +1,64 @@
+<!-- @dsCard height=340 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; }
+  body { background: var(--bg-page); }
+  .cover { width: 960px; height: 340px; position: relative; overflow: hidden; }
+  .brand { fill: var(--primary-600); }
+  .deep  { fill: var(--primary-900); }
+  .tint  { fill: var(--primary-300); }
+  .soft  { fill: var(--primary-100); }
+  .ink   { fill: var(--neutral-900); }
+  .paper { fill: var(--bg-card); }
+  .name {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 88px;
+    line-height: 0.95;
+    fill: var(--text-primary);
+    letter-spacing: -0.015em;
+  }
+  .tag {
+    font-family: var(--font-sans);
+    font-weight: 500;
+    font-size: 14px;
+    fill: var(--text-secondary);
+  }
+</style>
+</head>
+<body>
+<!--
+  blocks:      primary-600 disc (r≈120), primary-900 pill (260×76), primary-300 disc (r≈66), primary-100 soft slab, neutral-0 relief disc, neutral-900 accent dot
+  arrangement: staggered disc + pill cluster on a soft slab, bleeding off the top and right edges; name bottom-left on the ground
+  pattern:     discs & pills (radius-full) — chosen because Bluecut is a round-mark social studio; soft/friendly/large-radius row, not a dot grid
+  scales:      radius-full (discs/pills), radius-xl on the slab; sizes are multiples of space-8 (32px); name block left of x=480
+-->
+<div class="cover">
+  <svg viewBox="0 0 960 340" width="960" height="340" xmlns="http://www.w3.org/2000/svg">
+    <!-- soft field -->
+    <rect class="soft" x="600" y="-60" width="420" height="460" rx="40"/>
+    <!-- tint disc, bleeding right -->
+    <circle class="tint" cx="900" cy="86" r="66"/>
+    <!-- white relief disc -->
+    <circle class="paper" cx="636" cy="92" r="46"/>
+    <!-- brand disc -->
+    <circle class="brand" cx="744" cy="150" r="120"/>
+    <!-- deep pill -->
+    <rect class="deep" x="560" y="212" width="260" height="76" rx="38"/>
+    <!-- ink accent dot -->
+    <circle class="ink" cx="872" cy="258" r="26"/>
+
+    <!-- name + tagline, bottom-left on the ground -->
+    <text class="name" x="60" y="214">Bluecut</text>
+    <text class="name" x="60" y="298">Socials</text>
+    <text class="tag" x="62" y="326">Social media &amp; brand studio</text>
+  </svg>
+</div>
+</body>
+</html>

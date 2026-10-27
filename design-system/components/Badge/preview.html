@@ -1,0 +1,51 @@
+<!-- @dsCard group="Status" height=120 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body {
+    margin: 0;
+    padding: var(--space-6);
+    background: var(--bg-card);
+    font-family: var(--font-sans);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    align-items: center;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--neutral-900);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-full);
+  }
+  .dot { width: 7px; height: 7px; border-radius: var(--radius-full); flex: none; }
+  .success { background: var(--success-bg); }
+  .success .dot { background: var(--success); }
+  .warning { background: var(--warning-bg); }
+  .warning .dot { background: var(--warning); }
+  .danger { background: var(--danger-bg); }
+  .danger .dot { background: var(--danger); }
+  .info { background: var(--info-bg); }
+  .info .dot { background: var(--info); }
+  .neutral { background: var(--neutral-100); color: var(--neutral-700); }
+  .neutral .dot { background: var(--neutral-400); }
+</style>
+</head>
+<body>
+  <span class="badge success"><span class="dot"></span>Published</span>
+  <span class="badge warning"><span class="dot"></span>Scheduled</span>
+  <span class="badge danger"><span class="dot"></span>Failed</span>
+  <span class="badge info"><span class="dot"></span>In review</span>
+  <span class="badge neutral"><span class="dot"></span>Draft</span>
+</body>
+</html>

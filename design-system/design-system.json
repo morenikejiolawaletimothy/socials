@@ -1,0 +1,43 @@
+{
+  "v": 3,
+  "assetGroups": {
+    "Logos": {
+      "files": {
+        "bluecut-mark.png": {
+          "blob": "b5a0df7b04bd68d38c873ee32cd4673b",
+          "name": "bluecut-mark.png",
+          "size": 26994,
+          "type": "image/png"
+        }
+      },
+      "name": "Logos",
+      "order": [
+        "bluecut-mark.png"
+      ],
+      "tile": "l"
+    }
+  },
+  "blobs": {},
+  "createdOnFiles": {
+    "at": "2026-10-27T10:05:54Z",
+    "v": 1
+  },
+  "docs": {
+    "readme": "project/README.md",
+    "sections": []
+  },
+  "groups": [
+    "Logos"
+  ],
+  "lastChange": {
+    "at": "2026-10-27T10:05:54Z",
+    "by": "Claude",
+    "note": "Built Bluecut Socials design system from the brand token files (colors, type, spacing, radius, shadows), logo, cover and foundational components.",
+    "via": "Cowork"
+  },
+  "layout": "files",
+  "libraries": [],
+  "namespace": "BluecutSocials",
+  "sections": {},
+  "title": "Bluecut Socials"
+}

@@ -1,0 +1,49 @@
+<!-- @dsCard group="Actions" height=150 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  body {
+    margin: 0;
+    padding: var(--space-6);
+    background: var(--bg-card);
+    font-family: var(--font-sans);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    align-items: center;
+  }
+  .btn {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1;
+    padding: var(--space-3) var(--space-5);
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+  .primary { background: var(--primary-600); color: var(--text-inverse); }
+  .primary:hover { background: var(--primary-700); }
+  .secondary { background: var(--bg-card); color: var(--primary-700); border-color: var(--border-strong); }
+  .secondary:hover { background: var(--primary-50); border-color: var(--primary-300); }
+  .ghost { background: transparent; color: var(--primary-700); }
+  .ghost:hover { background: var(--primary-50); }
+  .danger { background: var(--danger); color: var(--text-inverse); }
+  .disabled { background: var(--primary-200); color: var(--neutral-0); cursor: not-allowed; }
+</style>
+</head>
+<body>
+  <button class="btn primary">Book a call</button>
+  <button class="btn secondary">See the work</button>
+  <button class="btn ghost">Learn more</button>
+  <button class="btn danger">Delete</button>
+  <button class="btn disabled" disabled>Disabled</button>
+</body>
+</html>

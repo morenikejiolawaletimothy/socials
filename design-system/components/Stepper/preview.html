@@ -1,0 +1,90 @@
+<!-- @dsCard group="Navigation" height=180 -->
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  body {
+    margin: 0;
+    padding: var(--space-6);
+    background: var(--bg-card);
+    font-family: var(--font-sans);
+    color: var(--text-primary);
+  }
+  .count {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-4);
+  }
+  .steps {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+  .step { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; }
+  /* connector line sits behind the dots, between neighbours */
+  .step::before {
+    content: "";
+    position: absolute;
+    top: 15px;
+    left: calc(-50% + 16px);
+    width: calc(100% - 32px);
+    height: 2px;
+    background: var(--neutral-150);
+  }
+  .step:first-child::before { display: none; }
+  .step.done::before, .step.current::before { background: var(--primary-600); }
+  .dot {
+    width: 32px; height: 32px;
+    border-radius: var(--radius-full);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 600;
+    position: relative; z-index: 1;
+    border: 2px solid var(--neutral-200);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+  }
+  .step.done .dot { background: var(--primary-600); border-color: var(--primary-600); color: var(--text-inverse); }
+  .step.current .dot { border-color: var(--primary-600); color: var(--primary-700); box-shadow: var(--focus-ring); }
+  .label {
+    margin-top: var(--space-2);
+    font-size: 14px;
+    line-height: 1.35;
+    color: var(--text-secondary);
+  }
+  .step.current .label { color: var(--text-primary); font-weight: 600; }
+  .step.done .label { color: var(--text-primary); }
+
+  /* mobile first: on very narrow widths, show labels only for the current step */
+  @media (max-width: 420px) {
+    .step .label { font-size: 12px; }
+  }
+</style>
+</head>
+<body>
+  <p class="count">Step 2 of 4</p>
+  <div class="steps">
+    <div class="step done">
+      <div class="dot">1</div>
+      <div class="label">Your details</div>
+    </div>
+    <div class="step current">
+      <div class="dot">2</div>
+      <div class="label">Brand goals</div>
+    </div>
+    <div class="step">
+      <div class="dot">3</div>
+      <div class="label">Choose a plan</div>
+    </div>
+    <div class="step">
+      <div class="dot">4</div>
+      <div class="label">Review</div>
+    </div>
+  </div>
+</body>
+</html>
