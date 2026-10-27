@@ -2,9 +2,12 @@
 
 import { Columns } from "@/components/layout/Columns";
 import { rails, type RailSet } from "@/components/rails";
-import { EmptyState, PageHeader, type Crumb } from "@/components/ui";
+import { Breadcrumbs, Card, PageHeader, type Crumb } from "@/components/ui";
 
-/** Batch 1.1 stand-in for pages built in later batches, laid out in their final columns. */
+/**
+ * Stand-in for pages built in later batches, laid out in their final columns.
+ * Client and manager pages have no page title (like LinkedIn): the first card carries the title.
+ */
 export function Placeholder({
   title,
   description,
@@ -22,15 +25,29 @@ export function Placeholder({
   layout?: RailSet;
   children?: React.ReactNode;
 }) {
-  const body = (
-    <>
-      <PageHeader title={title} description={description} crumbs={crumbs} />
-      {children}
-      <EmptyState title="Designed in a later batch">
-        This page is built in batch {batch} (flows {flows}). The shell and navigation around it are ready for review.
-      </EmptyState>
-    </>
+  const note = (
+    <p className="text-body-sm text-secondary">
+      {description ? `${description} ` : ""}Designed in batch {batch} (flows {flows}).
+    </p>
   );
-  if (!layout) return <div className="flex flex-col gap-6">{body}</div>;
-  return <Columns {...rails[layout]}>{body}</Columns>;
+
+  if (!layout) {
+    return (
+      <div className="flex flex-col gap-6">
+        <PageHeader title={title} description={description} crumbs={crumbs} />
+        {children}
+        <Card>{note}</Card>
+      </div>
+    );
+  }
+  return (
+    <Columns {...rails[layout]}>
+      <Card title={title} eyebrow={crumbs && <Breadcrumbs items={crumbs} />}>
+        <div className="flex flex-col gap-4">
+          {children}
+          {note}
+        </div>
+      </Card>
+    </Columns>
+  );
 }

@@ -12,8 +12,8 @@ export function ManagerCard() {
   const mUser = useDb((db) => db.users.find((u) => u.id === manager?.userId));
 
   return (
-    <Card className="flex flex-col gap-4">
-      <p className="font-display text-display-lg text-primary">Your account manager</p>
+    <Card title="Your account manager">
+      <div className="flex flex-col gap-4">
       {manager && mUser ? (
         <>
           <div className="flex items-center gap-3">
@@ -36,6 +36,7 @@ export function ManagerCard() {
       ) : (
         <p className="text-body-sm text-secondary">We are choosing the right manager for you. You will see them here soon.</p>
       )}
+      </div>
     </Card>
   );
 }

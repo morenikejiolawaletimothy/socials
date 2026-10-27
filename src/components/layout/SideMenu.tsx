@@ -8,9 +8,8 @@ import { Card } from "@/components/ui";
 export function SideMenu({ title, items }: { title: string; items: { label: string; href: string }[] }) {
   const pathname = usePathname();
   return (
-    <Card padding="none">
-      <p className="border-b border-border px-6 py-4 font-display text-display-lg text-primary">{title}</p>
-      <nav aria-label={title} className="p-2">
+    <Card title={title} padding="sm">
+      <nav aria-label={title}>
         <ul className="flex flex-col">
           {items.map((i) => {
             const active = pathname === i.href;

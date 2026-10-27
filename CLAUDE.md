@@ -31,6 +31,7 @@ Rules:
   - main pages (Content, Messages, client page): main plus right card (8 / 4)
   - settings pages (Your brand, Control, Contract, Account, Calls, Profile): left `SideMenu` plus main (3 / 9)
 - Content lives in cards with equal gaps (`gap-4` within a column, `gap-6` between columns). On mobile, columns stack and rails hide unless needed.
+- No page titles or subtitles on client and manager pages, so the first card in every column lines up at the top. Each card carries its own title through `Card title=...`: a header strip with a divider under it (breadcrumbs go in `eyebrow`). The owner dashboard may keep page titles.
 - The owner keeps the dashboard shell (sidebar).
 
 If the design system changes in Claude, re-sync `design-system/` and `globals.css` together.

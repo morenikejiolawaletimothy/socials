@@ -1,15 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Card, PageHeader } from "@/components/ui";
+import { Card } from "@/components/ui";
 import { profileNav } from "./nav";
 
 /** Mobile "Me" tab: the same items as the desktop profile menu. */
 export function MePage({ role }: { role: "client" | "manager" }) {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
-      <PageHeader title="Me" />
-      <Card padding="sm">
+      <Card title="Me" padding="sm">
         <ul className="flex flex-col">
           {[...profileNav[role], { label: "Sign out", href: "/", description: "Leave the demo" }].map((i) => (
             <li key={i.href + i.label}>
