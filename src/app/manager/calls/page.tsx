@@ -7,6 +7,7 @@ export default function Page() {
     <Placeholder
       title="Calls and availability"
       description="Your open slots and booked calls."
+      layout="managerSettings"
       batch="1.5"
       flows="M10"
       crumbs={[{ label: "Me", href: "/manager/me" }, { label: "Calls and availability" }]}

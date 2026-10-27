@@ -7,6 +7,7 @@ export default function Page() {
     <Placeholder
       title="Account"
       description="Profile, sign-in, notifications and your data."
+      layout="clientSettings"
       batch="1.4"
       flows="C14"
       crumbs={[{ label: "Me", href: "/me" }, { label: "Account" }]}

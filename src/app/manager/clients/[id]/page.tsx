@@ -20,6 +20,7 @@ export default function ClientPage({ params }: { params: Promise<{ id: string }>
 
   return (
     <Placeholder
+      layout="managerMain"
       title={name}
       batch="1.5"
       flows="M2"

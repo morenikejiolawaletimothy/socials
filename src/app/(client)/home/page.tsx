@@ -7,6 +7,7 @@ export default function Page() {
     <Placeholder
       title="Home"
       description="Your setup progress, then everything that needs you, newest first."
+      layout="clientFeed"
       batch="1.3 and 1.4"
       flows="C1, C17"
     />

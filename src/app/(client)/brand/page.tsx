@@ -7,6 +7,7 @@ export default function Page() {
     <Placeholder
       title="Your brand"
       description="Photos, voice, documents, Moments and what is off limits."
+      layout="clientSettings"
       batch="1.4"
       flows="C15"
       crumbs={[{ label: "Me", href: "/me" }, { label: "Your brand" }]}

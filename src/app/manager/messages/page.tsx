@@ -7,6 +7,7 @@ export default function Page() {
     <Placeholder
       title="Messages"
       description="One conversation per client."
+      layout="managerMain"
       batch="1.5"
       flows="M9"
     />

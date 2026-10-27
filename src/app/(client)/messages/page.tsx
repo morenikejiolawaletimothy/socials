@@ -7,6 +7,7 @@ export default function Page() {
     <Placeholder
       title="Messages"
       description="Your conversation with your account manager."
+      layout="clientMain"
       batch="1.4"
       flows="C10"
     />

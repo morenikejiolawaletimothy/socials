@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { Columns } from "@/components/layout/Columns";
+import { rails, type RailSet } from "@/components/rails";
 import { Button, Card, EmptyState, PageHeader, useToast } from "@/components/ui";
 import { markAllRead, useNotifications, useSession } from "@/lib/mock";
 
@@ -12,14 +14,14 @@ function timeAgo(iso: string) {
   return d === 1 ? "Yesterday" : `${d} days ago`;
 }
 
-export function NotificationsPage() {
+export function NotificationsPage({ layout }: { layout?: RailSet }) {
   const { user } = useSession();
   const items = useNotifications(user?.id);
   const toast = useToast();
   const unread = items.filter((n) => !n.read).length;
 
-  return (
-    <div className="mx-auto flex max-w-2xl flex-col gap-6">
+  const body = (
+    <>
       <PageHeader
         title="Notifications"
         action={
@@ -64,6 +66,8 @@ export function NotificationsPage() {
           </ul>
         </Card>
       )}
-    </div>
+    </>
   );
+  if (!layout) return <div className="mx-auto flex max-w-2xl flex-col gap-6">{body}</div>;
+  return <Columns {...rails[layout]}>{body}</Columns>;
 }

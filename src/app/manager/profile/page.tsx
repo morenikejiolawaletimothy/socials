@@ -7,6 +7,7 @@ export default function Page() {
     <Placeholder
       title="Profile"
       description="Photo, intro, sign-in and notifications."
+      layout="managerSettings"
       batch="1.5"
       flows="M10"
       crumbs={[{ label: "Me", href: "/manager/me" }, { label: "Profile" }]}

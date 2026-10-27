@@ -64,8 +64,17 @@ export function isActive(pathname: string, item: { href: string; exact?: boolean
   return item.exact ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`);
 }
 
-/** One hover and active treatment for every navigation item in the product. */
-export const navItemClass = (active: boolean) =>
-  `rounded-md transition-colors focus-visible:focus-ring ${
-    active ? "bg-primary-50 text-primary-700" : "text-secondary hover:bg-primary-50 hover:text-primary-700"
+/**
+ * One hover and active treatment for every navigation item in the product:
+ * the active item turns brand blue with a short indicator line (under it, or beside it in vertical menus).
+ */
+export const navItemClass = (active: boolean, direction: "horizontal" | "vertical" = "horizontal") =>
+  `relative transition-colors focus-visible:focus-ring ${
+    active
+      ? `text-primary-700 ${
+          direction === "horizontal"
+            ? "after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary-700"
+            : "before:absolute before:inset-y-2 before:left-0 before:w-0.5 before:rounded-full before:bg-primary-700"
+        }`
+      : "text-secondary hover:text-primary"
   }`;

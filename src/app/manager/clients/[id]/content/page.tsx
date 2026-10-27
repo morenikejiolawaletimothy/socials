@@ -11,6 +11,7 @@ export default function ClientContentPage({ params }: { params: Promise<{ id: st
 
   return (
     <Placeholder
+      layout="managerMain"
       title="Content"
       batch="1.5"
       flows="M4, M5"

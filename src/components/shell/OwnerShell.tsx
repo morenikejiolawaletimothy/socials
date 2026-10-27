@@ -23,7 +23,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
               href={item.href}
               onClick={onNavigate}
               aria-current={active ? "page" : undefined}
-              className={`flex items-center gap-3 px-3 py-2 text-body-sm font-medium ${navItemClass(active)}`}
+              className={`flex items-center gap-3 rounded-md px-4 py-2 text-body-sm font-medium ${navItemClass(active, "vertical")}`}
             >
               <item.icon className="size-5" aria-hidden />
               {item.label}

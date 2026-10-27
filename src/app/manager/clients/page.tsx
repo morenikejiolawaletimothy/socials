@@ -7,6 +7,7 @@ export default function Page() {
     <Placeholder
       title="Clients"
       description="Everyone you look after, and what each needs next."
+      layout="managerMain"
       batch="1.5"
       flows="M2"
     />

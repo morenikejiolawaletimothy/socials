@@ -22,6 +22,17 @@ Rules:
 - Multi-step tasks show the Stepper.
 - Check every screen at 390px wide first, then desktop. No horizontal scroll.
 
+## Layout (client and manager follow LinkedIn's arrangement)
+
+- Top bar and page body share one container (`max-w-6xl px-4`), so columns line up with the logo on the left and the Me menu on the right.
+- Top bar: logo left; nav right with icon above a short label (Home, Content or Clients, Messages, Notifications, Me ▾). Active item: brand blue with an underline indicator (`navItemClass`). Mobile: compact top bar plus floating bottom bar.
+- Pages use `Columns` (`src/components/layout/Columns.tsx`) with a named rail set from `src/components/rails`:
+  - feed pages (Home, Notifications): left profile card, centre feed, right card (3 / 6 / 3)
+  - main pages (Content, Messages, client page): main plus right card (8 / 4)
+  - settings pages (Your brand, Control, Contract, Account, Calls, Profile): left `SideMenu` plus main (3 / 9)
+- Content lives in cards with equal gaps (`gap-4` within a column, `gap-6` between columns). On mobile, columns stack and rails hide unless needed.
+- The owner keeps the dashboard shell (sidebar).
+
 If the design system changes in Claude, re-sync `design-system/` and `globals.css` together.
 
 ## Product docs

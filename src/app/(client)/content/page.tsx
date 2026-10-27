@@ -7,6 +7,7 @@ export default function Page() {
     <Placeholder
       title="Content"
       description="Posts to review, scheduled and live."
+      layout="clientMain"
       batch="1.4"
       flows="C7, C8"
     />

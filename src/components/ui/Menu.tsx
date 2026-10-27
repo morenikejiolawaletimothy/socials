@@ -11,11 +11,13 @@ export function Menu({
   label,
   items,
   header,
+  triggerClassName = "flex items-center rounded-full focus-visible:focus-ring",
 }: {
   trigger: React.ReactNode;
   label: string;
   items: MenuItem[];
   header?: React.ReactNode;
+  triggerClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -43,7 +45,7 @@ export function Menu({
         aria-expanded={open}
         aria-haspopup="menu"
         onClick={() => setOpen((o) => !o)}
-        className="flex items-center rounded-full focus-visible:focus-ring"
+        className={triggerClassName}
       >
         {trigger}
       </button>
