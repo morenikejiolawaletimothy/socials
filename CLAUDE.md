@@ -20,7 +20,7 @@ Rules:
 - Cursor: a pointer (hand) on everything clickable, `not-allowed` on anything disabled, `grab`/`grabbing` on things you drag, the text cursor only in fields. `globals.css` sets this for links, buttons, tabs, labels and checkboxes; when you make anything else clickable (a `div` or card with `onClick`, a hover-to-open card), add `cursor-pointer` yourself. Check the cursor when you review a screen.
 - Buttons have no shadow on hover, only a colour change (the landing `lp-btn` also lifts 1px).
 - One primary button per view. Sentence case. No em dashes, hype or emoji in UI copy. Errors say what happened and what to do.
-- Icons: Phosphor (`@phosphor-icons/react`) only, including social logos; no other icon set and no hand-drawn SVG icons. Regular weight only, functional only. No arrows on buttons or for navigation.
+- Icons: Phosphor (`@phosphor-icons/react`) only, including social logos; no other icon set and no hand-drawn SVG icons. The one exception is Google's official multicolour "G" on "Continue with Google" (`public/brand/google-g.svg`), which Google's guidelines require. Regular weight only, functional only. No arrows on buttons or for navigation.
 - Multi-step tasks show the Stepper.
 - Check every screen at 390px wide first, then desktop. No horizontal scroll.
 
@@ -47,6 +47,7 @@ If the design system changes in Claude, re-sync `design-system/` and `globals.cs
 - `docs/prd.md`: the PRD (v2). Source of truth for stories, roles, states and edge cases. v1 is in `docs/archive/`.
 - `docs/implementation-plan.md`: build order by phase and batch. Update "Current position" when work moves.
 - `docs/flow-map.md`: every flow screen by screen, with review status. Only build flows marked Approved.
+- `docs/demo-accounts.md`: Phase 1 demo sign-ins (emails, codes, invite link). Keep it current when seed data changes.
 
 Phase 1 is frontend only with dummy data behind one mock layer per domain (`src/lib/mock/`), so Phase 2 swaps data without redesigning screens.
 

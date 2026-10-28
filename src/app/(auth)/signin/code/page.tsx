@@ -8,7 +8,7 @@ import { AuthScreen } from "../../AuthScreen";
 
 export default function SignInCodePage() {
   const router = useRouter();
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(auth.DEMO_SIGN_IN.code);
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
   const [backup, setBackup] = useState(false);
@@ -29,7 +29,7 @@ export default function SignInCodePage() {
       description={backup ? "Enter one of the backup codes you saved when you set up two-step sign-in. Each code works once." : "Open your authenticator app and enter the 6-digit code for Bluecut."}
     >
       <form onSubmit={submit} noValidate className="flex flex-col gap-4">
-        <CodeInput label={backup ? "Backup code" : "Code"} value={code} onChange={(v) => { setCode(v); setError(undefined); }} error={error} help="Demo: any 6 digits work, except 000000." />
+        <CodeInput label={backup ? "Backup code" : "Code"} value={code} onChange={(v) => { setCode(v); setError(undefined); }} error={error} />
         <Button type="submit" fullWidth disabled={busy}>
           {busy ? "Checking" : "Sign in"}
         </Button>

@@ -10,7 +10,7 @@ function Verify() {
   const router = useRouter();
   const email = useSearchParams().get("email") ?? "your email";
   const toast = useToast();
-  const [code, setCode] = useState("");
+  const [code, setCode] = useState(auth.DEMO_SIGN_IN.code);
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
 
@@ -34,7 +34,7 @@ function Verify() {
       }
     >
       <form onSubmit={submit} noValidate className="flex flex-col gap-4">
-        <CodeInput label="Code" value={code} onChange={(v) => { setCode(v); setError(undefined); }} error={error} help="Demo: any 6 digits work, except 000000." />
+        <CodeInput label="Code" value={code} onChange={(v) => { setCode(v); setError(undefined); }} error={error} />
         <Button type="submit" fullWidth disabled={busy}>
           {busy ? "Checking" : "Confirm email"}
         </Button>

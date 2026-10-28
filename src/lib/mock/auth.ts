@@ -34,6 +34,9 @@ function newClient(firstName: string, lastName: string, email: string) {
   signInAs(`u-${id}`, "client");
 }
 
+/** Phase 1 only: the sign-in form starts filled with this account. Full list in docs/demo-accounts.md. Remove in Phase 2. */
+export const DEMO_SIGN_IN = { email: "chidi@paystream.example", password: "demo", code: "123456" };
+
 /** Sign-up step 1: is this email already used by an account? */
 export function isEmailTaken(email: string) {
   return Boolean(findByEmail(email));

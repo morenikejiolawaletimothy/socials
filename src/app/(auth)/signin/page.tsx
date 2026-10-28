@@ -13,8 +13,8 @@ import { step } from "../step";
 export default function SignInPage() {
   const router = useRouter();
   const [stage, setStage] = useState<"email" | "password">("email");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState(auth.DEMO_SIGN_IN.email);
+  const [password, setPassword] = useState(auth.DEMO_SIGN_IN.password);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [busy, setBusy] = useState<"google" | "email" | null>(null);
 
@@ -69,7 +69,7 @@ export default function SignInPage() {
           </motion.div>
         ) : (
           <motion.form key="password" {...step} onSubmit={submit} noValidate className="flex flex-col gap-4">
-            <EmailRow email={email.trim()} onChange={() => { setStage("email"); setPassword(""); setErrors({}); }} />
+            <EmailRow email={email.trim()} onChange={() => { setStage("email"); setErrors({}); }} />
             <PasswordInput
               label="Password"
               autoComplete="current-password"
@@ -91,10 +91,6 @@ export default function SignInPage() {
       <AuthFooter>
         New to Bluecut? <TextLink href="/signup">Create your account</TextLink>
       </AuthFooter>
-
-      <p className="text-center text-caption text-secondary">
-        Demo, any password: chidi@paystream.example (client), ada@bluecut.example (manager), fola@bluecut.example (owner). Staff are asked for a code.
-      </p>
     </AuthScreen>
   );
 }

@@ -48,7 +48,7 @@ export default function SignUpPage() {
   }
 
   return (
-    <AuthScreen title="Create your account" description="It takes under a minute. Your first 2 weeks are free.">
+    <AuthScreen title="Create your account">
       <AnimatePresence mode="wait" initial={false}>
         {stage === "email" ? (
           <motion.div key="email" {...step} className="flex flex-col gap-6">
