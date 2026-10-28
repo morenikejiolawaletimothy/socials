@@ -272,15 +272,12 @@ body {
 @utility lp-btn {
   transition:
     background-color 250ms cubic-bezier(0.22, 1, 0.36, 1),
-    transform 250ms cubic-bezier(0.22, 1, 0.36, 1),
-    box-shadow 250ms cubic-bezier(0.22, 1, 0.36, 1);
+    transform 250ms cubic-bezier(0.22, 1, 0.36, 1);
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 8px 20px rgba(34, 76, 213, 0.22);
   }
   &:active {
     transform: translateY(0);
-    box-shadow: none;
   }
 }
 @utility lp-zoom {
@@ -308,5 +305,30 @@ body {
   .lp-zoom,
   .lp-btn {
     transition: none;
+  }
+}
+
+/* Standard cursors everywhere: a hand on anything you can click, a not-allowed sign on anything disabled.
+   Tailwind v4 leaves buttons on the default arrow, so this sets it once for the whole app. */
+@layer base {
+  a[href],
+  button,
+  [role="button"],
+  [role="tab"],
+  [role="switch"],
+  [role="menuitem"],
+  [role="option"],
+  summary,
+  select,
+  label[for],
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="submit"],
+  input[type="file"] {
+    cursor: pointer;
+  }
+  :disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
   }
 }

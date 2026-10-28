@@ -4,6 +4,7 @@ import Lenis from "lenis";
 import {
   animate,
   motion,
+  useAnimationFrame,
   MotionConfig,
   useInView,
   useMotionValue,
@@ -220,6 +221,27 @@ export function Parallax({ children, className, distance = 60 }: { children: Rea
       {children}
     </motion.div>
   );
+}
+
+/** Time each autoplaying item stays on screen (How it works, testimonials). */
+export const AUTOPLAY_MS = 6000;
+
+/**
+ * Drives an autoplaying set: progress runs 0 to 1 while `running`, then calls onNext and starts over.
+ * Bind `progress` to a bar's scaleX so every autoplay on the page looks the same. Off under reduced motion.
+ */
+export function useAutoplay(running: boolean, onNext: () => void, ms = AUTOPLAY_MS) {
+  const reduce = useReducedMotion();
+  const progress = useMotionValue(0);
+  useAnimationFrame((_, delta) => {
+    if (!running || reduce) return;
+    const next = progress.get() + delta / ms;
+    if (next >= 1) {
+      progress.set(0);
+      onNext();
+    } else progress.set(next);
+  });
+  return { progress, restart: () => progress.set(0), reduce };
 }
 
 /** Same hover for every card on the page: a 4px lift with a softer, wider shadow. */

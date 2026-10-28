@@ -1,7 +1,8 @@
 import { ClosingAndFooter, Faq, Industries } from "@/components/landing/LandingEnd";
 import { Connected, Statement } from "@/components/landing/LandingFeatures";
 import { Features } from "@/components/landing/LandingNavy";
-import { HowItWorks, Results, Testimonials } from "@/components/landing/LandingProof";
+import { HowItWorks, Results } from "@/components/landing/LandingProof";
+import { Testimonials } from "@/components/landing/LandingTestimonials";
 import { Hero, Intro, LandingNav } from "@/components/landing/LandingTop";
 import { SmoothScroll } from "@/components/landing/motion";
 import { StickyCta } from "@/components/marketing/StickyCta";

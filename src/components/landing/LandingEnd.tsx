@@ -250,7 +250,7 @@ export function ClosingAndFooter() {
                 {socials.map((s) => (
                   <li key={s.label}>
                     <a href="#" aria-label={s.label} className="flex rounded-sm text-neutral-900 transition-[color,transform] duration-300 hover:-translate-y-0.5 hover:text-primary-700 focus-visible:focus-ring">
-                      <s.icon className="size-4" aria-hidden />
+                      <s.icon className="size-5" aria-hidden />
                     </a>
                   </li>
                 ))}

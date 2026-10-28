@@ -17,8 +17,10 @@ Rules:
 - Color classes: `bg-page`, `bg-card`, `bg-dark`, `text-primary`, `text-secondary`, `text-inverse`, `border-border`, `border-border-strong`, brand scale `primary-50..950`, status `success|warning|danger|info` and `*-bg`. `bg-primary` is ink, not blue; the brand action blue is `primary-600`.
 - Type: `font-display text-display-3xl|2xl|xl|lg` for headings; `text-body-lg|body|body-sm|caption` for text; `font-medium` for body-medium.
 - Focus: `focus-visible:focus-ring` on every interactive element.
+- Cursor: a pointer (hand) on everything clickable, `not-allowed` on anything disabled, `grab`/`grabbing` on things you drag, the text cursor only in fields. `globals.css` sets this for links, buttons, tabs, labels and checkboxes; when you make anything else clickable (a `div` or card with `onClick`, a hover-to-open card), add `cursor-pointer` yourself. Check the cursor when you review a screen.
+- Buttons have no shadow on hover, only a colour change (the landing `lp-btn` also lifts 1px).
 - One primary button per view. Sentence case. No em dashes, hype or emoji in UI copy. Errors say what happened and what to do.
-- Icons: Phosphor (`@phosphor-icons/react`), Regular weight only, functional only. No arrows on buttons or for navigation.
+- Icons: Phosphor (`@phosphor-icons/react`) only, including social logos; no other icon set and no hand-drawn SVG icons. Regular weight only, functional only. No arrows on buttons or for navigation.
 - Multi-step tasks show the Stepper.
 - Check every screen at 390px wide first, then desktop. No horizontal scroll.
 
