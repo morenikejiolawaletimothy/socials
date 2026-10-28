@@ -1,18 +1,19 @@
 "use client";
 
-import { Trophy } from "@phosphor-icons/react";
+import { Trophy, X } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Button, Card, Dialog, ProgressBar, Textarea, useToast } from "@/components/ui";
+import { Button, Card, Dialog, ProgressBar, Textarea, useConfirm, useTask } from "@/components/ui";
 import { ago, daysFrom } from "@/lib/format";
 import { act, useMyClient } from "@/lib/mock";
 
 /** C9 Progress: plain words first, numbers second. This week's targets, what is waiting, and every update. */
 export default function ProgressPage() {
   const { client, week, updates, strategy } = useMyClient();
-  const toast = useToast();
+  const confirm = useConfirm();
+  const { run, pending } = useTask();
   const [adding, setAdding] = useState(false);
   const [result, setResult] = useState("");
   const [error, setError] = useState<string>();
@@ -91,7 +92,25 @@ export default function ProgressPage() {
             {results.map((r) => (
               <li key={r} className="flex items-center gap-3">
                 <Trophy className="size-5 shrink-0 text-primary-600" aria-hidden />
-                <span className="text-body-sm text-primary">{r}</span>
+                <span className="flex-1 text-body-sm text-primary">{r}</span>
+                <button
+                  type="button"
+                  aria-label={`Remove ${r}`}
+                  onClick={() =>
+                    client &&
+                    confirm({
+                      title: "Remove this result?",
+                      body: <>&ldquo;{r}&rdquo; will no longer count toward your goal or show in your updates.</>,
+                      confirmLabel: "Remove",
+                      tone: "danger",
+                      action: () => act.removeResult(client.id, r),
+                      success: "Result removed.",
+                    })
+                  }
+                  className="flex size-9 shrink-0 items-center justify-center rounded-full text-secondary hover:bg-danger-bg hover:text-danger focus-visible:focus-ring"
+                >
+                  <X className="size-4" aria-hidden />
+                </button>
               </li>
             ))}
           </ul>
@@ -136,15 +155,16 @@ export default function ProgressPage() {
             Cancel
           </Button>
           <Button
+            loading={pending("add")}
             onClick={async () => {
               if (!result.trim()) return setError("Write what happened.");
-              if (client) await act.addResult(client.id, result.trim());
-              setResult("");
-              setAdding(false);
-              toast("Result added. Your manager will count it in your next update.");
+              if (client && (await run("add", () => act.addResult(client.id, result.trim()), "Result added. Your manager will count it in your next update."))) {
+                setResult("");
+                setAdding(false);
+              }
             }}
           >
-            Add result
+            {pending("add") ? "Adding" : "Add result"}
           </Button>
         </div>
       </Dialog>

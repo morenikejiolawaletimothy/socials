@@ -86,6 +86,10 @@ export type Notification = {
   href: string;
   createdAt: string;
   read: boolean;
+  /** Also sent by email (Phase 2 sends it with Resend, following the person's notification settings). */
+  email?: boolean;
+  /** Urgent items are shown first and always emailed. */
+  urgent?: boolean;
 };
 
 /* ---------- Content (C7, C8, M4, M5) ---------- */

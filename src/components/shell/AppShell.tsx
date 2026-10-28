@@ -3,13 +3,13 @@
 import { Bell, CaretDown } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Avatar, Logo, Menu, ToastProvider } from "@/components/ui";
+import { Avatar, Logo, Menu } from "@/components/ui";
 import { useNotifications, useSession } from "@/lib/mock";
 import { CoveringBanner } from "./CoveringBanner";
 import { DemoBar } from "./DemoBar";
 import { isActive, mainNav, meHref, meIcon as MeIcon, navItemClass, profileNav, type NavItem } from "./nav";
 import { PageSkeleton } from "./PageSkeleton";
-import { useMounted } from "./useMounted";
+import { usePageReady } from "./useMounted";
 import { useRoleSync } from "./useRoleSync";
 
 function UnreadDot({ count }: { count: number }) {
@@ -46,8 +46,8 @@ function TopItem({ item, active, count = 0 }: { item: NavItem; active: boolean; 
  */
 export function AppShell({ role, children }: { role: "client" | "manager"; children: React.ReactNode }) {
   useRoleSync(role);
-  const mounted = useMounted();
   const pathname = usePathname();
+  const mounted = usePageReady(pathname);
   const { user } = useSession();
   const unread = useNotifications(user?.id).filter((n) => !n.read).length;
   const name = user ? `${user.firstName} ${user.lastName}` : "";
@@ -60,7 +60,7 @@ export function AppShell({ role, children }: { role: "client" | "manager"; child
   const meActive = pathname === meHref[role] || profileNav[role].some((i) => isActive(pathname, i));
 
   return (
-    <ToastProvider>
+    <>
       <DemoBar />
       {role === "manager" && <CoveringBanner />}
       <header className="sticky top-0 z-30 border-b border-border bg-card">
@@ -141,6 +141,6 @@ export function AppShell({ role, children }: { role: "client" | "manager"; child
           })}
         </ul>
       </nav>
-    </ToastProvider>
+    </>
   );
 }

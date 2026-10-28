@@ -6,9 +6,9 @@ import { use, useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { OffLimitsBox } from "@/components/manager/ClientTabs";
 import { rails } from "@/components/rails";
-import { Badge, Banner, Breadcrumbs, Button, Card, EmptyState, Input, Stepper, Textarea, useToast } from "@/components/ui";
+import { Badge, Banner, Breadcrumbs, Button, Card, EmptyState, Input, Stepper, Textarea, useConfirm, useTask } from "@/components/ui";
 import { dayTime, fullName } from "@/lib/format";
-import { clientBundle, useMyManager, type ClientBundle } from "@/lib/mock";
+import { act, clientBundle, useMyManager, type ClientBundle } from "@/lib/mock";
 
 const steps = ["Prep", "Goals call", "Listening", "Strategy", "What we agreed", "Approved"];
 
@@ -23,7 +23,8 @@ function currentStep(b: ClientBundle) {
 
 /** M3 Onboard a client: from goals call to approved strategy in about a week, with the research done for you. */
 function Onboard({ id }: { id: string }) {
-  const toast = useToast();
+  const confirm = useConfirm();
+  const { run, pending } = useTask();
   const { db } = useMyManager();
   const b = clientBundle(db, id);
   const [step, setStep] = useState(() => currentStep(b));
@@ -96,9 +97,9 @@ function Onboard({ id }: { id: string }) {
                   Back
                 </Button>
                 <Button
-                  onClick={() => {
-                    toast("Confirmed. Off limits saved to their Brand.");
-                    setStep(2);
+                  loading={pending("summary")}
+                  onClick={async () => {
+                    if (await run("summary", () => act.save(), "Confirmed. Off limits saved to their Brand.")) setStep(2);
                   }}
                 >
                   Confirm summary
@@ -181,15 +182,19 @@ function Onboard({ id }: { id: string }) {
                 onSubmit={(e) => {
                   e.preventDefault();
                   if (!direction.trim()) return;
-                  setDirections((d) => [...d, direction.trim()]);
-                  setDirection("");
+                  const text = direction.trim();
+                  run("direct", () => act.save(), `Strategy updated: "${text}"`).then((ok) => {
+                    if (!ok) return;
+                    setDirections((d) => [...d, text]);
+                    setDirection("");
+                  });
                 }}
               >
                 <div className="flex-1">
                   <Input label="Direct the strategy" placeholder={'For example: "make topic 2 about policy", "the tone is too formal"'} value={direction} onChange={(e) => setDirection(e.target.value)} />
                 </div>
-                <Button type="submit" variant="secondary">
-                  Apply
+                <Button type="submit" variant="secondary" loading={pending("direct")}>
+                  {pending("direct") ? "Updating" : "Apply"}
                 </Button>
               </form>
               <div className="flex gap-2">
@@ -197,9 +202,15 @@ function Onboard({ id }: { id: string }) {
                   Back
                 </Button>
                 <Button
-                  onClick={() => {
-                    toast(`Shared with ${first}, to read before the strategy call.`);
-                    setStep(4);
+                  onClick={async () => {
+                    const ok = await confirm({
+                      title: `Share the strategy with ${first}?`,
+                      body: `${first} is told and can read it before the strategy call. You can still change it after the call.`,
+                      confirmLabel: "Share",
+                      action: () => act.save(),
+                      success: `Shared with ${first}, to read before the strategy call.`,
+                    });
+                    if (ok) setStep(4);
                   }}
                 >
                   Share with {first}
@@ -224,7 +235,18 @@ function Onboard({ id }: { id: string }) {
                 <Button variant="ghost" onClick={() => setStep(3)}>
                   Back
                 </Button>
-                <Button variant={s?.status === "agreed-sent" ? "secondary" : "primary"} onClick={() => toast(`"What we agreed" sent to ${first}.`)}>
+                <Button
+                  variant={s?.status === "agreed-sent" ? "secondary" : "primary"}
+                  onClick={() =>
+                    confirm({
+                      title: s?.status === "agreed-sent" ? `Send "What we agreed" again?` : `Send "What we agreed" to ${first}?`,
+                      body: `${first} reads it and approves, or asks for a change. Nothing starts until they approve.`,
+                      confirmLabel: "Send",
+                      action: () => act.save(),
+                      success: `"What we agreed" sent to ${first}.`,
+                    })
+                  }
+                >
                   {s?.status === "agreed-sent" ? "Send again" : "Send What we agreed"}
                 </Button>
               </div>

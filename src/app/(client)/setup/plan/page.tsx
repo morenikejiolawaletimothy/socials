@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PayDialog } from "@/components/client/PayDialog";
 import { SetupFrame } from "@/components/client/SetupFrame";
-import { Banner, Button, Input } from "@/components/ui";
+import { Banner, Button, Input, useTask } from "@/components/ui";
 import { date, fullName, money } from "@/lib/format";
 import { act, useMyClient } from "@/lib/mock";
 import { included, plans, type PlanId } from "@/lib/pricing";
@@ -20,7 +20,7 @@ export default function PlanPage() {
   const [planId, setPlanId] = useState<PlanId>("6m");
   const [name, setName] = useState("");
   const [error, setError] = useState<string>();
-  const [busy, setBusy] = useState(false);
+  const { run, pending } = useTask();
   const [paying, setPaying] = useState(false);
   const [paid, setPaid] = useState(false);
   const [now] = useState(() => Date.now());
@@ -74,11 +74,15 @@ export default function PlanPage() {
           onSubmit={async (e) => {
             e.preventDefault();
             if (name.trim().toLowerCase() !== fullName(user).toLowerCase()) return setError(`Type your full name as it appears on your account: ${fullName(user)}.`);
-            setBusy(true);
-            await act.signContract(client.id, plan.months, plan.monthlyUsdCents, name.trim());
-            act.completeSetupStep(client.id, "plan");
-            setBusy(false);
-            setStep(2);
+            const ok = await run(
+              "sign",
+              async () => {
+                await act.signContract(client.id, plan.months, plan.monthlyUsdCents, name.trim());
+                await act.completeSetupStep(client.id, "plan");
+              },
+              "Signed. Your free 2 weeks have started.",
+            );
+            if (ok) setStep(2);
           }}
         >
           <dl className="grid grid-cols-1 gap-4 rounded-md border border-border p-4 sm:grid-cols-2">
@@ -112,8 +116,8 @@ export default function PlanPage() {
             <Button variant="ghost" onClick={() => setStep(0)}>
               Back
             </Button>
-            <Button type="submit" disabled={busy}>
-              {busy ? "Signing" : "Sign the contract"}
+            <Button type="submit" loading={pending("sign")}>
+              {pending("sign") ? "Signing" : "Sign the contract"}
             </Button>
           </div>
         </form>

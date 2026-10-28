@@ -3,13 +3,11 @@
 import { useRouter } from "next/navigation";
 import { ReviewForm } from "@/components/client/ReviewForm";
 import { SetupFrame } from "@/components/client/SetupFrame";
-import { useToast } from "@/components/ui";
 import { act, useMyClient } from "@/lib/mock";
 
 /** C5 Set how you review. The last setup step. */
 export default function ReviewSetupPage() {
   const router = useRouter();
-  const toast = useToast();
   const { client } = useMyClient();
   if (!client) return null;
 
@@ -21,10 +19,10 @@ export default function ReviewSetupPage() {
         saveLabel="Save and finish setup"
         onSave={async (r) => {
           await act.saveReview(client.id, r);
-          act.completeSetupStep(client.id, "review");
-          toast("Setup is done. Your first 2 weeks have started.");
-          router.push("/home");
+          await act.completeSetupStep(client.id, "review");
         }}
+        success="Setup is done. Your first 2 weeks have started."
+        onSaved={() => router.push("/home")}
       />
     </SetupFrame>
   );

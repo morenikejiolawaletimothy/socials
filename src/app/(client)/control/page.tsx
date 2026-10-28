@@ -7,7 +7,7 @@ import { PermissionsForm } from "@/components/client/PermissionsForm";
 import { ReviewForm, reviewSummary } from "@/components/client/ReviewForm";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Badge, Banner, Button, Card, Dialog, Tabs, useToast } from "@/components/ui";
+import { Badge, Banner, Button, Card, Tabs, useConfirm, useTask } from "@/components/ui";
 import { ago, agoIn } from "@/lib/format";
 import { act, useMyClient, type Activity } from "@/lib/mock";
 
@@ -17,11 +17,10 @@ type Filter = "all" | Activity["kind"];
 /** C11 Control: what we do, how you review, requests, pause, LinkedIn connection and every action on the account. */
 export default function ControlPage() {
   const { client, requests, activity } = useMyClient();
-  const toast = useToast();
+  const confirm = useConfirm();
+  const { run, pending: isPending } = useTask();
   const [editingReview, setEditingReview] = useState(false);
-  const [confirm, setConfirm] = useState<"pause" | "disconnect" | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
-  const [busy, setBusy] = useState(false);
   if (!client) return null;
 
   const pending = requests.filter((r) => r.status === "pending");
@@ -41,20 +40,20 @@ export default function ControlPage() {
                   <span className="text-caption text-secondary">Asked {agoIn(r.at)}</span>
                 </div>
                 <div className="flex gap-2">
-                  <Button
-                    onClick={async () => {
-                      await act.answerRequest(r.id, true);
-                      toast("Approved. Your manager can go ahead, this once.");
-                    }}
-                  >
+                  <Button loading={isPending(`yes-${r.id}`)} onClick={() => run(`yes-${r.id}`, () => act.answerRequest(r.id, true), "Approved. Your manager can go ahead, this once.")}>
                     Approve
                   </Button>
                   <Button
                     variant="ghost"
-                    onClick={async () => {
-                      await act.answerRequest(r.id, false);
-                      toast("Declined. Your manager will not do this.");
-                    }}
+                    onClick={() =>
+                      confirm({
+                        title: "Decline this request?",
+                        body: <>Your manager will not {r.text.charAt(0).toLowerCase() + r.text.slice(1)}. They are told, and can ask again with more detail.</>,
+                        confirmLabel: "Decline",
+                        action: () => act.answerRequest(r.id, false),
+                        success: "Declined. Your manager will not do this.",
+                      })
+                    }
                   >
                     Decline
                   </Button>
@@ -82,11 +81,10 @@ export default function ControlPage() {
         {editingReview ? (
           <ReviewForm
             initial={client.review}
-            onSave={async (r) => {
-              await act.saveReview(client.id, r);
-              setEditingReview(false);
-              toast("Saved. This applies to new posts.");
-            }}
+            onSave={(r) => act.saveReview(client.id, r)}
+            success="Saved. This applies to new posts. Your manager is told."
+            onSaved={() => setEditingReview(false)}
+            onCancel={() => setEditingReview(false)}
           />
         ) : (
           <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -126,11 +124,19 @@ export default function ControlPage() {
           <Button
             variant="secondary"
             className="self-start"
-            onClick={async () => {
-              if (!client.postingPaused) return setConfirm("pause");
-              await act.setPostingPaused(client.id, false);
-              toast("Posting is back on. Held posts are scheduled again.");
-            }}
+            loading={isPending("resume")}
+            onClick={() =>
+              client.postingPaused
+                ? run("resume", () => act.setPostingPaused(client.id, false), "Posting is back on. Held posts are scheduled again.")
+                : confirm({
+                    title: "Pause all posting?",
+                    body: "Scheduled posts are held, and nothing goes out on LinkedIn. Your manager is told. Turn it back on any time.",
+                    warning: "Your contract keeps running while posting is paused, and held posts count as waiting on you.",
+                    confirmLabel: "Pause posting",
+                    action: () => act.setPostingPaused(client.id, true),
+                    success: "All posting is paused.",
+                  })
+            }
           >
             {client.postingPaused ? "Turn posting back on" : "Pause all posting"}
           </Button>
@@ -152,18 +158,25 @@ export default function ControlPage() {
             </span>
           </div>
           {client.linkedin === "connected" ? (
-            <Button variant="ghost" className="self-start" onClick={() => setConfirm("disconnect")}>
+            <Button
+              variant="ghost"
+              className="self-start"
+              onClick={() =>
+                confirm({
+                  title: "Disconnect LinkedIn?",
+                  body: "We stop posting and engaging at once. Scheduled posts are held. Your manager is told.",
+                  warning: "Nothing can go out until you reconnect. You can reconnect any time.",
+                  confirmLabel: "Disconnect",
+                  tone: "danger",
+                  action: () => act.setLinkedIn(client.id, "disconnected"),
+                  success: "LinkedIn disconnected.",
+                })
+              }
+            >
               Disconnect LinkedIn
             </Button>
           ) : (
-            <Button
-              variant="secondary"
-              className="self-start"
-              onClick={async () => {
-                await act.setLinkedIn(client.id, "connected");
-                toast("LinkedIn connected again.");
-              }}
-            >
+            <Button variant="secondary" className="self-start" loading={isPending("reconnect")} onClick={() => run("reconnect", () => act.setLinkedIn(client.id, "connected"), "LinkedIn connected again.")}>
               Reconnect LinkedIn
             </Button>
           )}
@@ -208,48 +221,6 @@ export default function ControlPage() {
         </div>
       </Card>
 
-      <Dialog open={confirm === "pause"} onClose={() => setConfirm(null)} title="Pause all posting?">
-        <p className="text-body text-secondary">Scheduled posts are held, and nothing goes out on LinkedIn. Your contract keeps running. Turn it back on any time.</p>
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => setConfirm(null)}>
-            Cancel
-          </Button>
-          <Button
-            disabled={busy}
-            onClick={async () => {
-              setBusy(true);
-              await act.setPostingPaused(client.id, true);
-              setBusy(false);
-              setConfirm(null);
-              toast("All posting is paused.");
-            }}
-          >
-            Pause posting
-          </Button>
-        </div>
-      </Dialog>
-
-      <Dialog open={confirm === "disconnect"} onClose={() => setConfirm(null)} title="Disconnect LinkedIn?">
-        <p className="text-body text-secondary">We stop posting and engaging at once. Scheduled posts are held. You can reconnect any time.</p>
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => setConfirm(null)}>
-            Cancel
-          </Button>
-          <Button
-            variant="danger"
-            disabled={busy}
-            onClick={async () => {
-              setBusy(true);
-              await act.setLinkedIn(client.id, "disconnected");
-              setBusy(false);
-              setConfirm(null);
-              toast("LinkedIn disconnected.");
-            }}
-          >
-            Disconnect
-          </Button>
-        </div>
-      </Dialog>
     </Columns>
   );
 }

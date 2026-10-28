@@ -4,7 +4,7 @@ import { CalendarPlus, CheckCircle, VideoCamera } from "@phosphor-icons/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import { SetupFrame } from "@/components/client/SetupFrame";
-import { Avatar, Button } from "@/components/ui";
+import { Avatar, Button, useTask, useToast } from "@/components/ui";
 import { day, dayTime, fullName, time } from "@/lib/format";
 import { act, useData, useMyClient } from "@/lib/mock";
 
@@ -81,7 +81,8 @@ function BookCalls() {
   const [goals, setGoals] = useState<string | null>(goalsBooked?.at ?? null);
   const [strategy, setStrategy] = useState<string | null>(null);
   const [error, setError] = useState<string>();
-  const [busy, setBusy] = useState(false);
+  const { run, pending } = useTask();
+  const toast = useToast();
   const [now] = useState(() => Date.now());
   const times = useMemo(() => openTimes(m.slots ?? [], now), [m.slots, now]);
   const gap = db.settings.daysBetweenCalls;
@@ -141,16 +142,13 @@ function BookCalls() {
               Back
             </Button>
             <Button
-              disabled={busy}
+              loading={pending("goals")}
               onClick={async () => {
                 if (!goals) return setError("Pick a time for your goals call.");
-                setBusy(true);
-                await act.bookCall(client.id, "goals", goals, record ?? true);
-                setBusy(false);
-                setStep(2);
+                if (await run("goals", () => act.bookCall(client.id, "goals", goals, record ?? true), `Goals call booked: ${dayTime(goals)}.`)) setStep(2);
               }}
             >
-              {busy ? "Booking" : "Book goals call"}
+              {pending("goals") ? "Booking" : "Book goals call"}
             </Button>
           </div>
         </div>
@@ -170,16 +168,13 @@ function BookCalls() {
               Back
             </Button>
             <Button
-              disabled={busy}
+              loading={pending("strategy")}
               onClick={async () => {
                 if (!strategy) return setError("Pick a time for your strategy call.");
-                setBusy(true);
-                await act.bookCall(client.id, "strategy", strategy, record ?? true);
-                setBusy(false);
-                setStep(3);
+                if (await run("strategy", () => act.bookCall(client.id, "strategy", strategy, record ?? true), "Strategy call booked. Calendar invites are on their way.")) setStep(3);
               }}
             >
-              {busy ? "Booking" : "Book strategy call"}
+              {pending("strategy") ? "Booking" : "Book strategy call"}
             </Button>
           </div>
         </div>
@@ -203,7 +198,7 @@ function BookCalls() {
                   <span className="inline-flex items-center gap-1 text-secondary">
                     <VideoCamera className="size-4" aria-hidden /> Google Meet link sent by email
                   </span>
-                  <button type="button" className="inline-flex items-center gap-1 rounded-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
+                  <button type="button" onClick={() => toast(`${c.name} added to your calendar.`)} className="inline-flex items-center gap-1 rounded-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
                     <CalendarPlus className="size-4" aria-hidden /> Add to calendar
                   </button>
                 </span>

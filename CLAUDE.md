@@ -49,6 +49,11 @@ Corrections Fola has already made. Check every new screen against them before sh
 - Every button does something on the demo data (`act.*` in `src/lib/mock/actions.ts`), with a toast that says what happened. No dead buttons.
 - Clients never see the word AI. Staff screens may show "Suggested" with the sparkle icon.
 - Only `page`, `default` and Next.js route exports in `page.tsx` files. Shared labels and helpers go in components.
+- Every action gives feedback. Run it through `useTask` (spinner on the button, success toast, error toast if it fails) and pass `loading` to the Button. Route changes show the page skeleton briefly.
+- Anything destructive or hard to undo (delete, remove, cancel, withdraw, take down, suspend, refund, publish) asks first with `useConfirm`: say what will happen, put what cannot be undone in `warning`, run the action inside the dialog. Small removals that can come back get an Undo action on the toast instead.
+- Every add or create has a matching edit and remove.
+- Actions that tell someone use `notify(...)` in `src/lib/mock/actions.ts` (`email: true` marks the ones that will also send an email in Phase 2). Owner actions also write to the audit log.
+- Test error states with "Simulate errors" in the demo bar: every action must fail gracefully, keep what the person typed, and say what to do.
 
 ## Landing page exception
 

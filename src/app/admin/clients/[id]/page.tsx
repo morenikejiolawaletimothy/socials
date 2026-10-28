@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { use, useState } from "react";
 import { managerName } from "@/components/admin/parts";
 import { ActivityTab, BrandTab, CallsTab, ContentTab, EngagementTab, OverviewTab, PlanTab, UpdatesTab } from "@/components/manager/ClientTabs";
-import { Avatar, Badge, Button, Card, EmptyState, PageHeader, Tabs } from "@/components/ui";
+import { Avatar, Badge, Button, Card, EmptyState, PageHeader, Tabs, useConfirm, useToast } from "@/components/ui";
 import { date, fullName, money } from "@/lib/format";
 import { act, clientBundle, useData } from "@/lib/mock";
 import { statusBadge } from "@/lib/status";
@@ -26,6 +26,8 @@ const tabs = [
 export default function OwnerClientPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const confirm = useConfirm();
+  const toast = useToast();
   const db = useData();
   const b = clientBundle(db, id);
   const [tab, setTab] = useState<(typeof tabs)[number]["value"]>("overview");
@@ -43,8 +45,16 @@ export default function OwnerClientPage({ params }: { params: Promise<{ id: stri
           b.client.managerId && (
             <Button
               variant="secondary"
-              onClick={() => {
+              onClick={async () => {
+                const ok = await confirm({
+                  title: `Step in for ${mName.split(" ")[0]}?`,
+                  body: `You work in ${mName}'s workspace and can act for all their clients. ${b.user?.firstName} sees "Your account team", not your name.`,
+                  warning: "Everything you do is recorded in the audit log.",
+                  confirmLabel: "Step in",
+                });
+                if (!ok) return;
                 act.setCovering(b.client!.managerId);
+                toast(`You are covering for ${mName.split(" ")[0]}. Use the banner to stop.`, "info");
                 router.push(`/manager/clients/${id}`);
               }}
             >

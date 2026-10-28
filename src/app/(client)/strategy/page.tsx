@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Badge, Banner, Button, Card, Dialog, EmptyState, Textarea, useToast } from "@/components/ui";
+import { Badge, Banner, Button, Card, Dialog, EmptyState, Textarea, useTask } from "@/components/ui";
 import { date } from "@/lib/format";
 import { act, useMyClient } from "@/lib/mock";
 
@@ -30,11 +30,10 @@ const statusLabel = {
  */
 export default function StrategyPage() {
   const { client, strategy, brand } = useMyClient();
-  const toast = useToast();
+  const { run, pending } = useTask();
   const [asking, setAsking] = useState(false);
   const [note, setNote] = useState("");
   const [error, setError] = useState<string>();
-  const [busy, setBusy] = useState(false);
 
   if (!strategy || !client) {
     return (
@@ -145,16 +144,8 @@ export default function StrategyPage() {
 
           {agreed ? (
             <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row">
-              <Button
-                disabled={busy}
-                onClick={async () => {
-                  setBusy(true);
-                  await act.approveStrategy(client.id);
-                  setBusy(false);
-                  toast("Approved. Your manager starts on your first posts.");
-                }}
-              >
-                {busy ? "Approving" : "Approve"}
+              <Button loading={pending("approve")} onClick={() => run("approve", () => act.approveStrategy(client.id), "Approved. Your manager starts on your first posts.")}>
+                {pending("approve") ? "Approving" : "Approve"}
               </Button>
               <Button variant="ghost" onClick={() => setAsking(true)}>
                 Ask for a change
@@ -186,14 +177,13 @@ export default function StrategyPage() {
             Cancel
           </Button>
           <Button
+            loading={pending("change")}
             onClick={async () => {
               if (!note.trim()) return setError("Write what should change.");
-              await act.askStrategyChange(client.id, note.trim());
-              setAsking(false);
-              toast("Sent. Your manager will send a new version.");
+              if (await run("change", () => act.askStrategyChange(client.id, note.trim()), "Sent. Your manager will send a new version.")) setAsking(false);
             }}
           >
-            Send
+            {pending("change") ? "Sending" : "Send"}
           </Button>
         </div>
       </Dialog>

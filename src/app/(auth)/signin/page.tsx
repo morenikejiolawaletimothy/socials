@@ -81,7 +81,7 @@ export default function SignInPage() {
             <TextLink href="/reset" className="self-start text-body-sm">
               Forgot your password?
             </TextLink>
-            <Button type="submit" fullWidth disabled={busy !== null}>
+            <Button type="submit" fullWidth disabled={busy !== null} loading={busy === "email"}>
               {busy === "email" ? "Signing in" : "Sign in"}
             </Button>
           </motion.form>

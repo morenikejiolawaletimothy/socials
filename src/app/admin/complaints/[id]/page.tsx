@@ -2,19 +2,29 @@
 
 import { use, useState } from "react";
 import { ClientCell, complaintKind, managerName } from "@/components/admin/parts";
-import { Badge, Banner, Button, Card, EmptyState, PageHeader, Textarea, useToast } from "@/components/ui";
+import { Badge, Banner, Button, Card, EmptyState, PageHeader, Textarea, useConfirm } from "@/components/ui";
 import { dayTime } from "@/lib/format";
 import { act, useData } from "@/lib/mock";
 
 const outcomes = ["No action", "Credit", "Partial refund", "Warning to the manager", "Change of manager"];
-const whoLabel = { client: "Client", manager: "Manager", owner: "You", system: "Bluecut" };
-const whoTone = { client: "bg-info", manager: "bg-warning", owner: "bg-success", system: "bg-neutral-400" };
+const whoLabel = {
+  client: "Client",
+  manager: "Manager",
+  owner: "You",
+  system: "Bluecut",
+};
+const whoTone = {
+  client: "bg-info",
+  manager: "bg-warning",
+  owner: "bg-success",
+  system: "bg-neutral-400",
+};
 
 /** A6 Complaint page: the timeline, whose delay it was, and the outcome sent to the client. */
 export default function ComplaintPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const db = useData();
-  const toast = useToast();
+  const confirm = useConfirm();
   const c = db.complaints.find((x) => x.id === id);
   const [outcome, setOutcome] = useState("");
   const [note, setNote] = useState("");
@@ -72,10 +82,16 @@ export default function ComplaintPage({ params }: { params: Promise<{ id: string
                 <Textarea label="Message to the client" rows={3} value={note} onChange={(e) => setNote(e.target.value)} />
                 <Button
                   disabled={!outcome || !note.trim()}
-                  onClick={async () => {
-                    await act.resolveComplaint(c.id, outcome);
-                    toast("Outcome sent to the client.");
-                  }}
+                  onClick={() =>
+                    confirm({
+                      title: "Send this outcome?",
+                      body: `${outcome}. The client gets your message by email and in the app, and the complaint closes.`,
+                      warning: "A closed complaint cannot be reopened here. The client can raise a new one.",
+                      confirmLabel: "Send outcome",
+                      action: () => act.resolveComplaint(c.id, outcome),
+                      success: "Outcome sent to the client.",
+                    })
+                  }
                 >
                   Send outcome
                 </Button>

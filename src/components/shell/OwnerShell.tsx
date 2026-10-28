@@ -4,12 +4,12 @@ import { List } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Avatar, Dialog, Logo, ToastProvider } from "@/components/ui";
+import { Avatar, Dialog, Logo } from "@/components/ui";
 import { useSession } from "@/lib/mock";
 import { DemoBar } from "./DemoBar";
 import { NotificationBell } from "./NotificationBell";
 import { PageSkeleton } from "./PageSkeleton";
-import { useMounted } from "./useMounted";
+import { usePageReady } from "./useMounted";
 import { useRoleSync } from "./useRoleSync";
 import { isActive, navItemClass, ownerNav } from "./nav";
 
@@ -40,13 +40,14 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 /** Dashboard shell, used only by the owner. */
 export function OwnerShell({ children }: { children: React.ReactNode }) {
   useRoleSync("owner");
-  const mounted = useMounted();
+  const pathname = usePathname();
+  const mounted = usePageReady(pathname);
   const [menuOpen, setMenuOpen] = useState(false);
   const { user } = useSession();
   const name = user ? `${user.firstName} ${user.lastName}` : "";
 
   return (
-    <ToastProvider>
+    <>
       <div className="lg:flex">
         <aside className="hidden w-64 shrink-0 flex-col gap-6 border-r border-border bg-card px-4 py-6 lg:sticky lg:top-0 lg:flex lg:h-dvh">
           <Link href="/admin" className="flex items-center gap-2 rounded-full px-2 focus-visible:focus-ring">
@@ -94,6 +95,6 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
           <NavList onNavigate={() => setMenuOpen(false)} />
         </nav>
       </Dialog>
-    </ToastProvider>
+    </>
   );
 }

@@ -30,7 +30,7 @@ export default function SignInCodePage() {
     >
       <form onSubmit={submit} noValidate className="flex flex-col gap-4">
         <CodeInput label={backup ? "Backup code" : "Code"} value={code} onChange={(v) => { setCode(v); setError(undefined); }} error={error} />
-        <Button type="submit" fullWidth disabled={busy}>
+        <Button type="submit" fullWidth loading={busy}>
           {busy ? "Checking" : "Sign in"}
         </Button>
       </form>

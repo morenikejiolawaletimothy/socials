@@ -3,15 +3,15 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Table, managerName, managerStatus, td } from "@/components/admin/parts";
-import { Avatar, Badge, Button, Card, Dialog, Input, PageHeader, useToast } from "@/components/ui";
-import { money } from "@/lib/format";
+import { Avatar, Badge, Button, Card, Dialog, Input, PageHeader, useConfirm, useTask } from "@/components/ui";
+import { dayIn, money } from "@/lib/format";
 import { act, useData } from "@/lib/mock";
-
 
 /** A3 Managers: status, load, delivery and quality. Invite, train, pay. */
 export default function ManagersPage() {
   const db = useData();
-  const toast = useToast();
+  const confirm = useConfirm();
+  const { run, pending } = useTask();
   const [inviting, setInviting] = useState(false);
   const [form, setForm] = useState({ first: "", last: "", email: "" });
   const [error, setError] = useState<string>();
@@ -50,6 +50,54 @@ export default function ManagersPage() {
         </Table>
       </Card>
 
+      {db.managers.some((m) => m.status === "invited") && (
+        <Card title="Invites waiting">
+          <ul className="flex flex-col">
+            {db.managers
+              .filter((m) => m.status === "invited")
+              .map((m) => {
+                const u = db.users.find((x) => x.id === m.userId);
+                return (
+                  <li key={m.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-border py-3 first:pt-0 last:border-b-0 last:pb-0">
+                    <span className="flex min-w-0 flex-col">
+                      <span className="text-body-sm font-medium text-primary">{managerName(db, m.id)}</span>
+                      <span className="truncate text-caption text-secondary">
+                        {u?.email}
+                        {m.inviteExpiresAt ? `, link works until ${dayIn(m.inviteExpiresAt)}` : ""}
+                      </span>
+                    </span>
+                    <span className="flex items-center gap-4">
+                      <Button
+                        variant="secondary"
+                        loading={pending(`resend-${m.id}`)}
+                        onClick={() => run(`resend-${m.id}`, () => act.resendInvite(m.id), `New link sent to ${u?.email}. It works for 7 days.`)}
+                      >
+                        Resend
+                      </Button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          confirm({
+                            title: `Withdraw the invite for ${managerName(db, m.id)}?`,
+                            body: "Their link stops working at once. You can invite them again later.",
+                            confirmLabel: "Withdraw invite",
+                            tone: "danger",
+                            action: () => act.revokeInvite(m.id),
+                            success: "Invite withdrawn.",
+                          })
+                        }
+                        className="rounded-sm text-body-sm font-medium text-danger hover:underline focus-visible:focus-ring"
+                      >
+                        Withdraw
+                      </button>
+                    </span>
+                  </li>
+                );
+              })}
+          </ul>
+        </Card>
+      )}
+
       <Card title="Payouts">
         <Table head={["Manager", "Period", "Active clients", "Amount", ""]}>
           {db.payouts.map((p) => (
@@ -62,10 +110,16 @@ export default function ManagersPage() {
                 {p.status === "to-approve" ? (
                   <Button
                     variant="secondary"
-                    onClick={async () => {
-                      await act.approvePayout(p.id);
-                      toast("Payout approved. It is paid on Friday.");
-                    }}
+                    onClick={() =>
+                      confirm({
+                        title: `Approve ${money(p.amountCents)} for ${managerName(db, p.managerId)}?`,
+                        body: `${p.period}, ${p.clients} active clients. It is paid on Friday.`,
+                        warning: "Once paid, a payout cannot be taken back.",
+                        confirmLabel: "Approve payout",
+                        action: () => act.approvePayout(p.id),
+                        success: "Payout approved. It is paid on Friday.",
+                      })
+                    }
                   >
                     Approve
                   </Button>
@@ -84,21 +138,32 @@ export default function ManagersPage() {
           <Input label="First name" value={form.first} onChange={(e) => setForm({ ...form, first: e.target.value })} />
           <Input label="Last name" value={form.last} onChange={(e) => setForm({ ...form, last: e.target.value })} />
         </div>
-        <Input label="Email" type="email" value={form.email} onChange={(e) => { setForm({ ...form, email: e.target.value }); setError(undefined); }} error={error} />
+        <Input
+          label="Email"
+          type="email"
+          value={form.email}
+          onChange={(e) => {
+            setForm({ ...form, email: e.target.value });
+            setError(undefined);
+          }}
+          error={error}
+        />
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Button variant="ghost" onClick={() => setInviting(false)}>
             Cancel
           </Button>
           <Button
+            loading={pending("invite")}
             onClick={async () => {
               if (!form.first.trim() || !/^\S+@\S+\.\S+$/.test(form.email.trim())) return setError("Add their first name and an email like name@company.com.");
-              await act.inviteManager(form.first.trim(), form.last.trim(), form.email.trim());
-              setInviting(false);
-              setForm({ first: "", last: "", email: "" });
-              toast("Invite sent.");
+              if (db.users.some((u) => u.email.toLowerCase() === form.email.trim().toLowerCase())) return setError("Someone already uses this email. Check it, or find them in the list.");
+              if (await run("invite", () => act.inviteManager(form.first.trim(), form.last.trim(), form.email.trim()), `Invite sent to ${form.email.trim()}. The link works for 7 days.`)) {
+                setInviting(false);
+                setForm({ first: "", last: "", email: "" });
+              }
             }}
           >
-            Send invite
+            {pending("invite") ? "Sending" : "Send invite"}
           </Button>
         </div>
       </Dialog>

@@ -6,13 +6,26 @@ import { fullName } from "@/lib/format";
 import type { Complaint, Db, Manager } from "@/lib/mock";
 
 /** A few clear numbers at the top of an owner page. */
-export function Stats({ items }: { items: { label: string; value: string | number; note?: string; tone?: "danger" | "warning" | "success" }[] }) {
+export function Stats({
+  items,
+}: {
+  items: {
+    label: string;
+    value: string | number;
+    note?: string;
+    tone?: "danger" | "warning" | "success";
+  }[];
+}) {
   return (
     <ul className="grid grid-cols-2 gap-3 lg:grid-cols-5">
       {items.map((s) => (
         <li key={s.label} className="flex flex-col gap-1 rounded-lg border border-border bg-card p-4 shadow-md">
           <span className="text-caption text-secondary">{s.label}</span>
-          <span className={`font-display ${typeof s.value === "string" && /[a-z]/i.test(s.value) && !/^\$/.test(s.value) ? "text-display-lg" : "text-display-2xl"} ${s.tone === "danger" ? "text-danger" : s.tone === "warning" ? "text-warning" : "text-primary"}`}>{s.value}</span>
+          <span
+            className={`font-display ${typeof s.value === "string" && /[a-z]/i.test(s.value) && !/^\$/.test(s.value) ? "text-display-lg" : "text-display-2xl"} ${s.tone === "danger" ? "text-danger" : s.tone === "warning" ? "text-warning" : "text-primary"}`}
+          >
+            {s.value}
+          </span>
           {s.note && <span className="text-caption text-secondary">{s.note}</span>}
         </li>
       ))}

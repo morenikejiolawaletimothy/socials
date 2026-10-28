@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Banner, Button, Card, Input, PageHeader, useToast } from "@/components/ui";
+import { Banner, Button, Card, Input, PageHeader, useConfirm } from "@/components/ui";
 import { money } from "@/lib/format";
 import { act, useData } from "@/lib/mock";
 import { plans } from "@/lib/pricing";
@@ -9,7 +9,7 @@ import { plans } from "@/lib/pricing";
 /** A7 Settings: prices and the rules the product runs on. Changes apply to new contracts only. */
 export default function SettingsPage() {
   const db = useData();
-  const toast = useToast();
+  const confirm = useConfirm();
   const [s, setS] = useState(db.settings);
   const num = (k: keyof typeof s) => (e: React.ChangeEvent<HTMLInputElement>) => setS({ ...s, [k]: Number(e.target.value) || 0 });
 
@@ -30,9 +30,31 @@ export default function SettingsPage() {
         </Card>
         <Card title="Money">
           <div className="flex flex-col gap-4">
-            <Input label="Approve refunds automatically below (USD)" value={String(s.autoRefundLimitCents / 100)} onChange={(e) => setS({ ...s, autoRefundLimitCents: (Number(e.target.value) || 0) * 100 })} help={`Now ${money(s.autoRefundLimitCents)}. Larger refunds wait for you.`} />
+            <Input
+              label="Approve refunds automatically below (USD)"
+              value={String(s.autoRefundLimitCents / 100)}
+              onChange={(e) =>
+                setS({
+                  ...s,
+                  autoRefundLimitCents: (Number(e.target.value) || 0) * 100,
+                })
+              }
+              help={`Now ${money(s.autoRefundLimitCents)}. Larger refunds wait for you.`}
+            />
             <Input label="Free period (days)" value={String(s.freeDays)} onChange={num("freeDays")} />
-            <Input label="Payment reminders (days before the free period ends)" value={s.reminderDays.join(", ")} onChange={(e) => setS({ ...s, reminderDays: e.target.value.split(",").map((x) => Number(x.trim())).filter((x) => !Number.isNaN(x)) })} />
+            <Input
+              label="Payment reminders (days before the free period ends)"
+              value={s.reminderDays.join(", ")}
+              onChange={(e) =>
+                setS({
+                  ...s,
+                  reminderDays: e.target.value
+                    .split(",")
+                    .map((x) => Number(x.trim()))
+                    .filter((x) => !Number.isNaN(x)),
+                })
+              }
+            />
           </div>
         </Card>
         <Card title="Paused accounts">
@@ -50,15 +72,27 @@ export default function SettingsPage() {
           </div>
         </Card>
       </div>
-      <Button
-        className="self-start"
-        onClick={async () => {
-          await act.saveSettings(s);
-          toast("Settings saved. They apply to new contracts.");
-        }}
-      >
-        Save settings
-      </Button>
+      <div className="flex flex-wrap gap-3">
+        <Button
+          className="self-start"
+          disabled={JSON.stringify(s) === JSON.stringify(db.settings)}
+          onClick={() =>
+            confirm({
+              title: "Save these settings?",
+              body: "They apply to new contracts from now on. Clients already signed keep their terms.",
+              warning: "The change is recorded in the audit log.",
+              confirmLabel: "Save settings",
+              action: () => act.saveSettings(s),
+              success: "Settings saved. They apply to new contracts.",
+            })
+          }
+        >
+          Save settings
+        </Button>
+        <Button variant="ghost" disabled={JSON.stringify(s) === JSON.stringify(db.settings)} onClick={() => setS(db.settings)}>
+          Discard changes
+        </Button>
+      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Avatar, Banner, Breadcrumbs, Button, Dialog, EmptyState, ProgressBar, Segmented, Skeleton, Switch, Tabs, Textarea, ToastProvider, useToast } from "@/components/ui";
+import { Avatar, Banner, Breadcrumbs, Button, Dialog, EmptyState, ProgressBar, Segmented, Skeleton, Switch, Tabs, Textarea, ToastProvider, useConfirm, useTask, useToast } from "@/components/ui";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -18,6 +18,9 @@ function Demo() {
   const [view, setView] = useState<"feed" | "board">("feed");
   const [open, setOpen] = useState(false);
   const toast = useToast();
+  const confirm = useConfirm();
+  const { run, pending } = useTask();
+  const wait = () => new Promise<void>((r) => setTimeout(r, 900));
 
   return (
     <>
@@ -57,8 +60,32 @@ function Demo() {
       <Section title="Dialog and toast">
         <div className="flex flex-wrap gap-3">
           <Button variant="secondary" onClick={() => setOpen(true)}>Open dialog</Button>
-          <Button variant="secondary" onClick={() => toast("Your changes are saved.")}>Show toast</Button>
+          <Button variant="secondary" onClick={() => toast("Your changes are saved.")}>Success toast</Button>
+          <Button variant="secondary" onClick={() => toast("That did not go through. Check your connection and try again.", "danger")}>Error toast</Button>
+          <Button variant="secondary" onClick={() => toast("Lead dropped.", "success", { action: { label: "Undo", onClick: () => toast("Lead is back.") } })}>Toast with Undo</Button>
+          <Button variant="secondary" loading={pending("save")} onClick={() => run("save", wait, "Saved.")}>
+            Loading button
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() =>
+              confirm({
+                title: "Delete this file?",
+                body: "It is removed from your Brand. Posts that already use it keep it.",
+                warning: "You cannot undo this.",
+                confirmLabel: "Delete",
+                tone: "danger",
+                action: wait,
+                success: "File deleted.",
+              })
+            }
+          >
+            Confirm before deleting
+          </Button>
         </div>
+        <p className="text-body-sm text-secondary">
+          Actions run through useTask: a spinner while it works, a success toast, and an error toast if it fails. Anything destructive or hard to undo asks first with useConfirm, says what will happen, and offers Undo where it can.
+        </p>
         <Dialog open={open} onClose={() => setOpen(false)} title="Take this post down?">
           <p className="text-body text-secondary">It will be removed from LinkedIn straight away.</p>
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">

@@ -1,55 +1,113 @@
 "use client";
 
-import { CheckCircle, Clock, Image as ImageIcon, Sparkle, WarningCircle } from "@phosphor-icons/react";
+import { CheckCircle, Clock, Image as ImageIcon, Sparkle, Trash, WarningCircle } from "@phosphor-icons/react";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, use, useState } from "react";
 import { PostPreview } from "@/components/content/PostPreview";
 import { Columns } from "@/components/layout/Columns";
 import { OffLimitsBox } from "@/components/manager/ClientTabs";
 import { rails } from "@/components/rails";
-import { Badge, Banner, Breadcrumbs, Button, Card, EmptyState, Tabs, Textarea, useToast } from "@/components/ui";
+import { Badge, Banner, Breadcrumbs, Button, Dialog, EmptyState, Card, Input, Tabs, Textarea, useConfirm, useTask, useToast } from "@/components/ui";
 import { ago, dayTime, dayTimeIn, fullName, time } from "@/lib/format";
 import { act, clientBundle, useMyManager, type ClientBundle, type Post } from "@/lib/mock";
 
 type Tab = "ideas" | "drafts" | "changes" | "client" | "schedule" | "scheduled" | "live";
 
 // Staff only: proposed ideas, each with its reason. Phase 2 generates these per client from the strategy and listening.
-const ideas = [
-  { title: "What the mobile money report gets wrong about settlement", reason: "Signal: the central bank report, and 3 investors on the list wrote about it. Fits topic 1.", format: "Opinion" },
-  { title: "The question from the student at Lagos Fintech Week", reason: "Moment the client added, with photos. Event posts do best within a week.", format: "Story" },
-  { title: "5 questions to ask a payments partner before you sign", reason: "Goal: investor and partner conversations. How-to posts got saves last month.", format: "How-to" },
-  { title: "Our first Ghana merchants, one year on", reason: "Past preference: the client approved every customer story so far.", format: "Story" },
+const firstIdeas: { title: string; reason: string; format: Post["format"] }[] = [
+  { title: "What the mobile money report gets wrong about settlement", reason: "Signal: the central bank report, and 3 investors on the list wrote about it. Fits topic 1.", format: "opinion" },
+  { title: "The question from the student at Lagos Fintech Week", reason: "Moment the client added, with photos. Event posts do best within a week.", format: "story" },
+  { title: "5 questions to ask a payments partner before you sign", reason: "Goal: investor and partner conversations. How-to posts got saves last month.", format: "how-to" },
+  { title: "Our first Ghana merchants, one year on", reason: "Past preference: the client approved every customer story so far.", format: "story" },
+];
+const moreIdeas: typeof firstIdeas = [
+  { title: "Why we hold local liquidity in every market", reason: "Topic 1, and it answers the most common comment on last week's post.", format: "how-to" },
+  { title: "The hire that changed how we build", reason: "Topic 3 (team). Hiring push next quarter.", format: "story" },
 ];
 
 const checkKind = { "off-limits": "Off limits", claim: "Claim", phrase: "Banned phrase", generic: "Generic", repeat: "Repeat", "alt-text": "Image description" };
+const nextWeekday9 = (days: number) => {
+  const d = new Date(Date.now() + days * 86_400_000);
+  d.setHours(9, 0, 0, 0);
+  return d.toISOString();
+};
+
+/** Pick a visual from the client's Brand photos. */
+function VisualPicker({ b, open, onClose, onPick }: { b: ClientBundle; open: boolean; onClose: () => void; onPick: (src: string, alt: string) => void }) {
+  const photos = b.files.filter((f) => f.section === "photos" && f.src);
+  return (
+    <Dialog open={open} onClose={onClose} title="Choose a visual">
+      <p className="text-body-sm text-secondary">From {b.user?.firstName}&apos;s Brand. Upload or use a template from the library in Phase 2.</p>
+      <ul className="grid grid-cols-3 gap-2">
+        {photos.map((f) => (
+          <li key={f.id}>
+            <button type="button" onClick={() => onPick(f.src!, f.name.replace(/[-_]/g, " ").replace(/\.\w+$/, ""))} className="relative block aspect-square w-full overflow-hidden rounded-md focus-visible:focus-ring">
+              <Image src={f.src!} alt={f.name} fill sizes="120px" className="object-cover transition-transform hover:scale-105" />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </Dialog>
+  );
+}
 
 /** M4 one draft: direct it, edit it, see versions and checks, then send to the client with a why-note and due time. */
 function DraftEditor({ post, b }: { post: Post; b: ClientBundle }) {
   const toast = useToast();
+  const confirm = useConfirm();
+  const { run, pending } = useTask();
   const [text, setText] = useState(post.text);
   const [direction, setDirection] = useState("");
   const [why, setWhy] = useState(post.why);
   const [version, setVersion] = useState(post.version ?? 1);
-  const [busy, setBusy] = useState(false);
+  const [picking, setPicking] = useState(false);
+  const [dismissing, setDismissing] = useState<string | null>(null);
+  const [dismissReason, setDismissReason] = useState("");
   const open = (post.checks ?? []).filter((k) => k.state === "open");
   const blocked = open.length > 0;
+  const dirty = text !== post.text || why !== post.why;
+  const first = b.user?.firstName ?? "the client";
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="text-caption text-secondary">
           {post.topic} · {post.format} · version {version}
+          {dirty && " · unsaved changes"}
         </span>
-        <Badge status={blocked ? "warning" : "success"}>{blocked ? `${open.length} check${open.length > 1 ? "s" : ""} to clear` : "Checks clear"}</Badge>
+        <span className="flex items-center gap-2">
+          <Badge status={blocked ? "warning" : "success"}>{blocked ? `${open.length} check${open.length > 1 ? "s" : ""} to clear` : "Checks clear"}</Badge>
+          <button
+            type="button"
+            aria-label="Delete draft"
+            onClick={() =>
+              confirm({
+                title: "Delete this draft?",
+                body: `"${post.text.split("\n")[0].slice(0, 80)}" and all its versions are removed. ${first} has not seen it.`,
+                warning: "You cannot undo this.",
+                confirmLabel: "Delete draft",
+                tone: "danger",
+                action: () => act.deletePost(post.id),
+                success: "Draft deleted.",
+              })
+            }
+            className="flex size-9 items-center justify-center rounded-full text-secondary hover:bg-danger-bg hover:text-danger focus-visible:focus-ring"
+          >
+            <Trash className="size-4" aria-hidden />
+          </button>
+        </span>
       </div>
 
       <Textarea label="Draft" rows={7} value={text} onChange={(e) => setText(e.target.value)} help={`${text.length} characters. LinkedIn shows about 210 before "See more".`} />
 
       <form
         className="flex flex-col gap-2 sm:flex-row sm:items-end"
-        onSubmit={(e) => {
+        onSubmit={async (e) => {
           e.preventDefault();
           if (!direction.trim()) return;
+          const ok = await run("rewrite", () => act.save());
+          if (!ok) return;
           setVersion((v) => v + 1);
           setText((t) => (direction.toLowerCase().includes("short") ? t.split("\n\n").slice(0, 2).join("\n\n") : `${t}\n\nWhat would you add?`));
           toast(`Version ${version + 1} ready: "${direction.trim()}"`);
@@ -67,25 +125,57 @@ function DraftEditor({ post, b }: { post: Post; b: ClientBundle }) {
             className="min-h-11 rounded-sm border border-border-strong bg-card px-4 text-body text-primary placeholder:text-neutral-400 focus-visible:border-primary-600 focus-visible:focus-ring"
           />
         </label>
-        <Button type="submit" variant="secondary">
-          Rewrite
+        <Button type="submit" variant="secondary" loading={pending("rewrite")}>
+          {pending("rewrite") ? "Rewriting" : "Rewrite"}
         </Button>
       </form>
 
       <div className="flex items-start gap-3 rounded-md bg-neutral-25 p-4">
-        <ImageIcon className="mt-0.5 size-5 shrink-0 text-primary-600" aria-hidden />
-        <div className="flex flex-col gap-1">
+        {post.image ? (
+          <span className="relative size-16 shrink-0 overflow-hidden rounded-sm">
+            <Image src={post.image.src} alt={post.image.alt} fill sizes="64px" className="object-cover" />
+          </span>
+        ) : (
+          <ImageIcon className="mt-0.5 size-5 shrink-0 text-primary-600" aria-hidden />
+        )}
+        <div className="flex flex-1 flex-col gap-1">
           <span className="text-body-sm font-medium text-primary">Visual</span>
           <span className="text-body-sm text-secondary">
-            {post.image
-              ? `Attached: ${post.image.alt}.`
-              : "Suggested: the stage photo from the client's Brand, or text on a brand-coloured card. A quote card from the template library would also work."}
+            {post.image ? `Attached: ${post.image.alt}.` : "Suggested: the stage photo from the client's Brand, or text on a brand-coloured card. A quote card from the template library would also work."}
           </span>
-          <button type="button" onClick={() => toast("Choose from Brand, templates or upload.")} className="self-start rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
-            {post.image ? "Change visual" : "Add a visual"}
-          </button>
+          <span className="flex gap-4">
+            <button type="button" onClick={() => setPicking(true)} className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
+              {post.image ? "Change visual" : "Add a visual"}
+            </button>
+            {post.image && (
+              <button
+                type="button"
+                onClick={() =>
+                  confirm({
+                    title: "Remove the visual?",
+                    body: "The post goes out as text only, unless you add another.",
+                    confirmLabel: "Remove",
+                    action: () => act.setPostStatus(post.id, post.status, { image: undefined }),
+                    success: "Visual removed.",
+                  })
+                }
+                className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring"
+              >
+                Remove
+              </button>
+            )}
+          </span>
         </div>
       </div>
+      <VisualPicker
+        b={b}
+        open={picking}
+        onClose={() => setPicking(false)}
+        onPick={async (src, alt) => {
+          setPicking(false);
+          await run("visual", () => act.setPostStatus(post.id, post.status, { image: { src, alt } }), "Visual attached.");
+        }}
+      />
 
       {(post.checks ?? []).length > 0 && (
         <ul className="flex flex-col gap-2">
@@ -101,11 +191,11 @@ function DraftEditor({ post, b }: { post: Post; b: ClientBundle }) {
               </span>
               {k.state === "open" && (
                 <span className="flex gap-2">
-                  <Button variant="secondary" onClick={() => act.setCheck(post.id, k.id, "fixed")}>
+                  <Button variant="secondary" loading={pending(`fix-${k.id}`)} onClick={() => run(`fix-${k.id}`, () => act.setCheck(post.id, k.id, "fixed"), "Check cleared.")}>
                     Fixed
                   </Button>
                   {k.kind !== "off-limits" && (
-                    <Button variant="ghost" onClick={() => act.setCheck(post.id, k.id, "dismissed")}>
+                    <Button variant="ghost" onClick={() => setDismissing(k.id)}>
                       Dismiss
                     </Button>
                   )}
@@ -116,28 +206,56 @@ function DraftEditor({ post, b }: { post: Post; b: ClientBundle }) {
           {open.some((k) => k.kind === "off-limits") && <li className="text-caption text-secondary">Off-limits flags cannot be dismissed. Change the draft, then mark it fixed.</li>}
         </ul>
       )}
+      <Dialog open={!!dismissing} onClose={() => setDismissing(null)} title="Dismiss this check?">
+        <p className="text-body-sm text-secondary">Say why it does not apply. The reason is kept with the post and the owner can see it.</p>
+        <Textarea label="Reason" rows={2} value={dismissReason} onChange={(e) => setDismissReason(e.target.value)} />
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Button variant="ghost" onClick={() => setDismissing(null)}>
+            Cancel
+          </Button>
+          <Button
+            disabled={!dismissReason.trim()}
+            loading={pending("dismiss")}
+            onClick={async () => {
+              if (dismissing && (await run("dismiss", () => act.setCheck(post.id, dismissing, "dismissed"), "Check dismissed, with your reason."))) {
+                setDismissing(null);
+                setDismissReason("");
+              }
+            }}
+          >
+            Dismiss
+          </Button>
+        </div>
+      </Dialog>
 
-      <Textarea label={`Why this post (${b.user?.firstName ?? "the client"} sees this)`} rows={2} value={why} onChange={(e) => setWhy(e.target.value)} />
+      <Textarea label={`Why this post (${first} sees this)`} rows={2} value={why} onChange={(e) => setWhy(e.target.value)} />
 
-      <Button
-        className="self-start"
-        disabled={blocked || busy}
-        onClick={async () => {
-          setBusy(true);
-          await act.setPostStatus(post.id, "awaiting-client", { text, why, version, dueAt: new Date(Date.now() + 2 * 86_400_000).toISOString() });
-          setBusy(false);
-          toast(`Sent to ${b.user?.firstName}. Due in 2 days.`);
-        }}
-      >
-        {blocked ? "Clear the checks to send" : busy ? "Sending" : `Send to ${b.user?.firstName ?? "client"}`}
-      </Button>
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <Button
+          disabled={blocked}
+          onClick={() =>
+            confirm({
+              title: `Send to ${first}?`,
+              body: `${first} is told and has 2 days to review. ${b.client?.review.ifNoReply === "wait" ? "If they do not reply, the post is held." : "If they do not reply within 24 hours, it is approved automatically."}`,
+              confirmLabel: "Send",
+              action: () => act.setPostStatus(post.id, "awaiting-client", { text, why, version, dueAt: new Date(Date.now() + 2 * 86_400_000).toISOString() }),
+              success: `Sent to ${first}. Due in 2 days.`,
+            })
+          }
+        >
+          {blocked ? "Clear the checks to send" : `Send to ${first}`}
+        </Button>
+        <Button variant="secondary" disabled={!dirty} loading={pending("save")} onClick={() => run("save", () => act.setPostStatus(post.id, post.status, { text, why, version }), "Draft saved.")}>
+          {pending("save") ? "Saving" : "Save draft"}
+        </Button>
+      </div>
     </div>
   );
 }
 
 /** M5 changes asked: the client's feedback becomes a short list to tick off, then send back. */
 function ChangesEditor({ post, b }: { post: Post; b: ClientBundle }) {
-  const toast = useToast();
+  const { run, pending } = useTask();
   const latest = post.feedback?.[post.feedback.length - 1];
   const items = ["Soften the opening line", "Do not suggest dashboards are bad", "Keep the point about nurses' time"];
   const [done, setDone] = useState<string[]>([]);
@@ -163,25 +281,53 @@ function ChangesEditor({ post, b }: { post: Post; b: ClientBundle }) {
       <Button
         className="self-start"
         disabled={done.length < items.length}
-        onClick={async () => {
-          await act.setPostStatus(post.id, "awaiting-client", { dueAt: new Date(Date.now() + 86_400_000).toISOString() });
-          toast(`New version sent to ${b.user?.firstName}.`);
-        }}
+        loading={pending("send")}
+        onClick={() => run("send", () => act.setPostStatus(post.id, "awaiting-client", { dueAt: new Date(Date.now() + 86_400_000).toISOString() }), `New version sent to ${b.user?.firstName}.`)}
       >
-        {done.length < items.length ? `${items.length - done.length} changes left` : "Send back"}
+        {done.length < items.length ? `${items.length - done.length} changes left` : pending("send") ? "Sending" : "Send back"}
       </Button>
     </div>
   );
 }
 
+/** Change a post's time: suggested time first, any time allowed. */
+function TimeDialog({ open, onClose, initial, onSave, busy }: { open: boolean; onClose: () => void; initial: string; onSave: (iso: string) => void; busy: boolean }) {
+  const local = (iso: string) => {
+    const d = new Date(iso);
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+  };
+  const [value, setValue] = useState(local(initial));
+  const [error, setError] = useState<string>();
+  return (
+    <Dialog open={open} onClose={onClose} title="Choose a time">
+      <Input label="Day and time" type="datetime-local" value={value} onChange={(e) => { setValue(e.target.value); setError(undefined); }} error={error} help="In the client's time zone." />
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <Button variant="ghost" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button
+          loading={busy}
+          onClick={() => {
+            const iso = new Date(value).toISOString();
+            if (new Date(iso).getTime() < Date.now()) return setError("Pick a time in the future.");
+            onSave(iso);
+          }}
+        >
+          Schedule
+        </Button>
+      </div>
+    </Dialog>
+  );
+}
+
 /** M5 approved: confirm or change the suggested time, with both time zones. */
 function Scheduler({ post, b }: { post: Post; b: ClientBundle }) {
-  const toast = useToast();
-  const suggested = (() => {
-    const d = new Date(Date.now() + 2 * 86_400_000);
-    d.setHours(9, 0, 0, 0);
-    return d.toISOString();
-  })();
+  const { run, pending } = useTask();
+  const [choosing, setChoosing] = useState(false);
+  const [suggested] = useState(() => nextWeekday9(2));
+  const schedule = async (iso: string) => {
+    if (await run("schedule", () => act.setPostStatus(post.id, "scheduled", { scheduledFor: iso }), `Scheduled for ${dayTimeIn(iso)}.`)) setChoosing(false);
+  };
   return (
     <div className="flex flex-col gap-3 rounded-md bg-neutral-25 p-4">
       <span className="flex items-center gap-2 text-body-sm font-medium text-primary">
@@ -191,30 +337,106 @@ function Scheduler({ post, b }: { post: Post; b: ClientBundle }) {
         {time(suggested)} for {b.user?.firstName} ({b.user?.timeZone.replace("_", " ")}), {time(suggested)} for you. Weekday mornings do best for this audience.
       </span>
       <div className="flex gap-2">
-        <Button
-          onClick={async () => {
-            await act.setPostStatus(post.id, "scheduled", { scheduledFor: suggested });
-            toast(`Scheduled for ${dayTimeIn(suggested)}.`);
-          }}
-        >
+        <Button loading={pending("schedule") && !choosing} onClick={() => schedule(suggested)}>
           Schedule
         </Button>
-        <Button variant="ghost" onClick={() => toast("Pick another time from the calendar.")}>
+        <Button variant="ghost" onClick={() => setChoosing(true)}>
           Change time
         </Button>
       </div>
+      {choosing && <TimeDialog open onClose={() => setChoosing(false)} initial={suggested} busy={pending("schedule")} onSave={schedule} />}
     </div>
   );
+}
+
+/** M5 scheduled: move the time, or take it off the schedule. */
+function ScheduledActions({ post }: { post: Post }) {
+  const confirm = useConfirm();
+  const { run, pending } = useTask();
+  const [choosing, setChoosing] = useState(false);
+  return (
+    <div className="flex flex-wrap gap-2">
+      <Button variant="secondary" onClick={() => setChoosing(true)}>
+        Change time
+      </Button>
+      <Button
+        variant="ghost"
+        onClick={() =>
+          confirm({
+            title: "Take this post off the schedule?",
+            body: "It goes back to To schedule. It will not go out until you schedule it again.",
+            confirmLabel: "Unschedule",
+            action: () => act.setPostStatus(post.id, "approved", { scheduledFor: undefined }),
+            success: "Post taken off the schedule.",
+          })
+        }
+      >
+        Unschedule
+      </Button>
+      {choosing && (
+        <TimeDialog
+          open
+          onClose={() => setChoosing(false)}
+          initial={post.scheduledFor ?? nextWeekday9(1)}
+          busy={pending("move")}
+          onSave={async (iso) => {
+            if (await run("move", () => act.setPostStatus(post.id, "scheduled", { scheduledFor: iso }), `Moved to ${dayTimeIn(iso)}.`)) setChoosing(false);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function LiveActions({ post, b }: { post: Post; b: ClientBundle }) {
+  const { run, pending } = useTask();
+  if (post.fixRequested)
+    return (
+      <Banner
+        tone="danger"
+        title="Fix asked for"
+        action={
+          <Button variant="secondary" loading={pending("fixed")} onClick={() => run("fixed", () => act.setPostStatus(post.id, "published", { fixRequested: undefined }), `Fixed. ${b.user?.firstName} is told.`)}>
+            Mark fixed
+          </Button>
+        }
+      >
+        {post.fixRequested}
+      </Banner>
+    );
+  if (post.status === "failed")
+    return (
+      <Banner
+        tone="danger"
+        title="Did not post"
+        action={
+          <Button
+            variant="secondary"
+            loading={pending("retry")}
+            onClick={() => run("retry", () => act.setPostStatus(post.id, "scheduled", { failedReason: undefined, scheduledFor: new Date(Date.now() + 3_600_000).toISOString() }), "Fixed and scheduled for an hour from now.")}
+          >
+            Fix and retry
+          </Button>
+        }
+      >
+        {post.failedReason}
+      </Banner>
+    );
+  if (post.status === "taken-down") return <p className="text-body-sm text-secondary">The client took this post down.</p>;
+  return null;
 }
 
 function ContentWorkspace({ id }: { id: string }) {
   const router = useRouter();
   const toast = useToast();
+  const { run, pending } = useTask();
   const tab = (useSearchParams().get("tab") as Tab) || "drafts";
   const { db } = useMyManager();
   const b = clientBundle(db, id);
+  const [ideas, setIdeas] = useState(firstIdeas);
   if (!b.client || !b.user) return <EmptyState title="Client not found">Go back to Clients.</EmptyState>;
   const author = { name: fullName(b.user), title: b.user.title };
+  const goTo = (t: Tab) => router.replace(`/manager/clients/${id}/content?tab=${t}`, { scroll: false });
 
   const groups: Record<Exclude<Tab, "ideas">, Post[]> = {
     drafts: b.posts.filter((p) => p.status === "draft" || p.status === "manager-review"),
@@ -238,9 +460,9 @@ function ContentWorkspace({ id }: { id: string }) {
           <Tabs
             label="Content stages"
             value={tab}
-            onChange={(t) => router.replace(`/manager/clients/${id}/content?tab=${t}`, { scroll: false })}
+            onChange={goTo}
             tabs={[
-              { value: "ideas", label: "Ideas" },
+              { value: "ideas", label: "Ideas", count: ideas.length },
               { value: "drafts", label: "Drafts", count: groups.drafts.length },
               { value: "changes", label: "Changes asked", count: groups.changes.length },
               { value: "client", label: "With client", count: groups.client.length },
@@ -254,29 +476,53 @@ function ContentWorkspace({ id }: { id: string }) {
         {tab === "ideas" ? (
           <div className="flex flex-col gap-4 p-6">
             <p className="flex items-center gap-1 text-body-sm text-secondary">
-              <Sparkle className="size-4 text-primary-600" aria-hidden /> Proposed for next week. Nothing here touches the off-limits list. Pick, change or ask for more.
+              <Sparkle className="size-4 text-primary-600" aria-hidden /> Proposed for next week. Nothing here touches the off-limits list. Pick, skip or ask for more.
             </p>
             <ul className="flex flex-col gap-3">
               {ideas.map((i) => (
                 <li key={i.title} className="flex flex-col gap-2 rounded-md border border-border p-4">
                   <span className="flex items-start justify-between gap-3">
                     <span className="text-body font-medium text-primary">{i.title}</span>
-                    <span className="shrink-0 text-caption text-secondary">{i.format}</span>
+                    <span className="shrink-0 text-caption capitalize text-secondary">{i.format}</span>
                   </span>
                   <span className="text-body-sm text-secondary">{i.reason}</span>
                   <span className="flex gap-2">
-                    <Button variant="secondary" onClick={() => toast("Picked. A first draft is being written in the client's voice.")}>
-                      Pick
+                    <Button
+                      variant="secondary"
+                      loading={pending(i.title)}
+                      onClick={async () => {
+                        const ok = await run(i.title, () => act.pickIdea(id, i.title, i.format, i.reason), {
+                          text: "A first draft is ready in the client's voice.",
+                          action: { label: "Open drafts", onClick: () => goTo("drafts") },
+                        });
+                        if (ok) setIdeas((list) => list.filter((x) => x.title !== i.title));
+                      }}
+                    >
+                      {pending(i.title) ? "Drafting" : "Pick"}
                     </Button>
-                    <Button variant="ghost" onClick={() => toast("Noted. The next ideas will avoid this.")}>
-                      Not this
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setIdeas((list) => list.filter((x) => x.title !== i.title));
+                        toast("Skipped. The next ideas will avoid this.", "success", { action: { label: "Undo", onClick: () => setIdeas((list) => [...list, i]) } });
+                      }}
+                    >
+                      Skip
                     </Button>
                   </span>
                 </li>
               ))}
+              {!ideas.length && <li className="text-body-sm text-secondary">No ideas left. Ask for more.</li>}
             </ul>
-            <Button variant="secondary" className="self-start" onClick={() => toast("4 more ideas on the way.")}>
-              More ideas
+            <Button
+              variant="secondary"
+              className="self-start"
+              loading={pending("more")}
+              onClick={async () => {
+                if (await run("more", () => act.save(), "2 more ideas added.")) setIdeas((list) => [...list, ...moreIdeas.filter((m) => !list.some((x) => x.title === m.title))]);
+              }}
+            >
+              {pending("more") ? "Finding ideas" : "More ideas"}
             </Button>
           </div>
         ) : (
@@ -302,17 +548,8 @@ function ContentWorkspace({ id }: { id: string }) {
                       </p>
                     )}
                     {tab === "schedule" && <Scheduler post={p} b={b} />}
-                    {tab === "live" && p.fixRequested && (
-                      <Banner tone="danger" title="Fix asked for" action={<Button variant="secondary" onClick={async () => { await act.setPostStatus(p.id, "published", { fixRequested: undefined }); toast(`Fixed. ${b.user!.firstName} is told.`); }}>Mark fixed</Button>}>
-                        {p.fixRequested}
-                      </Banner>
-                    )}
-                    {tab === "live" && p.status === "failed" && (
-                      <Banner tone="danger" title="Did not post" action={<Button variant="secondary" onClick={async () => { await act.setPostStatus(p.id, "scheduled", { failedReason: undefined, scheduledFor: new Date(Date.now() + 3_600_000).toISOString() }); toast("Fixed and scheduled for an hour from now."); }}>Fix and retry</Button>}>
-                        {p.failedReason}
-                      </Banner>
-                    )}
-                    {tab === "live" && p.status === "taken-down" && <p className="text-body-sm text-secondary">The client took this post down.</p>}
+                    {tab === "scheduled" && <ScheduledActions post={p} />}
+                    {tab === "live" && <LiveActions post={p} b={b} />}
                   </PostPreview>
                 )}
               </li>

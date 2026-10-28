@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Avatar, Button, Card, Dialog, useToast } from "@/components/ui";
+import { Avatar, Button, Card, useConfirm, useTask } from "@/components/ui";
 import { day, fullName, time } from "@/lib/format";
 import { act, useMyManager, type Call } from "@/lib/mock";
 
@@ -20,9 +20,9 @@ const kind = { goals: "Goals call", strategy: "Strategy call", "check-in": "Chec
 /** M10 Calls and availability: booked calls by day, open slots like a calendar, and rescheduling from your side. */
 export default function CallsPage() {
   const { db, manager, user } = useMyManager();
-  const toast = useToast();
+  const confirm = useConfirm();
+  const { run, pending } = useTask();
   const [slots, setSlots] = useState<string[]>(manager?.slots ?? []);
-  const [moving, setMoving] = useState<Call | null>(null);
   const calls = db.calls.filter((c) => c.managerId === manager?.id && c.status === "booked").sort((a, b) => a.at.localeCompare(b.at));
   const byDay = calls.reduce<Record<string, Call[]>>((acc, c) => {
     (acc[day(c.at)] ??= []).push(c);
@@ -58,7 +58,19 @@ export default function CallsPage() {
                         <a href={c.meetUrl} className="inline-flex items-center gap-1 rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
                           <VideoCamera className="size-4" aria-hidden /> Join
                         </a>
-                        <button type="button" onClick={() => setMoving(c)} className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            confirm({
+                              title: "Reschedule this call?",
+                              body: `${clientName(c)} is told at once and picks a new time from your open slots.`,
+                              warning: "Only reschedule when you really have to. Clients plan around these calls, and it counts on your record.",
+                              confirmLabel: "Ask client to pick a new time",
+                              action: () => act.rescheduleCall(c.id),
+                              success: `${clientName(c)} has been asked to pick a new time.`,
+                            })
+                          }
+                          className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
                           Reschedule
                         </button>
                       </span>
@@ -103,36 +115,13 @@ export default function CallsPage() {
               </div>
             ))}
           </div>
-          <Button
-            className="self-start"
-            onClick={async () => {
-              if (manager) await act.setSlots(manager.id, slots);
-              toast("Slots saved. Clients see the new times now.");
-            }}
-          >
-            Save slots
+          <Button className="self-start" disabled={!slots.length || slots.join() === (manager?.slots ?? []).join()} loading={pending("slots")} onClick={() => manager && run("slots", () => act.setSlots(manager.id, slots), "Slots saved. Clients see the new times now.")}>
+            {pending("slots") ? "Saving" : "Save slots"}
           </Button>
+          {!slots.length && <p className="text-body-sm text-danger">Open at least one slot, so clients can book their calls.</p>}
         </div>
       </Card>
 
-      <Dialog open={!!moving} onClose={() => setMoving(null)} title="Reschedule this call?">
-        <p className="text-body text-secondary">
-          {moving && `${clientName(moving)} is told at once and picks a new time from your open slots. Only reschedule when you really have to: clients plan around these calls.`}
-        </p>
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => setMoving(null)}>
-            Keep the call
-          </Button>
-          <Button
-            onClick={() => {
-              setMoving(null);
-              toast("The client has been asked to pick a new time.");
-            }}
-          >
-            Ask client to pick a new time
-          </Button>
-        </div>
-      </Dialog>
     </Columns>
   );
 }

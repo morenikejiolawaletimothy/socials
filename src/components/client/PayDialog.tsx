@@ -47,11 +47,16 @@ export function PayDialog({
             setBusy(false);
             return setError("Your card was declined. Try again, or use another card.");
           }
-          await act.payNow(clientId);
+          try {
+            await act.payNow(clientId);
+          } catch {
+            setBusy(false);
+            return setError("We could not reach the payment service. Nothing was charged. Try again in a moment.");
+          }
           setBusy(false);
           onClose();
           onPaid?.();
-          toast("Payment received. Thank you.");
+          toast("Payment received. Your receipt is in Contract.");
         }}
       >
         <p className="text-body text-primary">
@@ -69,7 +74,7 @@ export function PayDialog({
           <Button variant="ghost" onClick={onClose}>
             Cancel
           </Button>
-          <Button type="submit" disabled={busy}>
+          <Button type="submit" loading={busy}>
             {busy ? "Paying" : `Pay ${money(amountCents)}`}
           </Button>
         </div>

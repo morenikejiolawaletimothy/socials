@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Badge, Breadcrumbs, Button, Card, Textarea, useToast } from "@/components/ui";
+import { Badge, Breadcrumbs, Button, Card, Textarea, useConfirm, useTask } from "@/components/ui";
 import { agoIn } from "@/lib/format";
 import { act, useMyClient, type Complaint } from "@/lib/mock";
 
@@ -20,11 +20,11 @@ const statusLabel = { open: "Received", "in-review": "Being looked at", resolved
 /** C12 Raise a complaint: what went wrong, describe it, attach a file, send. Status shown afterwards. */
 export default function ComplaintPage() {
   const { client, complaints } = useMyClient();
-  const toast = useToast();
+  const confirm = useConfirm();
+  const { run, pending } = useTask();
   const [kind, setKind] = useState<Complaint["kind"] | "">("");
   const [text, setText] = useState("");
   const [errors, setErrors] = useState<{ kind?: string; text?: string }>({});
-  const [busy, setBusy] = useState(false);
   if (!client) return null;
 
   return (
@@ -40,12 +40,10 @@ export default function ComplaintPage() {
             if (text.trim().length < 10) next.text = "Tell us a little more, so we can look into it.";
             setErrors(next);
             if (Object.keys(next).length || !kind) return;
-            setBusy(true);
-            await act.raiseComplaint(client.id, kind, text.trim());
-            setBusy(false);
-            setKind("");
-            setText("");
-            toast("Sent. The owner will reply within 1 working day.");
+            if (await run("send", () => act.raiseComplaint(client.id, kind, text.trim()), "Sent. The owner will reply within 1 working day.")) {
+              setKind("");
+              setText("");
+            }
           }}
         >
           <p className="text-body-sm text-secondary">The owner of Bluecut reads every complaint and replies within 1 working day.</p>
@@ -65,8 +63,8 @@ export default function ComplaintPage() {
             <input type="file" className="text-body-sm text-secondary file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-border-strong file:bg-card file:px-4 file:py-2 file:text-body-sm file:font-medium file:text-primary-700" />
             <span className="text-caption text-secondary">A screenshot or document, up to 25 MB.</span>
           </label>
-          <Button type="submit" className="self-start" disabled={busy}>
-            {busy ? "Sending" : "Send"}
+          <Button type="submit" className="self-start" loading={pending("send")}>
+            {pending("send") ? "Sending" : "Send"}
           </Button>
         </form>
       </Card>
@@ -82,7 +80,26 @@ export default function ComplaintPage() {
                 </span>
                 <span className="text-body-sm text-secondary">{c.text}</span>
                 {c.outcome && <span className="text-body-sm text-primary">Outcome: {c.outcome}</span>}
-                <span className="text-caption text-secondary">Sent {agoIn(c.at)}</span>
+                <span className="flex items-center justify-between gap-3">
+                  <span className="text-caption text-secondary">Sent {agoIn(c.at)}</span>
+                  {c.status !== "resolved" && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        confirm({
+                          title: "Withdraw this complaint?",
+                          body: "The owner stops looking into it. You can raise a new one any time.",
+                          confirmLabel: "Withdraw",
+                          action: () => act.withdrawComplaint(c.id),
+                          success: "Complaint withdrawn.",
+                        })
+                      }
+                      className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring"
+                    >
+                      Withdraw
+                    </button>
+                  )}
+                </span>
               </li>
             ))}
           </ul>

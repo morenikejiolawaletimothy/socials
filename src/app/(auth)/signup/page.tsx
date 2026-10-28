@@ -94,7 +94,7 @@ export default function SignUpPage() {
             <p className="text-caption text-secondary">
               By creating an account you agree to our <TextLink href="/terms">terms</TextLink> and <TextLink href="/privacy">privacy policy</TextLink>.
             </p>
-            <Button type="submit" fullWidth disabled={busy !== null}>
+            <Button type="submit" fullWidth disabled={busy !== null} loading={busy === "email"}>
               {busy === "email" ? "Creating your account" : "Create account"}
             </Button>
           </motion.form>

@@ -3,10 +3,12 @@
 import { useRouter } from "next/navigation";
 import { fullName } from "@/lib/format";
 import { act, useMyManager } from "@/lib/mock";
+import { useToast } from "@/components/ui";
 
 /** A2 step in: shown while the owner works in a manager's workspace. Clients see no change. */
 export function CoveringBanner() {
   const router = useRouter();
+  const toast = useToast();
   const { user, covering } = useMyManager();
   if (!covering) return null;
   return (
@@ -19,6 +21,7 @@ export function CoveringBanner() {
           type="button"
           onClick={() => {
             act.setCovering(null);
+            toast(`You stopped covering for ${user?.firstName}.`, "info");
             router.push("/admin/managers");
           }}
           className="rounded-sm text-body-sm font-medium text-primary-700 hover:underline focus-visible:focus-ring"

@@ -60,5 +60,26 @@ export function useDb<T>(selector: (db: Db) => T): T {
   );
 }
 
-/** Simulated network delay so loading states are real. */
-export const delay = (ms = 350) => new Promise((r) => setTimeout(r, ms));
+/* Demo only: "Simulate errors" in the demo bar makes every action fail, so error states can be checked. */
+let failMode = false;
+const failListeners = new Set<() => void>();
+export function setFailMode(on: boolean) {
+  failMode = on;
+  failListeners.forEach((l) => l());
+}
+export function useFailMode() {
+  return useSyncExternalStore(
+    (l) => {
+      failListeners.add(l);
+      return () => failListeners.delete(l);
+    },
+    () => failMode,
+    () => false,
+  );
+}
+
+/** Simulated network delay so loading states are real. Fails while "Simulate errors" is on. */
+export async function delay(ms = 450) {
+  await new Promise((r) => setTimeout(r, ms));
+  if (failMode) throw new Error("Simulated failure");
+}

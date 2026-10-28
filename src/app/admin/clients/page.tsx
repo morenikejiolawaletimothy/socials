@@ -4,70 +4,11 @@ import { Sparkle } from "@phosphor-icons/react";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { ClientCell, Table, managerName, selectClass, td } from "@/components/admin/parts";
-import { Badge, Banner, Button, Card, Dialog, PageHeader, ProgressBar, useToast } from "@/components/ui";
-import { daysFrom, fullName, plural } from "@/lib/format";
-import { act, useData, type Client, type Db } from "@/lib/mock";
+import { AssignDialog, suggest } from "@/components/admin/AssignDialog";
+import { Badge, Button, Card, PageHeader, ProgressBar } from "@/components/ui";
+import { daysFrom, plural } from "@/lib/format";
+import { useData, type Client } from "@/lib/mock";
 import { statusBadge } from "@/lib/status";
-
-/** A2: the platform suggests a manager by free capacity, industry and time zone. Full managers cannot be chosen. */
-function suggest(db: Db, c: Client) {
-  return db.managers
-    .filter((m) => m.status === "active")
-    .map((m) => {
-      const load = db.clients.filter((x) => x.managerId === m.id).length;
-      const industry = m.industries.includes(c.industry);
-      const tz = db.users.find((u) => u.id === m.userId)?.timeZone === db.users.find((u) => u.id === c.userId)?.timeZone;
-      return { m, load, full: load >= m.maxClients, industry, tz, score: (industry ? 3 : 0) + (tz ? 2 : 0) + (m.maxClients - load) / 10 };
-    })
-    .sort((a, b) => b.score - a.score);
-}
-
-function AssignDialog({ db, client, onClose }: { db: Db; client: Client; onClose: () => void }) {
-  const toast = useToast();
-  const options = suggest(db, client);
-  const [pick, setPick] = useState(options.find((o) => !o.full)?.m.id ?? "");
-  const top = options[0];
-  return (
-    <Dialog open onClose={onClose} title={`Assign a manager to ${fullName(db.users.find((u) => u.id === client.userId))}`}>
-      {top && (
-        <Banner tone="info" title={`Suggested: ${managerName(db, top.m.id)}`}>
-          {[top.industry && `Works in ${client.industry.toLowerCase()}`, top.tz && "Same time zone", `${top.m.maxClients - top.load} places free`].filter(Boolean).join(". ")}.
-        </Banner>
-      )}
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-2 text-body-sm font-medium text-primary">Choose a manager</legend>
-        {options.map((o) => (
-          <label key={o.m.id} className={`flex items-center gap-3 rounded-md border p-3 ${o.full ? "cursor-not-allowed opacity-50" : "cursor-pointer"} ${pick === o.m.id ? "border-primary-600 bg-primary-50" : "border-border"}`}>
-            <input type="radio" name="manager" disabled={o.full} checked={pick === o.m.id} onChange={() => setPick(o.m.id)} className="size-4 accent-primary-600" />
-            <span className="flex flex-1 flex-col">
-              <span className="text-body-sm font-medium text-primary">
-                {managerName(db, o.m.id)} {o === top && <span className="text-caption text-primary-600">Suggested</span>}
-              </span>
-              <span className="text-caption text-secondary">
-                {o.load} of {o.m.maxClients} clients. {o.m.industries.join(", ")}.{o.full ? " Full." : ""}
-              </span>
-            </span>
-          </label>
-        ))}
-      </fieldset>
-      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button variant="ghost" onClick={onClose}>
-          Cancel
-        </Button>
-        <Button
-          disabled={!pick}
-          onClick={async () => {
-            await act.assignManager(client.id, pick);
-            onClose();
-            toast(`${managerName(db, pick)} assigned. The client is told who their manager is.`);
-          }}
-        >
-          Confirm
-        </Button>
-      </div>
-    </Dialog>
-  );
-}
 
 function ClientsPage() {
   const db = useData();
@@ -76,9 +17,7 @@ function ClientsPage() {
   const [manager, setManager] = useState("all");
   const [assigning, setAssigning] = useState<Client | null>(null);
   const list = db.clients.filter(
-    (c) =>
-      (status === "all" || (status === "unassigned" ? !c.managerId : status === "at-risk" ? Boolean(c.atRisk) : c.status === status)) &&
-      (manager === "all" || c.managerId === manager),
+    (c) => (status === "all" || (status === "unassigned" ? !c.managerId : status === "at-risk" ? Boolean(c.atRisk) : c.status === status)) && (manager === "all" || c.managerId === manager),
   );
   const waiting = db.clients.filter((c) => !c.managerId);
 

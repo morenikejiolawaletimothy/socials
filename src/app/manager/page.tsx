@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Avatar, Button, Card, Segmented, Textarea, useToast } from "@/components/ui";
+import { Avatar, Button, Card, Segmented, Textarea, useTask } from "@/components/ui";
 import { dayTimeIn, fullName, plural, time } from "@/lib/format";
 import { act, useMyManager, type Db, type ManagerTask } from "@/lib/mock";
 
@@ -41,7 +41,7 @@ function TaskRow({ t, db, primary }: { t: ManagerTask; db: Db; primary?: boolean
 
 /** M1: a missed due time asks for a short reason. Repeated misses go to the owner. */
 function MissedCard({ tasks, db }: { tasks: ManagerTask[]; db: Db }) {
-  const toast = useToast();
+  const { run, pending } = useTask();
   const [reason, setReason] = useState("");
   const [sent, setSent] = useState(false);
   const late = tasks.filter((t) => t.group === "work" && t.column !== "done" && new Date(t.dueAt).getTime() < Date.now());
@@ -57,9 +57,9 @@ function MissedCard({ tasks, db }: { tasks: ManagerTask[]; db: Db }) {
           variant="secondary"
           className="self-start"
           disabled={!reason.trim()}
-          onClick={() => {
-            setSent(true);
-            toast("Thanks. Finish it as soon as you can.");
+          loading={pending("reason")}
+          onClick={async () => {
+            if (await run("reason", () => act.save(), "Thanks. Finish it as soon as you can.")) setSent(true);
           }}
         >
           Send reason
@@ -78,6 +78,7 @@ const columns: { key: ManagerTask["column"]; label: string }[] = [
 
 /** M1 Board: the same tasks in columns. Drag between To do and Doing; the rest move on their own. */
 function Board({ tasks, db }: { tasks: ManagerTask[]; db: Db }) {
+  const { run } = useTask();
   const [mobileCol, setMobileCol] = useState<ManagerTask["column"]>("todo");
   const [dragging, setDragging] = useState<string | null>(null);
   const [over, setOver] = useState<string | null>(null);
@@ -102,7 +103,11 @@ function Board({ tasks, db }: { tasks: ManagerTask[]; db: Db }) {
               }}
               onDragLeave={() => setOver(null)}
               onDrop={() => {
-                if (dragging && droppable) act.moveTask(dragging, col.key);
+                const t = tasks.find((x) => x.id === dragging);
+                if (t && droppable && t.column !== col.key) {
+                  const from = t.column;
+                  run("move", () => act.moveTask(t.id, col.key), { text: `Moved to ${col.label}.`, action: { label: "Undo", onClick: () => act.moveTask(t.id, from) } });
+                }
                 setDragging(null);
                 setOver(null);
               }}

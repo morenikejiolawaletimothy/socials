@@ -1,3 +1,4 @@
+import { CircleNotch } from "@phosphor-icons/react/dist/ssr";
 import type { ButtonHTMLAttributes } from "react";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
@@ -15,6 +16,8 @@ const variants: Record<Variant, string> = {
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: Variant;
   fullWidth?: boolean;
+  /** Shows a spinner and blocks clicks while the action runs. Keep the label (for example "Saving"). */
+  loading?: boolean;
 };
 
 /** One primary button per view. Label says the action. No arrows. */
@@ -23,13 +26,21 @@ export function Button({
   fullWidth = false,
   className = "",
   type = "button",
+  loading = false,
+  disabled,
+  children,
   ...props
 }: ButtonProps) {
   return (
     <button
       type={type}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
       className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-md border px-5 py-3 text-body leading-none font-medium transition-colors focus-visible:focus-ring disabled:cursor-not-allowed ${variants[variant]} ${fullWidth ? "w-full" : ""} ${className}`}
       {...props}
-    />
+    >
+      {loading && <CircleNotch className="size-5 shrink-0 animate-spin" aria-hidden />}
+      {children}
+    </button>
   );
 }

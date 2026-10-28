@@ -6,14 +6,15 @@ import { Suspense, useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { Conversation } from "@/components/messages/Conversation";
 import { rails } from "@/components/rails";
-import { Avatar, Button, Card, Dialog, Input, Textarea, useToast } from "@/components/ui";
+import { Avatar, Button, Card, Dialog, Input, Textarea, useConfirm, useTask } from "@/components/ui";
 import { ago, fullName } from "@/lib/format";
 import { act, useMyManager } from "@/lib/mock";
 
 /** M9 Messages: one conversation per client. Phone: the list, then the open conversation. */
 function ManagerMessages() {
   const router = useRouter();
-  const toast = useToast();
+  const confirm = useConfirm();
+  const { run, pending } = useTask();
   const selected = useSearchParams().get("client");
   const { db, clients, user, covering } = useMyManager();
   const [asking, setAsking] = useState(false);
@@ -73,6 +74,31 @@ function ManagerMessages() {
                     Ask for a permission
                   </button>
                 </div>
+                {db.requests
+                  .filter((r) => r.clientId === active.c.id && r.status === "pending")
+                  .map((r) => (
+                    <div key={r.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-info-bg px-6 py-3">
+                      <span className="text-body-sm text-primary">
+                        <span className="font-medium">Waiting for an answer: </span>
+                        {r.text}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          confirm({
+                            title: "Withdraw this request?",
+                            body: `${active.u?.firstName} will no longer see it in Control.`,
+                            confirmLabel: "Withdraw",
+                            action: () => act.cancelRequest(r.id),
+                            success: "Request withdrawn.",
+                          })
+                        }
+                        className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring"
+                      >
+                        Withdraw
+                      </button>
+                    </div>
+                  ))}
                 <Conversation clientId={active.c.id} messages={active.msgs} me={user} users={db.users} saveLabel="Save to their Brand" asTeam={covering} />
               </>
             ) : (
@@ -91,16 +117,17 @@ function ManagerMessages() {
             Cancel
           </Button>
           <Button
+            loading={pending("ask")}
             onClick={async () => {
               if (!what.trim() || !active) return setError("Say what you want to do.");
-              await act.askPermission(active.c.id, what.trim(), why.trim());
-              setAsking(false);
-              setWhat("");
-              setWhy("");
-              toast("Sent. You will be told when they answer.");
+              if (await run("ask", () => act.askPermission(active.c.id, what.trim(), why.trim()), "Sent. You will be told when they answer.")) {
+                setAsking(false);
+                setWhat("");
+                setWhy("");
+              }
             }}
           >
-            Send request
+            {pending("ask") ? "Sending" : "Send request"}
           </Button>
         </div>
       </Dialog>

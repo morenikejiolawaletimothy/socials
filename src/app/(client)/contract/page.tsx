@@ -1,14 +1,14 @@
 "use client";
 
-import { CreditCard, DownloadSimple } from "@phosphor-icons/react";
+import { CircleNotch, CreditCard, DownloadSimple } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useState } from "react";
 import { PayDialog } from "@/components/client/PayDialog";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Avatar, Badge, Banner, Button, Card, Dialog, EmptyState, Textarea, useToast } from "@/components/ui";
+import { Avatar, Badge, Banner, Button, Card, Dialog, EmptyState, Textarea, useConfirm, useTask } from "@/components/ui";
 import { date, daysFrom, fullName, money } from "@/lib/format";
-import { act, useMyClient } from "@/lib/mock";
+import { act, useData, useMyClient } from "@/lib/mock";
 
 const contractBadge = {
   free: { label: "Free 2 weeks", tone: "info" as const },
@@ -23,7 +23,9 @@ const invoiceBadge = { paid: { label: "Paid", tone: "success" as const }, due: {
 /** C13 Contract: plan and dates, account manager, payments and invoices, and pulling out. */
 export default function ContractPage() {
   const { client, contract, invoices, managerUser, manager } = useMyClient();
-  const toast = useToast();
+  const db = useData();
+  const confirm = useConfirm();
+  const { run, pending } = useTask();
   const [paying, setPaying] = useState(false);
   const [changing, setChanging] = useState(false);
   const [reason, setReason] = useState("");
@@ -43,6 +45,7 @@ export default function ContractPage() {
   }
 
   const b = contractBadge[contract.status];
+  const changeRequest = db.changeRequests.find((r) => r.clientId === client.id && r.status === "open");
   const unpaid = !contract.paid && (contract.status === "free" || contract.status === "paused");
   const rows: [string, string][] = [
     ["Plan", `${contract.months} months, ${money(contract.monthlyCents)} a month`],
@@ -92,9 +95,31 @@ export default function ContractPage() {
                 <span className="text-body-sm text-secondary">Since {date(client.joinedAt)}. You keep the same manager when you renew.</span>
               </div>
             </div>
-            <button type="button" onClick={() => setChanging(true)} className="self-start rounded-sm text-body-sm font-medium text-primary-600 hover:text-primary-700 hover:underline focus-visible:focus-ring">
-              Ask for a different manager
-            </button>
+            {changeRequest ? (
+              <div className="flex flex-col gap-2 rounded-md bg-info-bg p-4">
+                <span className="text-body-sm font-medium text-primary">You asked for a different manager</span>
+                <span className="text-body-sm text-secondary">&ldquo;{changeRequest.reason}&rdquo; The owner will get back to you within 1 working day.</span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    confirm({
+                      title: "Withdraw your request?",
+                      body: `You keep ${managerUser.firstName} as your account manager. The owner is told.`,
+                      confirmLabel: "Withdraw request",
+                      action: () => act.cancelManagerChange(changeRequest.id),
+                      success: "Request withdrawn.",
+                    })
+                  }
+                  className="self-start rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring"
+                >
+                  Withdraw request
+                </button>
+              </div>
+            ) : (
+              <button type="button" onClick={() => setChanging(true)} className="self-start rounded-sm text-body-sm font-medium text-primary-600 hover:text-primary-700 hover:underline focus-visible:focus-ring">
+                Ask for a different manager
+              </button>
+            )}
           </div>
         </Card>
       )}
@@ -124,11 +149,12 @@ export default function ContractPage() {
                     <Badge status={ib.tone}>{ib.label}</Badge>
                     <button
                       type="button"
-                      onClick={() => toast(`Downloading ${i.number}.pdf`)}
+                      disabled={pending(i.id)}
+                      onClick={() => run(i.id, () => act.save(), `${i.number}.pdf downloaded.`)}
                       aria-label={`Download invoice ${i.number}`}
                       className="flex size-10 items-center justify-center rounded-full text-secondary hover:bg-primary-50 hover:text-primary-700 focus-visible:focus-ring"
                     >
-                      <DownloadSimple className="size-5" aria-hidden />
+                      {pending(i.id) ? <CircleNotch className="size-5 animate-spin" aria-hidden /> : <DownloadSimple className="size-5" aria-hidden />}
                     </button>
                   </li>
                 );
@@ -161,14 +187,16 @@ export default function ContractPage() {
             Cancel
           </Button>
           <Button
+            loading={pending("change")}
             onClick={async () => {
               if (!reason.trim()) return setError("Give a short reason, so the owner can find the right person.");
-              await act.requestManagerChange(client.id, reason.trim());
-              setChanging(false);
-              toast("Sent to the owner.");
+              if (await run("change", () => act.requestManagerChange(client.id, reason.trim()), "Sent to the owner. They will reply within 1 working day.")) {
+                setChanging(false);
+                setReason("");
+              }
             }}
           >
-            Send
+            {pending("change") ? "Sending" : "Send"}
           </Button>
         </div>
       </Dialog>

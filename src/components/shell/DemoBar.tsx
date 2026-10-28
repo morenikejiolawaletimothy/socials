@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { act, resetDemo, setDemoRole, useData, useSession, type Role } from "@/lib/mock";
+import { act, resetDemo, setDemoRole, setFailMode, useData, useFailMode, useSession, type Role } from "@/lib/mock";
 import { useToast } from "@/components/ui";
 
 const homes: Record<Role, string> = { client: "/home", manager: "/manager", owner: "/admin" };
@@ -23,6 +23,7 @@ export function DemoBar() {
   const router = useRouter();
   const toast = useToast();
   const clientUserId = useData().session.userIds.client;
+  const failing = useFailMode();
 
   return (
     <div className="bg-dark text-inverse">
@@ -47,13 +48,25 @@ export function DemoBar() {
             ))}
           </div>
         </div>
+        <label className="flex cursor-pointer items-center gap-2 text-caption text-neutral-300 sm:order-3 sm:ml-auto">
+          <input
+            type="checkbox"
+            checked={failing}
+            onChange={(e) => {
+              setFailMode(e.target.checked);
+              toast(e.target.checked ? "Errors on: every action will now fail, so you can see error states." : "Errors off.", "info");
+            }}
+            className="size-4 accent-primary-600"
+          />
+          Simulate errors
+        </label>
         <button
           type="button"
           onClick={() => {
             resetDemo();
             toast("Demo data reset.");
           }}
-          className="rounded-sm px-2 py-1 text-caption text-neutral-300 hover:text-inverse focus-visible:focus-ring sm:order-3 sm:ml-auto"
+          className="rounded-sm px-2 py-1 text-caption text-neutral-300 hover:text-inverse focus-visible:focus-ring sm:order-4"
         >
           Reset demo
         </button>

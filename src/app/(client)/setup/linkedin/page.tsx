@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { PermissionsForm } from "@/components/client/PermissionsForm";
 import { SetupFrame } from "@/components/client/SetupFrame";
-import { Banner, Button, Card } from "@/components/ui";
+import { Banner, Button, Card, useTask } from "@/components/ui";
 import { fullName } from "@/lib/format";
 import { act, useMyClient } from "@/lib/mock";
 
@@ -23,7 +23,7 @@ function ConnectLinkedIn() {
   const { client, user } = useMyClient();
   const [step, setStep] = useState(client?.setupDone.includes("linkedin") ? startAt || 2 : 0);
   const [declined, setDeclined] = useState(false);
-  const [busy, setBusy] = useState(false);
+  const { run, pending } = useTask();
   if (!client || !user) return null;
 
   return (
@@ -81,16 +81,20 @@ function ConnectLinkedIn() {
                 Cancel
               </Button>
               <Button
-                disabled={busy}
+                loading={pending("allow")}
                 onClick={async () => {
-                  setBusy(true);
-                  await act.setLinkedIn(client.id, "connected");
-                  act.completeSetupStep(client.id, "linkedin");
-                  setBusy(false);
-                  setStep(2);
+                  const ok = await run(
+                    "allow",
+                    async () => {
+                      await act.setLinkedIn(client.id, "connected");
+                      await act.completeSetupStep(client.id, "linkedin");
+                    },
+                    "LinkedIn is connected.",
+                  );
+                  if (ok) setStep(2);
                 }}
               >
-                {busy ? "Connecting" : "Allow"}
+                {pending("allow") ? "Connecting" : "Allow"}
               </Button>
             </div>
           </Card>
@@ -107,9 +111,9 @@ function ConnectLinkedIn() {
           <PermissionsForm client={client} />
           <Button
             className="self-start"
-            onClick={() => {
-              act.completeSetupStep(client.id, "permissions");
-              router.push("/home");
+            loading={pending("save")}
+            onClick={async () => {
+              if (await run("save", () => act.completeSetupStep(client.id, "permissions"), "Saved. On to your calls.")) router.push("/home");
             }}
           >
             Save and continue

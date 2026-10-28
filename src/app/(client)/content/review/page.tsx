@@ -7,7 +7,7 @@ import { PostPreview } from "@/components/content/PostPreview";
 import { VoiceRecorder } from "@/components/content/VoiceRecorder";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Avatar, Banner, Breadcrumbs, Button, Card, Dialog, Textarea, useToast } from "@/components/ui";
+import { Avatar, Banner, Breadcrumbs, Button, Card, Textarea, useConfirm, useTask } from "@/components/ui";
 import { dayTimeIn, fullName, plural } from "@/lib/format";
 import { act, useMyClient, type Post } from "@/lib/mock";
 
@@ -25,11 +25,10 @@ function ReviewItem({
   primary: boolean;
   onDone: () => void;
 }) {
-  const toast = useToast();
+  const { run, pending } = useTask();
   const [changing, setChanging] = useState(false);
   const [note, setNote] = useState("");
   const [error, setError] = useState<string>();
-  const [busy, setBusy] = useState(false);
 
   return (
     <div className="flex flex-col gap-4">
@@ -65,17 +64,13 @@ function ReviewItem({
               Cancel
             </Button>
             <Button
-              disabled={busy}
+              loading={pending("changes")}
               onClick={async () => {
                 if (!note.trim()) return setError("Write what you would like changed, or record a voice note.");
-                setBusy(true);
-                await act.askForChanges(post.id, note.trim());
-                setBusy(false);
-                toast("Sent to your manager. You will see the new version soon.");
-                onDone();
+                if (await run("changes", () => act.askForChanges(post.id, note.trim()), "Sent to your manager. You will see the new version soon.")) onDone();
               }}
             >
-              {busy ? "Sending" : "Send changes"}
+              {pending("changes") ? "Sending" : "Send changes"}
             </Button>
           </div>
         </div>
@@ -83,16 +78,12 @@ function ReviewItem({
         <div className="flex flex-col gap-3 sm:flex-row">
           <Button
             variant={primary ? "primary" : "secondary"}
-            disabled={busy}
+            loading={pending("approve")}
             onClick={async () => {
-              setBusy(true);
-              await act.approvePost(post.id);
-              setBusy(false);
-              toast("Approved. Your manager will schedule it.");
-              onDone();
+              if (await run("approve", () => act.approvePost(post.id), "Approved. Your manager will schedule it.")) onDone();
             }}
           >
-            {busy ? "Approving" : "Approve"}
+            {pending("approve") ? "Approving" : "Approve"}
           </Button>
           <Button variant="ghost" onClick={() => setChanging(true)}>
             Ask for changes
@@ -109,14 +100,12 @@ function ReviewItem({
  */
 export default function ReviewPage() {
   const { posts, user, managerUser, client } = useMyClient();
-  const toast = useToast();
+  const confirm = useConfirm();
   // Keep the set of posts fixed while reviewing, so the list does not jump as each one is approved.
   const [ids] = useState(() => posts.filter((p) => p.status === "awaiting-client").map((p) => p.id));
   const items = useMemo(() => ids.map((id) => posts.find((p) => p.id === id)!).filter(Boolean), [ids, posts]);
   const pending = items.filter((p) => p.status === "awaiting-client");
   const [index, setIndex] = useState(0);
-  const [confirmAll, setConfirmAll] = useState(false);
-  const [busy, setBusy] = useState(false);
   const author = { name: fullName(user), title: user?.title };
   const due = items[0]?.dueAt;
   const current = pending[Math.min(index, pending.length - 1)];
@@ -185,7 +174,20 @@ export default function ReviewPage() {
 
             {pending.length > 1 && (
               <div className="flex flex-col gap-2 border-t border-border pt-6">
-                <Button variant="secondary" className="self-start" onClick={() => setConfirmAll(true)}>
+                <Button
+                  variant="secondary"
+                  className="self-start"
+                  onClick={() =>
+                    confirm({
+                      title: `Approve all ${pending.length} posts?`,
+                      body: "Your manager schedules them for the best times. You can still take any post down once it is live.",
+                      warning: "Only approve posts you have read. Approved posts go out without asking you again.",
+                      confirmLabel: "Approve all",
+                      action: () => act.approveAll(pending.map((p) => p.id)),
+                      success: `Approved ${plural(pending.length, "post")}.`,
+                    })
+                  }
+                >
                   Approve all {pending.length}
                 </Button>
                 <p className="text-caption text-secondary">Only if you have read them all.</p>
@@ -195,26 +197,6 @@ export default function ReviewPage() {
         )}
       </Card>
 
-      <Dialog open={confirmAll} onClose={() => setConfirmAll(false)} title={`Approve all ${pending.length} posts?`}>
-        <p className="text-body text-secondary">Your manager schedules them for the best times. You can still take any post down once it is live.</p>
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => setConfirmAll(false)}>
-            Cancel
-          </Button>
-          <Button
-            disabled={busy}
-            onClick={async () => {
-              setBusy(true);
-              await act.approveAll(pending.map((p) => p.id));
-              setBusy(false);
-              setConfirmAll(false);
-              toast(`Approved ${plural(pending.length, "post")}.`);
-            }}
-          >
-            {busy ? "Approving" : "Approve all"}
-          </Button>
-        </div>
-      </Dialog>
     </Columns>
   );
 }

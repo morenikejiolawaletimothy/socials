@@ -1,16 +1,16 @@
 "use client";
 
-import { FileText, Microphone, PaperPlaneTilt, Paperclip, Stop, Waveform } from "@phosphor-icons/react";
+import { CircleNotch, FileText, Microphone, PaperPlaneTilt, Paperclip, Stop, Trash, Waveform } from "@phosphor-icons/react";
 import Image from "next/image";
 import { Fragment, useEffect, useRef, useState } from "react";
-import { Avatar, Button, useToast } from "@/components/ui";
+import { Avatar, Button, useConfirm, useTask, useToast } from "@/components/ui";
 import { day, fullName, time } from "@/lib/format";
 import { act, type Message, type User } from "@/lib/mock";
 
-function Bubble({ m, mine, author, onSave, saveLabel }: { m: Message; mine: boolean; author: string; onSave?: () => void; saveLabel: string }) {
+function Bubble({ m, mine, author, onSave, onDelete, saveLabel, saving }: { m: Message; mine: boolean; author: string; onSave?: () => void; onDelete?: () => void; saveLabel: string; saving: boolean }) {
   const body = mine ? "bg-primary-600 text-inverse" : "bg-neutral-50 text-primary";
   return (
-    <li className={`flex items-end gap-2 ${mine ? "flex-row-reverse" : ""}`}>
+    <li className={`group flex items-end gap-2 ${mine ? "flex-row-reverse" : ""}`}>
       {!mine && <Avatar name={author} size="sm" />}
       <div className={`flex max-w-xs flex-col gap-1 sm:max-w-md ${mine ? "items-end" : "items-start"}`}>
         {m.text && <p className={`whitespace-pre-line rounded-lg px-4 py-3 text-body-sm ${body}`}>{m.text}</p>}
@@ -42,16 +42,27 @@ function Bubble({ m, mine, author, onSave, saveLabel }: { m: Message; mine: bool
                 (m.savedToBrand ? (
                   <span className="shrink-0 text-caption text-success">In your brand</span>
                 ) : (
-                  <button type="button" onClick={onSave} className="shrink-0 rounded-sm text-caption font-medium text-primary-600 hover:text-primary-700 hover:underline focus-visible:focus-ring">
-                    {saveLabel}
+                  <button type="button" onClick={onSave} disabled={saving} className="inline-flex shrink-0 items-center gap-1 rounded-sm text-caption font-medium text-primary-600 hover:text-primary-700 hover:underline focus-visible:focus-ring">
+                    {saving && <CircleNotch className="size-3.5 animate-spin" aria-hidden />}
+                    {saving ? "Saving" : saveLabel}
                   </button>
                 ))}
             </div>
           </div>
         )}
-        <span className="px-1 text-caption text-secondary">
+        <span className="flex items-center gap-2 px-1 text-caption text-secondary">
           {m.asTeam ? "Your account team, " : ""}
           {time(m.at)}
+          {onDelete && (
+            <button
+              type="button"
+              onClick={onDelete}
+              aria-label="Delete message"
+              className="rounded-sm text-secondary opacity-100 hover:text-danger focus-visible:focus-ring sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+            >
+              <Trash className="size-4" aria-hidden />
+            </button>
+          )}
         </span>
       </div>
     </li>
@@ -78,6 +89,9 @@ export function Conversation({
   asTeam?: boolean;
 }) {
   const toast = useToast();
+  const confirm = useConfirm();
+  const { run, pending } = useTask();
+  const [uploading, setUploading] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
@@ -92,10 +106,11 @@ export function Conversation({
   }, [recording]);
 
   const send = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() || pending("send")) return;
     const body = text.trim();
     setText("");
-    await act.sendMessage(clientId, me.id, { text: body }, asTeam);
+    // No toast for a sent message: it appears in the conversation. On failure the text comes back.
+    if (!(await run("send", () => act.sendMessage(clientId, me.id, { text: body }, asTeam)))) setText(body);
   };
 
   let lastDay = "";
@@ -115,14 +130,32 @@ export function Conversation({
                 mine={m.fromUserId === me.id}
                 author={m.asTeam ? "Your account team" : fullName(author)}
                 saveLabel={saveLabel}
-                onSave={async () => {
-                  await act.saveFileToBrand(m.id);
-                  toast("Saved to Your brand.");
-                }}
+                saving={pending(`save-${m.id}`)}
+                onSave={() => run(`save-${m.id}`, () => act.saveFileToBrand(m.id), "Saved to Your brand.")}
+                onDelete={
+                  m.fromUserId === me.id
+                    ? () =>
+                        confirm({
+                          title: "Delete this message?",
+                          body: "It is removed for both of you.",
+                          warning: "You cannot undo this.",
+                          confirmLabel: "Delete",
+                          tone: "danger",
+                          action: () => act.deleteMessage(m.id),
+                          success: "Message deleted.",
+                        })
+                    : undefined
+                }
               />
             </Fragment>
           );
         })}
+        {(uploading || pending("voice")) && (
+          <li className="flex items-center gap-2 self-end rounded-lg bg-primary-50 px-4 py-3 text-body-sm text-primary-700">
+            <CircleNotch className="size-4 animate-spin" aria-hidden />
+            {uploading ? `Uploading ${uploading}` : "Sending voice note"}
+          </li>
+        )}
         <li ref={endRef} aria-hidden />
       </ol>
 
@@ -141,9 +174,11 @@ export function Conversation({
           onChange={async (e) => {
             const f = e.target.files?.[0];
             if (!f) return;
-            if (f.size > 25 * 1024 * 1024) return toast("That file is over 25 MB. Send a smaller one, or a link.", "danger");
-            await act.sendMessage(clientId, me.id, { file: { name: f.name, size: `${(f.size / 1024 / 1024).toFixed(1)} MB`, kind: f.type.startsWith("image/") ? "image" : f.type === "application/pdf" ? "pdf" : "doc" } }, asTeam);
             e.target.value = "";
+            if (f.size > 25 * 1024 * 1024) return toast("That file is over 25 MB. Send a smaller one, or a link.", "danger");
+            setUploading(f.name);
+            await run("file", () => act.sendMessage(clientId, me.id, { file: { name: f.name, size: `${(f.size / 1024 / 1024).toFixed(1)} MB`, kind: f.type.startsWith("image/") ? "image" : f.type === "application/pdf" ? "pdf" : "doc" } }, asTeam));
+            setUploading(null);
           }}
         />
         <button
@@ -184,7 +219,7 @@ export function Conversation({
               return setRecording(true);
             }
             setRecording(false);
-            await act.sendMessage(clientId, me.id, { voice: { seconds: Math.max(seconds, 3), transcript: "Quick one: can we move Thursday's post to next week? I want to add the new numbers first." } }, asTeam);
+            await run("voice", () => act.sendMessage(clientId, me.id, { voice: { seconds: Math.max(seconds, 3), transcript: "Quick one: can we move Thursday's post to next week? I want to add the new numbers first." } }, asTeam));
           }}
           aria-label={recording ? "Stop and send voice note" : "Record a voice note"}
           className="flex size-11 shrink-0 items-center justify-center rounded-full text-secondary hover:bg-primary-50 hover:text-primary-700 focus-visible:focus-ring"
@@ -192,8 +227,8 @@ export function Conversation({
           {recording ? <Stop className="size-5 text-danger" aria-hidden /> : <Microphone className="size-5" aria-hidden />}
         </button>
         {!recording && (
-          <Button type="submit" disabled={!text.trim()} aria-label="Send" className="px-3 sm:px-5">
-            <PaperPlaneTilt className="size-5 sm:hidden" aria-hidden />
+          <Button type="submit" disabled={!text.trim() && !pending("send")} loading={pending("send")} aria-label="Send" className="px-3 sm:px-5">
+            {!pending("send") && <PaperPlaneTilt className="size-5 sm:hidden" aria-hidden />}
             <span className="hidden sm:inline">Send</span>
           </Button>
         )}

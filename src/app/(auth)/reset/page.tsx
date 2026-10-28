@@ -44,7 +44,7 @@ export default function ResetPage() {
     <AuthScreen title="Reset your password" description="Enter your email and we will send you a link to set a new password.">
       <form onSubmit={submit} noValidate className="flex flex-col gap-4">
         <Input label="Email" type="email" autoComplete="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(undefined); }} error={error} />
-        <Button type="submit" fullWidth disabled={busy}>
+        <Button type="submit" fullWidth loading={busy}>
           {busy ? "Sending" : "Send link"}
         </Button>
       </form>

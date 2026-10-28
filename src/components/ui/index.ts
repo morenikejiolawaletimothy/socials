@@ -18,7 +18,7 @@ export { Skeleton } from "./Skeleton";
 export { Stepper } from "./Stepper";
 export { Switch } from "./Switch";
 export { TextLink } from "./TextLink";
-export { ToastProvider, useToast } from "./Toast";
+export { ToastProvider, useConfirm, useTask, useToast, type ConfirmOptions } from "./Toast";
 export { ProgressBar } from "./ProgressBar";
 export { Tabs } from "./Tabs";
 export { Textarea } from "./Textarea";

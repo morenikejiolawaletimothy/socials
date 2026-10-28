@@ -6,7 +6,7 @@ import { useState } from "react";
 import { pullOutTerms } from "@/components/client/contract";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Banner, Breadcrumbs, Button, Card, Stepper, Textarea, useToast } from "@/components/ui";
+import { Banner, Breadcrumbs, Button, Card, Stepper, Textarea, useTask } from "@/components/ui";
 import { date, money } from "@/lib/format";
 import { act, useMyClient } from "@/lib/mock";
 
@@ -25,12 +25,11 @@ const offers: Record<string, { title: string; text: string; yes: string; href: s
 /** C13 Pull out, in 3 short steps: why, can we fix this, what happens. */
 export default function CancelPage() {
   const { client, contract, invoices } = useMyClient();
-  const toast = useToast();
+  const { run, pending } = useTask();
   const [step, setStep] = useState(0);
   const [reason, setReason] = useState("");
   const [note, setNote] = useState("");
   const [error, setError] = useState<string>();
-  const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
   if (!client || !contract) return null;
   const terms = pullOutTerms(contract, invoices);
@@ -118,16 +117,12 @@ export default function CancelPage() {
                   </Button>
                   <Button
                     variant="danger"
-                    disabled={busy}
+                    loading={pending("cancel")}
                     onClick={async () => {
-                      setBusy(true);
-                      await act.cancelContract(client.id, reason, note.trim() || undefined);
-                      setBusy(false);
-                      setDone(true);
-                      toast("You have pulled out. We have emailed you the details.");
+                      if (await run("cancel", () => act.cancelContract(client.id, reason, note.trim() || undefined), "You have pulled out. We have emailed you the details.")) setDone(true);
                     }}
                   >
-                    {busy ? "Confirming" : "Confirm and pull out"}
+                    {pending("cancel") ? "Confirming" : "Confirm and pull out"}
                   </Button>
                 </div>
               </div>

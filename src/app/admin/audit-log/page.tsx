@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { Table, selectClass, td } from "@/components/admin/parts";
-import { Button, Card, PageHeader, useToast } from "@/components/ui";
+import { Button, Card, PageHeader, useTask } from "@/components/ui";
 import { dayTime } from "@/lib/format";
-import { useData, type AuditEntry } from "@/lib/mock";
+import { delay, useData, type AuditEntry } from "@/lib/mock";
 
 const kinds: { value: AuditEntry["kind"] | "all"; label: string }[] = [
   { value: "all", label: "Everything" },
@@ -19,13 +19,42 @@ const kinds: { value: AuditEntry["kind"] | "all"; label: string }[] = [
 /** A8 Audit log: every admin and system action, who, what and when. Records the real actor, including step-in. */
 export default function AuditPage() {
   const db = useData();
-  const toast = useToast();
+  const { run, pending } = useTask();
   const [kind, setKind] = useState<AuditEntry["kind"] | "all">("all");
   const list = [...db.audit].filter((a) => kind === "all" || a.kind === kind).sort((a, b) => b.at.localeCompare(a.at));
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Audit log" description="Every admin and system action. Nothing here can be changed." action={<Button variant="secondary" onClick={() => toast("Exporting the log as a CSV file.")}>Export</Button>} />
+      <PageHeader
+        title="Audit log"
+        description="Every admin and system action. Nothing here can be changed."
+        action={
+          <Button
+            variant="secondary"
+            loading={pending("export")}
+            onClick={() =>
+              run(
+                "export",
+                async () => {
+                  await delay(600);
+                  const cell = (v: string) => `"${v.replaceAll('"', '""')}"`;
+                  const csv = ["When,Who,What,On,Kind", ...list.map((a) => [a.at, a.who, a.action, a.target, a.kind].map((v) => cell(String(v ?? ""))).join(","))].join("\n");
+                  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+                  const link = Object.assign(document.createElement("a"), {
+                    href: url,
+                    download: "bluecut-audit-log.csv",
+                  });
+                  link.click();
+                  URL.revokeObjectURL(url);
+                },
+                `Exported ${list.length} actions as a CSV file.`,
+              )
+            }
+          >
+            Export
+          </Button>
+        }
+      />
       <Card
         title="Actions"
         action={

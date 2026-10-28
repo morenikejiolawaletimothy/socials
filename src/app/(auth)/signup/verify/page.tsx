@@ -35,7 +35,7 @@ function Verify() {
     >
       <form onSubmit={submit} noValidate className="flex flex-col gap-4">
         <CodeInput label="Code" value={code} onChange={(v) => { setCode(v); setError(undefined); }} error={error} />
-        <Button type="submit" fullWidth disabled={busy}>
+        <Button type="submit" fullWidth loading={busy}>
           {busy ? "Checking" : "Confirm email"}
         </Button>
       </form>

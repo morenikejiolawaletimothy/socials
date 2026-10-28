@@ -1,4 +1,3 @@
-import { ToastProvider } from "@/components/ui";
 import { AuthShowcase } from "./AuthShowcase";
 
 /**
@@ -7,7 +6,7 @@ import { AuthShowcase } from "./AuthShowcase";
  */
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ToastProvider>
+    <>
       <div className="flex min-h-dvh bg-card">
         <main className="flex w-full flex-col justify-center px-4 py-12 sm:px-8 lg:w-1/2">
           <div className="mx-auto w-full max-w-sm">{children}</div>
@@ -18,6 +17,6 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           </div>
         </aside>
       </div>
-    </ToastProvider>
+    </>
   );
 }

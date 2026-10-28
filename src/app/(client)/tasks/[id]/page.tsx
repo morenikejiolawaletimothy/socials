@@ -1,10 +1,10 @@
 "use client";
 
-import { CheckCircle, Circle, Copy, LinkedinLogo, PencilSimple } from "@phosphor-icons/react";
+import { CheckCircle, Circle, CircleNotch, Copy, LinkedinLogo, PencilSimple } from "@phosphor-icons/react";
 import { use, useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Banner, Breadcrumbs, Button, Card, Dialog, EmptyState, Input, ProgressBar, Textarea, useToast } from "@/components/ui";
+import { Banner, Breadcrumbs, Button, Card, Dialog, EmptyState, Input, ProgressBar, Textarea, useTask, useToast } from "@/components/ui";
 import { dayIn } from "@/lib/format";
 import { act, useMyClient, type Person, type QuickTask } from "@/lib/mock";
 
@@ -22,6 +22,7 @@ async function copy(text: string) {
 /** One person to connect with: why they matter, a ready note (editable), and the three buttons. */
 function PersonRow({ task, person }: { task: QuickTask; person: Person }) {
   const toast = useToast();
+  const { run, pending } = useTask();
   const [editing, setEditing] = useState(false);
   const [note, setNote] = useState(person.note);
 
@@ -48,9 +49,9 @@ function PersonRow({ task, person }: { task: QuickTask; person: Person }) {
           <div className="flex gap-2">
             <Button
               variant="secondary"
-              onClick={() => {
-                act.editPersonNote(task.id, person.id, note);
-                setEditing(false);
+              loading={pending("note")}
+              onClick={async () => {
+                if (await run("note", () => act.editPersonNote(task.id, person.id, note), "Note saved.")) setEditing(false);
               }}
             >
               Save note
@@ -81,8 +82,19 @@ function PersonRow({ task, person }: { task: QuickTask; person: Person }) {
           <button type="button" className={smallButton} onClick={() => setEditing(true)}>
             <PencilSimple className="size-4" aria-hidden /> Edit
           </button>
-          <button type="button" className={smallButton} aria-pressed={person.done} onClick={() => act.togglePersonSent(task.id, person.id)}>
-            {person.done ? <CheckCircle className="size-4 text-success" aria-hidden /> : <Circle className="size-4" aria-hidden />}
+          <button
+            type="button"
+            className={smallButton}
+            aria-pressed={person.done}
+            disabled={pending("sent")}
+            onClick={() =>
+              run("sent", () => act.togglePersonSent(task.id, person.id), {
+                text: person.done ? `${person.name} marked as not sent.` : `${person.name} marked as sent.`,
+                action: { label: "Undo", onClick: () => act.togglePersonSent(task.id, person.id) },
+              })
+            }
+          >
+            {pending("sent") ? <CircleNotch className="size-4 animate-spin" aria-hidden /> : person.done ? <CheckCircle className="size-4 text-success" aria-hidden /> : <Circle className="size-4" aria-hidden />}
             {person.done ? "Sent" : "Mark as sent"}
           </button>
         </div>
@@ -96,11 +108,11 @@ export default function TaskPage({ params }: { params: Promise<{ id: string }> }
   const { id } = use(params);
   const { tasks, managerUser } = useMyClient();
   const toast = useToast();
+  const { run, pending } = useTask();
   const task = tasks.find((t) => t.id === id);
   const [assistant, setAssistant] = useState(false);
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState<string>();
-  const [busy, setBusy] = useState(false);
 
   if (!task) {
     return (
@@ -163,8 +175,14 @@ export default function TaskPage({ params }: { params: Promise<{ id: string }> }
                 >
                   <Copy className="size-4" aria-hidden /> Copy text
                 </button>
-                <button type="button" className={smallButton} aria-pressed={task.done} onClick={() => act.markTaskDone(task.id, !task.done)}>
-                  {task.done ? <CheckCircle className="size-4 text-success" aria-hidden /> : <Circle className="size-4" aria-hidden />}
+                <button
+                  type="button"
+                  className={smallButton}
+                  aria-pressed={task.done}
+                  disabled={pending("done")}
+                  onClick={() => run("done", () => act.markTaskDone(task.id, !task.done), task.done ? "Marked as not done." : "Done. Your manager can see it.")}
+                >
+                  {pending("done") ? <CircleNotch className="size-4 animate-spin" aria-hidden /> : task.done ? <CheckCircle className="size-4 text-success" aria-hidden /> : <Circle className="size-4" aria-hidden />}
                   {task.done ? "Done" : "Mark as done"}
                 </button>
               </div>
@@ -189,17 +207,13 @@ export default function TaskPage({ params }: { params: Promise<{ id: string }> }
             Cancel
           </Button>
           <Button
-            disabled={busy}
+            loading={pending("assistant")}
             onClick={async () => {
               if (!/^\S+@\S+\.\S+$/.test(email.trim())) return setEmailError("Enter an email address like name@company.com.");
-              setBusy(true);
-              await act.sendToAssistant(task.id, email.trim());
-              setBusy(false);
-              setAssistant(false);
-              toast(`Sent to ${email.trim()}.`);
+              if (await run("assistant", () => act.sendToAssistant(task.id, email.trim()), `Sent to ${email.trim()}. They will get it in a minute.`)) setAssistant(false);
             }}
           >
-            {busy ? "Sending" : "Send"}
+            {pending("assistant") ? "Sending" : "Send"}
           </Button>
         </div>
       </Dialog>

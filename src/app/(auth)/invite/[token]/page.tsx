@@ -168,7 +168,7 @@ export default function InvitePage({ params }: { params: Promise<{ token: string
             ) : (
               <span />
             )}
-            <Button type="submit" disabled={busy}>
+            <Button type="submit" loading={busy}>
               {step === 3 ? (busy ? "Finishing" : "Finish setup") : "Continue"}
             </Button>
           </div>

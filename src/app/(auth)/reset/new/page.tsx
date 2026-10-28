@@ -40,7 +40,7 @@ export default function NewPasswordPage() {
       <form onSubmit={submit} noValidate className="flex flex-col gap-4">
         <PasswordInput label="New password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} help="At least 12 characters." error={errors.pw} />
         <PasswordInput label="Type it again" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} error={errors.confirm} />
-        <Button type="submit" fullWidth disabled={busy}>
+        <Button type="submit" fullWidth loading={busy}>
           {busy ? "Saving" : "Save password"}
         </Button>
       </form>

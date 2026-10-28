@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Switch } from "@/components/ui";
+import { Button, Switch, useTask } from "@/components/ui";
 import type { ReviewSettings } from "@/lib/mock";
 
 const freq: { value: ReviewSettings["frequency"]; label: string; help: string }[] = [
@@ -41,9 +41,23 @@ function Question({ n, title, children }: { n: number; title: string; children: 
 }
 
 /** C5 How you review: how often, where we tell you, what needs approval, and what happens if you do not reply. */
-export function ReviewForm({ initial, onSave, saveLabel = "Save" }: { initial: ReviewSettings; onSave: (r: ReviewSettings) => Promise<void>; saveLabel?: string }) {
+export function ReviewForm({
+  initial,
+  onSave,
+  onSaved,
+  onCancel,
+  success,
+  saveLabel = "Save",
+}: {
+  initial: ReviewSettings;
+  onSave: (r: ReviewSettings) => Promise<unknown>;
+  onSaved?: () => void;
+  onCancel?: () => void;
+  success: string;
+  saveLabel?: string;
+}) {
   const [r, setR] = useState(initial);
-  const [busy, setBusy] = useState(false);
+  const { run, pending } = useTask();
   const [error, setError] = useState<string>();
 
   const summary = [
@@ -118,18 +132,22 @@ export function ReviewForm({ initial, onSave, saveLabel = "Save" }: { initial: R
         <p className="text-caption text-secondary">Changes apply to new posts. Posts already sent to you keep their path. Change this any time in Control.</p>
       </div>
 
-      <Button
-        className="self-start"
-        disabled={busy}
-        onClick={async () => {
-          if (!r.channels.email && !r.channels.app) return setError("Choose at least one, so you know when posts are ready.");
-          setBusy(true);
-          await onSave(r);
-          setBusy(false);
-        }}
-      >
-        {busy ? "Saving" : saveLabel}
-      </Button>
+      <div className="flex flex-col-reverse gap-3 sm:flex-row">
+        {onCancel && (
+          <Button variant="ghost" onClick={onCancel}>
+            Cancel
+          </Button>
+        )}
+        <Button
+          loading={pending("save")}
+          onClick={async () => {
+            if (!r.channels.email && !r.channels.app) return setError("Choose at least one, so you know when posts are ready.");
+            if (await run("save", () => onSave(r), success)) onSaved?.();
+          }}
+        >
+          {pending("save") ? "Saving" : saveLabel}
+        </Button>
+      </div>
     </div>
   );
 }

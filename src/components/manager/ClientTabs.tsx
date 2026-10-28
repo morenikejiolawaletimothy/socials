@@ -4,7 +4,7 @@ import { CheckCircle, LinkSimple, Plus, Sparkle, Trash, WarningCircle, XCircle }
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { Badge, Banner, Button, Card, Input, ProgressBar, Textarea, useToast } from "@/components/ui";
+import { Badge, Banner, Button, Card, Input, ProgressBar, Textarea, useConfirm, useTask, useToast } from "@/components/ui";
 import { ago, agoIn, dayTime, fullName, plural } from "@/lib/format";
 import { act, type ClientBundle, type Lead } from "@/lib/mock";
 
@@ -193,7 +193,7 @@ export function ContentTab({ b, id }: { b: ClientBundle; id: string }) {
 const fitTone = { strong: "success", good: "info", weak: "neutral" } as const;
 
 function LeadRow({ l }: { l: Lead }) {
-  const toast = useToast();
+  const { run, pending } = useTask();
   return (
     <li className={`flex flex-col gap-3 border-b border-border py-4 first:pt-0 last:border-b-0 last:pb-0 ${l.status === "dropped" ? "opacity-50" : ""}`}>
       <div className="flex items-start justify-between gap-3">
@@ -215,23 +215,25 @@ function LeadRow({ l }: { l: Lead }) {
       {l.status === "done" ? (
         <span className="text-caption text-success">Done</span>
       ) : l.status === "dropped" ? (
-        <button type="button" onClick={() => act.setLead(l.id, "suggested")} className={`${linkClass} self-start`}>
-          Undo
+        <button type="button" onClick={() => run("undo", () => act.setLead(l.id, "suggested"), "Back on the list.")} className={`${linkClass} self-start`}>
+          Bring back
         </button>
       ) : (
         <div className="flex flex-wrap gap-2">
           {!l.warning && (
             <Button
               variant="secondary"
-              onClick={() => {
-                act.setLead(l.id, l.status === "kept" ? "done" : "kept");
-                toast(l.status === "kept" ? "Marked as done." : "Kept. The comment follows the client's review setting.");
-              }}
+              loading={pending("keep")}
+              onClick={() => run("keep", () => act.setLead(l.id, l.status === "kept" ? "done" : "kept"), l.status === "kept" ? "Marked as done. It counts toward this week's target." : "Kept. The comment follows the client's review setting.")}
             >
               {l.status === "kept" ? "Mark as done" : "Keep"}
             </Button>
           )}
-          <Button variant="ghost" onClick={() => act.setLead(l.id, "dropped")}>
+          <Button
+            variant="ghost"
+            loading={pending("drop")}
+            onClick={() => run("drop", () => act.setLead(l.id, "dropped"), { text: "Dropped.", action: { label: "Undo", onClick: () => act.setLead(l.id, l.status) } })}
+          >
             Drop
           </Button>
         </div>
@@ -241,8 +243,10 @@ function LeadRow({ l }: { l: Lead }) {
 }
 
 export function EngagementTab({ b }: { b: ClientBundle }) {
-  const toast = useToast();
+  const confirm = useConfirm();
+  const { run, pending } = useTask();
   const [url, setUrl] = useState("");
+  const [urlError, setUrlError] = useState<string>();
   const [checked, setChecked] = useState<string | null>(null);
   const firstName = b.user?.firstName ?? "the client";
   return (
@@ -255,18 +259,21 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
       <Card title="Add what you find">
         <form
           className="flex flex-col gap-3 sm:flex-row sm:items-end"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
-            if (!url.trim()) return;
-            setChecked(url.trim());
-            setUrl("");
+            if (!/^https?:\/\/(www\.)?linkedin\.com\//.test(url.trim())) return setUrlError("Paste a LinkedIn profile or post link, starting with https://www.linkedin.com/");
+            setUrlError(undefined);
+            if (await run("check", () => act.save())) {
+              setChecked(url.trim());
+              setUrl("");
+            }
           }}
         >
           <div className="flex-1">
-            <Input label="Profile or post link" placeholder="https://www.linkedin.com/..." value={url} onChange={(e) => setUrl(e.target.value)} />
+            <Input label="Profile or post link" placeholder="https://www.linkedin.com/..." value={url} onChange={(e) => { setUrl(e.target.value); setUrlError(undefined); }} error={urlError} />
           </div>
-          <Button type="submit" variant="secondary">
-            Check fit
+          <Button type="submit" variant="secondary" loading={pending("check")} className="sm:mb-auto sm:mt-7">
+            {pending("check") ? "Checking" : "Check fit"}
           </Button>
         </form>
         {checked && (
@@ -277,7 +284,13 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
             </span>
             <p className="text-body-sm text-primary">A fintech investor in Lagos, posting about payments infrastructure twice a week. Matches topic 1 and the investor list. Nothing on the off-limits list.</p>
             <div className="flex gap-2">
-              <Button variant="secondary" onClick={() => { setChecked(null); toast("Kept. A comment is drafted in the client's voice."); }}>
+              <Button
+                variant="secondary"
+                loading={pending("add")}
+                onClick={async () => {
+                  if (await run("add", () => act.addLead(b.client!.id, checked), "Kept. A comment is drafted in the client's voice.")) setChecked(null);
+                }}
+              >
                 Keep
               </Button>
               <Button variant="ghost" onClick={() => setChecked(null)}>
@@ -321,7 +334,19 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
           ) : (
             <p className="text-body-sm text-secondary">No quick tasks sent this week.</p>
           )}
-          <Button variant="secondary" className="self-start" onClick={() => toast("5 people prepared from this week's brief. Review them, then send.")}>
+          <Button
+            variant="secondary"
+            className="self-start"
+            onClick={() =>
+              confirm({
+                title: `Send 3 connection requests to ${firstName}?`,
+                body: `Prepared from this week's brief, with a note for each person. ${firstName} is told and sends them from LinkedIn in about 2 minutes.`,
+                confirmLabel: "Prepare and send",
+                action: () => act.prepareConnections(b.client!.id),
+                success: `Sent to ${firstName} as a quick task.`,
+              })
+            }
+          >
             <Plus className="size-4" aria-hidden /> Prepare connection requests
           </Button>
         </div>
@@ -335,19 +360,39 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
 
 /* ---------- Listening (M7) ---------- */
 
-function SignalList({ b, limit }: { b: ClientBundle; limit?: number }) {
+function SignalList({ b, limit, removable }: { b: ClientBundle; limit?: number; removable?: boolean }) {
+  const toast = useToast();
   const list = [...b.signals].sort((x, y) => y.at.localeCompare(x.at)).slice(0, limit);
   if (!list.length) return <p className="text-body-sm text-secondary">No signals yet. Add Google Alerts in Listening.</p>;
   return (
     <ul className="flex flex-col gap-3">
       {list.map((s) => (
-        <li key={s.id} className="flex flex-col gap-1">
-          <a href={s.url} target="_blank" rel="noreferrer" className="text-body-sm font-medium text-primary hover:text-primary-700 hover:underline focus-visible:focus-ring">
-            {s.title}
-          </a>
-          <span className="text-caption text-secondary">
-            {s.source}, {agoIn(s.at)}. Topic: {s.topic}
+        <li key={s.id} className="flex items-start gap-3">
+          <span className="flex flex-1 flex-col gap-1">
+            <a href={s.url} target="_blank" rel="noreferrer" className="text-body-sm font-medium text-primary hover:text-primary-700 hover:underline focus-visible:focus-ring">
+              {s.title}
+            </a>
+            <span className="text-caption text-secondary">
+              {s.source}, {agoIn(s.at)}. Topic: {s.topic}
+            </span>
           </span>
+          {removable && (
+            <button
+              type="button"
+              aria-label={`Remove ${s.title}`}
+              onClick={async () => {
+                try {
+                  await act.removeSignal(s.id);
+                  toast("Signal removed. It will not shape new ideas.");
+                } catch {
+                  toast("That did not go through. Check your connection and try again.", "danger");
+                }
+              }}
+              className="flex size-9 shrink-0 items-center justify-center rounded-full text-secondary hover:bg-danger-bg hover:text-danger focus-visible:focus-ring"
+            >
+              <Trash className="size-4" aria-hidden />
+            </button>
+          )}
         </li>
       ))}
     </ul>
@@ -355,9 +400,11 @@ function SignalList({ b, limit }: { b: ClientBundle; limit?: number }) {
 }
 
 export function ListeningTab({ b }: { b: ClientBundle }) {
-  const toast = useToast();
+  const confirm = useConfirm();
+  const { run, pending } = useTask();
   const [topic, setTopic] = useState("");
   const [feed, setFeed] = useState("");
+  const [feedError, setFeedError] = useState<string>();
   const [found, setFound] = useState("");
   const topics = b.strategy?.topics.map((t) => t.name) ?? ["Their field", "Their company", "Their city"];
   return (
@@ -393,7 +440,21 @@ export function ListeningTab({ b }: { b: ClientBundle }) {
                   <span className="text-caption text-secondary">Last item {agoIn(a.lastItemAt)}</span>
                 </span>
                 <Badge status={a.working ? "success" : "danger"}>{a.working ? "Working" : "Not working"}</Badge>
-                <button type="button" aria-label={`Remove ${a.topic}`} onClick={() => act.removeAlert(a.id)} className="flex size-9 items-center justify-center rounded-full text-secondary hover:bg-danger-bg hover:text-danger focus-visible:focus-ring">
+                <button
+                  type="button"
+                  aria-label={`Remove ${a.topic}`}
+                  onClick={() =>
+                    confirm({
+                      title: `Remove the "${a.topic}" feed?`,
+                      body: "The platform stops reading it. Signals already found are kept.",
+                      warning: "Delete the alert in Google Alerts too, or it keeps emailing you.",
+                      confirmLabel: "Remove feed",
+                      tone: "danger",
+                      action: () => act.removeAlert(a.id),
+                      success: "Feed removed.",
+                    })
+                  }
+                  className="flex size-9 items-center justify-center rounded-full text-secondary hover:bg-danger-bg hover:text-danger focus-visible:focus-ring">
                   <Trash className="size-4" aria-hidden />
                 </button>
               </li>
@@ -401,21 +462,23 @@ export function ListeningTab({ b }: { b: ClientBundle }) {
           </ul>
           <form
             className="flex flex-col gap-3 rounded-md bg-neutral-25 p-4"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
-              if (!topic.trim() || !/^https?:\/\//.test(feed.trim())) return toast("Add the topic and the feed link that starts with https://", "danger");
-              act.addAlert(b.client!.id, topic.trim(), feed.trim());
-              setTopic("");
-              setFeed("");
-              toast("Feed added. It is working.");
+              if (!topic.trim()) return setFeedError("Add the alert topic.");
+              if (!/^https:\/\/www\.google\.com\/alerts\/feeds\//.test(feed.trim())) return setFeedError("Paste the feed link from Google Alerts. It starts with https://www.google.com/alerts/feeds/");
+              setFeedError(undefined);
+              if (await run("feed", () => act.addAlert(b.client!.id, topic.trim(), feed.trim()), "Feed added. We checked it and it is working.")) {
+                setTopic("");
+                setFeed("");
+              }
             }}
           >
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Input label="Alert topic" placeholder="Lagos fintech" value={topic} onChange={(e) => setTopic(e.target.value)} />
-              <Input label="Feed link" placeholder="https://www.google.com/alerts/feeds/..." value={feed} onChange={(e) => setFeed(e.target.value)} />
+              <Input label="Feed link" placeholder="https://www.google.com/alerts/feeds/..." value={feed} onChange={(e) => { setFeed(e.target.value); setFeedError(undefined); }} error={feedError} />
             </div>
-            <Button type="submit" variant="secondary" className="self-start">
-              Add feed
+            <Button type="submit" variant="secondary" className="self-start" loading={pending("feed")}>
+              {pending("feed") ? "Checking the feed" : "Add feed"}
             </Button>
           </form>
         </div>
@@ -423,21 +486,20 @@ export function ListeningTab({ b }: { b: ClientBundle }) {
       <Card title="Add what I found">
         <form
           className="flex flex-col gap-3"
-          onSubmit={(e) => {
+          onSubmit={async (e) => {
             e.preventDefault();
             if (!found.trim()) return;
-            setFound("");
-            toast("Added. It will shape the next ideas.");
+            if (await run("found", () => act.addFinding(b.client!.id, found.trim()), "Added. It will shape the next ideas.")) setFound("");
           }}
         >
           <Textarea label="A link, or a short note" rows={2} placeholder="3 founders in Lagos are debating instant settlement this week." value={found} onChange={(e) => setFound(e.target.value)} />
-          <Button type="submit" variant="secondary" className="self-start">
+          <Button type="submit" variant="secondary" className="self-start" loading={pending("found")}>
             Add
           </Button>
         </form>
       </Card>
       <Card title="Latest signals">
-        <SignalList b={b} />
+        <SignalList b={b} removable />
       </Card>
     </>
   );
@@ -535,7 +597,7 @@ export function CallsTab({ b }: { b: ClientBundle }) {
 /* ---------- Updates (M8) ---------- */
 
 export function UpdatesTab({ b }: { b: ClientBundle }) {
-  const toast = useToast();
+  const confirm = useConfirm();
   const draft = b.updates.find((u) => u.status === "draft");
   const [note, setNote] = useState(draft?.note ?? "");
   const sent = b.updates.filter((u) => u.status === "sent").sort((x, y) => (y.sentAt ?? "").localeCompare(x.sentAt ?? ""));
@@ -576,10 +638,15 @@ export function UpdatesTab({ b }: { b: ClientBundle }) {
             <Textarea label="Your personal note" placeholder={`A line from you to ${b.user?.firstName ?? "the client"}.`} value={note} onChange={(e) => setNote(e.target.value)} />
             <Button
               className="self-start"
-              onClick={async () => {
-                await act.sendUpdate(draft.id, note);
-                toast("Update sent.");
-              }}
+              onClick={() =>
+                confirm({
+                  title: `Send the update to ${b.user?.firstName ?? "the client"}?`,
+                  body: "They get it in the app and by email. You cannot edit it after it is sent.",
+                  confirmLabel: "Send update",
+                  action: () => act.sendUpdate(draft.id, note),
+                  success: `Update sent to ${b.user?.firstName ?? "the client"}.`,
+                })
+              }
             >
               Send update
             </Button>

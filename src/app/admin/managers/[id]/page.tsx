@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { use, useState } from "react";
+import { use } from "react";
 import { ClientCell, Stats, managerName, managerStatus } from "@/components/admin/parts";
-import { Badge, Banner, Button, Card, Dialog, EmptyState, PageHeader, useToast } from "@/components/ui";
+import { Badge, Banner, Button, Card, EmptyState, PageHeader, useConfirm, useToast } from "@/components/ui";
 import { dayTime, fullName } from "@/lib/format";
 import { act, useData } from "@/lib/mock";
 import { statusBadge } from "@/lib/status";
@@ -15,9 +15,9 @@ export default function ManagerPage({ params }: { params: Promise<{ id: string }
   const { id } = use(params);
   const router = useRouter();
   const toast = useToast();
+  const confirm = useConfirm();
   const db = useData();
   const m = db.managers.find((x) => x.id === id);
-  const [suspending, setSuspending] = useState(false);
   if (!m) return <EmptyState title="Manager not found">Go back to Managers.</EmptyState>;
   const u = db.users.find((x) => x.id === m.userId);
   const clients = db.clients.filter((c) => c.managerId === id);
@@ -34,8 +34,16 @@ export default function ManagerPage({ params }: { params: Promise<{ id: string }
           clients.length > 0 && (
             <Button
               variant="secondary"
-              onClick={() => {
+              onClick={async () => {
+                const ok = await confirm({
+                  title: `Step in for ${u?.firstName}?`,
+                  body: `You see their ${clients.length} clients as they do and can act for them. Clients see "Your account team", not your name.`,
+                  warning: "Everything you do is recorded in the audit log.",
+                  confirmLabel: "Step in",
+                });
+                if (!ok) return;
                 act.setCovering(id);
+                toast(`You are covering for ${u?.firstName}. Use the banner to stop.`, "info");
                 router.push("/manager");
               }}
             >
@@ -52,10 +60,15 @@ export default function ManagerPage({ params }: { params: Promise<{ id: string }
           action={
             <Button
               variant="secondary"
-              onClick={async () => {
-                await act.markTrainingDone(id);
-                toast(`${u?.firstName} can now be assigned clients.`);
-              }}
+              onClick={() =>
+                confirm({
+                  title: `Mark ${u?.firstName}'s training as done?`,
+                  body: "They get full access and can be given clients. They are told by email.",
+                  confirmLabel: "Mark done",
+                  action: () => act.markTrainingDone(id),
+                  success: `${u?.firstName} can now be assigned clients.`,
+                })
+              }
             >
               Mark training done
             </Button>
@@ -64,15 +77,29 @@ export default function ManagerPage({ params }: { params: Promise<{ id: string }
           A 60-minute onboarding call with you, off the platform. Until you mark it done, they see only their training call and cannot be given clients.
         </Banner>
       )}
-      {m.status === "invited" && <Banner tone="info" title="Invite sent">They have not set up their account yet. The link expires in 7 days.</Banner>}
+      {m.status === "invited" && (
+        <Banner tone="info" title="Invite sent">
+          They have not set up their account yet. The link expires in 7 days.
+        </Banner>
+      )}
 
       <Stats
         items={[
           { label: "Status", value: s.label },
           { label: "Clients", value: `${clients.length} of ${m.maxClients}` },
-          { label: "On time", value: m.status === "active" ? `${m.stats.onTime}%` : "None yet" },
-          { label: "Approved first time", value: m.status === "active" ? `${m.stats.firstTimeApproval}%` : "None yet" },
-          { label: "Missed this month", value: m.stats.missed, tone: m.stats.missed >= 3 ? "danger" : undefined },
+          {
+            label: "On time",
+            value: m.status === "active" ? `${m.stats.onTime}%` : "None yet",
+          },
+          {
+            label: "Approved first time",
+            value: m.status === "active" ? `${m.stats.firstTimeApproval}%` : "None yet",
+          },
+          {
+            label: "Missed this month",
+            value: m.stats.missed,
+            tone: m.stats.missed >= 3 ? "danger" : undefined,
+          },
         ]}
       />
 
@@ -140,32 +167,49 @@ export default function ManagerPage({ params }: { params: Promise<{ id: string }
         <Card title="Suspend">
           <div className="flex flex-col gap-3">
             <p className="text-body-sm text-secondary">Access ends at once. Their clients are listed for reassignment, with suggestions and a handover summary for each new manager.</p>
-            <Button variant="ghost" className="self-start" onClick={() => setSuspending(true)}>
+            <Button
+              variant="ghost"
+              className="self-start"
+              onClick={() =>
+                confirm({
+                  title: `Suspend ${fullName(u)}?`,
+                  body: `${managerName(db, id)} loses access now.${clients.length ? ` ${clients.length} clients need a new manager. Clients are told who their new manager is.` : ""}`,
+                  warning: "Drafts they had not sent stay with each client for the next manager. You can reinstate them later, but their clients do not come back automatically.",
+                  confirmLabel: "Suspend",
+                  tone: "danger",
+                  action: () => act.suspendManager(id),
+                  success: clients.length ? `${u?.firstName} is suspended. Assign their clients from Clients.` : `${u?.firstName} is suspended.`,
+                })
+              }
+            >
               Suspend {u?.firstName}
             </Button>
           </div>
         </Card>
       )}
 
-      <Dialog open={suspending} onClose={() => setSuspending(false)} title={`Suspend ${fullName(u)}?`}>
-        <p className="text-body text-secondary">
-          {managerName(db, id)} loses access now. {clients.length ? `${clients.length} clients need a new manager. Clients are told who their new manager is.` : ""}
-        </p>
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => setSuspending(false)}>
-            Cancel
-          </Button>
-          <Button
-            variant="danger"
-            onClick={() => {
-              setSuspending(false);
-              toast("Demo only: in the live app access would end now.");
-            }}
-          >
-            Suspend
-          </Button>
-        </div>
-      </Dialog>
+      {m.status === "suspended" && (
+        <Card title="Suspended">
+          <div className="flex flex-col gap-3">
+            <p className="text-body-sm text-secondary">{u?.firstName} cannot sign in. Reinstate to give their access back. They start with no clients.</p>
+            <Button
+              variant="secondary"
+              className="self-start"
+              onClick={() =>
+                confirm({
+                  title: `Reinstate ${fullName(u)}?`,
+                  body: "They can sign in again and be given clients. They are told by email.",
+                  confirmLabel: "Reinstate",
+                  action: () => act.reinstateManager(id),
+                  success: `${u?.firstName} is reinstated.`,
+                })
+              }
+            >
+              Reinstate {u?.firstName}
+            </Button>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }

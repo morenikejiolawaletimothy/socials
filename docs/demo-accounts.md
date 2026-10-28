@@ -7,6 +7,7 @@ These sign in to the dummy data on the preview site and on `npm run dev`. They s
 - **Email code after sign-up:** same rule, any 6 digits except `000000`.
 - The sign-in page fills in the client account for you. Change the email to use another role.
 - The demo bar at the top of the app switches roles and resets the dummy data. In the Client view it also has a picker to view each client state (active, free 2 weeks, calls booked, approve strategy, setting up, paused).
+- "Simulate errors" in the demo bar makes every action fail after its loading state, so you can see the error toasts and dialogs. Turn it off to go back to normal. Your data is kept in this browser until you reset.
 
 | Role | Email | Asks for a code | State |
 | --- | --- | --- | --- |

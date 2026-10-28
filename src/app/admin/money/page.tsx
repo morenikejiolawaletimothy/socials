@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { ClientCell, Stats, Table, linkClass, td } from "@/components/admin/parts";
-import { Badge, Button, Card, Dialog, PageHeader, ProgressBar, Tabs, Textarea, useToast } from "@/components/ui";
+import { Badge, Button, Card, Dialog, Input, PageHeader, ProgressBar, Tabs, Textarea, useConfirm, useTask } from "@/components/ui";
 import { date, money } from "@/lib/format";
 import { act, useData, type Contract, type Refund } from "@/lib/mock";
 
@@ -28,8 +28,14 @@ const refundTone: Record<Refund["status"], { label: string; tone: "info" | "succ
 /** A5 Money: contracts, payments, refunds (automatic below the limit) and why clients pull out. */
 function MoneyPage() {
   const db = useData();
-  const toast = useToast();
+  const confirm = useConfirm();
+  const { run, pending } = useTask();
   const router = useRouter();
+  const [extending, setExtending] = useState<Contract | null>(null);
+  const [extKind, setExtKind] = useState<"extend" | "credit">("extend");
+  const [extAmount, setExtAmount] = useState("1");
+  const [extNote, setExtNote] = useState("");
+  const [extError, setExtError] = useState<string>();
   const tab = (useSearchParams().get("tab") as Tab) || "contracts";
   const [declining, setDeclining] = useState<Refund | null>(null);
   const [reason, setReason] = useState("");
@@ -43,10 +49,24 @@ function MoneyPage() {
       <Stats
         items={[
           { label: "Paid this month", value: money(paid) },
-          { label: "Active contracts", value: db.contracts.filter((k) => k.status === "active").length },
-          { label: "Unpaid, in free 2 weeks", value: db.contracts.filter((k) => k.status === "free" && !k.paid).length },
-          { label: "Failed payments", value: db.invoices.filter((i) => i.status === "failed").length, tone: "danger" },
-          { label: "Refunds waiting", value: db.refunds.filter((r) => r.status === "waiting").length, tone: "warning" },
+          {
+            label: "Active contracts",
+            value: db.contracts.filter((k) => k.status === "active").length,
+          },
+          {
+            label: "Unpaid, in free 2 weeks",
+            value: db.contracts.filter((k) => k.status === "free" && !k.paid).length,
+          },
+          {
+            label: "Failed payments",
+            value: db.invoices.filter((i) => i.status === "failed").length,
+            tone: "danger",
+          },
+          {
+            label: "Refunds waiting",
+            value: db.refunds.filter((r) => r.status === "waiting").length,
+            tone: "warning",
+          },
         ]}
       />
       <Card padding="none">
@@ -58,7 +78,11 @@ function MoneyPage() {
             tabs={[
               { value: "contracts", label: "Contracts" },
               { value: "payments", label: "Payments" },
-              { value: "refunds", label: "Refunds", count: db.refunds.filter((r) => r.status === "waiting").length },
+              {
+                value: "refunds",
+                label: "Refunds",
+                count: db.refunds.filter((r) => r.status === "waiting").length,
+              },
               { value: "reasons", label: "Why clients pull out" },
             ]}
           />
@@ -82,7 +106,7 @@ function MoneyPage() {
                   </td>
                   <td className={td}>{k.paid ? "Yes" : "No"}</td>
                   <td className={`${td} text-right`}>
-                    <button type="button" onClick={() => toast("Add the length and a note. Notes are required.")} className={linkClass}>
+                    <button type="button" onClick={() => setExtending(k)} className={linkClass}>
                       Extend or credit
                     </button>
                   </td>
@@ -105,8 +129,24 @@ function MoneyPage() {
                     <td className={td}>{money(i.amountCents)}</td>
                     <td className={`${td} whitespace-nowrap`}>{date(i.at)}</td>
                     <td className={td}>
-                      <Badge status={{ paid: "success" as const, failed: "danger" as const, due: "info" as const, refunded: "neutral" as const }[i.status]}>
-                        {{ paid: "Paid", failed: "Failed", due: "Due", refunded: "Refunded" }[i.status]}
+                      <Badge
+                        status={
+                          {
+                            paid: "success" as const,
+                            failed: "danger" as const,
+                            due: "info" as const,
+                            refunded: "neutral" as const,
+                          }[i.status]
+                        }
+                      >
+                        {
+                          {
+                            paid: "Paid",
+                            failed: "Failed",
+                            due: "Due",
+                            refunded: "Refunded",
+                          }[i.status]
+                        }
                       </Badge>
                     </td>
                   </tr>
@@ -129,10 +169,16 @@ function MoneyPage() {
                   {r.status === "waiting" && (
                     <div className="flex gap-2">
                       <Button
-                        onClick={async () => {
-                          await act.decideRefund(r.id, true);
-                          toast("Refund approved. It is paid automatically and the client is told.");
-                        }}
+                        onClick={() =>
+                          confirm({
+                            title: `Approve a refund of ${money(r.amountCents)}?`,
+                            body: "It is paid to the client's card automatically, and they are told by email.",
+                            warning: "Refunds cannot be taken back once paid.",
+                            confirmLabel: "Approve refund",
+                            action: () => act.decideRefund(r.id, true),
+                            success: "Refund approved. It is paid automatically and the client is told.",
+                          })
+                        }
                       >
                         Approve refund
                       </Button>
@@ -183,13 +229,64 @@ function MoneyPage() {
           <Button
             variant="danger"
             disabled={!reason.trim()}
+            loading={pending("decline")}
             onClick={async () => {
-              if (declining) await act.decideRefund(declining.id, false);
-              setDeclining(null);
-              toast("Refund declined. The client has your reason.");
+              if (declining && (await run("decline", () => act.decideRefund(declining.id, false, reason.trim()), "Refund declined. The client has your reason."))) {
+                setDeclining(null);
+                setReason("");
+              }
             }}
           >
             Decline
+          </Button>
+        </div>
+      </Dialog>
+      <Dialog open={!!extending} onClose={() => setExtending(null)} title="Extend or credit">
+        <fieldset className="flex gap-2">
+          <legend className="sr-only">Kind</legend>
+          {(["extend", "credit"] as const).map((k) => (
+            <label key={k} className={`flex flex-1 cursor-pointer items-center gap-2 rounded-md border p-3 ${extKind === k ? "border-primary-600 bg-primary-50" : "border-border"}`}>
+              <input type="radio" name="kind" checked={extKind === k} onChange={() => setExtKind(k)} className="size-4 accent-primary-600" />
+              <span className="text-body-sm text-primary">{k === "extend" ? "Extend, free" : "Add a credit"}</span>
+            </label>
+          ))}
+        </fieldset>
+        <Input label={extKind === "extend" ? "Months to add" : "Credit (USD)"} inputMode="numeric" value={extAmount} onChange={(e) => setExtAmount(e.target.value)} />
+        <Textarea
+          label="Note (required)"
+          rows={2}
+          value={extNote}
+          onChange={(e) => {
+            setExtNote(e.target.value);
+            setExtError(undefined);
+          }}
+          error={extError}
+          help="Kept in the audit log. The client is told."
+        />
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Button variant="ghost" onClick={() => setExtending(null)}>
+            Cancel
+          </Button>
+          <Button
+            loading={pending("extend")}
+            onClick={async () => {
+              const n = Number(extAmount);
+              if (!n || n < 1) return setExtError(extKind === "extend" ? "Enter the number of months, 1 or more." : "Enter the credit amount.");
+              if (!extNote.trim()) return setExtError("Add a note. It is required for every change.");
+              if (
+                extending &&
+                (await run(
+                  "extend",
+                  () => act.extendContract(extending.id, extKind, n, extNote.trim()),
+                  extKind === "extend" ? `Contract extended by ${n} month${n === 1 ? "" : "s"}. The client is told.` : `Credit of $${n} added. The client is told.`,
+                ))
+              ) {
+                setExtending(null);
+                setExtNote("");
+              }
+            }}
+          >
+            Save
           </Button>
         </div>
       </Dialog>

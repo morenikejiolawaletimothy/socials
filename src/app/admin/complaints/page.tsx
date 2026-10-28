@@ -1,15 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
+import { AssignDialog } from "@/components/admin/AssignDialog";
 import { ClientCell, complaintKind, linkClass, managerName } from "@/components/admin/parts";
-import { Badge, Card, PageHeader, useToast } from "@/components/ui";
+import { Badge, Card, PageHeader } from "@/components/ui";
 import { ago } from "@/lib/format";
-import { useData } from "@/lib/mock";
+import { act, useData, type ManagerChangeRequest } from "@/lib/mock";
 
 /** A6 Complaints: open complaints and manager change requests, newest first. */
 export default function ComplaintsPage() {
   const db = useData();
-  const toast = useToast();
+  const [changing, setChanging] = useState<ManagerChangeRequest | null>(null);
+  const changingClient = db.clients.find((c) => c.id === changing?.clientId);
   const list = [...db.complaints].sort((a, b) => b.at.localeCompare(a.at));
   const requests = db.changeRequests.filter((r) => r.status === "open");
 
@@ -28,7 +31,9 @@ export default function ComplaintsPage() {
                 <span className="line-clamp-2 text-body-sm text-secondary">{c.text}</span>
                 <span className="text-caption text-secondary">{ago(c.at)}</span>
               </div>
-              <Badge status={c.status === "resolved" ? "success" : c.status === "in-review" ? "info" : "warning"}>{c.status === "resolved" ? "Resolved" : c.status === "in-review" ? "In review" : "Open"}</Badge>
+              <Badge status={c.status === "resolved" ? "success" : c.status === "in-review" ? "info" : "warning"}>
+                {c.status === "resolved" ? "Resolved" : c.status === "in-review" ? "In review" : "Open"}
+              </Badge>
               <Link href={`/admin/complaints/${c.id}`} className={linkClass}>
                 Open
               </Link>
@@ -45,7 +50,7 @@ export default function ComplaintsPage() {
                   <ClientCell db={db} clientId={r.clientId} sub={`Now: ${managerName(db, db.clients.find((x) => x.id === r.clientId)?.managerId)}`} />
                 </div>
                 <p className="flex-1 text-body-sm text-primary">&ldquo;{r.reason}&rdquo;</p>
-                <button type="button" onClick={() => toast("A handover summary is prepared for the new manager.")} className={linkClass}>
+                <button type="button" onClick={() => setChanging(r)} className={linkClass}>
                   Change manager
                 </button>
               </li>
@@ -55,6 +60,9 @@ export default function ComplaintsPage() {
           <p className="text-body-sm text-secondary">No open requests.</p>
         )}
       </Card>
+      {changing && changingClient && (
+        <AssignDialog db={db} client={changingClient} title="Choose their new manager" onAssign={(managerId) => act.resolveChangeRequest(changing.id, managerId)} onClose={() => setChanging(null)} />
+      )}
     </div>
   );
 }
