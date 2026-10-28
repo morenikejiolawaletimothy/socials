@@ -36,7 +36,7 @@ Rules:
 
 ## Landing page exception
 
-The marketing landing page (`src/app/page.tsx`, `src/components/landing/`) is built pixel-perfect from the approved Figma template (`1440w light`). It uses Inter only, with the `lp-*` type utilities in `globals.css`, and may use the template's exact pixel values (spacing, radii, shadows, blurs). Colours still come from design-system tokens. Mock-ups are drawn at template size inside `FitBox`, which scales them down on small screens. Everything else in the app follows the design-system rules above.
+The marketing landing page (`src/app/page.tsx`, `src/components/landing/`) is built pixel-perfect from the approved Figma template (`1440w light`). It uses Inter only, with the `lp-*` type utilities in `globals.css`, and may use the template's exact pixel values (spacing, radii, shadows, blurs). Colours still come from design-system tokens. Mock-ups are drawn at template size inside `FitBox`, which scales them down on small screens. All landing motion comes from `src/components/landing/motion.tsx` (Motion + Lenis): one ease, reveal, stagger and card hover, plus the `lp-btn`, `lp-zoom` and `lp-marquee` utilities. Reuse those instead of new timings, and keep reduced motion working. Everything else in the app follows the design-system rules above.
 
 If the design system changes in Claude, re-sync `design-system/` and `globals.css` together.
 

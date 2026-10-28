@@ -1,83 +1,77 @@
 "use client";
 
 import {
-  Bank,
-  Briefcase,
-  Buildings,
-  ChartLineUp,
   Copyright,
-  Cpu,
   FacebookLogo,
-  FirstAid,
-  GraduationCap,
   InstagramLogo,
-  Lightning,
   LinkedinLogo,
-  Minus,
   PaperPlaneTilt,
   Plus,
-  Scales,
-  Truck,
   XLogo,
-  type Icon,
 } from "@phosphor-icons/react";
+import { AnimatePresence, motion } from "motion/react";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { BluecutMark, btnPrimary } from "./LandingTop";
+import { DUR, EASE, Reveal, Stagger, StaggerItem } from "./motion";
 
-type Tile = { icon: Icon; label: string; bg: string } | null;
-const t = (icon: Icon, label: string, bg: string): Tile => ({ icon, label, bg });
+// Template headshots, in template order. Stock images: replace with real clients (with their permission) before launch.
+const leaders = Array.from({ length: 26 }, (_, i) => `/landing/leaders/${String(i + 1).padStart(2, "0")}.jpg`);
+const rowOne = leaders.slice(0, 13);
+const rowTwo = leaders.slice(13);
 
-// Two offset rows of tiles; filled tiles show a field we work with.
-const rowA: Tile[] = [
-  t(Bank, "Banking", "/landing/tile-1.png"), null, null, t(Cpu, "Technology", "/landing/tile-2.png"), null, null,
-  t(FirstAid, "Health", "/landing/tile-3.png"), null, null, t(Scales, "Law", "/landing/tile-1.png"), null, t(ChartLineUp, "Venture capital", "/landing/tile-2.png"), null,
-];
-const rowB: Tile[] = [
-  null, t(Briefcase, "Consulting", "/landing/tile-2.png"), null, null, t(Lightning, "Energy", "/landing/tile-3.png"), null,
-  t(Buildings, "Real estate", "/landing/tile-1.png"), null, null, t(GraduationCap, "Education", "/landing/tile-2.png"), null, t(Truck, "Logistics", "/landing/tile-3.png"), null,
-];
-
-function TileRow({ tiles, offset }: { tiles: Tile[]; offset: string }) {
+/** One endless row of headshots. The list is doubled so the loop has no seam; hovering the row pauses it. */
+function LeaderRow({ faces, reverse, offset }: { faces: string[]; reverse?: boolean; offset: string }) {
   return (
-    <ul className={`flex justify-center gap-6 ${offset}`}>
-      {tiles.map((tile, i) =>
-        tile ? (
+    <div className={`group/row flex w-max ${offset}`}>
+      <ul
+        className={`flex w-max gap-6 pr-6 group-hover/row:[animation-play-state:paused] ${reverse ? "lp-marquee-reverse" : "lp-marquee"}`}
+        style={{ ["--lp-marquee-duration" as string]: "60s" }}
+      >
+        {[...faces, ...faces].map((src, i) => (
           <li
             key={i}
-            title={tile.label}
-            className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-[20px] bg-card shadow-[0px_4px_16px_0px_rgba(0,0,0,0.08)]"
+            aria-hidden={i >= faces.length}
+            className={`relative size-20 shrink-0 overflow-hidden rounded-[20px] transition-transform duration-300 ease-out hover:-translate-y-1 hover:scale-105 ${
+              i % faces.length === 0 ? "bg-gradient-to-b from-primary-50 to-card shadow-[0px_4px_16px_0px_rgba(0,0,0,0.08)]" : "bg-card"
+            }`}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={tile.bg} alt="" className="absolute inset-0 size-full" />
-            <tile.icon className="relative size-9 text-primary-600" aria-hidden />
-            <span className="sr-only">{tile.label}</span>
-            <span aria-hidden className="absolute inset-0 rounded-[20px] shadow-[inset_0px_0px_0px_2px_white]" />
+            <Image src={src} alt="" fill sizes="80px" className="object-cover" />
+            <span
+              aria-hidden
+              className={`absolute inset-0 rounded-[20px] ${
+                i % faces.length === 0 ? "shadow-[inset_0px_0px_0px_2px_white]" : "shadow-[inset_0px_0px_0px_1px_var(--color-neutral-100)]"
+              }`}
+            />
           </li>
-        ) : (
-          <li key={i} aria-hidden className="size-20 shrink-0 rounded-[20px] bg-card shadow-[inset_0px_0px_0px_1px_var(--color-neutral-100)]" />
-        ),
-      )}
-    </ul>
+        ))}
+      </ul>
+    </div>
   );
 }
 
 export function Industries() {
   return (
-    <section className="flex flex-col items-center gap-[60px] overflow-hidden bg-card py-[100px]">
+    <section className="flex flex-col items-center gap-[60px] overflow-hidden bg-card pt-[100px] pb-[124px]">
       <div className="flex w-full max-w-[1280px] flex-col items-center gap-3 px-5 md:px-10">
-        <h2 className="w-full max-w-[730px] text-center lp-h2 text-neutral-950">Leaders we work with</h2>
+        <Reveal as="h2" className="w-full max-w-[730px] text-center lp-h2 text-neutral-950">
+          Leaders we work with
+        </Reveal>
       </div>
-      <div
-        className="flex h-52 w-full max-w-[1280px] flex-col justify-center gap-6"
-        style={{
-          maskImage: "linear-gradient(90deg, transparent 0%, black 20%, black 80%, transparent 100%)",
-          WebkitMaskImage: "linear-gradient(90deg, transparent 0%, black 20%, black 80%, transparent 100%)",
-        }}
-      >
-        <TileRow tiles={rowA} offset="" />
-        <TileRow tiles={rowB} offset="pl-[104px]" />
-      </div>
+      <Reveal delay={0.1} className="w-full max-w-[1280px] md:px-10">
+        <div
+          className="flex flex-col gap-6 overflow-hidden"
+          style={{
+            maskImage: "linear-gradient(90deg, transparent 0, black 6%, black 94%, transparent 100%)",
+            WebkitMaskImage: "linear-gradient(90deg, transparent 0, black 6%, black 94%, transparent 100%)",
+          }}
+        >
+          <p className="sr-only">Founders, executives and senior professionals across banking, technology, health, law and more.</p>
+          <LeaderRow faces={rowOne} offset="-ml-[22px]" />
+          <LeaderRow faces={rowTwo} offset="-ml-[110px]" reverse />
+        </div>
+      </Reveal>
     </section>
   );
 }
@@ -96,39 +90,62 @@ export function Faq() {
     <section id="faq" className="flex scroll-mt-16 flex-col items-center gap-[60px] bg-card px-5 py-[100px] md:px-10">
       <div className="grid w-full max-w-[980px] grid-cols-1 gap-8 md:grid-cols-[2fr_1fr] md:px-10">
         <div className="flex flex-col items-start gap-6 self-end">
-          <span className="rounded-[5px] bg-card py-1.5 lp-small text-neutral-950 opacity-80">FAQ</span>
-          <h2 className="lp-h2-regular text-neutral-950">
+          <Reveal as="span" className="rounded-[5px] bg-card py-1.5 lp-small text-neutral-950 opacity-80">
+            FAQ
+          </Reveal>
+          <Reveal as="h2" delay={0.05} className="lp-h2-regular text-neutral-950">
             Common questions,
             <br />
             straight answers
-          </h2>
+          </Reveal>
         </div>
-        <div className="flex flex-col items-start gap-6 self-end md:w-[300px]">
+        <Reveal delay={0.1} className="flex flex-col items-start gap-6 self-end md:w-[300px]">
           <p className="lp-body text-neutral-950 opacity-50">Have a question that is not covered here? Write to us and we will reply within 24 hours.</p>
           <a href="mailto:hello@bluecut.example" className={`${btnPrimary} h-11`}>
             Contact us
           </a>
-        </div>
+        </Reveal>
       </div>
-      <div className="w-full max-w-[980px] md:px-10">
+      <Stagger className="w-full max-w-[980px] md:px-10">
         {faqs.map((f, i) => {
           const isOpen = open === i;
           return (
-            <div key={f.q} className="border-b-[0.667px] border-neutral-100 py-6">
-              <button
-                type="button"
-                aria-expanded={isOpen}
-                onClick={() => setOpen(isOpen ? -1 : i)}
-                className="flex w-full items-center gap-6 rounded-sm text-left focus-visible:focus-ring"
-              >
-                <span className="flex-1 lp-body-medium text-neutral-950">{f.q}</span>
-                {isOpen ? <Minus className="size-5 text-neutral-950" aria-hidden /> : <Plus className="size-5 text-neutral-950" aria-hidden />}
-              </button>
-              {isOpen && <p className="mt-6 max-w-[650px] lp-body text-neutral-950 opacity-50">{f.a}</p>}
-            </div>
+            <StaggerItem key={f.q} className="border-b-[0.667px] border-neutral-100">
+              <h3>
+                <button
+                  type="button"
+                  id={`faq-q-${i}`}
+                  aria-expanded={isOpen}
+                  aria-controls={`faq-a-${i}`}
+                  onClick={() => setOpen(isOpen ? -1 : i)}
+                  className="group flex w-full items-center gap-6 rounded-sm py-6 text-left focus-visible:focus-ring"
+                >
+                  <span className="flex-1 lp-body-medium text-neutral-950 transition-colors duration-300 group-hover:text-primary-700">{f.q}</span>
+                  <motion.span animate={{ rotate: isOpen ? 45 : 0 }} transition={{ duration: DUR.fast, ease: EASE }} className="flex">
+                    <Plus className="size-5 text-neutral-950" aria-hidden />
+                  </motion.span>
+                </button>
+              </h3>
+              <AnimatePresence initial={false}>
+                {isOpen && (
+                  <motion.div
+                    id={`faq-a-${i}`}
+                    role="region"
+                    aria-labelledby={`faq-q-${i}`}
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.4, ease: EASE }}
+                    className="overflow-hidden"
+                  >
+                    <p className="pb-6 lp-body text-neutral-950 opacity-50">{f.a}</p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </StaggerItem>
           );
         })}
-      </div>
+      </Stagger>
     </section>
   );
 }
@@ -149,32 +166,34 @@ export function ClosingAndFooter() {
     <div className="bg-primary-900 pb-28 md:pb-0">
       <section className="flex flex-col items-center px-5 pb-[50px] pt-[100px] md:px-10">
         <div className="flex w-full max-w-[1280px] flex-col items-center gap-6 md:px-10">
-          <h2 className="max-w-[560px] text-center lp-h2-regular text-inverse">
+          <Reveal as="h2" className="max-w-[560px] text-center lp-h2-regular font-medium text-inverse">
             Less time on LinkedIn.
             <br />
             More of the right attention.
-          </h2>
-          <p className="max-w-[543px] px-2 text-center lp-body text-neutral-300">
+          </Reveal>
+          <Reveal as="p" delay={0.1} className="max-w-[475px] px-2 text-center lp-body text-neutral-300">
             A dedicated expert runs your LinkedIn around your goals, and you approve everything. Your first 2 weeks are free.
-          </p>
-          <Link href="/signup" className={`${btnPrimary} h-11`}>
-            Get started
-          </Link>
+          </Reveal>
+          <Reveal delay={0.2}>
+            <Link href="/signup" className={`${btnPrimary} h-11`}>
+              Get started
+            </Link>
+          </Reveal>
         </div>
       </section>
 
       <footer className="flex flex-col items-center px-4 pb-20 pt-[50px] md:px-10">
         <div className="w-full max-w-[1280px] md:px-10">
-          <div className="flex flex-col rounded-[24px] bg-card">
+          <Reveal className="flex flex-col rounded-[24px] bg-card">
             <div className="flex flex-col gap-10 px-6 py-10 md:flex-row md:items-start md:justify-between md:py-[60px] md:pl-[68px] md:pr-20">
               <div className="flex gap-[68px]">
                 {columns.map((c) => (
                   <nav key={c.title} aria-label={c.title} className="flex flex-col gap-4">
-                    <p className="pl-3 text-[14px] font-medium leading-[14.4px] tracking-[-0.24px] text-neutral-900">{c.title}</p>
+                    <p className="pl-3 text-[14px] leading-[14.4px] tracking-[-0.24px] text-primary">{c.title}</p>
                     <ul className="flex flex-col gap-1">
                       {c.links.map(([l, h]) => (
                         <li key={l}>
-                          <Link href={h} className="block rounded-[20px] px-3 py-1.5 text-[14px] leading-[18.2px] tracking-[-0.14px] text-neutral-950/50 hover:text-neutral-950 focus-visible:focus-ring">
+                          <Link href={h} className="block rounded-[20px] px-3 py-1.5 text-[14px] leading-[18.2px] tracking-[-0.14px] text-neutral-950/50 transition-colors duration-300 hover:bg-neutral-25 hover:text-neutral-950 focus-visible:focus-ring">
                             {l}
                           </Link>
                         </li>
@@ -214,7 +233,7 @@ export function ClosingAndFooter() {
                 <BluecutMark size={40} textClass="text-[20px] leading-[26px]" />
                 <a
                   href="mailto:hello@bluecut.example"
-                  className="inline-flex items-center justify-center rounded-[10px] bg-primary-600 px-[18px] py-[13px] text-[15px] font-medium leading-[15px] tracking-[-0.3px] text-inverse hover:bg-primary-700 focus-visible:focus-ring"
+                  className="lp-btn inline-flex items-center justify-center rounded-[10px] bg-primary-600 px-[18px] py-[13px] text-[15px] font-medium leading-[15px] tracking-[-0.3px] text-inverse hover:bg-primary-700 focus-visible:focus-ring"
                 >
                   Contact us
                 </a>
@@ -230,14 +249,14 @@ export function ClosingAndFooter() {
               <ul className="flex items-center gap-5">
                 {socials.map((s) => (
                   <li key={s.label}>
-                    <a href="#" aria-label={s.label} className="flex rounded-sm text-neutral-900 hover:text-primary-700 focus-visible:focus-ring">
+                    <a href="#" aria-label={s.label} className="flex rounded-sm text-neutral-900 transition-[color,transform] duration-300 hover:-translate-y-0.5 hover:text-primary-700 focus-visible:focus-ring">
                       <s.icon className="size-4" aria-hidden />
                     </a>
                   </li>
                 ))}
               </ul>
             </div>
-          </div>
+          </Reveal>
         </div>
       </footer>
     </div>
