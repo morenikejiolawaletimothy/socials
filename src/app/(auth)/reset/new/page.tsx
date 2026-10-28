@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Banner, Button, PasswordInput, TextLink } from "@/components/ui";
 import { auth } from "@/lib/mock";
-import { AuthCard } from "../../AuthCard";
+import { AuthScreen } from "../../AuthScreen";
 
 export default function NewPasswordPage() {
   const [pw, setPw] = useState("");
@@ -24,19 +24,19 @@ export default function NewPasswordPage() {
 
   if (done) {
     return (
-      <AuthCard title="Your password is changed">
+      <AuthScreen title="Your password is changed">
         <Banner tone="success" title="You are signed out everywhere else">
           For your safety, any other device signed in to your account has been signed out.
         </Banner>
         <TextLink href="/signin" className="self-start">
           Sign in
         </TextLink>
-      </AuthCard>
+      </AuthScreen>
     );
   }
 
   return (
-    <AuthCard title="Set a new password">
+    <AuthScreen title="Set a new password" description="Choose a password you have not used for Bluecut before.">
       <form onSubmit={submit} noValidate className="flex flex-col gap-4">
         <PasswordInput label="New password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} help="At least 12 characters." error={errors.pw} />
         <PasswordInput label="Type it again" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} error={errors.confirm} />
@@ -44,6 +44,6 @@ export default function NewPasswordPage() {
           {busy ? "Saving" : "Save password"}
         </Button>
       </form>
-    </AuthCard>
+    </AuthScreen>
   );
 }

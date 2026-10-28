@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button, Input, TextLink } from "@/components/ui";
 import { auth } from "@/lib/mock";
-import { AuthCard } from "../AuthCard";
+import { AuthScreen } from "../AuthScreen";
 
 export default function ResetPage() {
   const [email, setEmail] = useState("");
@@ -22,7 +22,7 @@ export default function ResetPage() {
 
   if (sent) {
     return (
-      <AuthCard
+      <AuthScreen
         title="Check your email"
         description={
           <>
@@ -36,12 +36,12 @@ export default function ResetPage() {
         <TextLink href="/signin" className="self-start">
           Back to sign in
         </TextLink>
-      </AuthCard>
+      </AuthScreen>
     );
   }
 
   return (
-    <AuthCard title="Reset your password" description="Enter your email and we will send you a link to set a new password.">
+    <AuthScreen title="Reset your password" description="Enter your email and we will send you a link to set a new password.">
       <form onSubmit={submit} noValidate className="flex flex-col gap-4">
         <Input label="Email" type="email" autoComplete="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(undefined); }} error={error} />
         <Button type="submit" fullWidth disabled={busy}>
@@ -51,6 +51,6 @@ export default function ResetPage() {
       <p className="text-center text-body-sm text-secondary">
         Remembered it? <TextLink href="/signin">Sign in</TextLink>
       </p>
-    </AuthCard>
+    </AuthScreen>
   );
 }

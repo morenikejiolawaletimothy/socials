@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { use, useState } from "react";
 import { Avatar, Banner, Button, CodeInput, PasswordInput, Stepper, TextLink } from "@/components/ui";
 import { auth, useDb } from "@/lib/mock";
-import { AuthCard } from "../../AuthCard";
+import { AuthScreen } from "../../AuthScreen";
 
 const steps = ["Password", "Two-step", "Profile", "Call slots"];
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -31,12 +31,12 @@ export default function InvitePage({ params }: { params: Promise<{ token: string
 
   if (!invite) {
     return (
-      <AuthCard title="This invite link no longer works" description="Invite links work once and expire after 7 days.">
+      <AuthScreen title="This invite link no longer works" description="Invite links work once and expire after 7 days.">
         <p className="text-body text-secondary">Ask the owner to send you a new invite.</p>
         <TextLink href="/" className="self-start">
           Go to Bluecut
         </TextLink>
-      </AuthCard>
+      </AuthScreen>
     );
   }
   const name = `${invite.user.firstName} ${invite.user.lastName}`;
@@ -68,9 +68,8 @@ export default function InvitePage({ params }: { params: Promise<{ token: string
   ];
 
   return (
-    <div className="flex flex-col gap-6">
-      <Stepper steps={steps} current={step} />
-      <AuthCard title={titles[step].t} description={titles[step].d}>
+    <>
+      <AuthScreen title={titles[step].t} description={titles[step].d} above={<Stepper steps={steps} current={step} />}>
         <form onSubmit={next} noValidate className="flex flex-col gap-4">
           {step === 0 && (
             <PasswordInput label="Choose a password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} help="At least 12 characters." error={error} />
@@ -174,8 +173,8 @@ export default function InvitePage({ params }: { params: Promise<{ token: string
             </Button>
           </div>
         </form>
-      </AuthCard>
-      <p className="text-center text-caption text-secondary">Demo: this invite is for Bisi Adebayo. Reset the demo to use it again.</p>
-    </div>
+      </AuthScreen>
+      <p className="mt-8 text-center text-caption text-secondary">Demo: this invite is for Bisi Adebayo. Reset the demo to use it again.</p>
+    </>
   );
 }

@@ -2,9 +2,9 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { Button, CodeInput, useToast } from "@/components/ui";
+import { Button, CodeInput, TextLink, useToast } from "@/components/ui";
 import { auth } from "@/lib/mock";
-import { AuthCard } from "../../AuthCard";
+import { AuthScreen } from "../../AuthScreen";
 
 function Verify() {
   const router = useRouter();
@@ -25,7 +25,7 @@ function Verify() {
   }
 
   return (
-    <AuthCard
+    <AuthScreen
       title="Check your email"
       description={
         <>
@@ -42,7 +42,10 @@ function Verify() {
       <Button variant="ghost" onClick={() => toast("We sent a new code.")}>
         Send a new code
       </Button>
-    </AuthCard>
+      <p className="text-center text-body-sm text-secondary">
+        Wrong email? <TextLink href="/signup">Change it</TextLink>
+      </p>
+    </AuthScreen>
   );
 }
 

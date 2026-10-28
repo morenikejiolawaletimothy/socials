@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button, CodeInput, TextLink } from "@/components/ui";
 import { auth } from "@/lib/mock";
-import { AuthCard } from "../../AuthCard";
+import { AuthScreen } from "../../AuthScreen";
 
 export default function SignInCodePage() {
   const router = useRouter();
@@ -24,7 +24,7 @@ export default function SignInCodePage() {
   }
 
   return (
-    <AuthCard
+    <AuthScreen
       title={backup ? "Use a backup code" : "Enter your code"}
       description={backup ? "Enter one of the backup codes you saved when you set up two-step sign-in. Each code works once." : "Open your authenticator app and enter the 6-digit code for Bluecut."}
     >
@@ -40,6 +40,6 @@ export default function SignInCodePage() {
       <p className="text-center text-body-sm text-secondary">
         <TextLink href="/signin">Back to sign in</TextLink>
       </p>
-    </AuthCard>
+    </AuthScreen>
   );
 }
