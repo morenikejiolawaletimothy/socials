@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Avatar, Logo, Menu, ToastProvider } from "@/components/ui";
 import { useNotifications, useSession } from "@/lib/mock";
+import { CoveringBanner } from "./CoveringBanner";
 import { DemoBar } from "./DemoBar";
 import { isActive, mainNav, meHref, meIcon as MeIcon, navItemClass, profileNav, type NavItem } from "./nav";
 import { PageSkeleton } from "./PageSkeleton";
@@ -61,6 +62,7 @@ export function AppShell({ role, children }: { role: "client" | "manager"; child
   return (
     <ToastProvider>
       <DemoBar />
+      {role === "manager" && <CoveringBanner />}
       <header className="sticky top-0 z-30 border-b border-border bg-card">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
           <Link href={home} className="flex items-center gap-2 rounded-full focus-visible:focus-ring" aria-label="Bluecut Socials home">
