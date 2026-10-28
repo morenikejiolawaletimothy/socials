@@ -1,19 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Avatar,
-  Banner,
-  Breadcrumbs,
-  Button,
-  Dialog,
-  EmptyState,
-  Segmented,
-  Skeleton,
-  Switch,
-  ToastProvider,
-  useToast,
-} from "@/components/ui";
+import { Avatar, Banner, Breadcrumbs, Button, Dialog, EmptyState, ProgressBar, Segmented, Skeleton, Switch, Tabs, Textarea, ToastProvider, useToast } from "@/components/ui";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -25,6 +13,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function Demo() {
+  const [tab, setTab] = useState<"review" | "upcoming" | "live">("review");
   const [on, setOn] = useState(true);
   const [view, setView] = useState<"feed" | "board">("feed");
   const [open, setOpen] = useState(false);
@@ -77,6 +66,30 @@ function Demo() {
             <Button variant="danger" onClick={() => setOpen(false)}>Take it down</Button>
           </div>
         </Dialog>
+      </Section>
+
+      <Section title="Tabs">
+        <Tabs
+          label="Example tabs"
+          value={tab}
+          onChange={setTab}
+          tabs={[
+            { value: "review", label: "To review", count: 3 },
+            { value: "upcoming", label: "Coming up" },
+            { value: "live", label: "Live" },
+          ]}
+        />
+      </Section>
+
+      <Section title="Text area and progress">
+        <Textarea label="What would you like changed?" help="We remember your preferences for future posts." />
+        <div className="flex flex-col gap-2">
+          <span className="flex justify-between text-body-sm">
+            <span className="text-primary">Comments</span>
+            <span className="text-secondary">11 of 15</span>
+          </span>
+          <ProgressBar value={11} max={15} />
+        </div>
       </Section>
 
       <Section title="Empty state and loading">

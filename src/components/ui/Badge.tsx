@@ -19,7 +19,7 @@ export function Badge({
   const s = styles[status];
   return (
     <span
-      className={`inline-flex items-center gap-2 rounded-full px-3 py-2 text-caption leading-none ${s.surface}`}
+      className={`inline-flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-caption leading-none ${s.surface}`}
     >
       <span className={`size-[7px] shrink-0 rounded-full ${s.dot}`} aria-hidden />
       {children}

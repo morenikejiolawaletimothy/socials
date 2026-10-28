@@ -58,41 +58,41 @@ These rules apply to every flow below.
 | P2 | Create account | Client | 1.1 | Built |
 | P3 | Sign in and reset password | All | 1.3, 1.4 | Built |
 | P4 | Accept staff invite | Manager | 1.2, 1.3 | Built |
-| C1 | Home and setup progress | Client | 3.9, 10.1 | Approved |
-| C2 | Connect LinkedIn and choose what we do | Client | 8.1, 8.2 | Approved |
-| C3 | Book your two calls | Client | 3.3, 3.4 | Approved |
-| C4 | Choose a plan, sign, pay now or later | Client | 2.2, 2.3, 11.1 | Approved |
-| C5 | Set how you review | Client | 3.8, 7.5, 7.6, 14.2 | Approved |
-| C6 | Strategy call and approval | Client | 3.7, 4.6, 4.7 | Approved |
-| C7 | Review content | Client | 7.2, 7.3, 7.5 | Approved |
-| C8 | Take down or fix a live post | Client | New | Approved |
-| C9 | Progress and weekly updates | Client | 10.1 to 10.5 | Approved |
-| C10 | Messages | Client | 14.3 | Approved |
-| C11 | Control: permissions, pause, disconnect, activity | Client | 8.2, 8.4, 8.5, 8.6, 8.7, 9.3 | Approved |
-| C12 | Raise a complaint | Client | 12.3 | Approved |
-| C13 | Contract, billing and cancel | Client | 11.2 to 11.7 | Approved |
-| C14 | Account: profile, security, delete | Client | 1.6 to 1.8, 14.2 | Approved |
-| C15 | Your brand | Client | 3.2, 5.4 | Approved |
-| C16 | Paused account and reactivation | Client | 2.4, 2.5, 11.6, 11.7 | Approved |
-| C17 | Quick tasks for you | Client | 6.3, 8.3, 5.8 | Approved |
-| M1 | Home: what to do next | Manager | 13.4, 12.1, 12.5 | Approved |
-| M2 | Clients and the client page | Manager | 3.8, 8.2 | Approved |
-| M3 | Onboard a client | Manager | 3.4 to 3.7, 4.2 to 4.5 | Approved |
-| M4 | Plan and draft content | Manager | 5.1 to 5.7, 7.1 | Approved |
-| M5 | After the client reviews | Manager | 7.4, 9.1, 9.2, 9.4 | Approved |
-| M6 | Weekly engagement | Manager | 6.1 to 6.3, 6.6, 8.3 | Approved |
-| M7 | Listening for a client | Manager | New | Approved |
-| M8 | Weekly and monthly updates | Manager | 10.2 | Approved |
-| M9 | Messages | Manager | 14.3, 8.6 | Approved |
-| M10 | My calls and profile | Manager | 3.3, 1.7 | Approved |
-| A1 | Overview | Admin | 10.6 | Approved |
-| A2 | Clients and assigning managers | Admin | 13.3, 10.6 | Approved |
-| A3 | Managers | Admin | 13.1, 13.5, 13.6, 13.9, 12.6 | Approved |
-| A4 | Framework | Admin | 4.1 | Approved |
-| A5 | Money | Admin | 2.7, 11.5 | Approved |
-| A6 | Complaints | Admin | 12.2, 12.4 | Approved |
-| A7 | Settings | Admin | 12.7, 13.7 | Approved |
-| A8 | Audit log | Admin | 13.8 | Approved |
+| C1 | Home and setup progress | Client | 3.9, 10.1 | Built |
+| C2 | Connect LinkedIn and choose what we do | Client | 8.1, 8.2 | Built |
+| C3 | Book your two calls | Client | 3.3, 3.4 | Built |
+| C4 | Choose a plan, sign, pay now or later | Client | 2.2, 2.3, 11.1 | Built |
+| C5 | Set how you review | Client | 3.8, 7.5, 7.6, 14.2 | Built |
+| C6 | Strategy call and approval | Client | 3.7, 4.6, 4.7 | Built |
+| C7 | Review content | Client | 7.2, 7.3, 7.5 | Built |
+| C8 | Take down or fix a live post | Client | New | Built |
+| C9 | Progress and weekly updates | Client | 10.1 to 10.5 | Built |
+| C10 | Messages | Client | 14.3 | Built |
+| C11 | Control: permissions, pause, disconnect, activity | Client | 8.2, 8.4, 8.5, 8.6, 8.7, 9.3 | Built |
+| C12 | Raise a complaint | Client | 12.3 | Built |
+| C13 | Contract, billing and cancel | Client | 11.2 to 11.7 | Built |
+| C14 | Account: profile, security, delete | Client | 1.6 to 1.8, 14.2 | Built |
+| C15 | Your brand | Client | 3.2, 5.4 | Built |
+| C16 | Paused account and reactivation | Client | 2.4, 2.5, 11.6, 11.7 | Built |
+| C17 | Quick tasks for you | Client | 6.3, 8.3, 5.8 | Built |
+| M1 | Home: what to do next | Manager | 13.4, 12.1, 12.5 | Built |
+| M2 | Clients and the client page | Manager | 3.8, 8.2 | Built |
+| M3 | Onboard a client | Manager | 3.4 to 3.7, 4.2 to 4.5 | Built |
+| M4 | Plan and draft content | Manager | 5.1 to 5.7, 7.1 | Built |
+| M5 | After the client reviews | Manager | 7.4, 9.1, 9.2, 9.4 | Built |
+| M6 | Weekly engagement | Manager | 6.1 to 6.3, 6.6, 8.3 | Built |
+| M7 | Listening for a client | Manager | New | Built |
+| M8 | Weekly and monthly updates | Manager | 10.2 | Built |
+| M9 | Messages | Manager | 14.3, 8.6 | Built |
+| M10 | My calls and profile | Manager | 3.3, 1.7 | Built |
+| A1 | Overview | Admin | 10.6 | Built |
+| A2 | Clients and assigning managers | Admin | 13.3, 10.6 | Built |
+| A3 | Managers | Admin | 13.1, 13.5, 13.6, 13.9, 12.6 | Built |
+| A4 | Framework | Admin | 4.1 | Built |
+| A5 | Money | Admin | 2.7, 11.5 | Built |
+| A6 | Complaints | Admin | 12.2, 12.4 | Built |
+| A7 | Settings | Admin | 12.7, 13.7 | Built |
+| A8 | Audit log | Admin | 13.8 | Built |
 
 **Later (not in the first build):** manager training (13.2), opportunities (6.4, 6.5), benchmarks (4.4), digests (14.5).
 

@@ -36,6 +36,20 @@ Rules:
 - No page titles or subtitles on client and manager pages, so the first card in every column lines up at the top. Each card carries its own title through `Card title=...`: a header strip with a divider under it (breadcrumbs go in `eyebrow`). The owner dashboard may keep page titles.
 - The owner keeps the dashboard shell (sidebar).
 
+## Lessons from reviews (do not repeat)
+
+Corrections Fola has already made. Check every new screen against them before sharing.
+
+- Client and manager pages have no page title or subtitle. Every card has its title in the header strip (`Card title=...`).
+- Keep screens simple: no extra lines under titles unless they say something needed (for example, sign-up has the title only).
+- Demo-only help (demo logins, codes, "any 6 digits") never shows on screens. Pre-fill it instead and keep it in `docs/demo-accounts.md`.
+- Hand cursor on everything clickable; no shadow on button hover; Phosphor icons only (Google "G" excepted).
+- Dates mid-sentence use `dayIn`, `dayTimeIn` and `agoIn` from `src/lib/format.ts`. Never `.toLowerCase()` a formatted date ("due Sun 1 Nov", not "due sun 1 nov").
+- Check 390px for horizontal scroll on every page, including the demo bar and wide tables (tables scroll inside their card, never the page).
+- Every button does something on the demo data (`act.*` in `src/lib/mock/actions.ts`), with a toast that says what happened. No dead buttons.
+- Clients never see the word AI. Staff screens may show "Suggested" with the sparkle icon.
+- Only `page`, `default` and Next.js route exports in `page.tsx` files. Shared labels and helpers go in components.
+
 ## Landing page exception
 
 The marketing landing page (`src/app/page.tsx`, `src/components/landing/`) is built pixel-perfect from the approved Figma template (`1440w light`). It uses Inter only, with the `lp-*` type utilities in `globals.css`, and may use the template's exact pixel values (spacing, radii, shadows, blurs). Colours still come from design-system tokens. Mock-ups are drawn at template size inside `FitBox`, which scales them down on small screens. All landing motion comes from `src/components/landing/motion.tsx` (Motion + Lenis): one ease, reveal, stagger and card hover, plus the `lp-btn`, `lp-zoom` and `lp-marquee` utilities. Reuse those instead of new timings, and keep reduced motion working. Everything else in the app follows the design-system rules above.
