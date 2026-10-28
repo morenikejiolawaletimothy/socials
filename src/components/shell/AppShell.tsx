@@ -7,6 +7,8 @@ import { Avatar, Logo, Menu, ToastProvider } from "@/components/ui";
 import { useNotifications, useSession } from "@/lib/mock";
 import { DemoBar } from "./DemoBar";
 import { isActive, mainNav, meHref, meIcon as MeIcon, navItemClass, profileNav, type NavItem } from "./nav";
+import { PageSkeleton } from "./PageSkeleton";
+import { useMounted } from "./useMounted";
 import { useRoleSync } from "./useRoleSync";
 
 function UnreadDot({ count }: { count: number }) {
@@ -43,6 +45,7 @@ function TopItem({ item, active, count = 0 }: { item: NavItem; active: boolean; 
  */
 export function AppShell({ role, children }: { role: "client" | "manager"; children: React.ReactNode }) {
   useRoleSync(role);
+  const mounted = useMounted();
   const pathname = usePathname();
   const { user } = useSession();
   const unread = useNotifications(user?.id).filter((n) => !n.read).length;
@@ -115,7 +118,7 @@ export function AppShell({ role, children }: { role: "client" | "manager"; child
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl px-4 pb-32 pt-6 md:pb-16">{children}</main>
+      <main className="mx-auto w-full max-w-6xl px-4 pb-32 pt-6 md:pb-16">{mounted ? children : <PageSkeleton />}</main>
 
       <nav aria-label="Main" className="fixed inset-x-4 bottom-4 z-30 rounded-xl border border-border bg-card px-2 shadow-lg md:hidden">
         <ul className="grid grid-cols-4">

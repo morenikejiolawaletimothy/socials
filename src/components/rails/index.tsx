@@ -5,10 +5,19 @@ import { CallsCard } from "./CallsCard";
 import { ManagerCard } from "./ManagerCard";
 import { clientAccountMenu, managerAccountMenu } from "./menus";
 import { ProfileCard } from "./ProfileCard";
+import { WeekCard } from "./WeekCard";
 
 /** Named column sets so every page of a kind is laid out the same way. */
 export const rails = {
-  clientFeed: { left: <ProfileCard />, right: <ManagerCard /> },
+  clientFeed: {
+    left: <ProfileCard />,
+    right: (
+      <>
+        <ManagerCard />
+        <WeekCard />
+      </>
+    ),
+  },
   clientMain: { right: <ManagerCard /> },
   clientSettings: { left: <SideMenu {...clientAccountMenu} /> },
   managerFeed: { left: <ProfileCard />, right: <CallsCard /> },

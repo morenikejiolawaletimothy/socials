@@ -30,13 +30,23 @@ export function ProfileCard() {
           )}
         </div>
       </div>
+      {role === "client" && client?.goal && (
+        <div className="flex flex-col gap-1 border-t border-border px-6 py-4">
+          <span className="text-caption text-secondary">Your goal</span>
+          <p className="text-body-sm text-primary">{client.goal}</p>
+        </div>
+      )}
       {role === "client" && (
-        <Link
-          href="/brand"
-          className="block border-t border-border px-6 py-3 text-body-sm font-medium text-primary-700 hover:bg-primary-50 focus-visible:focus-ring"
-        >
-          Your brand
-        </Link>
+        <nav aria-label="Your account" className="flex flex-col border-t border-border">
+          {client?.stage === "running" && (
+            <Link href="/strategy" className="px-6 py-3 text-body-sm font-medium text-primary-700 hover:bg-primary-50 focus-visible:focus-ring">
+              Your strategy
+            </Link>
+          )}
+          <Link href="/brand" className="px-6 py-3 text-body-sm font-medium text-primary-700 hover:bg-primary-50 focus-visible:focus-ring">
+            Your brand
+          </Link>
+        </nav>
       )}
     </Card>
   );

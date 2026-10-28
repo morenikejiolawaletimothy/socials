@@ -7,7 +7,7 @@ import type { Db } from "./types";
 // In-browser demo database. Phase 2 replaces this module's consumers with real API calls.
 
 const KEY = "bluecut-demo";
-const VERSION = 2;
+const VERSION = 3;
 const listeners = new Set<() => void>();
 const serverSnapshot = seed();
 let db: Db | null = null;

@@ -8,6 +8,8 @@ import { Avatar, Dialog, Logo, ToastProvider } from "@/components/ui";
 import { useSession } from "@/lib/mock";
 import { DemoBar } from "./DemoBar";
 import { NotificationBell } from "./NotificationBell";
+import { PageSkeleton } from "./PageSkeleton";
+import { useMounted } from "./useMounted";
 import { useRoleSync } from "./useRoleSync";
 import { isActive, navItemClass, ownerNav } from "./nav";
 
@@ -38,6 +40,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 /** Dashboard shell, used only by the owner. */
 export function OwnerShell({ children }: { children: React.ReactNode }) {
   useRoleSync("owner");
+  const mounted = useMounted();
   const [menuOpen, setMenuOpen] = useState(false);
   const { user } = useSession();
   const name = user ? `${user.firstName} ${user.lastName}` : "";
@@ -78,7 +81,7 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
             </div>
             <NotificationBell href="/admin/notifications" />
           </header>
-          <main className="px-4 py-6 lg:px-8 lg:py-8">{children}</main>
+          <main className="px-4 py-6 lg:px-8 lg:py-8">{mounted ? children : <PageSkeleton />}</main>
         </div>
       </div>
 

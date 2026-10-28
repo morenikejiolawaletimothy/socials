@@ -19,3 +19,6 @@ export { Stepper } from "./Stepper";
 export { Switch } from "./Switch";
 export { TextLink } from "./TextLink";
 export { ToastProvider, useToast } from "./Toast";
+export { ProgressBar } from "./ProgressBar";
+export { Tabs } from "./Tabs";
+export { Textarea } from "./Textarea";

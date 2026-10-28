@@ -28,8 +28,27 @@ function newClient(firstName: string, lastName: string, email: string) {
     ],
     clients: [
       ...db.clients,
-      { id: `c-${id}`, userId: `u-${id}`, managerId: null, company: "", role: "", country: "", status: "setting-up", setupProgress: 0, goal: "" },
+      {
+        id: `c-${id}`,
+        userId: `u-${id}`,
+        managerId: null,
+        company: "",
+        role: "",
+        country: "",
+        industry: "",
+        status: "setting-up",
+        stage: "setup",
+        setupProgress: 0,
+        setupDone: [],
+        goal: "",
+        linkedin: "not-connected",
+        postingPaused: false,
+        permissions: { post: true, engage: true, companyPage: false, connectionDrafts: false, profileDrafts: false },
+        review: { frequency: "weekly", channels: { email: true, app: true }, approval: { posts: "ask", comments: "go", connectionNotes: "ask" }, ifNoReply: "wait" },
+        joinedAt: new Date().toISOString(),
+      },
     ],
+    brands: [...db.brands, { clientId: `c-${id}`, colours: [], voice: "", wordsUse: [], wordsAvoid: [], examples: [], offLimits: [] }],
   }));
   signInAs(`u-${id}`, "client");
 }
