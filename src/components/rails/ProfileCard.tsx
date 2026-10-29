@@ -19,7 +19,7 @@ export function ProfileCard() {
     <Card padding="none" className="overflow-hidden">
       <div aria-hidden className="h-14 bg-primary-100" />
       <div className="-mt-8 flex flex-col gap-1 px-6 pb-6">
-        <Avatar name={name} size="lg" className="ring-4 ring-neutral-0" />
+        <Avatar name={name} src={user.photo} size="lg" className="ring-4 ring-neutral-0" />
         <p className="mt-2 font-display text-display-lg text-primary">{name}</p>
         <p className="text-body-sm text-secondary">{user.title}</p>
         <div className="mt-2">

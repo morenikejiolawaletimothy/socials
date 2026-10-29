@@ -88,7 +88,7 @@ export function seed(): Db {
   });
 
   return {
-    version: 4,
+    version: 5,
     session: {
       role: "client",
       userIds: { client: "u-chidi", manager: "u-ada", owner: "u-fola" },
@@ -399,6 +399,9 @@ export function seed(): Db {
       { id: "mt11", managerId: "m-ada", clientId: "c-chidi", group: "waiting", column: "waiting", title: "3 posts with Chidi", detail: "Due tomorrow at 5pm.", dueAt: at(1, 17), action: "Open", href: "/manager/clients/c-chidi/content" },
       { id: "mt12", managerId: "m-ada", clientId: "c-chidi", group: "work", column: "done", title: "Sent 6 people to connect with", detail: "Quick task sent to Chidi.", dueAt: hoursAgo(5), action: "Open", href: "/manager/clients/c-chidi?tab=engagement" },
       { id: "mt13", managerId: "m-ada", clientId: "c-zainab", group: "work", column: "done", title: "Weekly update sent", detail: "Week 14.", dueAt: at(-1, 17), action: "Open", href: "/manager/clients/c-zainab?tab=updates" },
+      { id: "mt14", managerId: "m-tunde", clientId: "c-tobi", group: "work", column: "done", title: "Post on hiring", detail: "Went out a day late.", dueAt: at(-6, 9), action: "Open", href: "/manager/clients/c-tobi/content", missed: { reason: "Client sent the photos late, so the post slipped a day.", at: at(-6, 18) } },
+      { id: "mt15", managerId: "m-tunde", clientId: "c-musa", group: "work", column: "done", title: "Weekly update", detail: "Sent on Tuesday.", dueAt: at(-13, 17), action: "Open", href: "/manager/clients/c-musa?tab=updates", missed: { reason: "Was ill on Monday.", at: at(-12, 10) } },
+      { id: "mt16", managerId: "m-tunde", clientId: "c-kemi", group: "work", column: "done", title: "Draft next week's posts", detail: "Sent a day late.", dueAt: at(-20, 17), action: "Open", href: "/manager/clients/c-kemi/content", missed: { reason: "", at: at(-19, 9) } },
     ],
     leads: [
       { id: "l1", clientId: "c-chidi", kind: "post", name: "Ibrahim Sule on the mobile money report", detail: "Post, 2 hours ago, 84 comments", url: "https://www.linkedin.com/posts/example-1", fit: "strong", why: "Investor on Chidi's list, writing about his topic.", draft: "The report misses one thing: settlement time. Our data shows mobile money users wait 3x longer for cross-border funds. Happy to share the numbers.", status: "suggested" },

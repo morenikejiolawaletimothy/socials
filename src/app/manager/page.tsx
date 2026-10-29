@@ -45,9 +45,8 @@ function TaskRow({ t, db, primary }: { t: ManagerTask; db: Db; primary?: boolean
 function MissedCard({ tasks, db }: { tasks: ManagerTask[]; db: Db }) {
   const { run, pending } = useTask();
   const [reason, setReason] = useState("");
-  const [sent, setSent] = useState(false);
-  const late = tasks.filter((t) => t.group === "work" && t.column !== "done" && new Date(t.dueAt).getTime() < Date.now());
-  if (!late.length || sent) return null;
+  const late = tasks.filter((t) => t.group === "work" && t.column !== "done" && !t.missed && new Date(t.dueAt).getTime() < Date.now());
+  if (!late.length) return null;
   return (
     <Card title="You missed a due time">
       <div className="flex flex-col gap-4">
@@ -61,7 +60,7 @@ function MissedCard({ tasks, db }: { tasks: ManagerTask[]; db: Db }) {
           disabled={!reason.trim()}
           loading={pending("reason")}
           onClick={async () => {
-            if (await run("reason", () => act.save(), "Thanks. Finish it as soon as you can.")) setSent(true);
+            if (await run("reason", () => act.sendMissedReason(late[0].id, reason.trim()), "Thanks. Finish it as soon as you can.")) setReason("");
           }}
         >
           Send reason

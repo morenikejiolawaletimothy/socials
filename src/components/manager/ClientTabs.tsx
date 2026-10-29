@@ -4,9 +4,9 @@ import { CheckCircle, LinkSimple, Plus, Sparkle, Trash, WarningCircle, XCircle }
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { Badge, Banner, Button, Card, Input, ProgressBar, Textarea, useConfirm, useTask, useToast } from "@/components/ui";
+import { Badge, Banner, Button, Card, Dialog, Input, ProgressBar, Textarea, useConfirm, useTask, useToast } from "@/components/ui";
 import { ago, agoIn, dayTime, fullName, plural } from "@/lib/format";
-import { act, type ClientBundle, type Lead } from "@/lib/mock";
+import { act, type ClientBundle, type Lead, type Update } from "@/lib/mock";
 
 const linkClass = "rounded-sm text-body-sm font-medium text-primary-600 hover:text-primary-700 hover:underline focus-visible:focus-ring";
 const primaryLink =
@@ -601,8 +601,37 @@ export function UpdatesTab({ b }: { b: ClientBundle }) {
   const draft = b.updates.find((u) => u.status === "draft");
   const [note, setNote] = useState(draft?.note ?? "");
   const sent = b.updates.filter((u) => u.status === "sent").sort((x, y) => (y.sentAt ?? "").localeCompare(x.sentAt ?? ""));
+  const { run, pending } = useTask();
+  const [correcting, setCorrecting] = useState<Update | null>(null);
+  const [fix, setFix] = useState({ headline: "", note: "" });
+  const first = b.user?.firstName ?? "the client";
   return (
     <>
+      {correcting && (
+        <Dialog open onClose={() => setCorrecting(null)} title={`Correct ${correcting.title.toLowerCase()}`}>
+          <p className="text-body-sm text-secondary">{first} is told that you corrected it. The numbers come from the week&apos;s work and cannot be changed here.</p>
+          <Input label="Headline" defaultValue={correcting.headline} onChange={(e) => setFix({ ...fix, headline: e.target.value })} />
+          <Textarea label="Your personal note" rows={3} defaultValue={correcting.note} onChange={(e) => setFix({ ...fix, note: e.target.value })} />
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <Button variant="ghost" onClick={() => setCorrecting(null)}>
+              Cancel
+            </Button>
+            <Button
+              loading={pending("correct")}
+              onClick={async () => {
+                const headline = (fix.headline || correcting.headline).trim();
+                const note = fix.note || correcting.note;
+                if (await run("correct", () => act.correctUpdate(correcting.id, headline, note), `Corrected. ${first} is told.`)) {
+                  setCorrecting(null);
+                  setFix({ headline: "", note: "" });
+                }
+              }}
+            >
+              Save correction
+            </Button>
+          </div>
+        </Dialog>
+      )}
       {draft && (
         <Card title={`${draft.title}, ready to send`} action={<Badge status="info">Draft</Badge>}>
           <div className="flex flex-col gap-4">
@@ -641,7 +670,7 @@ export function UpdatesTab({ b }: { b: ClientBundle }) {
               onClick={() =>
                 confirm({
                   title: `Send the update to ${b.user?.firstName ?? "the client"}?`,
-                  body: "They get it in the app and by email. You cannot edit it after it is sent.",
+                  body: "They get it in the app and by email. You can still correct it after it is sent, and they are told.",
                   confirmLabel: "Send update",
                   action: () => act.sendUpdate(draft.id, note),
                   success: `Update sent to ${b.user?.firstName ?? "the client"}.`,
@@ -660,9 +689,12 @@ export function UpdatesTab({ b }: { b: ClientBundle }) {
               <li key={u.id} className="flex flex-col gap-1 border-b border-border py-3 first:pt-0 last:border-b-0 last:pb-0">
                 <span className="flex justify-between gap-3">
                   <span className="text-body font-medium text-primary">{u.title}</span>
-                  <span className="text-caption text-secondary">{ago(u.sentAt!)}</span>
+                  <span className="text-caption text-secondary">{u.correctedAt ? `Corrected ${ago(u.correctedAt)}` : ago(u.sentAt!)}</span>
                 </span>
                 <span className="text-body-sm text-secondary">{u.headline}</span>
+                <button type="button" onClick={() => setCorrecting(u)} className={`${linkClass} self-start`}>
+                  Correct
+                </button>
               </li>
             ))}
           </ul>

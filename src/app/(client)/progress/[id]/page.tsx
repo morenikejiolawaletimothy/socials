@@ -5,7 +5,7 @@ import { PostPreview } from "@/components/content/PostPreview";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
 import { Avatar, Breadcrumbs, Button, Card, EmptyState } from "@/components/ui";
-import { ago, fullName } from "@/lib/format";
+import { ago, agoIn, fullName } from "@/lib/format";
 import { useMyClient } from "@/lib/mock";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -47,7 +47,7 @@ export default function UpdatePage({ params }: { params: Promise<{ id: string }>
           <div className="flex items-center gap-3">
             {managerUser && <Avatar name={fullName(managerUser)} size="sm" />}
             <span className="text-body-sm text-secondary">
-              From {fullName(managerUser) || "your account team"}, {u.sentAt ? ago(u.sentAt) : "draft"}. {u.periodLabel}.
+              From {fullName(managerUser) || "your account team"}, {u.sentAt ? ago(u.sentAt) : "draft"}. {u.periodLabel}.{u.correctedAt ? ` Corrected ${agoIn(u.correctedAt)}.` : ""}
             </span>
           </div>
           <p className="font-display text-display-xl text-primary">{u.headline}</p>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Button, CodeInput, TextLink, useToast } from "@/components/ui";
 import { auth } from "@/lib/mock";
 import { AuthScreen } from "../../AuthScreen";
@@ -13,6 +13,13 @@ function Verify() {
   const [code, setCode] = useState(auth.DEMO_SIGN_IN.code);
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
+  const [wait, setWait] = useState(30);
+  const [sending, setSending] = useState(false);
+  useEffect(() => {
+    if (wait <= 0) return;
+    const t = setTimeout(() => setWait((w) => w - 1), 1000);
+    return () => clearTimeout(t);
+  }, [wait]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,8 +46,20 @@ function Verify() {
           {busy ? "Checking" : "Confirm email"}
         </Button>
       </form>
-      <Button variant="ghost" onClick={() => toast("We sent a new code.")}>
-        Send a new code
+      <Button
+        variant="ghost"
+        disabled={wait > 0}
+        loading={sending}
+        onClick={async () => {
+          setSending(true);
+          await new Promise((r) => setTimeout(r, 600));
+          setSending(false);
+          setWait(30);
+          setCode("");
+          toast(`We sent a new code to ${email}. The old one no longer works.`);
+        }}
+      >
+        {wait > 0 ? `Send a new code in ${wait}s` : sending ? "Sending" : "Send a new code"}
       </Button>
       <p className="text-center text-body-sm text-secondary">
         Wrong email? <TextLink href="/signup">Change it</TextLink>

@@ -3,13 +3,14 @@
 import { CheckCircle, Clock, Image as ImageIcon, Sparkle, Trash, WarningCircle } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, use, useState } from "react";
+import { Suspense, use, useRef, useState } from "react";
 import { PostAgainDialog } from "@/components/content/PostAgainDialog";
 import { PostPreview, RepostNote } from "@/components/content/PostPreview";
 import { Columns } from "@/components/layout/Columns";
 import { OffLimitsBox } from "@/components/manager/ClientTabs";
 import { rails } from "@/components/rails";
 import { Badge, Banner, Breadcrumbs, Button, Dialog, EmptyState, Card, Input, Menu, Tabs, Textarea, useConfirm, useTask, useToast } from "@/components/ui";
+import { photoProblem } from "@/lib/image";
 import { ago, agoIn, dayTime, dayTimeIn, fullName, time } from "@/lib/format";
 import { act, clientBundle, useMyManager, type ClientBundle, type Post } from "@/lib/mock";
 
@@ -37,9 +38,31 @@ const nextWeekday9 = (days: number) => {
 /** Pick a visual from the client's Brand photos. */
 function VisualPicker({ b, open, onClose, onPick }: { b: ClientBundle; open: boolean; onClose: () => void; onPick: (src: string, alt: string) => void }) {
   const photos = b.files.filter((f) => f.section === "photos" && f.src);
+  const upload = useRef<HTMLInputElement>(null);
+  const toast = useToast();
+  const { run, pending } = useTask();
   return (
     <Dialog open={open} onClose={onClose} title="Choose a visual">
-      <p className="text-body-sm text-secondary">From {b.user?.firstName}&apos;s Brand. Upload or use a template from the library in Phase 2.</p>
+      <p className="text-body-sm text-secondary">From {b.user?.firstName}&apos;s Brand. A photo you upload is saved there too, so they can see it.</p>
+      <input
+        ref={upload}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        className="sr-only"
+        tabIndex={-1}
+        onChange={async (e) => {
+          const f = e.target.files?.[0];
+          e.target.value = "";
+          if (!f) return;
+          const problem = photoProblem(f);
+          if (problem) return toast(problem, "danger");
+          const src = URL.createObjectURL(f);
+          if (await run("upload", () => act.addBrandFile(b.client!.id, "photos", f.name, `${Math.max(1, Math.round(f.size / 1024))} KB`, src), "Photo saved to their Brand.")) onPick(src, f.name.replace(/[-_]/g, " ").replace(/\.\w+$/, ""));
+        }}
+      />
+      <Button variant="secondary" className="self-start" loading={pending("upload")} onClick={() => upload.current?.click()}>
+        {pending("upload") ? "Uploading" : "Upload a photo"}
+      </Button>
       <ul className="grid grid-cols-3 gap-2">
         {photos.map((f) => (
           <li key={f.id}>

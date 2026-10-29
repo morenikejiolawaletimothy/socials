@@ -21,6 +21,12 @@ function patchClient(db: Db, clientId: string, fn: (c: Client) => Partial<Client
   return { ...db, clients: db.clients.map((c) => (c.id === clientId ? { ...c, ...fn(c) } : c)) };
 }
 
+/** The client's brands list, with an empty Brand added if they do not have one yet (new clients). */
+function withBrand(db: Db, clientId: string): Db["brands"] {
+  if (db.brands.some((b) => b.clientId === clientId)) return db.brands;
+  return [...db.brands, { clientId, colours: [], voice: "", wordsUse: [], wordsAvoid: [], examples: [], offLimits: [] }];
+}
+
 function setPost(db: Db, postId: string, patch: Partial<Db["posts"][number]>): Db {
   return { ...db, posts: db.posts.map((p) => (p.id === postId ? { ...p, ...patch } : p)) };
 }
@@ -254,6 +260,29 @@ export async function editScheduledPost(postId: string, text: string, smallFix: 
   });
 }
 
+/** The client changes what they asked for, before the manager sends a new version. */
+export async function editChangeRequest(postId: string, text: string) {
+  await delay();
+  update((db) => {
+    const p = db.posts.find((x) => x.id === postId);
+    if (!p?.feedback?.length) return db;
+    const feedback = [...p.feedback.slice(0, -1), { ...p.feedback[p.feedback.length - 1], text, at: nowIso() }];
+    const next = setPost(db, postId, { feedback });
+    return notify(next, managerUserOf(db, p.clientId)?.id, `${clientUser(db, p.clientId)?.firstName} changed what they asked for on ${short(p.text)}.`, `/manager/clients/${p.clientId}/content?tab=changes`);
+  });
+}
+
+/** The client takes back a change request. The post returns to them for review as it was. */
+export async function withdrawChangeRequest(postId: string) {
+  await delay();
+  update((db) => {
+    const p = db.posts.find((x) => x.id === postId);
+    if (!p) return db;
+    const next = setPost(db, postId, { status: "awaiting-client", feedback: p.feedback?.slice(0, -1) });
+    return notify(next, managerUserOf(db, p.clientId)?.id, `${clientUser(db, p.clientId)?.firstName} withdrew their change request on ${short(p.text)}. No changes needed.`, `/manager/clients/${p.clientId}/content?tab=client`);
+  });
+}
+
 /** The client stops a scheduled post before it goes out. Reversible with resumePost. */
 export async function stopPost(postId: string) {
   await delay();
@@ -458,33 +487,33 @@ export async function withdrawComplaint(complaintId: string) {
 export async function addOffLimit(clientId: string, kind: Db["brands"][number]["offLimits"][number]["kind"], text: string) {
   await delay(300);
   update((db) => {
-    const next = { ...db, brands: db.brands.map((b) => (b.clientId === clientId ? { ...b, offLimits: [...b.offLimits, { id: id("o"), kind, text }] } : b)) };
+    const next = { ...db, brands: withBrand(db, clientId).map((b) => (b.clientId === clientId ? { ...b, offLimits: [...b.offLimits, { id: id("o"), kind, text }] } : b)) };
     return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} added to off limits: ${text}`, `/manager/clients/${clientId}?tab=brand`);
   });
 }
 
 export async function editOffLimit(clientId: string, offId: string, text: string) {
   await delay(300);
-  update((db) => ({ ...db, brands: db.brands.map((b) => (b.clientId === clientId ? { ...b, offLimits: b.offLimits.map((o) => (o.id === offId ? { ...o, text } : o)) } : b)) }));
+  update((db) => ({ ...db, brands: withBrand(db, clientId).map((b) => (b.clientId === clientId ? { ...b, offLimits: b.offLimits.map((o) => (o.id === offId ? { ...o, text } : o)) } : b)) }));
 }
 
 export async function removeOffLimit(clientId: string, offId: string) {
   await delay(300);
-  update((db) => ({ ...db, brands: db.brands.map((b) => (b.clientId === clientId ? { ...b, offLimits: b.offLimits.filter((o) => o.id !== offId) } : b)) }));
+  update((db) => ({ ...db, brands: withBrand(db, clientId).map((b) => (b.clientId === clientId ? { ...b, offLimits: b.offLimits.filter((o) => o.id !== offId) } : b)) }));
 }
 
 export function restoreOffLimit(clientId: string, item: Db["brands"][number]["offLimits"][number]) {
-  update((db) => ({ ...db, brands: db.brands.map((b) => (b.clientId === clientId ? { ...b, offLimits: [...b.offLimits, item] } : b)) }));
+  update((db) => ({ ...db, brands: withBrand(db, clientId).map((b) => (b.clientId === clientId ? { ...b, offLimits: [...b.offLimits, item] } : b)) }));
 }
 
 export async function saveVoice(clientId: string, voice: string, wordsUse: string[], wordsAvoid: string[]) {
   await delay();
-  update((db) => ({ ...db, brands: db.brands.map((b) => (b.clientId === clientId ? { ...b, voice, wordsUse, wordsAvoid } : b)) }));
+  update((db) => ({ ...db, brands: withBrand(db, clientId).map((b) => (b.clientId === clientId ? { ...b, voice, wordsUse, wordsAvoid } : b)) }));
 }
 
 export async function setColours(clientId: string, colours: string[]) {
   await delay(300);
-  update((db) => ({ ...db, brands: db.brands.map((b) => (b.clientId === clientId ? { ...b, colours } : b)) }));
+  update((db) => ({ ...db, brands: withBrand(db, clientId).map((b) => (b.clientId === clientId ? { ...b, colours } : b)) }));
 }
 
 export async function addMoment(clientId: string, note: string, photos: string[]) {
@@ -617,7 +646,7 @@ export async function cancelContract(clientId: string, reason: string, note?: st
   update((db) => {
     let next: Db = {
       ...db,
-      contracts: db.contracts.map((k) => (k.clientId === clientId ? { ...k, status: "cancelled" } : k)),
+      contracts: db.contracts.map((k) => (k.clientId === clientId && k.status !== "cancelled" ? { ...k, status: "cancelled", cancelledFrom: k.status } : k)),
       cancellations: [{ id: id("x"), clientId, reason, note, at: nowIso() }, ...db.cancellations],
     };
     next = notify(next, OWNER, `${nameOf(clientUser(db, clientId))} pulled out: ${reason.toLowerCase()}.`, "/admin/money?tab=reasons", { urgent: true });
@@ -649,9 +678,136 @@ export async function setTwoStep(userId: string, on: boolean) {
   update((db) => ({ ...db, users: db.users.map((u) => (u.id === userId ? { ...u, twoStep: on } : u)) }));
 }
 
-/** Generic save for settings with no demo data behind them yet (email preferences, sessions). */
+/** For simulated work with nothing to store (drafting help, link checks). Phase 2 calls the real service. */
 export async function save() {
   await delay(400);
+}
+
+export async function setPhoto(userId: string, photo: string | undefined) {
+  await delay(600);
+  update((db) => ({ ...db, users: db.users.map((u) => (u.id === userId ? { ...u, photo } : u)) }));
+}
+
+/** An email or alert choice. Phase 2 reads these before sending. */
+export async function setPref(userId: string, key: string, on: boolean) {
+  await delay(300);
+  update((db) => ({ ...db, users: db.users.map((u) => (u.id === userId ? { ...u, prefs: { ...u.prefs, [key]: on } } : u)) }));
+}
+
+export async function signOutSessions(userId: string, sessionIds: string[]) {
+  await delay(500);
+  update((db) => ({ ...db, users: db.users.map((u) => (u.id === userId ? { ...u, signedOut: [...new Set([...(u.signedOut ?? []), ...sessionIds])] } : u)) }));
+}
+
+/** Prepares a download of everything we hold about the person and emails them a link. */
+export async function requestDataExport(userId: string) {
+  await delay(700);
+  update((db) => notify(db, userId, "Your data download is ready. The link in your email works for 7 days.", "/account", { email: true }));
+}
+
+/** C14: deletes the client's account. The contract is cancelled first; invoices are kept, as the law requires. */
+export async function deleteAccount(clientId: string) {
+  await delay(900);
+  update((db) => {
+    const u = clientUser(db, clientId);
+    let next: Db = {
+      ...db,
+      users: db.users.map((x) => (x.id === u?.id ? { ...x, deletedAt: nowIso() } : x)),
+      clients: db.clients.map((c) => (c.id === clientId ? { ...c, status: "removed" } : c)),
+      contracts: db.contracts.map((k) => (k.clientId === clientId && k.status !== "cancelled" && k.status !== "completed" ? { ...k, status: "cancelled", cancelledFrom: k.status } : k)),
+    };
+    next = notify(next, OWNER, `${nameOf(u)} deleted their account.`, `/admin/clients/${clientId}`, { urgent: true });
+    next = notify(next, managerUserOf(db, clientId)?.id, `${nameOf(u)} deleted their account. Their work has stopped.`, "/manager/clients");
+    return audit(next, "Deleted their account", nameOf(u), "account", nameOf(u));
+  });
+}
+
+/** C13: the client changes their mind after pulling out, while the contract has not ended. Nothing is refunded. */
+export async function stayAfterAll(clientId: string) {
+  await delay(700);
+  update((db) => {
+    let next: Db = {
+      ...db,
+      contracts: db.contracts.map((k) => (k.clientId === clientId && k.status === "cancelled" ? { ...k, status: k.cancelledFrom ?? "active", cancelledFrom: undefined } : k)),
+      cancellations: db.cancellations.map((x) => (x.clientId === clientId && !x.withdrawnAt ? { ...x, withdrawnAt: nowIso() } : x)),
+    };
+    next = notify(next, OWNER, `${nameOf(clientUser(db, clientId))} changed their mind and is staying.`, `/admin/clients/${clientId}`);
+    next = notify(next, managerUserOf(db, clientId)?.id, `${nameOf(clientUser(db, clientId))} is staying after all.`, `/manager/clients/${clientId}`);
+    return audit(next, "Withdrew their pull-out and is staying", nameOf(clientUser(db, clientId)), "account", nameOf(clientUser(db, clientId)));
+  });
+}
+
+/** A client cancels a check-in call. The goals and strategy calls can only be moved, since onboarding needs them. */
+export async function cancelCall(callId: string) {
+  await delay();
+  update((db) => {
+    const c = db.calls.find((x) => x.id === callId);
+    if (!c) return db;
+    const next = { ...db, calls: db.calls.map((x) => (x.id === callId ? { ...x, status: "cancelled" as const } : x)) };
+    return notify(next, managerUserOf(db, c.clientId)?.id, `${nameOf(clientUser(db, c.clientId))} cancelled their check-in call.`, "/manager/calls");
+  });
+}
+
+/** M8: correct an update after sending it. The client is told what changed. */
+export async function correctUpdate(updateId: string, headline: string, note: string) {
+  await delay();
+  update((db) => {
+    const u = db.updates.find((x) => x.id === updateId);
+    if (!u) return db;
+    const next = { ...db, updates: db.updates.map((x) => (x.id === updateId ? { ...x, headline, note, correctedAt: nowIso() } : x)) };
+    return notify(next, clientUser(db, u.clientId)?.id, `Your manager corrected your ${u.kind} update.`, `/progress/${u.id}`);
+  });
+}
+
+/* ---------- Manager: profile ---------- */
+
+export async function saveManagerProfile(managerId: string, patch: { firstName: string; lastName: string; intro: string; timeZone: string }) {
+  await delay();
+  update((db) => {
+    const m = db.managers.find((x) => x.id === managerId);
+    return {
+      ...db,
+      managers: db.managers.map((x) => (x.id === managerId ? { ...x, intro: patch.intro } : x)),
+      users: db.users.map((u) => (u.id === m?.userId ? { ...u, firstName: patch.firstName, lastName: patch.lastName, timeZone: patch.timeZone } : u)),
+    };
+  });
+}
+
+export async function setCalendar(managerId: string, on: boolean) {
+  await delay(700);
+  update((db) => ({ ...db, managers: db.managers.map((x) => (x.id === managerId ? { ...x, calendarConnected: on } : x)) }));
+}
+
+/** M1: a short reason for a missed due time. Repeated misses (3 or more this month) go to the owner. */
+export async function sendMissedReason(taskId: string, reason: string) {
+  await delay();
+  update((db) => {
+    const t = db.managerTasks.find((x) => x.id === taskId);
+    if (!t) return db;
+    const m = db.managers.find((x) => x.id === t.managerId);
+    const missed = (m?.stats.missed ?? 0) + 1;
+    let next: Db = {
+      ...db,
+      managerTasks: db.managerTasks.map((x) => (x.id === taskId ? { ...x, missed: { reason, at: nowIso() } } : x)),
+      managers: db.managers.map((x) => (x.id === t.managerId ? { ...x, stats: { ...x.stats, missed } } : x)),
+    };
+    if (missed >= 3) next = notify(next, OWNER, `${nameOf(db.users.find((u) => u.id === m?.userId))} has missed ${missed} due times this month.`, `/admin/managers/${t.managerId}`);
+    return next;
+  });
+}
+
+/** M3: the manager confirms what was agreed on the goals call. New off-limits items go to the client's Brand. */
+export async function confirmGoalsSummary(clientId: string, summary: { goal: string; audience: string; tone: string; notes?: string; offLimit?: string }) {
+  await delay(700);
+  update((db) => {
+    let next = patchClient(db, clientId, () => ({ goal: summary.goal, onboarding: { audience: summary.audience, tone: summary.tone, notes: summary.notes, confirmedAt: nowIso() } }));
+    next = { ...next, strategies: next.strategies.map((s) => (s.clientId === clientId ? { ...s, goal: summary.goal, audience: summary.audience, tone: summary.tone } : s)) };
+    if (summary.offLimit) {
+      next = { ...next, brands: withBrand(next, clientId).map((b) => (b.clientId === clientId ? { ...b, offLimits: [...b.offLimits, { id: id("o"), kind: "topic" as const, text: summary.offLimit! }] } : b)) };
+      next = notify(next, clientUser(db, clientId)?.id, `Added to your off limits after the call: ${summary.offLimit}`, "/brand");
+    }
+    return log(next, clientId, "team", "setting", "Confirmed the goals call summary");
+  });
 }
 
 /* ---------- Manager: tasks and content ---------- */

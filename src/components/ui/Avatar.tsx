@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 const sizes = {
   xs: "size-6 text-caption",
   sm: "size-8 text-caption",
@@ -6,13 +8,16 @@ const sizes = {
   xl: "size-20 font-display text-display-xl",
 };
 
-/** Round avatar. Shows initials until a photo exists. */
+/** Round avatar: the photo when there is one, otherwise initials. */
 export function Avatar({
   name,
+  src,
   size = "md",
   className = "",
 }: {
   name: string;
+  /** Photo; initials show until there is one. */
+  src?: string;
   size?: keyof typeof sizes;
   className?: string;
 }) {
@@ -25,9 +30,9 @@ export function Avatar({
   return (
     <span
       aria-hidden
-      className={`inline-flex shrink-0 items-center justify-center rounded-full bg-primary-100 font-semibold text-primary-900 ${sizes[size]} ${className}`}
+      className={`relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-100 font-semibold text-primary-900 ${sizes[size]} ${className}`}
     >
-      {initials}
+      {src ? <Image src={src} alt="" fill unoptimized className="object-cover" /> : initials}
     </span>
   );
 }

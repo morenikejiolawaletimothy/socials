@@ -64,8 +64,30 @@ export default function ContractPage() {
             </Banner>
           )}
           {contract.status === "cancelled" && (
-            <Banner tone="info" title="You pulled out">
-              Service runs to {date(contract.endsAt)}. Any refund is shown under Payments.
+            <Banner
+              tone="info"
+              title="You pulled out"
+              action={
+                daysFrom(contract.endsAt) > 0 && (
+                  <Button
+                    variant="secondary"
+                    onClick={() =>
+                      confirm({
+                        title: "Stay with Bluecut?",
+                        body: `Your contract carries on as before, with ${managerUser?.firstName ?? "your manager"}, to ${date(contract.endsAt)}.`,
+                        warning: "Any refund not yet paid is cancelled.",
+                        confirmLabel: "Stay",
+                        action: () => act.stayAfterAll(client.id),
+                        success: "Welcome back. Your contract carries on as before.",
+                      })
+                    }
+                  >
+                    Stay after all
+                  </Button>
+                )
+              }
+            >
+              Service runs to {date(contract.endsAt)}. Any refund is shown under Payments. Changed your mind? You can stay until then.
             </Banner>
           )}
           <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">

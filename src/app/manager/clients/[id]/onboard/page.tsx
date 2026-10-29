@@ -30,6 +30,15 @@ function Onboard({ id }: { id: string }) {
   const [step, setStep] = useState(() => currentStep(b));
   const [direction, setDirection] = useState("");
   const [directions, setDirections] = useState<string[]>([]);
+  const [summary, setSummary] = useState(() => ({
+    notes: b.client?.onboarding?.notes ?? b.calls.find((c) => c.kind === "goals")?.summary ?? "",
+    goal: b.client?.goal ?? "",
+    audience: b.client?.onboarding?.audience ?? b.strategy?.audience ?? "Distribution partners, retail buyers and food journalists in Lagos and Abuja.",
+    tone: b.client?.onboarding?.tone ?? b.strategy?.tone ?? "Warm, practical, proud of local sourcing.",
+    offLimit: "",
+  }));
+  const [summaryError, setSummaryError] = useState<string>();
+  const field = (k: keyof typeof summary) => ({ value: summary[k], onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => { setSummary({ ...summary, [k]: e.target.value }); setSummaryError(undefined); } });
   if (!b.client || !b.user) return <EmptyState title="Client not found">Go back to Clients.</EmptyState>;
 
   const goals = b.calls.find((c) => c.kind === "goals");
@@ -81,16 +90,16 @@ function Onboard({ id }: { id: string }) {
               <Banner tone="info" title={goals?.recording ? "The transcript has arrived" : "Not recorded: write up your notes"}>
                 {goals?.recording ? "The summary below is drafted from it. Correct anything, then confirm." : "Write what you heard. The summary below fills in from your notes."}
               </Banner>
-              {!goals?.recording && <Textarea label="Your notes" rows={4} defaultValue={goals?.summary} />}
+              {!goals?.recording && <Textarea label="Your notes" rows={4} {...field("notes")} />}
               <div className="grid grid-cols-1 gap-4">
-                <Textarea label="Goals" rows={2} defaultValue={b.client.goal} />
-                <Textarea label="Audience" rows={2} defaultValue={s?.audience ?? "Distribution partners, retail buyers and food journalists in Lagos and Abuja."} />
-                <Textarea label="Tone" rows={2} defaultValue={s?.tone ?? "Warm, practical, proud of local sourcing."} />
+                <Textarea label="Goals" rows={2} {...field("goal")} error={summaryError} />
+                <Textarea label="Audience" rows={2} {...field("audience")} />
+                <Textarea label="Tone" rows={2} {...field("tone")} />
               </div>
               <div className="flex flex-col gap-2">
                 <span className="text-body font-semibold text-primary">Off limits (saved to their Brand, where they can see and edit it)</span>
                 <OffLimitsBox b={b} />
-                <Input label="Add to off limits" placeholder="For example: never name competitors" />
+                <Input label="Add to off limits (optional)" placeholder="For example: never name competitors" {...field("offLimit")} />
               </div>
               <div className="flex gap-2">
                 <Button variant="ghost" onClick={() => setStep(0)}>
@@ -99,7 +108,18 @@ function Onboard({ id }: { id: string }) {
                 <Button
                   loading={pending("summary")}
                   onClick={async () => {
-                    if (await run("summary", () => act.save(), "Confirmed. Off limits saved to their Brand.")) setStep(2);
+                    if (!summary.goal.trim() || !summary.audience.trim()) return setSummaryError("Add their goal and audience. The strategy is built from them.");
+                    const off = summary.offLimit.trim();
+                    if (
+                      await run(
+                        "summary",
+                        () => act.confirmGoalsSummary(b.client!.id, { goal: summary.goal.trim(), audience: summary.audience.trim(), tone: summary.tone.trim(), notes: summary.notes.trim() || undefined, offLimit: off || undefined }),
+                        off ? `Confirmed. "${off}" added to ${first}'s off limits.` : "Summary confirmed.",
+                      )
+                    ) {
+                      setSummary({ ...summary, offLimit: "" });
+                      setStep(2);
+                    }
                   }}
                 >
                   Confirm summary

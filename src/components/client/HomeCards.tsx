@@ -153,7 +153,7 @@ export function CallsCard({ b }: { b: ClientBundle }) {
       <div className="flex flex-col gap-4">
         {managerUser && (
           <div className="flex items-start gap-3">
-            <Avatar name={fullName(managerUser)} size="md" />
+            <Avatar name={fullName(managerUser)} src={managerUser?.photo} size="md" />
             <p className="text-body-sm text-secondary">
               You will meet <span className="font-medium text-primary">{fullName(managerUser)}</span>, your account manager. 30 minutes each, on Google Meet.
             </p>
@@ -363,7 +363,7 @@ export function MessageCard({ b }: { b: ClientBundle }) {
     <Card title={`From ${b.managerUser.firstName}`} action={<span className="text-caption text-secondary">{ago(m.at)}</span>}>
       <div className="flex flex-col gap-3">
         <div className="flex items-start gap-3">
-          <Avatar name={fullName(b.managerUser)} size="sm" />
+          <Avatar name={fullName(b.managerUser)} src={b.managerUser?.photo} size="sm" />
           <p className="rounded-md bg-neutral-25 px-4 py-3 text-body-sm text-primary">{m.text}</p>
         </div>
         <Link href="/messages" className={linkClass}>

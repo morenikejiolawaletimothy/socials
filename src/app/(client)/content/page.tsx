@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { LivePostActions, UpcomingPostActions } from "@/components/client/LivePostActions";
+import { ChangeRequestActions, LivePostActions, UpcomingPostActions } from "@/components/client/LivePostActions";
 import { PostPreview } from "@/components/content/PostPreview";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
@@ -88,9 +88,7 @@ function ContentPage() {
                   {(p.status === "scheduled" || p.status === "approved") && <UpcomingPostActions post={p} />}
                   {p.status === "on-hold" && p.heldReason?.startsWith("You stopped") && <UpcomingPostActions post={p} />}
                   {p.heldReason && !p.heldReason.startsWith("You stopped") && <Banner tone="warning">Held: {p.heldReason}</Banner>}
-                  {p.status === "changes-requested" && p.feedback?.length && (
-                    <Banner tone="info">You asked: &ldquo;{p.feedback[p.feedback.length - 1].text}&rdquo; Your manager is working on it.</Banner>
-                  )}
+                  {p.status === "changes-requested" && <ChangeRequestActions post={p} />}
                   {p.status === "failed" && <Banner tone="warning">LinkedIn did not accept this post. Your manager is fixing it and will try again.</Banner>}
                 </PostPreview>
               </div>

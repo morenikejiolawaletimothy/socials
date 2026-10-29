@@ -6,6 +6,7 @@ import { Suspense, useMemo, useState } from "react";
 import { SetupFrame } from "@/components/client/SetupFrame";
 import { Avatar, Banner, Button, useTask, useToast } from "@/components/ui";
 import { day, dayTime, fullName, time } from "@/lib/format";
+import { downloadCall } from "@/lib/calendar";
 import { act, useData, useMyClient } from "@/lib/mock";
 
 const DAY = 86_400_000;
@@ -198,7 +199,13 @@ function BookCalls() {
                   <span className="inline-flex items-center gap-1 text-secondary">
                     <VideoCamera className="size-4" aria-hidden /> Google Meet link sent by email
                   </span>
-                  <button type="button" onClick={() => toast(`${c.name} added to your calendar.`)} className="inline-flex items-center gap-1 rounded-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!c.at) return;
+                      downloadCall({ title: `${c.name} with ${mu ? fullName(mu) : "your manager"}`, start: c.at, minutes: 30, url: "https://meet.google.com/", description: "Bluecut Socials. The Google Meet link is in your email." });
+                      toast(`${c.name} downloaded. Open the file to add it to your calendar.`);
+                    }} className="inline-flex items-center gap-1 rounded-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
                     <CalendarPlus className="size-4" aria-hidden /> Add to calendar
                   </button>
                 </span>

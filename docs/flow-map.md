@@ -239,6 +239,7 @@ These rules apply to every flow below.
 - **Manager side (Live tab):** edit the text in place (LinkedIn keeps reactions and marks the post edited; only text can change once live), post it again, replace the post when an image must change (takes the original down and puts a copy in Drafts; reactions are lost), take it down, or close the request with a note. On Scheduled: edit (goes back to the client for approval, or a small fix keeps the time and tells the client).
 - **What LinkedIn allows:** edit a live post's text; delete a post; reshare a post with new commentary. Images and video cannot be changed on a live post, and a deleted post cannot be restored.
 - **States:** taken down (by client or team, logged in activity), fix requested, repost requested, edited, fix done.
+- **Also manageable after the fact (all flows):** a change request can be edited or withdrawn (C7); a check-in call can be cancelled and onboarding calls moved (C3); pulling out can be reversed until the contract ends (C13); a sent update can be corrected, and the client is told (M8); an approved one-off permission can be withdrawn (C11).
 
 ### C9. Progress and weekly updates
 

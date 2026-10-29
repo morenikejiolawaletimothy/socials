@@ -58,7 +58,7 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
             <NavList />
           </nav>
           <div className="flex items-center gap-3 px-2">
-            <Avatar name={name || "Owner"} size="sm" />
+            <Avatar name={name || "Owner"} src={user?.photo} size="sm" />
             <div className="flex min-w-0 flex-col">
               <span className="truncate text-body-sm font-semibold text-primary">{name}</span>
               <span className="text-caption text-secondary">Owner</span>

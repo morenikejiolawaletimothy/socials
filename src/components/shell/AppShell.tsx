@@ -3,7 +3,7 @@
 import { Bell, CaretDown } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Avatar, Logo, Menu } from "@/components/ui";
+import { Avatar, EmptyState, Logo, Menu } from "@/components/ui";
 import { useNotifications, useSession } from "@/lib/mock";
 import { CoveringBanner } from "./CoveringBanner";
 import { DemoBar } from "./DemoBar";
@@ -86,7 +86,7 @@ export function AppShell({ role, children }: { role: "client" | "manager"; child
                   triggerClassName={`flex h-14 min-w-20 flex-col items-center justify-center gap-1 px-2 text-caption ${navItemClass(meActive)}`}
                   trigger={
                     <>
-                      <Avatar name={name || "You"} size="xs" />
+                      <Avatar name={name || "You"} src={user?.photo} size="xs" />
                       <span className="flex items-center gap-1">
                         Me <CaretDown className="size-3" aria-hidden />
                       </span>
@@ -94,7 +94,7 @@ export function AppShell({ role, children }: { role: "client" | "manager"; child
                   }
                   header={
                     <div className="flex items-center gap-3">
-                      <Avatar name={name || "You"} />
+                      <Avatar name={name || "You"} src={user?.photo} />
                       <div className="flex min-w-0 flex-col">
                         <span className="truncate text-body-sm font-semibold text-primary">{name}</span>
                         <span className="truncate text-caption text-secondary">{user?.title}</span>
@@ -120,7 +120,22 @@ export function AppShell({ role, children }: { role: "client" | "manager"; child
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl px-4 pb-32 pt-6 md:pb-16">{mounted ? children : <PageSkeleton />}</main>
+      <main className="mx-auto w-full max-w-6xl px-4 pb-32 pt-6 md:pb-16">{!mounted ? (
+          <PageSkeleton />
+        ) : user?.deletedAt ? (
+          <EmptyState
+            title="This account has been deleted"
+            action={
+              <Link href="/signup" className="inline-flex min-h-11 items-center rounded-md bg-primary-600 px-6 text-body font-medium text-inverse hover:bg-primary-700 focus-visible:focus-ring">
+                Sign up again
+              </Link>
+            }
+          >
+            Your data has been removed. We kept only invoices and payment records, as the law requires.
+          </EmptyState>
+        ) : (
+          children
+        )}</main>
 
       <nav aria-label="Main" data-bottom-bar className="fixed inset-x-4 bottom-4 z-30 rounded-xl border border-border bg-card px-2 shadow-lg md:hidden">
         <ul className="grid grid-cols-4">

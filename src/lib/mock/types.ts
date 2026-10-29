@@ -14,6 +14,14 @@ export type User = {
   timeZone: string;
   /** Two-step sign-in. Required for staff, optional for clients. */
   twoStep: boolean;
+  /** Profile photo, as a small data URL until Phase 2 stores files. */
+  photo?: string;
+  /** Email and alert choices, by key. Missing keys use the default for that key. */
+  prefs?: Record<string, boolean>;
+  /** Session ids the person signed out of (Account, "Where you are signed in"). */
+  signedOut?: string[];
+  /** Set when a client deletes their account. */
+  deletedAt?: string;
 };
 
 /** C2: what the client lets us do on LinkedIn. */
@@ -57,6 +65,8 @@ export type Client = {
   postingPaused: boolean;
   permissions: Permissions;
   review: ReviewSettings;
+  /** What the manager confirmed after the goals call (M3). */
+  onboarding?: { audience: string; tone: string; notes?: string; confirmedAt: string };
   /** Where the client is in onboarding, after setup. */
   stage: "setup" | "calls" | "strategy" | "running";
   joinedAt: string;
@@ -75,6 +85,8 @@ export type Manager = {
   /** Open call slots, as "mon-morning" style keys. */
   slots?: string[];
   trainingAt?: string;
+  /** Google Calendar: booked calls go in, busy times close slots. */
+  calendarConnected?: boolean;
   industries: string[];
   stats: { onTime: number; firstTimeApproval: number; missed: number; complaints: number };
 };
@@ -221,6 +233,8 @@ export type Update = {
   next: string;
   note: string;
   results?: string[];
+  /** When the manager corrected the update after sending it. */
+  correctedAt?: string;
 };
 
 /* ---------- Messages (C10, M9) ---------- */
@@ -305,6 +319,8 @@ export type Contract = {
   startsAt: string;
   endsAt: string;
   status: "free" | "active" | "ending" | "paused" | "completed" | "cancelled";
+  /** The status before the client pulled out, so they can change their mind. */
+  cancelledFrom?: Exclude<Contract["status"], "cancelled">;
   paid: boolean;
   card?: { brand: string; last4: string };
 };
@@ -329,7 +345,7 @@ export type Refund = {
   status: "waiting" | "auto-approved" | "approved" | "declined" | "paid";
 };
 
-export type Cancellation = { id: string; clientId: string; reason: string; note?: string; at: string };
+export type Cancellation = { id: string; clientId: string; reason: string; note?: string; at: string; withdrawnAt?: string };
 
 /* ---------- Complaints (C12, A6) ---------- */
 
@@ -358,6 +374,8 @@ export type ManagerTask = {
   dueAt: string;
   action: string;
   href: string;
+  /** The manager's reason when a due time was missed (M1). The owner sees it on the manager's page. */
+  missed?: { reason: string; at: string };
 };
 
 export type Lead = {

@@ -4,9 +4,11 @@ import { useRouter } from "next/navigation";
 import { use } from "react";
 import { ClientCell, Stats, managerName, managerStatus } from "@/components/admin/parts";
 import { Badge, Banner, Button, Card, EmptyState, PageHeader, useConfirm, useToast } from "@/components/ui";
-import { dayTime, fullName } from "@/lib/format";
-import { act, useData } from "@/lib/mock";
+import { dayIn, dayTime, fullName } from "@/lib/format";
+import { act, useData, type Db } from "@/lib/mock";
 import { statusBadge } from "@/lib/status";
+
+const clientNameOf = (db: Db, clientId: string) => fullName(db.users.find((u) => u.id === db.clients.find((c) => c.id === clientId)?.userId));
 
 const days = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 
@@ -22,6 +24,7 @@ export default function ManagerPage({ params }: { params: Promise<{ id: string }
   const u = db.users.find((x) => x.id === m.userId);
   const clients = db.clients.filter((c) => c.managerId === id);
   const s = managerStatus[m.status];
+  const missed = db.managerTasks.filter((t) => t.managerId === id && t.missed).sort((a, b) => b.dueAt.localeCompare(a.dueAt));
 
   return (
     <div className="flex flex-col gap-6">
@@ -134,11 +137,16 @@ export default function ManagerPage({ params }: { params: Promise<{ id: string }
         </Card>
 
         <Card title="Missed due times">
-          {m.stats.missed ? (
-            <ul className="flex flex-col gap-3 text-body-sm text-primary">
-              <li>&ldquo;Client sent the photos late, so the post slipped a day.&rdquo; Tobi Akin, last week</li>
-              <li>&ldquo;Was ill on Monday.&rdquo; Musa Ibrahim, 2 weeks ago</li>
-              <li>No reason given. Kemi Ola, 3 weeks ago</li>
+          {missed.length ? (
+            <ul className="flex flex-col">
+              {missed.map((t) => (
+                <li key={t.id} className="flex flex-col gap-1 border-b border-border py-3 first:pt-0 last:border-b-0 last:pb-0">
+                  <span className="text-body font-medium text-primary">{t.missed!.reason ? `“${t.missed!.reason}”` : "No reason given"}</span>
+                  <span className="text-body-sm text-secondary">
+                    {t.title}, {clientNameOf(db, t.clientId)}. Due {dayIn(t.dueAt)}.
+                  </span>
+                </li>
+              ))}
             </ul>
           ) : (
             <p className="text-body-sm text-secondary">None this month.</p>

@@ -22,6 +22,8 @@ function AskDialog({
   placeholder,
   sample,
   busy,
+  initial = "",
+  sendLabel = "Send",
   onSend,
 }: {
   open: boolean;
@@ -32,9 +34,11 @@ function AskDialog({
   placeholder: string;
   sample: string;
   busy: boolean;
+  initial?: string;
+  sendLabel?: string;
   onSend: (note: string) => void;
 }) {
-  const [note, setNote] = useState("");
+  const [note, setNote] = useState(initial);
   const [error, setError] = useState<string>();
   return (
     <Dialog open={open} onClose={onClose} title={title}>
@@ -55,7 +59,7 @@ function AskDialog({
           Cancel
         </Button>
         <Button loading={busy} onClick={() => (note.trim() ? onSend(note.trim()) : setError("Write what you would like, or record a voice note."))}>
-          {busy ? "Sending" : "Send"}
+          {busy ? "Sending" : sendLabel}
         </Button>
       </div>
     </Dialog>
@@ -227,6 +231,63 @@ export function UpcomingPostActions({ post }: { post: Post }) {
           busy={pending("change")}
           onSend={async (note) => {
             if (await run("change", () => act.askForChanges(post.id, note), "Sent. It is off the schedule until you approve the new version.")) setChanging(false);
+          }}
+        />
+      )}
+    </>
+  );
+}
+
+/** C7: after asking for changes, the client can change what they asked, or take it back. */
+export function ChangeRequestActions({ post }: { post: Post }) {
+  const confirm = useConfirm();
+  const { run, pending } = useTask();
+  const [editing, setEditing] = useState(false);
+  const last = post.feedback?.[post.feedback.length - 1];
+  if (!last) return null;
+  return (
+    <>
+      <Banner
+        tone="info"
+        title="You asked for changes"
+        action={
+          <>
+            <Button variant="secondary" onClick={() => setEditing(true)}>
+              Edit
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() =>
+                confirm({
+                  title: "Withdraw your change request?",
+                  body: "The post comes back to you to review as it was. Your manager is told to stop.",
+                  confirmLabel: "Withdraw",
+                  action: () => act.withdrawChangeRequest(post.id),
+                  success: "Request withdrawn. The post is back in To review.",
+                })
+              }
+            >
+              Withdraw
+            </Button>
+          </>
+        }
+      >
+        &ldquo;{last.text}&rdquo; Your manager is working on it.
+      </Banner>
+      {editing && (
+        <AskDialog
+          open
+          onClose={() => setEditing(false)}
+          title="Change what you asked"
+          intro="Your manager is told at once and works from your new note."
+          label="What you would like changed"
+          placeholder="For example: mention the Accra team too."
+          sample="Actually, keep the first line and just shorten the end."
+          initial={last.text}
+          sendLabel="Save"
+          busy={pending("edit")}
+          onSend={async (note) => {
+            if (await run("edit", () => act.editChangeRequest(post.id, note), "Saved. Your manager has your new note.")) setEditing(false);
           }}
         />
       )}

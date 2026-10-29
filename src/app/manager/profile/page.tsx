@@ -4,7 +4,9 @@ import { CalendarBlank } from "@phosphor-icons/react";
 import { useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Avatar, Badge, Button, Card, Input, Switch, Textarea, useConfirm, useTask } from "@/components/ui";
+import { PhotoField } from "@/components/account/PhotoField";
+import { Badge, Button, Card, Input, Select, Switch, Textarea, useConfirm, useTask } from "@/components/ui";
+import { zoneLabel, zones } from "@/lib/timezones";
 import { fullName } from "@/lib/format";
 import { act, useMyManager } from "@/lib/mock";
 
@@ -14,10 +16,14 @@ export default function ManagerProfile() {
   const confirm = useConfirm();
   const { run, pending } = useTask();
   const [intro, setIntro] = useState(manager?.intro ?? "");
+  const [firstName, setFirstName] = useState(user?.firstName ?? "");
+  const [lastName, setLastName] = useState(user?.lastName ?? "");
+  const [zone, setZone] = useState(user?.timeZone ?? "Africa/Lagos");
   const [introError, setIntroError] = useState<string>();
-  const [calendar, setCalendar] = useState(true);
-  const [notify, setNotify] = useState({ urgent: true, reviews: true, moments: true, digest: false });
   if (!user || !manager) return null;
+  const calendar = manager.calendarConnected ?? true;
+  const alertOn = (key: string, fallback: boolean) => user.prefs?.[`alert.${key}`] ?? fallback;
+  const dirty = intro !== manager.intro || firstName !== user.firstName || lastName !== user.lastName || zone !== user.timeZone;
 
   return (
     <Columns {...rails.managerSettings}>
@@ -26,24 +32,26 @@ export default function ManagerProfile() {
           className="flex flex-col gap-6"
           onSubmit={async (e) => {
             e.preventDefault();
+            if (!firstName.trim()) return;
             if (intro.trim().length < 20) return setIntroError("Write a short intro (at least 20 characters). Clients see it when they book.");
             setIntroError(undefined);
-            await run("profile", () => act.save(), "Profile saved. Clients see your new intro when they book.");
+            await run("profile", () => act.saveManagerProfile(manager.id, { firstName: firstName.trim(), lastName: lastName.trim(), intro: intro.trim(), timeZone: zone }), "Profile saved. Clients see your new intro when they book.");
           }}
         >
-          <div className="flex items-center gap-4">
-            <Avatar name={fullName(user)} size="xl" />
-            <Button variant="secondary" loading={pending("photo")} onClick={() => run("photo", () => act.save(), "Photo updated.")}>
-              {pending("photo") ? "Uploading" : "Change photo"}
-            </Button>
-          </div>
+          <PhotoField user={user} name={fullName(user)} />
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Input label="First name" defaultValue={user.firstName} />
-            <Input label="Last name" defaultValue={user.lastName} />
+            <Input label="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)} error={!firstName.trim() ? "Add your first name." : undefined} />
+            <Input label="Last name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
           </div>
           <Textarea label="Short intro" value={intro} onChange={(e) => setIntro(e.target.value)} help="Clients see this when they book their calls with you." error={introError} />
-          <Input label="Time zone" defaultValue={user.timeZone.replace("_", " ")} />
-          <Button type="submit" className="self-start" loading={pending("profile")}>
+          <Select label="Time zone" help="Your call slots and due times use this time zone." value={zone} onChange={(e) => setZone(e.target.value)}>
+            {zones.map((z) => (
+              <option key={z} value={z}>
+                {zoneLabel(z)}
+              </option>
+            ))}
+          </Select>
+          <Button type="submit" className="self-start" disabled={!dirty} loading={pending("profile")}>
             {pending("profile") ? "Saving" : "Save"}
           </Button>
         </form>
@@ -79,10 +87,7 @@ export default function ManagerProfile() {
                   warning: "Clients could book times when you are busy.",
                   confirmLabel: "Disconnect",
                   tone: "danger",
-                  action: async () => {
-                    await act.save();
-                    setCalendar(false);
-                  },
+                  action: () => act.setCalendar(manager.id, false),
                   success: "Google Calendar disconnected.",
                 })
               }
@@ -91,7 +96,7 @@ export default function ManagerProfile() {
               Disconnect
             </button>
           ) : (
-            <Button variant="secondary" loading={pending("cal")} onClick={async () => { if (await run("cal", () => act.save(), "Google Calendar connected.")) setCalendar(true); }}>
+            <Button variant="secondary" loading={pending("cal")} onClick={() => run("cal", () => act.setCalendar(manager.id, true), "Google Calendar connected.")}>
               Connect
             </Button>
           )}
@@ -101,15 +106,13 @@ export default function ManagerProfile() {
       <Card title="Notifications">
         <ul className="flex flex-col">
           {[
-            { key: "urgent" as const, label: "Urgent: fix requests, take-downs, failed posts", description: "Email and in the app, always on." },
-            { key: "reviews" as const, label: "Client reviews and changes" },
-            { key: "moments" as const, label: "New Moments from clients" },
-            { key: "digest" as const, label: "Morning summary by email" },
+            { key: "urgent", label: "Urgent: fix requests, take-downs, failed posts", description: "Email and in the app, always on.", default: true },
+            { key: "reviews", label: "Client reviews and changes", default: true },
+            { key: "moments", label: "New Moments from clients", default: true },
+            { key: "digest", label: "Morning summary by email", default: false },
           ].map((i) => (
             <li key={i.key} className="border-b border-border py-4 first:pt-0 last:border-b-0 last:pb-0">
-              <Switch label={i.label} description={i.description} checked={notify[i.key]} disabled={i.key === "urgent" || pending(i.key)} onChange={async (v) => {
-                  if (await run(i.key, () => act.save(), `${i.label.split(":")[0]}: ${v ? "on" : "off"}.`)) setNotify({ ...notify, [i.key]: v });
-                }} />
+              <Switch label={i.label} description={i.description} checked={alertOn(i.key, i.default)} disabled={i.key === "urgent" || pending(i.key)} onChange={(v) => run(i.key, () => act.setPref(user.id, `alert.${i.key}`, v), `${i.label.split(":")[0]}: ${v ? "on" : "off"}.`)} />
             </li>
           ))}
         </ul>
