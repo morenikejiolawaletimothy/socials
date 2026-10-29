@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Avatar, Banner, Breadcrumbs, Button, Dialog, EmptyState, ProgressBar, Segmented, Skeleton, Switch, Tabs, Textarea, ToastProvider, useConfirm, useTask, useToast } from "@/components/ui";
+import { Avatar, Banner, Breadcrumbs, Button, Dialog, EmptyState, ProgressBar, Segmented, Skeleton, Switch, Tabs, Textarea, Menu, Select, ToastProvider, useConfirm, useTask, useToast } from "@/components/ui";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -54,7 +54,34 @@ function Demo() {
             Pay to pick up where you left off.
           </Banner>
           <Banner tone="danger" title="Your LinkedIn connection expired">Reconnect so we can keep posting.</Banner>
+          <Banner tone="info">If you do not reply by then, we hold them and nothing goes out.</Banner>
+          <Banner tone="neutral">You took this post down. It is no longer on LinkedIn.</Banner>
         </div>
+        <p className="text-body-sm text-secondary">Anything the person should act on or know before they act is a notice, never grey text. Without a title it sits inside a card.</p>
+      </Section>
+
+      <Section title="Select and menu">
+        <div className="flex flex-wrap items-end gap-4">
+          <Select label="Time zone" wrapperClassName="w-64" defaultValue="lagos">
+            <option value="lagos">Africa, Lagos</option>
+            <option value="london">Europe, London</option>
+          </Select>
+          <Select size="sm" aria-label="Client" defaultValue="all">
+            <option value="all">All clients</option>
+            <option value="chidi">Chidi Okeke</option>
+          </Select>
+          <Menu
+            label="More actions"
+            align="start"
+            trigger={<span className="px-4 text-body-sm font-medium text-primary-700">More</span>}
+            triggerClassName="flex min-h-11 items-center rounded-md hover:bg-primary-50 focus-visible:focus-ring"
+            items={[
+              { label: "Replace post (new image)", onSelect: () => toast("Replace chosen.", "info") },
+              { label: "Take it down", onSelect: () => toast("Take down chosen.", "info") },
+            ]}
+          />
+        </div>
+        <p className="text-body-sm text-secondary">The caret sits on the same inset as the text. Menus open in a layer above the page and open upwards when there is no room below.</p>
       </Section>
 
       <Section title="Dialog and toast">

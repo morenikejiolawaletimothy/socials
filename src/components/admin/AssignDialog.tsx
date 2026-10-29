@@ -51,7 +51,7 @@ export function AssignDialog({ db, client, onClose, onAssign, title }: { db: Db;
           >
             <input type="radio" name="manager" disabled={o.full} checked={pick === o.m.id} onChange={() => setPick(o.m.id)} className="size-4 accent-primary-600" />
             <span className="flex flex-1 flex-col">
-              <span className="text-body-sm font-medium text-primary">
+              <span className="text-body font-medium text-primary">
                 {managerName(db, o.m.id)} {o === top && <span className="text-caption text-primary-600">Suggested</span>}
               </span>
               <span className="text-caption text-secondary">

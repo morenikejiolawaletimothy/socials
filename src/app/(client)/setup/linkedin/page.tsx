@@ -106,7 +106,7 @@ function ConnectLinkedIn() {
           <Banner tone="success" title="LinkedIn is connected" />
           <div className="flex flex-col gap-2">
             <h3 className="font-display text-display-lg text-primary">What should we do for you?</h3>
-            <p className="text-body-sm text-secondary">Change these any time in Control. Whether each one needs your approval first is set in the last setup step.</p>
+            <Banner tone="neutral">Change these any time in Control. Whether each one needs your approval first is set in the last setup step.</Banner>
           </div>
           <PermissionsForm client={client} />
           <Button

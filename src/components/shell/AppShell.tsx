@@ -122,7 +122,7 @@ export function AppShell({ role, children }: { role: "client" | "manager"; child
 
       <main className="mx-auto w-full max-w-6xl px-4 pb-32 pt-6 md:pb-16">{mounted ? children : <PageSkeleton />}</main>
 
-      <nav aria-label="Main" className="fixed inset-x-4 bottom-4 z-30 rounded-xl border border-border bg-card px-2 shadow-lg md:hidden">
+      <nav aria-label="Main" data-bottom-bar className="fixed inset-x-4 bottom-4 z-30 rounded-xl border border-border bg-card px-2 shadow-lg md:hidden">
         <ul className="grid grid-cols-4">
           {[...mainNav[role], { label: "Me", href: meHref[role], icon: MeIcon }].map((item) => {
             const active = item.label === "Me" ? meActive : isActive(pathname, item);

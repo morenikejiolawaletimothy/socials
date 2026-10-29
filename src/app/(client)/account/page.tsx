@@ -6,7 +6,7 @@ import { useRef, useState } from "react";
 import { pullOutTerms } from "@/components/client/contract";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Avatar, Banner, Button, Card, Dialog, Input, Switch, useConfirm, useTask } from "@/components/ui";
+import { Avatar, Banner, Button, Card, Dialog, Input, Select, Switch, useConfirm, useTask } from "@/components/ui";
 import { fullName, money } from "@/lib/format";
 import { act, useMyClient } from "@/lib/mock";
 
@@ -77,17 +77,13 @@ export default function AccountPage() {
             <Input label="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)} error={nameError} />
             <Input label="Last name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
           </div>
-          <label className="flex flex-col gap-2">
-            <span className="text-body-sm font-medium text-primary">Time zone</span>
-            <select value={zone} onChange={(e) => setZone(e.target.value)} className="min-h-11 rounded-sm border border-border-strong bg-card px-4 text-body text-primary focus-visible:border-primary-600 focus-visible:focus-ring">
+          <Select label="Time zone" help="We show call times and due times in this time zone." value={zone} onChange={(e) => setZone(e.target.value)}>
               {zones.map((z) => (
                 <option key={z} value={z}>
                   {z.replace("_", " ").replace("/", ", ")}
                 </option>
               ))}
-            </select>
-            <span className="text-body-sm text-secondary">We show call times and due times in this time zone.</span>
-          </label>
+          </Select>
           <Button type="submit" className="self-start" disabled={!dirty} loading={pending("profile")}>
             {pending("profile") ? "Saving" : "Save"}
           </Button>
@@ -124,7 +120,7 @@ export default function AccountPage() {
           />
           <div className="flex flex-col gap-3">
             <span className="flex items-center justify-between gap-3">
-              <span className="text-body-sm font-medium text-primary">Where you are signed in</span>
+              <span className="text-body font-semibold text-primary">Where you are signed in</span>
               {sessions.length > 1 && (
                 <button
                   type="button"
@@ -151,7 +147,7 @@ export default function AccountPage() {
                 <li key={s.id} className="flex items-center gap-3 border-b border-border p-4 last:border-b-0">
                   <s.icon className="size-6 text-secondary" aria-hidden />
                   <span className="flex flex-1 flex-col">
-                    <span className="text-body-sm font-medium text-primary">{s.name}</span>
+                    <span className="text-body font-medium text-primary">{s.name}</span>
                     <span className="text-caption text-secondary">{s.where}</span>
                   </span>
                   {s.current ? (
@@ -213,10 +209,10 @@ export default function AccountPage() {
 
       <Card title="Delete your account">
         <div className="flex flex-col gap-3">
-          <p className="text-body-sm text-secondary">
+          <Banner tone="warning">
             This removes your account and deletes your data. We keep only invoices and payment records, as the law requires.
             {activeContract ? " Your contract is cancelled first, with any refund due." : ""}
-          </p>
+          </Banner>
           <Button variant="ghost" className="self-start" onClick={() => setDeleting(true)}>
             Delete my account
           </Button>

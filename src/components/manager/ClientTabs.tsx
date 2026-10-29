@@ -39,7 +39,7 @@ export function OffLimitsBox({ b }: { b: ClientBundle }) {
   if (!b.brand?.offLimits.length) return null;
   return (
     <div className="flex flex-col gap-2 rounded-md border border-danger bg-danger-bg p-4">
-      <span className="flex items-center gap-2 text-body-sm font-medium text-primary">
+      <span className="flex items-center gap-2 text-body font-medium text-primary">
         <WarningCircle className="size-5 text-danger" aria-hidden /> Off limits
       </span>
       <ul className="flex flex-col gap-1 text-body-sm text-primary">
@@ -198,7 +198,7 @@ function LeadRow({ l }: { l: Lead }) {
     <li className={`flex flex-col gap-3 border-b border-border py-4 first:pt-0 last:border-b-0 last:pb-0 ${l.status === "dropped" ? "opacity-50" : ""}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <a href={l.url} target="_blank" rel="noreferrer" className="text-body-sm font-medium text-primary hover:text-primary-700 hover:underline focus-visible:focus-ring">
+          <a href={l.url} target="_blank" rel="noreferrer" className="text-body font-medium text-primary hover:text-primary-700 hover:underline focus-visible:focus-ring">
             {l.name}
           </a>
           <span className="text-caption text-secondary">{l.detail}</span>
@@ -369,7 +369,7 @@ function SignalList({ b, limit, removable }: { b: ClientBundle; limit?: number; 
       {list.map((s) => (
         <li key={s.id} className="flex items-start gap-3">
           <span className="flex flex-1 flex-col gap-1">
-            <a href={s.url} target="_blank" rel="noreferrer" className="text-body-sm font-medium text-primary hover:text-primary-700 hover:underline focus-visible:focus-ring">
+            <a href={s.url} target="_blank" rel="noreferrer" className="text-body font-medium text-primary hover:text-primary-700 hover:underline focus-visible:focus-ring">
               {s.title}
             </a>
             <span className="text-caption text-secondary">
@@ -436,7 +436,7 @@ export function ListeningTab({ b }: { b: ClientBundle }) {
               <li key={a.id} className="flex items-center gap-3 border-b border-border py-3 last:border-b-0">
                 <LinkSimple className="size-5 shrink-0 text-secondary" aria-hidden />
                 <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="text-body-sm font-medium text-primary">{a.topic}</span>
+                  <span className="text-body font-medium text-primary">{a.topic}</span>
                   <span className="text-caption text-secondary">Last item {agoIn(a.lastItemAt)}</span>
                 </span>
                 <Badge status={a.working ? "success" : "danger"}>{a.working ? "Working" : "Not working"}</Badge>
@@ -659,7 +659,7 @@ export function UpdatesTab({ b }: { b: ClientBundle }) {
             {sent.map((u) => (
               <li key={u.id} className="flex flex-col gap-1 border-b border-border py-3 first:pt-0 last:border-b-0 last:pb-0">
                 <span className="flex justify-between gap-3">
-                  <span className="text-body-sm font-medium text-primary">{u.title}</span>
+                  <span className="text-body font-medium text-primary">{u.title}</span>
                   <span className="text-caption text-secondary">{ago(u.sentAt!)}</span>
                 </span>
                 <span className="text-body-sm text-secondary">{u.headline}</span>

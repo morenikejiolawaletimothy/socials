@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRef, useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Badge, Button, Card, Dialog, Input, Textarea, useConfirm, useTask, useToast } from "@/components/ui";
+import { Badge, Button, Card, Dialog, Input, Select, Textarea, useConfirm, useTask, useToast } from "@/components/ui";
 import { agoIn, date } from "@/lib/format";
 import { act, useMyClient, type BrandFile, type OffLimit } from "@/lib/mock";
 
@@ -224,16 +224,13 @@ export default function BrandPage() {
               if (await run("off", () => act.addOffLimit(client.id, offKind, offText.trim()), "Added to off limits. Your manager is told.")) setOffText("");
             }}
           >
-            <label className="flex flex-col gap-2">
-              <span className="text-body-sm font-medium text-primary">Kind</span>
-              <select value={offKind} onChange={(e) => setOffKind(e.target.value as OffLimit["kind"])} className="min-h-11 rounded-sm border border-border-strong bg-card px-3 text-body text-primary focus-visible:focus-ring">
+            <Select label="Kind" wrapperClassName="sm:w-44" value={offKind} onChange={(e) => setOffKind(e.target.value as OffLimit["kind"])}>
                 {offKinds.map((k) => (
                   <option key={k.value} value={k.value}>
                     {k.label}
                   </option>
                 ))}
-              </select>
-            </label>
+            </Select>
             <div className="flex-1">
               <Input label="What to avoid" placeholder="For example: never comment on politics" value={offText} onChange={(e) => { setOffText(e.target.value); setOffError(undefined); }} error={offError} />
             </div>
@@ -315,7 +312,7 @@ export default function BrandPage() {
                   type="button"
                   aria-label={`Remove ${f.name}`}
                   onClick={() => removeFile(f)}
-                  className="absolute right-2 top-2 flex size-9 items-center justify-center rounded-full bg-card text-secondary shadow-md transition-opacity hover:text-danger focus-visible:opacity-100 focus-visible:focus-ring sm:opacity-0 sm:group-hover:opacity-100"
+                  className="absolute right-2 top-2 flex size-9 items-center justify-center rounded-full bg-card text-secondary shadow-sm transition-opacity hover:text-danger focus-visible:opacity-100 focus-visible:focus-ring sm:opacity-0 sm:group-hover:opacity-100"
                 >
                   <Trash className="size-4" aria-hidden />
                 </button>
@@ -336,7 +333,7 @@ export default function BrandPage() {
                 <Sparkle className="size-6 text-primary-600" aria-hidden />
               </span>
               <span className="flex flex-1 flex-col">
-                <span className="text-body-sm font-medium text-primary">{f.name}</span>
+                <span className="text-body font-medium text-primary">{f.name}</span>
                 <span className="text-caption text-secondary">{f.size}</span>
               </span>
               <button type="button" aria-label={`Remove ${f.name}`} onClick={() => removeFile(f)} className={iconButton}>
@@ -361,7 +358,7 @@ export default function BrandPage() {
                         success: "Colour removed.",
                       })
                     }
-                    className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-card text-secondary shadow-md hover:text-danger focus-visible:focus-ring sm:opacity-0 sm:group-hover:opacity-100"
+                    className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-card text-secondary shadow-sm hover:text-danger focus-visible:focus-ring sm:opacity-0 sm:group-hover:opacity-100"
                   >
                     <X className="size-3" aria-hidden />
                   </button>
@@ -399,7 +396,7 @@ export default function BrandPage() {
               <li key={f.id} className="flex items-center gap-3 border-b border-border py-3 last:border-b-0">
                 <FileText className="size-6 shrink-0 text-primary-600" aria-hidden />
                 <span className="flex flex-1 flex-col">
-                  <span className="text-body-sm font-medium text-primary">{f.name}</span>
+                  <span className="text-body font-medium text-primary">{f.name}</span>
                   <span className="text-caption text-secondary">
                     {f.size}, added {date(f.at)}
                   </span>

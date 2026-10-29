@@ -27,7 +27,7 @@ export default function ComplaintsPage() {
                 <ClientCell db={db} clientId={c.clientId} sub={`Manager: ${managerName(db, db.clients.find((x) => x.id === c.clientId)?.managerId)}`} />
               </div>
               <div className="flex flex-1 flex-col gap-1">
-                <span className="text-body-sm font-medium text-primary">{complaintKind[c.kind]}</span>
+                <span className="text-body font-medium text-primary">{complaintKind[c.kind]}</span>
                 <span className="line-clamp-2 text-body-sm text-secondary">{c.text}</span>
                 <span className="text-caption text-secondary">{ago(c.at)}</span>
               </div>

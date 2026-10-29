@@ -89,7 +89,7 @@ export default function InvitePage({ params }: { params: Promise<{ token: string
               </div>
               <CodeInput label="Code from your app" value={code} onChange={(v) => { setCode(v); setError(undefined); }} error={error} help="Demo: any 6 digits work." />
               <div className="flex flex-col gap-2">
-                <p className="text-body-sm font-medium text-primary">Your backup codes</p>
+                <p className="text-body font-semibold text-primary">Your backup codes</p>
                 <p className="text-body-sm text-secondary">Save these somewhere safe. Each one gets you in once if you lose your phone.</p>
                 <ul className="grid grid-cols-3 gap-2">
                   {backupCodes.map((c) => (

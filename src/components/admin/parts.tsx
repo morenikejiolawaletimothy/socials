@@ -19,7 +19,7 @@ export function Stats({
   return (
     <ul className="grid grid-cols-2 gap-3 lg:grid-cols-5">
       {items.map((s) => (
-        <li key={s.label} className="flex flex-col gap-1 rounded-lg border border-border bg-card p-4 shadow-md">
+        <li key={s.label} className="flex flex-col gap-1 rounded-lg border border-border bg-card p-4">
           <span className="text-caption text-secondary">{s.label}</span>
           <span
             className={`font-display ${typeof s.value === "string" && /[a-z]/i.test(s.value) && !/^\$/.test(s.value) ? "text-display-lg" : "text-display-2xl"} ${s.tone === "danger" ? "text-danger" : s.tone === "warning" ? "text-warning" : "text-primary"}`}
@@ -77,7 +77,6 @@ export function managerName(db: Db, managerId: string | null | undefined) {
 
 export const clientName = (db: Db, clientId: string) => fullName(db.users.find((u) => u.id === db.clients.find((c) => c.id === clientId)?.userId));
 
-export const selectClass = "min-h-10 rounded-sm border border-border-strong bg-card px-3 text-body-sm text-primary focus-visible:focus-ring";
 export const linkClass = "rounded-sm text-body-sm font-medium text-primary-600 hover:text-primary-700 hover:underline focus-visible:focus-ring";
 
 export const managerStatus: Record<Manager["status"], { label: string; tone: "success" | "info" | "warning" | "danger" }> = {

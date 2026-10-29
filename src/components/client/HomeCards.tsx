@@ -152,7 +152,7 @@ export function CallsCard({ b }: { b: ClientBundle }) {
     <Card title="Your two calls">
       <div className="flex flex-col gap-4">
         {managerUser && (
-          <div className="flex items-center gap-3">
+          <div className="flex items-start gap-3">
             <Avatar name={fullName(managerUser)} size="md" />
             <p className="text-body-sm text-secondary">
               You will meet <span className="font-medium text-primary">{fullName(managerUser)}</span>, your account manager. 30 minutes each, on Google Meet.
@@ -209,11 +209,11 @@ export function StrategyReadyCard({ b }: { b: ClientBundle }) {
     <Card title={strategy.status === "agreed-sent" ? "What we agreed is ready to approve" : "Your strategy is ready"}>
       <div className="flex flex-col gap-4">
         <p className="text-body text-primary">{strategy.goal}</p>
-        <p className="text-body-sm text-secondary">
+        <Banner tone="info">
           {strategy.status === "agreed-sent"
             ? "Your manager added what you changed on the call. Work starts once you approve."
             : `Read it before your strategy call${call ? ` ${dayTimeIn(call.at)}` : ""}. Bring any questions.`}
-        </p>
+        </Banner>
         <Link href="/strategy" className={buttonLink(true)}>
           Read your strategy
         </Link>
@@ -277,15 +277,15 @@ export function ReviewCard({ b, primary }: { b: ClientBundle; primary: boolean }
                 <span className="flex size-12 shrink-0 items-center justify-center rounded-sm bg-neutral-50 text-caption text-secondary">Text</span>
               )}
               <span className="flex min-w-0 flex-col">
-                <span className="truncate text-body-sm font-medium text-primary">{p.text.split("\n")[0]}</span>
+                <span className="truncate text-body font-medium text-primary">{p.text.split("\n")[0]}</span>
                 <span className="text-caption text-secondary">{p.topic}</span>
               </span>
             </li>
           ))}
         </ul>
-        <p className="text-body-sm text-secondary">
+        <Banner tone="info">
           {wait ? "If you do not reply by then, we hold them and nothing goes out." : "If you do not reply within 24 hours, your manager posts them. You can still take any post down."}
-        </p>
+        </Banner>
         <Link href="/content/review" className={buttonLink(primary)}>
           Review now
         </Link>
@@ -344,7 +344,7 @@ export function UpcomingCard({ b }: { b: ClientBundle }) {
         {next.map((p, i) => (
           <li key={p.id} className={`flex items-start gap-4 py-3 ${i < next.length - 1 ? "border-b border-border" : ""}`}>
             <span className="flex w-16 shrink-0 flex-col">
-              <span className="text-body-sm font-medium text-primary">{day(p.scheduledFor!)}</span>
+              <span className="text-body font-medium text-primary">{day(p.scheduledFor!)}</span>
               <span className="text-caption text-secondary">{time(p.scheduledFor!)}</span>
             </span>
             <span className="text-body-sm text-primary">{p.text.split("\n")[0]}</span>

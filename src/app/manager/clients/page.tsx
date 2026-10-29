@@ -14,7 +14,15 @@ export default function ClientsPage() {
 
   return (
     <Columns {...rails.managerMain}>
-      <Card title="Your clients" action={<span className="text-caption text-secondary">{clients.length} of {manager?.maxClients ?? 10}</span>} padding="none">
+      <Card
+        title="Your clients"
+        action={
+          <span className="text-caption text-secondary">
+            {clients.length} of {manager?.maxClients ?? 10}
+          </span>
+        }
+        padding="none"
+      >
         <ul className="flex flex-col">
           {clients.map((c) => {
             const u = db.users.find((x) => x.id === c.userId);
@@ -23,25 +31,27 @@ export default function ClientsPage() {
             const week = db.progress.find((p) => p.clientId === c.id);
             return (
               <li key={c.id} className="border-b border-border last:border-b-0">
-                <Link href={`/manager/clients/${c.id}`} className="flex flex-col gap-3 px-6 py-5 hover:bg-neutral-25 focus-visible:focus-ring sm:flex-row sm:items-center">
-                  <Avatar name={fullName(u)} size="lg" />
-                  <div className="flex min-w-0 flex-1 flex-col gap-1">
-                    <span className="flex flex-wrap items-center gap-2">
-                      <span className="text-body font-medium text-primary">{fullName(u)}</span>
-                      <Badge status={b.tone}>{b.label}</Badge>
-                    </span>
-                    <span className="text-body-sm text-secondary">{u?.title}</span>
-                    {next ? (
-                      <span className="text-body-sm text-primary">
-                        Next: {next.title}, due {dayTimeIn(next.dueAt)}
+                <Link href={`/manager/clients/${c.id}`} className="flex flex-col gap-3 px-6 py-5 hover:bg-neutral-25 focus-visible:focus-ring sm:flex-row sm:items-start">
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                    <Avatar name={fullName(u)} size="lg" />
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      <span className="flex flex-wrap items-center gap-2">
+                        <span className="text-body font-medium text-primary">{fullName(u)}</span>
+                        <Badge status={b.tone}>{b.label}</Badge>
                       </span>
-                    ) : (
-                      <span className="text-body-sm text-secondary">Nothing due from you.</span>
-                    )}
-                    {c.atRisk && <span className="text-caption text-danger">{c.atRisk}</span>}
+                      <span className="text-body-sm text-secondary">{u?.title}</span>
+                      {next ? (
+                        <span className="text-body-sm text-primary">
+                          Next: {next.title}, due {dayTimeIn(next.dueAt)}
+                        </span>
+                      ) : (
+                        <span className="text-body-sm text-secondary">Nothing due from you.</span>
+                      )}
+                      {c.atRisk && <span className="text-caption text-danger">{c.atRisk}</span>}
+                    </div>
                   </div>
                   {week && (
-                    <div className="flex w-full flex-col gap-1 sm:w-40">
+                    <div className="flex w-full flex-col gap-1 pl-17 sm:w-40 sm:self-center sm:pl-0">
                       <span className="text-caption text-secondary">
                         This week: {week.posts.done + week.comments.done + week.connections.done} of {week.posts.target + week.comments.target + week.connections.target}
                       </span>

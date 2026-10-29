@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Table, selectClass, td } from "@/components/admin/parts";
-import { Button, Card, PageHeader, useTask } from "@/components/ui";
+import { Table, td } from "@/components/admin/parts";
+import { Button, Card, PageHeader, Select, useTask } from "@/components/ui";
 import { dayTime } from "@/lib/format";
 import { delay, useData, type AuditEntry } from "@/lib/mock";
 
@@ -58,13 +58,13 @@ export default function AuditPage() {
       <Card
         title="Actions"
         action={
-          <select aria-label="Filter" value={kind} onChange={(e) => setKind(e.target.value as AuditEntry["kind"] | "all")} className={selectClass}>
+          <Select size="sm" aria-label="Filter" value={kind} onChange={(e) => setKind(e.target.value as AuditEntry["kind"] | "all")}>
             {kinds.map((k) => (
               <option key={k.value} value={k.value}>
                 {k.label}
               </option>
             ))}
-          </select>
+          </Select>
         }
       >
         <Table head={["When", "Who", "What", "On"]}>

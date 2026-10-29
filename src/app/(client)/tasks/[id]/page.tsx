@@ -190,7 +190,7 @@ export default function TaskPage({ params }: { params: Promise<{ id: string }> }
           )}
 
           <div className="flex flex-col gap-2 border-t border-border pt-6">
-            <p className="text-body-sm font-medium text-primary">Someone does this for you?</p>
+            <p className="text-body font-semibold text-primary">Someone does this for you?</p>
             <p className="text-body-sm text-secondary">Send the list and notes to your assistant. They do not need an account.</p>
             <Button variant="secondary" className="self-start" onClick={() => setAssistant(true)}>
               Send to my assistant
@@ -200,7 +200,7 @@ export default function TaskPage({ params }: { params: Promise<{ id: string }> }
       </Card>
 
       <Dialog open={assistant} onClose={() => setAssistant(false)} title="Send to your assistant">
-        <p className="text-body-sm text-secondary">We email them the list, the notes and how to send each one. You still mark them as sent here, or they reply to us.</p>
+        <Banner tone="info">We email them the list, the notes and how to send each one. You still mark them as sent here, or they reply to us.</Banner>
         <Input label="Their email" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setEmailError(undefined); }} error={emailError} placeholder="name@company.com" />
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Button variant="ghost" onClick={() => setAssistant(false)}>

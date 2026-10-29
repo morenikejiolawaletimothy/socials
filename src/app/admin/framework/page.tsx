@@ -134,7 +134,7 @@ export default function FrameworkPage() {
             {db.frameworkVersions.map((v, i) => (
               <li key={v.version} className="flex flex-col gap-1">
                 <span className="flex items-center gap-2">
-                  <span className="text-body-sm font-medium text-primary">{v.version}</span>
+                  <span className="text-body font-medium text-primary">{v.version}</span>
                   {i === 0 && <Badge status="success">In use</Badge>}
                 </span>
                 <span className="text-body-sm text-secondary">{v.note}</span>

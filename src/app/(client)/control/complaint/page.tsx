@@ -75,7 +75,7 @@ export default function ComplaintPage() {
             {complaints.map((c) => (
               <li key={c.id} className="flex flex-col gap-2 border-b border-border py-4 first:pt-0 last:border-b-0 last:pb-0">
                 <span className="flex items-center justify-between gap-3">
-                  <span className="text-body-sm font-medium text-primary">{kinds.find((k) => k.value === c.kind)?.label ?? "Manager"}</span>
+                  <span className="text-body font-medium text-primary">{kinds.find((k) => k.value === c.kind)?.label ?? "Manager"}</span>
                   <Badge status={statusTone[c.status]}>{statusLabel[c.status]}</Badge>
                 </span>
                 <span className="text-body-sm text-secondary">{c.text}</span>

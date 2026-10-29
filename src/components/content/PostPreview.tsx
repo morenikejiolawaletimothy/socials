@@ -41,14 +41,13 @@ export function PostPreview({
 
   return (
     <article className="flex flex-col gap-3">
-      <header className="flex items-center gap-3">
-        <Avatar name={author.name} size="md" />
+      <header className="flex items-start gap-3">
+        <Avatar name={author.name} size="lg" />
         <div className="flex min-w-0 flex-col">
           <span className="truncate text-body-sm font-semibold text-primary">{author.name}</span>
           <span className="truncate text-caption text-secondary">{author.title}</span>
           <span className="flex items-center gap-1 text-caption text-secondary">
-            {meta}
-            {post.editedAt && <span>, edited</span>}
+            {post.editedAt ? `${meta}, edited` : meta}
             <GlobeHemisphereWest className="size-3" aria-label="Public" />
           </span>
         </div>

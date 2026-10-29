@@ -48,7 +48,7 @@ function ManagerMessages() {
                     <Avatar name={fullName(t.u)} size="md" />
                     <span className="flex min-w-0 flex-1 flex-col">
                       <span className="flex items-center justify-between gap-2">
-                        <span className="truncate text-body-sm font-medium text-primary">{fullName(t.u)}</span>
+                        <span className="truncate text-body font-medium text-primary">{fullName(t.u)}</span>
                         {t.last && <span className="shrink-0 text-caption text-secondary">{ago(t.last.at)}</span>}
                       </span>
                       <span className="truncate text-caption text-secondary">{t.last?.text ?? (t.last?.voice ? "Voice note" : t.last?.file ? t.last.file.name : "No messages yet")}</span>

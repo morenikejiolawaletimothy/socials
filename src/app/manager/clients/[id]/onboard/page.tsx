@@ -55,11 +55,11 @@ function Onboard({ id }: { id: string }) {
               <h3 className="font-display text-display-lg text-primary">Prep sheet for the goals call</h3>
               {goals && <p className="text-body-sm text-secondary">{dayTime(goals.at)}. {goals.recording ? "Recorded with consent." : "Not recorded: you write the notes."}</p>}
               <div className="flex flex-col gap-2 rounded-md bg-neutral-25 p-4">
-                <span className="text-body-sm font-medium text-primary">Their LinkedIn today</span>
+                <span className="text-body font-semibold text-primary">Their LinkedIn today</span>
                 <p className="text-body-sm text-primary">Headline: &ldquo;Founder&rdquo;. 1,240 followers. Last post 8 months ago (a product launch, 40 reactions). About section is two lines. No featured posts.</p>
               </div>
               <div className="flex flex-col gap-2">
-                <span className="flex items-center gap-1 text-body-sm font-medium text-primary">
+                <span className="flex items-center gap-1 text-body font-semibold text-primary">
                   <Sparkle className="size-4 text-primary-600" aria-hidden /> Questions to ask
                 </span>
                 <ul className="flex list-disc flex-col gap-1 pl-5 text-body-sm text-primary">
@@ -88,7 +88,7 @@ function Onboard({ id }: { id: string }) {
                 <Textarea label="Tone" rows={2} defaultValue={s?.tone ?? "Warm, practical, proud of local sourcing."} />
               </div>
               <div className="flex flex-col gap-2">
-                <span className="text-body-sm font-medium text-primary">Off limits (saved to their Brand, where they can see and edit it)</span>
+                <span className="text-body font-semibold text-primary">Off limits (saved to their Brand, where they can see and edit it)</span>
                 <OffLimitsBox b={b} />
                 <Input label="Add to off limits" placeholder="For example: never name competitors" />
               </div>
@@ -111,7 +111,7 @@ function Onboard({ id }: { id: string }) {
           {step === 2 && (
             <div className="flex flex-col gap-4">
               <h3 className="font-display text-display-lg text-primary">Set up listening</h3>
-              <p className="text-body-sm text-secondary">Create a Google Alert for each suggested topic, then paste each alert&apos;s feed link here.</p>
+              <Banner tone="info">Create a Google Alert for each suggested topic, then paste each alert&apos;s feed link here.</Banner>
               <ul className="flex flex-wrap gap-2">
                 {(s?.topics.map((t) => t.name) ?? ["Local sourcing", "Food distribution Nigeria", "Lagos food startups", "Agriculture policy"]).map((t) => (
                   <li key={t} className="rounded-full bg-primary-50 px-3 py-1 text-body-sm text-primary-700">
@@ -144,7 +144,7 @@ function Onboard({ id }: { id: string }) {
                   ["Strategy draft", `Version ${s?.version ?? 1}, framework v3`],
                 ].map(([t, d]) => (
                   <div key={t} className="flex flex-col gap-1 rounded-md border border-border p-3">
-                    <span className="flex items-center gap-1 text-body-sm font-medium text-primary">
+                    <span className="flex items-center gap-1 text-body font-semibold text-primary">
                       <CheckCircle className="size-4 text-success" aria-hidden /> {t}
                     </span>
                     <span className="text-caption text-secondary">{d}</span>
@@ -224,7 +224,7 @@ function Onboard({ id }: { id: string }) {
               <h3 className="font-display text-display-lg text-primary">After the strategy call</h3>
               {stratCall && <p className="text-body-sm text-secondary">Strategy call: {dayTime(stratCall.at)}.</p>}
               {stratCall?.summary && <p className="rounded-md bg-neutral-25 p-4 text-body-sm text-primary">{stratCall.summary}</p>}
-              <p className="text-body-sm text-secondary">Adjust the strategy with anything changed on the call, then send it as &ldquo;What we agreed&rdquo;. Nothing starts until {first} approves.</p>
+              <Banner tone="info">Adjust the strategy with anything changed on the call, then send it as &ldquo;What we agreed&rdquo;. Nothing starts until {first} approves.</Banner>
               <span className="self-start">
                 <Badge status={s?.status === "agreed-sent" ? "info" : s?.status === "change-asked" ? "warning" : "neutral"}>
                   {s?.status === "agreed-sent" ? `Sent. Waiting for ${first} to approve` : s?.status === "change-asked" ? `${first} asked for a change` : "Not sent yet"}

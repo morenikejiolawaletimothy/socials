@@ -116,7 +116,7 @@ export function LivePostActions({ post }: { post: Post }) {
   if (down)
     return (
       <div className="flex flex-col gap-3">
-        <p className="text-body-sm text-secondary">{post.takenDownBy === "team" ? "Your manager took this post down." : "You took this post down."} It is no longer on LinkedIn.</p>
+        <Banner tone="neutral">{post.takenDownBy === "team" ? "Your manager took this post down." : "You took this post down."} It is no longer on LinkedIn.</Banner>
         {banner || (
           <Button variant="secondary" className="self-start" onClick={() => setAgain(true)}>
             Post it again
@@ -185,7 +185,7 @@ export function UpcomingPostActions({ post }: { post: Post }) {
   if (post.status === "on-hold")
     return (
       <div className="flex flex-col gap-3">
-        <p className="text-body-sm text-secondary">{post.heldReason}</p>
+        <Banner tone="warning">{post.heldReason}</Banner>
         <Button variant="secondary" className="self-start" loading={pending("resume")} onClick={() => run("resume", () => act.resumePost(post.id), "Back on the schedule. Your manager is told.")}>
           Post it after all
         </Button>

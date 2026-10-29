@@ -23,15 +23,15 @@ export function CallsCard() {
             return (
               <li key={c.id} className="flex flex-col gap-2">
                 <div className="flex items-center gap-3">
-                  <Avatar name={fullName(u)} size="sm" />
+                  <Avatar name={fullName(u)} size="md" />
                   <span className="flex flex-col">
-                    <span className="text-body-sm font-medium text-primary">{fullName(u)}</span>
+                    <span className="text-body font-medium text-primary">{fullName(u)}</span>
                     <span className="text-caption text-secondary">
                       {kind[c.kind]}, {time(c.at)}
                     </span>
                   </span>
                 </div>
-                <div className="flex gap-4 pl-11">
+                <div className="flex gap-4 pl-13">
                   <a href={c.meetUrl} className="inline-flex items-center gap-1 rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
                     <VideoCamera className="size-4" aria-hidden /> Join
                   </a>

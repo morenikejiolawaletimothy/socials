@@ -54,6 +54,12 @@ Corrections Fola has already made. Check every new screen against them before sh
 - Every add or create has a matching edit and remove.
 - Actions that tell someone use `notify(...)` in `src/lib/mock/actions.ts` (`email: true` marks the ones that will also send an email in Phase 2). Owner actions also write to the audit log.
 - Test error states with "Simulate errors" in the demo bar: every action must fail gracefully, keep what the person typed, and say what to do.
+- Type hierarchy is set by size, not only weight: card titles 22px (18px in narrow side cards, automatic in `Card`), item titles and subsection headings `text-body` (16px) medium or semibold, supporting text `text-body-sm text-secondary`, meta `text-caption`. Never a 14px bold title over 14px text.
+- Anything the person should act on, or know before they act (held, failed, taken down, what happens if they do not reply), is a `Banner` (with or without a title), not grey text. Grey text is for descriptions only.
+- Cards are flat: hairline border, no shadow. Shadows only on things that float (menus, dialogs, toasts, the phone bottom bar).
+- Avatars: when the text beside them runs two or more lines, align to the top (`items-start`), as LinkedIn does; one line centres.
+- Dropdowns use `Select` (caret evenly inset). Popovers use `Menu`, which renders above the page and opens upwards near the bottom. Never put a dropdown inside a card with `absolute` positioning.
+- Toasts appear bottom right (bottom centre above the tab bar on phones).
 
 ## Landing page exception
 

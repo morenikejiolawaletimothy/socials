@@ -34,7 +34,7 @@ export default function PlanPage() {
     <SetupFrame title="Choose your plan and sign" step="Plan" steps={["Choose", "Review and sign", "Pay", "Done"]} current={step}>
       {step === 0 && (
         <div className="flex flex-col gap-6">
-          <p className="text-body-sm text-secondary">Your first 2 weeks are free, with the full service. Your contract starts after that.</p>
+          <Banner tone="success">Your first 2 weeks are free, with the full service. Your contract starts after that.</Banner>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {plans.map((p) => (
               <label

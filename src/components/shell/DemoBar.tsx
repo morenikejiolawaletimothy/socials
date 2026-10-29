@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { act, resetDemo, setDemoRole, setFailMode, useData, useFailMode, useSession, type Role } from "@/lib/mock";
-import { useToast } from "@/components/ui";
+import { Select, useToast } from "@/components/ui";
 
 const homes: Record<Role, string> = { client: "/home", manager: "/manager", owner: "/admin" };
 const labels: Record<Role, string> = { client: "Client", manager: "Manager", owner: "Owner" };
@@ -71,21 +71,23 @@ export function DemoBar() {
           Reset demo
         </button>
         {role === "client" && (
-          <select
+          <Select
+            size="xs"
+            tone="dark"
             aria-label="Demo client"
+            wrapperClassName="w-full sm:order-2 sm:w-auto"
             value={clientUserId}
             onChange={(e) => {
               act.setDemoClient(e.target.value);
               router.push("/home");
             }}
-            className="w-full rounded-sm bg-neutral-800 px-2 py-1 text-caption text-inverse focus-visible:focus-ring sm:order-2 sm:w-auto"
           >
             {demoClients.map((c) => (
               <option key={c.userId} value={c.userId}>
                 {c.label}
               </option>
             ))}
-          </select>
+          </Select>
         )}
       </div>
     </div>

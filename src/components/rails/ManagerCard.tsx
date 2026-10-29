@@ -2,7 +2,7 @@
 
 import { CalendarBlank } from "@phosphor-icons/react";
 import Link from "next/link";
-import { Avatar, Card } from "@/components/ui";
+import { Avatar, Banner, Card } from "@/components/ui";
 import { dayTime, fullName } from "@/lib/format";
 import { useMyClient } from "@/lib/mock";
 
@@ -29,7 +29,7 @@ export function ManagerCard() {
             <div className="flex items-start gap-3 rounded-md bg-neutral-25 p-3">
               <CalendarBlank className="mt-0.5 size-5 shrink-0 text-primary-600" aria-hidden />
               <div className="flex flex-col">
-                <span className="text-body-sm font-medium text-primary">{callName[next.kind]}</span>
+                <span className="text-body font-medium text-primary">{callName[next.kind]}</span>
                 <span className="text-body-sm text-secondary">{dayTime(next.at)}, 30 minutes</span>
               </div>
             </div>
@@ -42,7 +42,7 @@ export function ManagerCard() {
           </Link>
         </div>
       ) : (
-        <p className="text-body-sm text-secondary">We are choosing the right manager for you. You will see them here soon.</p>
+        <Banner tone="info">We are choosing the right manager for you. You will see them here soon.</Banner>
       )}
     </Card>
   );

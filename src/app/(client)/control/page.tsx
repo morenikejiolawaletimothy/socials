@@ -36,7 +36,7 @@ export default function ControlPage() {
             {approved.map((r) => (
               <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md bg-neutral-25 p-3">
                 <span className="flex min-w-0 flex-col gap-1">
-                  <span className="text-body-sm font-medium text-primary">{r.text}</span>
+                  <span className="text-body font-medium text-primary">{r.text}</span>
                   <span className="text-caption text-success">You approved this, once</span>
                 </span>
                 <button

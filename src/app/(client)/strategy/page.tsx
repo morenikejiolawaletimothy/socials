@@ -153,9 +153,9 @@ export default function StrategyPage() {
             </div>
           ) : (
             strategy.status === "approved" && (
-              <p className="border-t border-border pt-6 text-body-sm text-secondary">
+              <Banner tone="success">
                 You approved this on {date(strategy.approvedAt!)}. Version {strategy.version}. Want to change something? Message your manager.
-              </p>
+              </Banner>
             )
           )}
         </div>

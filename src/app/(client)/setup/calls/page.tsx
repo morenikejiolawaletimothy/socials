@@ -4,7 +4,7 @@ import { CalendarPlus, CheckCircle, VideoCamera } from "@phosphor-icons/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import { SetupFrame } from "@/components/client/SetupFrame";
-import { Avatar, Button, useTask, useToast } from "@/components/ui";
+import { Avatar, Banner, Button, useTask, useToast } from "@/components/ui";
 import { day, dayTime, fullName, time } from "@/lib/format";
 import { act, useData, useMyClient } from "@/lib/mock";
 
@@ -156,11 +156,11 @@ function BookCalls() {
 
       {step === 2 && (
         <div className="flex flex-col gap-6">
-          {goals && <p className="text-body-sm text-secondary">Goals call: {dayTime(goals)}. These times are at least {gap} days later.</p>}
+          {goals && <Banner tone="neutral">Goals call: {dayTime(goals)}. These times are at least {gap} days later.</Banner>}
           {strategyTimes.length ? (
             <TimePicker times={strategyTimes} value={strategy} onChange={(t) => { setStrategy(t); setError(undefined); }} />
           ) : (
-            <p className="text-body-sm text-secondary">No times are open yet. Your manager will open more soon, and we will remind you.</p>
+            <Banner tone="info">No times are open yet. Your manager will open more soon, and we will remind you.</Banner>
           )}
           {error && <p className="text-body-sm text-danger">{error}</p>}
           <div className="flex flex-col-reverse gap-3 sm:flex-row">
@@ -205,7 +205,7 @@ function BookCalls() {
               </li>
             ))}
           </ul>
-          <p className="text-body-sm text-secondary">We remind you by email the day before and 1 hour before each call.</p>
+          <Banner tone="info">We remind you by email the day before and 1 hour before each call.</Banner>
           <Button className="self-start" onClick={() => router.push("/home")}>
             Continue setup
           </Button>

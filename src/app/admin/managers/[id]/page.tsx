@@ -166,7 +166,7 @@ export default function ManagerPage({ params }: { params: Promise<{ id: string }
       {m.status !== "suspended" && (
         <Card title="Suspend">
           <div className="flex flex-col gap-3">
-            <p className="text-body-sm text-secondary">Access ends at once. Their clients are listed for reassignment, with suggestions and a handover summary for each new manager.</p>
+            <Banner tone="warning">Access ends at once. Their clients are listed for reassignment, with suggestions and a handover summary for each new manager.</Banner>
             <Button
               variant="ghost"
               className="self-start"
@@ -191,7 +191,7 @@ export default function ManagerPage({ params }: { params: Promise<{ id: string }
       {m.status === "suspended" && (
         <Card title="Suspended">
           <div className="flex flex-col gap-3">
-            <p className="text-body-sm text-secondary">{u?.firstName} cannot sign in. Reinstate to give their access back. They start with no clients.</p>
+            <Banner tone="neutral">{u?.firstName} cannot sign in. Reinstate to give their access back. They start with no clients.</Banner>
             <Button
               variant="secondary"
               className="self-start"

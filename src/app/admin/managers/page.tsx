@@ -60,7 +60,7 @@ export default function ManagersPage() {
                 return (
                   <li key={m.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-border py-3 first:pt-0 last:border-b-0 last:pb-0">
                     <span className="flex min-w-0 flex-col">
-                      <span className="text-body-sm font-medium text-primary">{managerName(db, m.id)}</span>
+                      <span className="text-body font-medium text-primary">{managerName(db, m.id)}</span>
                       <span className="truncate text-caption text-secondary">
                         {u?.email}
                         {m.inviteExpiresAt ? `, link works until ${dayIn(m.inviteExpiresAt)}` : ""}

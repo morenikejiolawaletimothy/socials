@@ -67,7 +67,7 @@ export default function ProgressPage() {
             </ul>
             {week.held.length > 0 && (
               <div className="flex flex-col gap-2 rounded-md bg-warning-bg p-4">
-                <span className="text-body-sm font-medium text-primary">Waiting on you</span>
+                <span className="text-body font-semibold text-primary">Waiting on you</span>
                 <ul className="flex flex-col gap-1 text-body-sm text-primary">
                   {week.held.map((h) => (
                     <li key={h}>{h}</li>

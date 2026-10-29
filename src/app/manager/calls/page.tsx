@@ -42,16 +42,18 @@ export default function CallsPage() {
                 <ul className="flex flex-col gap-3">
                   {list.map((c) => (
                     <li key={c.id} className="flex flex-col gap-3 rounded-md border border-border p-4 sm:flex-row sm:items-center">
-                      <Avatar name={clientName(c)} size="md" />
-                      <span className="flex flex-1 flex-col">
-                        <span className="text-body font-medium text-primary">
-                          {time(c.at)}, {clientName(c)}
+                      <div className="flex min-w-0 flex-1 items-start gap-3">
+                        <Avatar name={clientName(c)} size="md" />
+                        <span className="flex flex-1 flex-col">
+                          <span className="text-body font-medium text-primary">
+                            {time(c.at)}, {clientName(c)}
+                          </span>
+                          <span className="text-body-sm text-secondary">
+                            {kind[c.kind]}, 30 minutes. {c.recording ? "Recorded." : "Not recorded: take notes."}
+                          </span>
                         </span>
-                        <span className="text-body-sm text-secondary">
-                          {kind[c.kind]}, 30 minutes. {c.recording ? "Recorded." : "Not recorded: take notes."}
-                        </span>
-                      </span>
-                      <span className="flex flex-wrap gap-4">
+                      </div>
+                      <span className="flex flex-wrap gap-4 pl-13 sm:pl-0">
                         <Link href={`/manager/clients/${c.clientId}/onboard`} className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
                           Prep
                         </Link>
@@ -70,7 +72,8 @@ export default function CallsPage() {
                               success: `${clientName(c)} has been asked to pick a new time.`,
                             })
                           }
-                          className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
+                          className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring"
+                        >
                           Reschedule
                         </button>
                       </span>
@@ -115,13 +118,17 @@ export default function CallsPage() {
               </div>
             ))}
           </div>
-          <Button className="self-start" disabled={!slots.length || slots.join() === (manager?.slots ?? []).join()} loading={pending("slots")} onClick={() => manager && run("slots", () => act.setSlots(manager.id, slots), "Slots saved. Clients see the new times now.")}>
+          <Button
+            className="self-start"
+            disabled={!slots.length || slots.join() === (manager?.slots ?? []).join()}
+            loading={pending("slots")}
+            onClick={() => manager && run("slots", () => act.setSlots(manager.id, slots), "Slots saved. Clients see the new times now.")}
+          >
             {pending("slots") ? "Saving" : "Save slots"}
           </Button>
           {!slots.length && <p className="text-body-sm text-danger">Open at least one slot, so clients can book their calls.</p>}
         </div>
       </Card>
-
     </Columns>
   );
 }

@@ -81,14 +81,14 @@ export default function ContractPage() {
               Pay {money(contract.monthlyCents)}
             </Button>
           )}
-          <p className="text-body-sm text-secondary">You can pull out any time. We refund every paid month that has not started.</p>
+          <Banner tone="info">You can pull out any time. We refund every paid month that has not started.</Banner>
         </div>
       </Card>
 
       {manager && managerUser && (
         <Card title="Your account manager">
           <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-3">
+            <div className="flex items-start gap-3">
               <Avatar name={fullName(managerUser)} size="md" />
               <div className="flex flex-col">
                 <span className="text-body font-medium text-primary">{fullName(managerUser)}</span>
@@ -97,7 +97,7 @@ export default function ContractPage() {
             </div>
             {changeRequest ? (
               <div className="flex flex-col gap-2 rounded-md bg-info-bg p-4">
-                <span className="text-body-sm font-medium text-primary">You asked for a different manager</span>
+                <span className="text-body font-medium text-primary">You asked for a different manager</span>
                 <span className="text-body-sm text-secondary">&ldquo;{changeRequest.reason}&rdquo; The owner will get back to you within 1 working day.</span>
                 <button
                   type="button"
@@ -140,7 +140,7 @@ export default function ContractPage() {
                 return (
                   <li key={i.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border py-3 last:border-b-0">
                     <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="text-body-sm font-medium text-primary">{i.label}</span>
+                      <span className="text-body font-medium text-primary">{i.label}</span>
                       <span className="text-caption text-secondary">
                         {i.number}, {date(i.at)}
                       </span>

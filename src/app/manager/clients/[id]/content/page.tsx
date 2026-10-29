@@ -127,7 +127,7 @@ function DraftEditor({ post, b }: { post: Post; b: ClientBundle }) {
         }}
       >
         <label className="flex flex-1 flex-col gap-2">
-          <span className="flex items-center gap-1 text-body-sm font-medium text-primary">
+          <span className="flex items-center gap-1 text-body font-semibold text-primary">
             <Sparkle className="size-4 text-primary-600" aria-hidden /> Direct the draft
           </span>
           <input
@@ -154,7 +154,7 @@ function DraftEditor({ post, b }: { post: Post; b: ClientBundle }) {
             <ImageIcon className="mt-0.5 size-5 shrink-0 text-primary-600" aria-hidden />
           )}
           <div className="flex flex-1 flex-col gap-1">
-            <span className="text-body-sm font-medium text-primary">Visual</span>
+            <span className="text-body font-semibold text-primary">Visual</span>
             <span className="text-body-sm text-secondary">
               {post.image
                 ? `Attached: ${post.image.alt}.`
@@ -288,7 +288,7 @@ function ChangesEditor({ post, b }: { post: Post; b: ClientBundle }) {
         </blockquote>
       )}
       <div className="flex flex-col gap-2">
-        <span className="flex items-center gap-1 text-body-sm font-medium text-primary">
+        <span className="flex items-center gap-1 text-body font-semibold text-primary">
           <Sparkle className="size-4 text-primary-600" aria-hidden /> Changes to make
         </span>
         {items.map((i) => (
@@ -361,7 +361,7 @@ function Scheduler({ post, b }: { post: Post; b: ClientBundle }) {
   };
   return (
     <div className="flex flex-col gap-3 rounded-md bg-neutral-25 p-4">
-      <span className="flex items-center gap-2 text-body-sm font-medium text-primary">
+      <span className="flex items-center gap-2 text-body font-semibold text-primary">
         <Clock className="size-5 text-primary-600" aria-hidden /> Suggested: {dayTime(suggested)}
       </span>
       <span className="text-caption text-secondary">
@@ -627,7 +627,7 @@ function LiveActions({ post, b, onDraft }: { post: Post; b: ClientBundle; onDraf
   if (post.status === "taken-down")
     return (
       <div className="flex flex-col gap-3">
-        <p className="text-body-sm text-secondary">{post.takenDownBy === "team" ? "You took this post down." : `${first} took this post down.`} It is no longer on LinkedIn.</p>
+        <Banner tone="neutral">{post.takenDownBy === "team" ? "You took this post down." : `${first} took this post down.`} It is no longer on LinkedIn.</Banner>
         {req?.kind === "repost" && (
           <Banner tone="info" title={`${first} asked to post it again`}>
             {req.text}
@@ -672,9 +672,9 @@ function LiveActions({ post, b, onDraft }: { post: Post; b: ClientBundle; onDraf
           trigger={<span className="px-4 text-body-sm font-medium text-primary-700">More</span>}
           triggerClassName="flex min-h-11 items-center rounded-md hover:bg-primary-50 focus-visible:focus-ring"
           items={[
-            { label: "Replace the post (to change an image)", onSelect: replace },
+            { label: "Replace post (new image)", onSelect: replace },
             { label: "Take it down", onSelect: takeDown },
-            ...(req ? [{ label: "Close the request without changes", onSelect: () => setClosing(true) }] : []),
+            ...(req ? [{ label: "Close request without changes", onSelect: () => setClosing(true) }] : []),
           ]}
         />
       </div>
@@ -796,13 +796,13 @@ function ContentWorkspace({ id }: { id: string }) {
                 {tab !== "drafts" && tab !== "changes" && (
                   <PostPreview post={p} author={author} meta={p.publishedAt ? ago(p.publishedAt) : p.scheduledFor ? dayTime(p.scheduledFor) : p.dueAt ? `Due ${dayTimeIn(p.dueAt)}` : "Approved"}>
                     {tab === "client" && (
-                      <p className="text-body-sm text-secondary">
+                      <Banner tone={p.status === "on-hold" ? "warning" : "info"}>
                         {p.status === "on-hold"
                           ? `Held: ${p.heldReason} It shows in the weekly update as waiting on the client.`
                           : b.client!.review.ifNoReply === "wait"
                             ? "If there is no reply by the due time, it is held."
                             : "If there is no reply in 24 hours, it is approved and scheduled automatically."}
-                      </p>
+                      </Banner>
                     )}
                     {tab === "schedule" && <Scheduler post={p} b={b} />}
                     {tab === "scheduled" && <ScheduledActions post={p} b={b} />}

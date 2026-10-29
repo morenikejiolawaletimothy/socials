@@ -7,7 +7,7 @@ import { LivePostActions, UpcomingPostActions } from "@/components/client/LivePo
 import { PostPreview } from "@/components/content/PostPreview";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Badge, Card, EmptyState, Tabs } from "@/components/ui";
+import { Badge, Banner, Card, EmptyState, Tabs } from "@/components/ui";
 import { ago, dayTime, dayTimeIn, fullName } from "@/lib/format";
 import { useMyClient, type Post } from "@/lib/mock";
 import { postBadge } from "@/lib/status";
@@ -87,11 +87,11 @@ function ContentPage() {
                   {(p.status === "published" || p.status === "taken-down") && <LivePostActions post={p} />}
                   {(p.status === "scheduled" || p.status === "approved") && <UpcomingPostActions post={p} />}
                   {p.status === "on-hold" && p.heldReason?.startsWith("You stopped") && <UpcomingPostActions post={p} />}
-                  {p.heldReason && !p.heldReason.startsWith("You stopped") && <p className="text-body-sm text-secondary">Held: {p.heldReason}</p>}
+                  {p.heldReason && !p.heldReason.startsWith("You stopped") && <Banner tone="warning">Held: {p.heldReason}</Banner>}
                   {p.status === "changes-requested" && p.feedback?.length && (
-                    <p className="text-body-sm text-secondary">You asked: &ldquo;{p.feedback[p.feedback.length - 1].text}&rdquo; Your manager is working on it.</p>
+                    <Banner tone="info">You asked: &ldquo;{p.feedback[p.feedback.length - 1].text}&rdquo; Your manager is working on it.</Banner>
                   )}
-                  {p.status === "failed" && <p className="text-body-sm text-secondary">LinkedIn did not accept this post. Your manager is fixing it and will try again.</p>}
+                  {p.status === "failed" && <Banner tone="warning">LinkedIn did not accept this post. Your manager is fixing it and will try again.</Banner>}
                 </PostPreview>
               </div>
             );

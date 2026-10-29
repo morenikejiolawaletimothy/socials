@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Avatar, Button, Card, Segmented, Textarea, useTask } from "@/components/ui";
+import { Avatar, Button, Card, Segmented, Select, Textarea, useTask } from "@/components/ui";
 import { dayTimeIn, fullName, plural, time } from "@/lib/format";
 import { act, useMyManager, type Db, type ManagerTask } from "@/lib/mock";
 
@@ -23,16 +23,18 @@ function who(db: Db, clientId: string) {
 function TaskRow({ t, db, primary }: { t: ManagerTask; db: Db; primary?: boolean }) {
   const late = t.column !== "done" && t.group !== "waiting" && new Date(t.dueAt).getTime() < Date.now();
   return (
-    <li className="flex flex-col gap-3 border-b border-border py-4 first:pt-0 last:border-b-0 last:pb-0 sm:flex-row sm:items-center">
-      <Avatar name={who(db, t.clientId)} size="md" />
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className="text-body font-medium text-primary">{t.title}</span>
-        <span className="text-body-sm text-secondary">
-          {who(db, t.clientId)} · {t.detail}
-        </span>
-        <span className={`text-caption ${late ? "text-danger" : "text-secondary"}`}>{late ? `Was due ${dayTimeIn(t.dueAt)}` : `Due ${dayTimeIn(t.dueAt)}`}</span>
+    <li className="flex flex-col gap-3 border-b border-border py-4 first:pt-0 last:border-b-0 last:pb-0 sm:flex-row sm:items-start">
+      <div className="flex min-w-0 flex-1 items-start gap-3">
+        <Avatar name={who(db, t.clientId)} size="md" />
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="text-body font-medium text-primary">{t.title}</span>
+          <span className="text-body-sm text-secondary">
+            {who(db, t.clientId)} · {t.detail}
+          </span>
+          <span className={`text-caption ${late ? "text-danger" : "text-secondary"}`}>{late ? `Was due ${dayTimeIn(t.dueAt)}` : `Due ${dayTimeIn(t.dueAt)}`}</span>
+        </div>
       </div>
-      <Link href={t.href} className={linkButton(primary)}>
+      <Link href={t.href} className={`${linkButton(primary)} ml-13 self-start sm:ml-0 sm:self-center`}>
         {t.action}
       </Link>
     </li>
@@ -86,7 +88,12 @@ function Board({ tasks, db }: { tasks: ManagerTask[]; db: Db }) {
   return (
     <div className="flex flex-col gap-4">
       <div className="lg:hidden">
-        <Segmented label="Column" value={mobileCol} onChange={setMobileCol} options={columns.map((c) => ({ value: c.key, label: { todo: "To do", doing: "Doing", waiting: "Waiting", done: "Done" }[c.key] }))} />
+        <Segmented
+          label="Column"
+          value={mobileCol}
+          onChange={setMobileCol}
+          options={columns.map((c) => ({ value: c.key, label: { todo: "To do", doing: "Doing", waiting: "Waiting", done: "Done" }[c.key] }))}
+        />
       </div>
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
         {columns.map((col) => {
@@ -124,7 +131,7 @@ function Board({ tasks, db }: { tasks: ManagerTask[]; db: Db }) {
                   draggable={droppable}
                   onDragStart={() => setDragging(t.id)}
                   onDragEnd={() => setDragging(null)}
-                  className={`flex flex-col gap-1 rounded-md border border-border bg-card p-3 shadow-sm transition-shadow hover:shadow-md focus-visible:focus-ring ${droppable ? "cursor-grab active:cursor-grabbing" : ""} ${t.group === "urgent" ? "border-l-4 border-l-danger" : ""}`}
+                  className={`flex flex-col gap-1 rounded-md border border-border bg-card p-3 transition-colors hover:border-primary-300 focus-visible:focus-ring ${droppable ? "cursor-grab active:cursor-grabbing" : ""} ${t.group === "urgent" ? "border-l-4 border-l-danger" : ""}`}
                 >
                   <span className="text-body-sm font-medium text-primary">{t.title}</span>
                   <span className="text-caption text-secondary">{who(db, t.clientId)}</span>
@@ -146,9 +153,7 @@ export default function ManagerHome() {
   const [view, setView] = useState<"feed" | "board">("feed");
   const [clientFilter, setClientFilter] = useState("all");
   const [showWaiting, setShowWaiting] = useState(false);
-  const all = db.managerTasks
-    .filter((t) => t.managerId === manager?.id && (clientFilter === "all" || t.clientId === clientFilter))
-    .sort((a, b) => a.dueAt.localeCompare(b.dueAt));
+  const all = db.managerTasks.filter((t) => t.managerId === manager?.id && (clientFilter === "all" || t.clientId === clientFilter)).sort((a, b) => a.dueAt.localeCompare(b.dueAt));
   const urgent = all.filter((t) => t.group === "urgent" && t.column !== "done");
   const work = all.filter((t) => t.group === "work" && t.column !== "done");
   const waiting = all.filter((t) => t.group === "waiting");
@@ -169,14 +174,14 @@ export default function ManagerHome() {
           />
           <label className="flex items-center gap-2 text-body-sm text-secondary">
             Client
-            <select value={clientFilter} onChange={(e) => setClientFilter(e.target.value)} className="min-h-10 rounded-sm border border-border-strong bg-card px-3 text-body-sm text-primary focus-visible:focus-ring">
+            <Select size="sm" value={clientFilter} onChange={(e) => setClientFilter(e.target.value)}>
               <option value="all">All clients</option>
               {clients.map((c) => (
                 <option key={c.id} value={c.id}>
                   {who(db, c.id)}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
         </div>
       </Card>
@@ -211,16 +216,18 @@ export default function ManagerHome() {
               <ul className="flex flex-col">
                 {calls.map((c) => (
                   <li key={c.id} className="flex flex-col gap-3 border-b border-border py-4 first:pt-0 last:border-b-0 last:pb-0 sm:flex-row sm:items-center">
-                    <Avatar name={who(db, c.clientId)} size="md" />
-                    <div className="flex flex-1 flex-col gap-1">
-                      <span className="text-body font-medium text-primary">
-                        {who(db, c.clientId)}, {c.kind === "goals" ? "goals call" : c.kind === "strategy" ? "strategy call" : "check-in"}
-                      </span>
-                      <span className="text-body-sm text-secondary">
-                        {time(c.at)}, 30 minutes. {c.recording ? "Recorded with consent." : "Not recorded: take notes."}
-                      </span>
+                    <div className="flex min-w-0 flex-1 items-start gap-3">
+                      <Avatar name={who(db, c.clientId)} size="md" />
+                      <div className="flex flex-1 flex-col gap-1">
+                        <span className="text-body font-medium text-primary">
+                          {who(db, c.clientId)}, {c.kind === "goals" ? "goals call" : c.kind === "strategy" ? "strategy call" : "check-in"}
+                        </span>
+                        <span className="text-body-sm text-secondary">
+                          {time(c.at)}, 30 minutes. {c.recording ? "Recorded with consent." : "Not recorded: take notes."}
+                        </span>
+                      </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 pl-13 sm:pl-0">
                       <Link href={`/manager/clients/${c.clientId}/onboard`} className={linkButton()}>
                         Prep
                       </Link>

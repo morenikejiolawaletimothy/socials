@@ -3,9 +3,9 @@
 import { Sparkle } from "@phosphor-icons/react";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { ClientCell, Table, managerName, selectClass, td } from "@/components/admin/parts";
+import { ClientCell, Table, managerName, td } from "@/components/admin/parts";
 import { AssignDialog, suggest } from "@/components/admin/AssignDialog";
-import { Badge, Button, Card, PageHeader, ProgressBar } from "@/components/ui";
+import { Badge, Button, Card, PageHeader, ProgressBar, Select } from "@/components/ui";
 import { daysFrom, plural } from "@/lib/format";
 import { useData, type Client } from "@/lib/mock";
 import { statusBadge } from "@/lib/status";
@@ -48,7 +48,7 @@ function ClientsPage() {
         title="All clients"
         action={
           <span className="flex flex-wrap gap-2">
-            <select aria-label="Status" value={status} onChange={(e) => setStatus(e.target.value)} className={selectClass}>
+            <Select size="sm" aria-label="Status" value={status} onChange={(e) => setStatus(e.target.value)}>
               <option value="all">All statuses</option>
               <option value="setting-up">Setting up</option>
               <option value="free">Free 2 weeks</option>
@@ -56,8 +56,8 @@ function ClientsPage() {
               <option value="paused">Paused</option>
               <option value="at-risk">At risk</option>
               <option value="unassigned">No manager</option>
-            </select>
-            <select aria-label="Manager" value={manager} onChange={(e) => setManager(e.target.value)} className={selectClass}>
+            </Select>
+            <Select size="sm" aria-label="Manager" value={manager} onChange={(e) => setManager(e.target.value)}>
               <option value="all">All managers</option>
               {db.managers
                 .filter((m) => m.status === "active")
@@ -66,7 +66,7 @@ function ClientsPage() {
                     {managerName(db, m.id)}
                   </option>
                 ))}
-            </select>
+            </Select>
           </span>
         }
       >

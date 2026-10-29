@@ -22,3 +22,4 @@ export { ToastProvider, useConfirm, useTask, useToast, type ConfirmOptions } fro
 export { ProgressBar } from "./ProgressBar";
 export { Tabs } from "./Tabs";
 export { Textarea } from "./Textarea";
+export { Select, type SelectProps } from "./Select";

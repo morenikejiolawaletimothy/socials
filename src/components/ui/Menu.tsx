@@ -1,11 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 export type MenuItem = { label: string; href?: string; onSelect?: () => void };
 
-/** Small dropdown menu. Closes on outside click, Escape or selection. */
+const GAP = 8;
+const EDGE = 16;
+
+/**
+ * Small dropdown menu. It opens in a layer above the page, so a card can never clip it, and it opens
+ * upwards when there is not enough room below (bottom of the screen, above the phone's bottom bar).
+ * Closes on outside click, Escape, scroll or selection.
+ */
 export function Menu({
   trigger,
   label,
@@ -23,63 +31,96 @@ export function Menu({
   align?: "start" | "end";
 }) {
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number; up: boolean } | null>(null);
+  const button = useRef<HTMLButtonElement>(null);
+  const menu = useRef<HTMLDivElement>(null);
+
+  const place = useCallback(() => {
+    const b = button.current?.getBoundingClientRect();
+    const m = menu.current;
+    if (!b || !m) return;
+    const h = m.offsetHeight;
+    const w = m.offsetWidth;
+    // The phone's floating bottom bar covers the last part of the screen.
+    const bottomBar = document.querySelector<HTMLElement>("[data-bottom-bar]")?.getBoundingClientRect();
+    const floor = bottomBar && bottomBar.height > 0 ? bottomBar.top : window.innerHeight;
+    const below = floor - b.bottom - GAP;
+    const above = b.top - GAP;
+    const up = below < h + EDGE && above > below;
+    const left = Math.min(Math.max(EDGE, align === "end" ? b.right - w : b.left), window.innerWidth - w - EDGE);
+    setPos({ top: up ? b.top - GAP - h : b.bottom + GAP, left, up });
+  }, [align]);
+
+  useLayoutEffect(() => {
+    if (open) place();
+    else setPos(null);
+  }, [open, place]);
 
   useEffect(() => {
     if (!open) return;
-    const onDown = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false);
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (!button.current?.contains(t) && !menu.current?.contains(t)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setOpen(false);
+        button.current?.focus();
+      }
+    };
+    const close = () => setOpen(false);
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
     return () => {
       document.removeEventListener("mousedown", onDown);
       document.removeEventListener("keydown", onKey);
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
     };
   }, [open]);
 
-  const itemClass =
-    "block w-full rounded-sm px-3 py-2 text-left text-body-sm text-primary hover:bg-primary-50 focus-visible:focus-ring";
+  const itemClass = "flex min-h-10 w-full items-center rounded-sm px-3 text-left text-body-sm text-primary hover:bg-primary-50 focus-visible:focus-ring";
 
   return (
-    <div ref={ref} className="relative">
-      <button
-        type="button"
-        aria-label={label}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        onClick={() => setOpen((o) => !o)}
-        className={triggerClassName}
-      >
+    <>
+      <button ref={button} type="button" aria-label={label} aria-expanded={open} aria-haspopup="menu" onClick={() => setOpen((o) => !o)} className={triggerClassName}>
         {trigger}
       </button>
-      {open && (
-        <div
-          role="menu"
-          className={`absolute ${align === "end" ? "right-0" : "left-0"} z-40 mt-2 w-60 rounded-md border border-border bg-card p-2 shadow-lg`}
-        >
-          {header && <div className="border-b border-border px-3 pb-3 pt-1 mb-2">{header}</div>}
-          {items.map((item) =>
-            item.href ? (
-              <Link key={item.label} href={item.href} role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
-                {item.label}
-              </Link>
-            ) : (
-              <button
-                key={item.label}
-                type="button"
-                role="menuitem"
-                className={itemClass}
-                onClick={() => {
-                  setOpen(false);
-                  item.onSelect?.();
-                }}
-              >
-                {item.label}
-              </button>
-            ),
-          )}
-        </div>
-      )}
-    </div>
+      {open &&
+        createPortal(
+          <div
+            ref={menu}
+            role="menu"
+            aria-label={label}
+            style={{ top: pos?.top ?? 0, left: pos?.left ?? 0 }}
+            className={`fixed z-50 w-64 rounded-md border border-border bg-card p-2 shadow-lg ${pos ? "visible" : "invisible"}`}
+          >
+            {header && <div className="mb-2 border-b border-border px-3 pb-3 pt-1">{header}</div>}
+            {items.map((item) =>
+              item.href ? (
+                <Link key={item.label} href={item.href} role="menuitem" className={itemClass} onClick={() => setOpen(false)}>
+                  {item.label}
+                </Link>
+              ) : (
+                <button
+                  key={item.label}
+                  type="button"
+                  role="menuitem"
+                  className={itemClass}
+                  onClick={() => {
+                    setOpen(false);
+                    item.onSelect?.();
+                  }}
+                >
+                  {item.label}
+                </button>
+              ),
+            )}
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }
