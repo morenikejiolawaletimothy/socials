@@ -4,8 +4,21 @@ import { ChatCircle, GlobeHemisphereWest, Repeat, ThumbsUp } from "@phosphor-ico
 import Image from "next/image";
 import { useState } from "react";
 import { Avatar } from "@/components/ui";
-import { num } from "@/lib/format";
+import { date, dayIn, num } from "@/lib/format";
 import type { Post } from "@/lib/mock";
+
+/** On a repost: the original under a reshare's new comment, or a note that the words were posted before. */
+export function RepostNote({ post }: { post: Post }) {
+  const r = post.repostOf;
+  if (!r) return null;
+  if (!r.reshare) return <p className="text-caption text-secondary">Posting again{r.publishedAt ? `: first posted ${dayIn(r.publishedAt)}` : ""}.</p>;
+  return (
+    <div className="flex flex-col gap-1 rounded-md border border-border p-3">
+      <span className="text-caption text-secondary">{r.publishedAt ? `Original post, ${date(r.publishedAt)}` : "Original post"}</span>
+      <p className="line-clamp-3 whitespace-pre-line text-body-sm text-primary">{r.text}</p>
+    </div>
+  );
+}
 
 /** A post shown the way it will look on LinkedIn: author, text with "more", image, and numbers once live. */
 export function PostPreview({
@@ -35,6 +48,7 @@ export function PostPreview({
           <span className="truncate text-caption text-secondary">{author.title}</span>
           <span className="flex items-center gap-1 text-caption text-secondary">
             {meta}
+            {post.editedAt && <span>, edited</span>}
             <GlobeHemisphereWest className="size-3" aria-label="Public" />
           </span>
         </div>
@@ -48,6 +62,8 @@ export function PostPreview({
           </button>
         )}
       </div>
+
+      <RepostNote post={post} />
 
       {post.image && (
         <div className="relative aspect-video w-full overflow-hidden rounded-md bg-neutral-100">

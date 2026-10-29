@@ -41,7 +41,8 @@ export type ConfirmOptions = {
   /** Runs while the dialog shows a spinner. Throw to keep the dialog open (the error is shown). */
   action?: () => Promise<unknown> | unknown;
   /** Toast shown after the action succeeds. */
-  success?: string;
+  /** Toast shown once the action is done, optionally with an action such as Undo or Open. */
+  success?: string | (ToastOptions & { text: string });
 };
 type Confirm = (options: ConfirmOptions) => Promise<boolean>;
 const ConfirmContext = createContext<Confirm>(async () => false);
@@ -114,7 +115,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                     setError(undefined);
                     try {
                       await ask.action();
-                      if (ask.success) show(ask.success);
+                      if (typeof ask.success === "string") show(ask.success);
+                      else if (ask.success) show(ask.success.text, "success", ask.success);
                       close(true);
                     } catch {
                       setBusy(false);

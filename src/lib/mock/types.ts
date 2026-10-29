@@ -125,7 +125,13 @@ export type Post = {
   feedback?: { text: string; at: string; voice?: boolean }[];
   /** Routine work the manager did without asking, shown for information. */
   noAsk?: boolean;
-  fixRequested?: string;
+  /** The client's open request on a live or taken-down post: fix it, or post it again. */
+  request?: { kind: "fix" | "repost"; text: string; at: string; repostAs?: "reshare" | "new" };
+  /** When the text of a live post was last edited on LinkedIn. Only the text can change once a post is live. */
+  editedAt?: string;
+  /** On a repost: the post it repeats. A reshare shows the original under a new comment; a new post copies it. */
+  repostOf?: { id: string; text: string; publishedAt?: string; reshare: boolean };
+  takenDownBy?: "client" | "team";
   heldReason?: string;
   failedReason?: string;
   /** Staff-only: checks run on the draft (M4). */

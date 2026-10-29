@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
-import { LivePostActions } from "@/components/client/LivePostActions";
+import { LivePostActions, UpcomingPostActions } from "@/components/client/LivePostActions";
 import { PostPreview } from "@/components/content/PostPreview";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
@@ -84,13 +84,14 @@ function ContentPage() {
                   <span className="text-caption text-secondary">{p.topic}</span>
                 </div>
                 <PostPreview post={p} author={author} meta={meta}>
-                  {p.status === "published" && <LivePostActions post={p} />}
-                  {p.heldReason && <p className="text-body-sm text-secondary">Held: {p.heldReason}</p>}
+                  {(p.status === "published" || p.status === "taken-down") && <LivePostActions post={p} />}
+                  {(p.status === "scheduled" || p.status === "approved") && <UpcomingPostActions post={p} />}
+                  {p.status === "on-hold" && p.heldReason?.startsWith("You stopped") && <UpcomingPostActions post={p} />}
+                  {p.heldReason && !p.heldReason.startsWith("You stopped") && <p className="text-body-sm text-secondary">Held: {p.heldReason}</p>}
                   {p.status === "changes-requested" && p.feedback?.length && (
                     <p className="text-body-sm text-secondary">You asked: &ldquo;{p.feedback[p.feedback.length - 1].text}&rdquo; Your manager is working on it.</p>
                   )}
                   {p.status === "failed" && <p className="text-body-sm text-secondary">LinkedIn did not accept this post. Your manager is fixing it and will try again.</p>}
-                  {p.status === "taken-down" && <p className="text-body-sm text-secondary">You took this post down.</p>}
                 </PostPreview>
               </div>
             );

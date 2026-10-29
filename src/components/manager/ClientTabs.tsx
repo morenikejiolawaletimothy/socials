@@ -167,7 +167,7 @@ export function ContentTab({ b, id }: { b: ClientBundle; id: string }) {
     ["Scheduled", b.posts.filter((p) => p.status === "scheduled").length],
     ["Held", b.posts.filter((p) => p.status === "on-hold").length],
     ["Live", b.posts.filter((p) => p.status === "published").length],
-    ["Needs fixing", b.posts.filter((p) => p.status === "failed" || p.fixRequested).length],
+    ["Needs fixing", b.posts.filter((p) => p.status === "failed" || p.request?.kind === "fix").length],
   ];
   return (
     <Card title="Content">

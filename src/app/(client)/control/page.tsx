@@ -24,14 +24,39 @@ export default function ControlPage() {
   if (!client) return null;
 
   const pending = requests.filter((r) => r.status === "pending");
+  const approved = requests.filter((r) => r.status === "approved");
   const sum = reviewSummary(client.review);
   const shown = activity.filter((a) => filter === "all" || a.kind === filter);
 
   return (
     <Columns {...rails.clientSettings}>
-      {pending.length > 0 && (
+      {(pending.length > 0 || approved.length > 0) && (
         <Card title="Requests from your manager">
           <ul className="flex flex-col gap-4">
+            {approved.map((r) => (
+              <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 rounded-md bg-neutral-25 p-3">
+                <span className="flex min-w-0 flex-col gap-1">
+                  <span className="text-body-sm font-medium text-primary">{r.text}</span>
+                  <span className="text-caption text-success">You approved this, once</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    confirm({
+                      title: "Withdraw your approval?",
+                      body: "Your manager is told at once not to go ahead.",
+                      warning: "If they have already done it, it stays done. Ask them in Messages to undo it.",
+                      confirmLabel: "Withdraw approval",
+                      action: () => act.withdrawApproval(r.id),
+                      success: "Approval withdrawn. Your manager will not go ahead.",
+                    })
+                  }
+                  className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring"
+                >
+                  Withdraw
+                </button>
+              </li>
+            ))}
             {pending.map((r) => (
               <li key={r.id} className="flex flex-col gap-3">
                 <div className="flex flex-col gap-1">

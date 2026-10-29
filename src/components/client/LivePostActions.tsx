@@ -1,38 +1,140 @@
 "use client";
 
 import { useState } from "react";
+import { PostAgainDialog } from "@/components/content/PostAgainDialog";
 import { VoiceRecorder } from "@/components/content/VoiceRecorder";
 import { Banner, Button, Dialog, Textarea, useConfirm, useTask } from "@/components/ui";
 import { act, type Post } from "@/lib/mock";
 
-/** C8: on any live post, take it down now or ask for a fix. */
+const requestTitle = {
+  fix: "Fix asked for",
+  reshare: "You asked to share it again",
+  new: "You asked to post it again",
+};
+
+/** Ask for something in writing or by voice: a fix to a live post, or a change to a scheduled one. */
+function AskDialog({
+  open,
+  onClose,
+  title,
+  intro,
+  label,
+  placeholder,
+  sample,
+  busy,
+  onSend,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  intro: string;
+  label: string;
+  placeholder: string;
+  sample: string;
+  busy: boolean;
+  onSend: (note: string) => void;
+}) {
+  const [note, setNote] = useState("");
+  const [error, setError] = useState<string>();
+  return (
+    <Dialog open={open} onClose={onClose} title={title}>
+      <p className="text-body-sm text-secondary">{intro}</p>
+      <Textarea
+        label={label}
+        placeholder={placeholder}
+        value={note}
+        onChange={(e) => {
+          setNote(e.target.value);
+          setError(undefined);
+        }}
+        error={error}
+      />
+      <VoiceRecorder sample={sample} onChange={setNote} />
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <Button variant="ghost" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button loading={busy} onClick={() => (note.trim() ? onSend(note.trim()) : setError("Write what you would like, or record a voice note."))}>
+          {busy ? "Sending" : "Send"}
+        </Button>
+      </div>
+    </Dialog>
+  );
+}
+
+/** C8: on a live post, ask for a fix, ask to post it again, or take it down now. A taken-down post can be posted again as new. */
 export function LivePostActions({ post }: { post: Post }) {
   const confirm = useConfirm();
   const { run, pending } = useTask();
   const [fixing, setFixing] = useState(false);
-  const [note, setNote] = useState("");
-  const [error, setError] = useState<string>();
+  const [again, setAgain] = useState(false);
+  const req = post.request;
+  const down = post.status === "taken-down";
 
-  if (post.status === "taken-down") return <p className="text-body-sm text-secondary">You took this post down. It is no longer on LinkedIn.</p>;
+  const againDialog = again && (
+    <PostAgainDialog
+      open
+      onClose={() => setAgain(false)}
+      title="Post it again"
+      intro="Your manager prepares it and you review it before it goes out."
+      onlyNew={down}
+      noteLabel={(c) => (c === "reshare" ? "What should the new comment say? (optional)" : "Anything to change, or a good day for it? (optional)")}
+      notePlaceholder="For example: add a line about the new office, and post it next week."
+      busy={pending("again")}
+      submitLabel="Send to your manager"
+      onSubmit={async (choice, note) => {
+        if (await run("again", () => act.askForRepost(post.id, choice, note || (choice === "reshare" ? "Share it again." : "Post it again.")), "Sent. Your manager will prepare it for your review.")) setAgain(false);
+      }}
+    />
+  );
+
+  const banner = req && (
+    <Banner
+      tone="info"
+      title={req.kind === "fix" ? requestTitle.fix : requestTitle[req.repostAs ?? "reshare"]}
+      action={
+        <Button
+          variant="ghost"
+          onClick={() =>
+            confirm({
+              title: "Withdraw your request?",
+              body: "Your manager is told and will not act on it. You can ask again at any time.",
+              confirmLabel: "Withdraw",
+              action: () => act.cancelPostRequest(post.id),
+              success: "Request withdrawn.",
+            })
+          }
+        >
+          Withdraw
+        </Button>
+      }
+    >
+      {req.text} {req.kind === "fix" ? "Your manager will fix it today and tell you when it is done." : "Your manager will prepare it for your review."}
+    </Banner>
+  );
+
+  if (down)
+    return (
+      <div className="flex flex-col gap-3">
+        <p className="text-body-sm text-secondary">{post.takenDownBy === "team" ? "Your manager took this post down." : "You took this post down."} It is no longer on LinkedIn.</p>
+        {banner || (
+          <Button variant="secondary" className="self-start" onClick={() => setAgain(true)}>
+            Post it again
+          </Button>
+        )}
+        {againDialog}
+      </div>
+    );
 
   return (
     <>
-      {post.fixRequested ? (
-        <Banner
-          tone="info"
-          title="Fix asked for"
-          action={
-            <Button variant="ghost" loading={pending("cancel")} onClick={() => run("cancel", () => act.cancelFix(post.id), "Fix request withdrawn.")}>
-              Withdraw
-            </Button>
-          }
-        >
-          {post.fixRequested} Your manager will fix it today and tell you when it is done.
-        </Banner>
-      ) : (
+      {banner || (
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={() => setFixing(true)}>
             Ask for a fix
+          </Button>
+          <Button variant="ghost" onClick={() => setAgain(true)}>
+            Post it again
           </Button>
           <Button
             variant="ghost"
@@ -40,7 +142,7 @@ export function LivePostActions({ post }: { post: Post }) {
               confirm({
                 title: "Take this post down?",
                 body: "It comes off LinkedIn straight away, with its reactions and comments. Your manager is told.",
-                warning: "You cannot undo this. The post cannot be put back with its reactions.",
+                warning: "You cannot undo this. The post cannot be put back with its reactions, only posted again as a new post.",
                 confirmLabel: "Take it down",
                 cancelLabel: "Keep it",
                 tone: "danger",
@@ -54,37 +156,80 @@ export function LivePostActions({ post }: { post: Post }) {
         </div>
       )}
 
-      <Dialog open={fixing} onClose={() => setFixing(false)} title="What needs fixing?">
-        <p className="text-body-sm text-secondary">Your manager is told at once and fixes it today. The post stays up until then.</p>
-        <Textarea
+      {fixing && (
+        <AskDialog
+          open
+          onClose={() => setFixing(false)}
+          title="What needs fixing?"
+          intro="Your manager is told at once and fixes it today. Text fixes keep the post's reactions. The post stays up until then."
           label="Tell us what to fix"
           placeholder="For example: the clinic name in paragraph 2 is wrong."
-          value={note}
-          onChange={(e) => {
-            setNote(e.target.value);
-            setError(undefined);
+          sample="Please change the number in the second line. It should be 4 hours, not 4 days."
+          busy={pending("fix")}
+          onSend={async (note) => {
+            if (await run("fix", () => act.askForFix(post.id, note), "Sent. Your manager will fix it today.")) setFixing(false);
           }}
-          error={error}
         />
-        <VoiceRecorder sample="Please change the number in the second line. It should be 4 hours, not 4 days." onChange={setNote} />
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => setFixing(false)}>
-            Cancel
-          </Button>
-          <Button
-            loading={pending("fix")}
-            onClick={async () => {
-              if (!note.trim()) return setError("Write what needs fixing, or record a voice note.");
-              if (await run("fix", () => act.askForFix(post.id, note.trim()), "Sent. Your manager will fix it today.")) {
-                setFixing(false);
-                setNote("");
-              }
-            }}
-          >
-            {pending("fix") ? "Sending" : "Send"}
-          </Button>
-        </div>
-      </Dialog>
+      )}
+      {againDialog}
+    </>
+  );
+}
+
+/** C7 Upcoming: change your mind before a post goes out. Ask for a change, or stop it (and put it back). */
+export function UpcomingPostActions({ post }: { post: Post }) {
+  const confirm = useConfirm();
+  const { run, pending } = useTask();
+  const [changing, setChanging] = useState(false);
+
+  if (post.status === "on-hold")
+    return (
+      <div className="flex flex-col gap-3">
+        <p className="text-body-sm text-secondary">{post.heldReason}</p>
+        <Button variant="secondary" className="self-start" loading={pending("resume")} onClick={() => run("resume", () => act.resumePost(post.id), "Back on the schedule. Your manager is told.")}>
+          Post it after all
+        </Button>
+      </div>
+    );
+
+  return (
+    <>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="secondary" onClick={() => setChanging(true)}>
+          Ask for a change
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() =>
+            confirm({
+              title: "Stop this post?",
+              body: "It will not go out. Your manager is told and holds it until you decide.",
+              warning: "You can put it back on the schedule later from Other.",
+              confirmLabel: "Stop it",
+              cancelLabel: "Keep it scheduled",
+              action: () => act.stopPost(post.id),
+              success: { text: "Stopped. It will not go out.", action: { label: "Undo", onClick: () => run("resume", () => act.resumePost(post.id), "Back on the schedule.") } },
+            })
+          }
+        >
+          Don&apos;t post it
+        </Button>
+      </div>
+      {changing && (
+        <AskDialog
+          open
+          onClose={() => setChanging(false)}
+          title="What would you like changed?"
+          intro="It comes off the schedule while your manager makes the change, then comes back to you to approve."
+          label="Tell us what to change"
+          placeholder="For example: mention the Accra team too."
+          sample="Can we mention the Accra team in the last line as well?"
+          busy={pending("change")}
+          onSend={async (note) => {
+            if (await run("change", () => act.askForChanges(post.id, note), "Sent. It is off the schedule until you approve the new version.")) setChanging(false);
+          }}
+        />
+      )}
     </>
   );
 }

@@ -233,7 +233,12 @@ These rules apply to every flow below.
 - **Actions:**
   - **Take it down now:** removed from LinkedIn straight away, after one confirmation.
   - **Ask for a fix:** a short note or voice note to the manager. Urgent by default.
-- **States:** taken down (logged in activity), fix requested, fix done.
+  - **Post it again:** share it again with a new comment (the original stays up with its reactions) or post it again as a new post. Also on taken-down posts, as new only. The manager prepares a draft, which the client reviews as usual.
+  - **Withdraw** any open request.
+- **Before a post goes out (Upcoming):** ask for a change (it comes off the schedule and comes back for approval), or don't post it (held; put it back with Undo or "Post it after all").
+- **Manager side (Live tab):** edit the text in place (LinkedIn keeps reactions and marks the post edited; only text can change once live), post it again, replace the post when an image must change (takes the original down and puts a copy in Drafts; reactions are lost), take it down, or close the request with a note. On Scheduled: edit (goes back to the client for approval, or a small fix keeps the time and tells the client).
+- **What LinkedIn allows:** edit a live post's text; delete a post; reshare a post with new commentary. Images and video cannot be changed on a live post, and a deleted post cannot be restored.
+- **States:** taken down (by client or team, logged in activity), fix requested, repost requested, edited, fix done.
 
 ### C9. Progress and weekly updates
 

@@ -4,12 +4,13 @@ import { CheckCircle, Clock, Image as ImageIcon, Sparkle, Trash, WarningCircle }
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, use, useState } from "react";
-import { PostPreview } from "@/components/content/PostPreview";
+import { PostAgainDialog } from "@/components/content/PostAgainDialog";
+import { PostPreview, RepostNote } from "@/components/content/PostPreview";
 import { Columns } from "@/components/layout/Columns";
 import { OffLimitsBox } from "@/components/manager/ClientTabs";
 import { rails } from "@/components/rails";
-import { Badge, Banner, Breadcrumbs, Button, Dialog, EmptyState, Card, Input, Tabs, Textarea, useConfirm, useTask, useToast } from "@/components/ui";
-import { ago, dayTime, dayTimeIn, fullName, time } from "@/lib/format";
+import { Badge, Banner, Breadcrumbs, Button, Dialog, EmptyState, Card, Input, Menu, Tabs, Textarea, useConfirm, useTask, useToast } from "@/components/ui";
+import { ago, agoIn, dayTime, dayTimeIn, fullName, time } from "@/lib/format";
 import { act, clientBundle, useMyManager, type ClientBundle, type Post } from "@/lib/mock";
 
 type Tab = "ideas" | "drafts" | "changes" | "client" | "schedule" | "scheduled" | "live";
@@ -42,7 +43,11 @@ function VisualPicker({ b, open, onClose, onPick }: { b: ClientBundle; open: boo
       <ul className="grid grid-cols-3 gap-2">
         {photos.map((f) => (
           <li key={f.id}>
-            <button type="button" onClick={() => onPick(f.src!, f.name.replace(/[-_]/g, " ").replace(/\.\w+$/, ""))} className="relative block aspect-square w-full overflow-hidden rounded-md focus-visible:focus-ring">
+            <button
+              type="button"
+              onClick={() => onPick(f.src!, f.name.replace(/[-_]/g, " ").replace(/\.\w+$/, ""))}
+              className="relative block aspect-square w-full overflow-hidden rounded-md focus-visible:focus-ring"
+            >
               <Image src={f.src!} alt={f.name} fill sizes="120px" className="object-cover transition-transform hover:scale-105" />
             </button>
           </li>
@@ -99,7 +104,14 @@ function DraftEditor({ post, b }: { post: Post; b: ClientBundle }) {
         </span>
       </div>
 
-      <Textarea label="Draft" rows={7} value={text} onChange={(e) => setText(e.target.value)} help={`${text.length} characters. LinkedIn shows about 210 before "See more".`} />
+      <Textarea
+        label={post.repostOf?.reshare ? "New comment" : "Draft"}
+        rows={7}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        help={`${text.length} characters. LinkedIn shows about 210 before "See more".`}
+      />
+      <RepostNote post={post} />
 
       <form
         className="flex flex-col gap-2 sm:flex-row sm:items-end"
@@ -130,43 +142,49 @@ function DraftEditor({ post, b }: { post: Post; b: ClientBundle }) {
         </Button>
       </form>
 
-      <div className="flex items-start gap-3 rounded-md bg-neutral-25 p-4">
-        {post.image ? (
-          <span className="relative size-16 shrink-0 overflow-hidden rounded-sm">
-            <Image src={post.image.src} alt={post.image.alt} fill sizes="64px" className="object-cover" />
-          </span>
-        ) : (
-          <ImageIcon className="mt-0.5 size-5 shrink-0 text-primary-600" aria-hidden />
-        )}
-        <div className="flex flex-1 flex-col gap-1">
-          <span className="text-body-sm font-medium text-primary">Visual</span>
-          <span className="text-body-sm text-secondary">
-            {post.image ? `Attached: ${post.image.alt}.` : "Suggested: the stage photo from the client's Brand, or text on a brand-coloured card. A quote card from the template library would also work."}
-          </span>
-          <span className="flex gap-4">
-            <button type="button" onClick={() => setPicking(true)} className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
-              {post.image ? "Change visual" : "Add a visual"}
-            </button>
-            {post.image && (
-              <button
-                type="button"
-                onClick={() =>
-                  confirm({
-                    title: "Remove the visual?",
-                    body: "The post goes out as text only, unless you add another.",
-                    confirmLabel: "Remove",
-                    action: () => act.setPostStatus(post.id, post.status, { image: undefined }),
-                    success: "Visual removed.",
-                  })
-                }
-                className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring"
-              >
-                Remove
+      {post.repostOf?.reshare ? (
+        <p className="text-caption text-secondary">A reshare carries the original post, so it takes no visual of its own.</p>
+      ) : (
+        <div className="flex items-start gap-3 rounded-md bg-neutral-25 p-4">
+          {post.image ? (
+            <span className="relative size-16 shrink-0 overflow-hidden rounded-sm">
+              <Image src={post.image.src} alt={post.image.alt} fill sizes="64px" className="object-cover" />
+            </span>
+          ) : (
+            <ImageIcon className="mt-0.5 size-5 shrink-0 text-primary-600" aria-hidden />
+          )}
+          <div className="flex flex-1 flex-col gap-1">
+            <span className="text-body-sm font-medium text-primary">Visual</span>
+            <span className="text-body-sm text-secondary">
+              {post.image
+                ? `Attached: ${post.image.alt}.`
+                : "Suggested: the stage photo from the client's Brand, or text on a brand-coloured card. A quote card from the template library would also work."}
+            </span>
+            <span className="flex gap-4">
+              <button type="button" onClick={() => setPicking(true)} className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
+                {post.image ? "Change visual" : "Add a visual"}
               </button>
-            )}
-          </span>
+              {post.image && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    confirm({
+                      title: "Remove the visual?",
+                      body: "The post goes out as text only, unless you add another.",
+                      confirmLabel: "Remove",
+                      action: () => act.setPostStatus(post.id, post.status, { image: undefined }),
+                      success: "Visual removed.",
+                    })
+                  }
+                  className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring"
+                >
+                  Remove
+                </button>
+              )}
+            </span>
+          </div>
         </div>
-      </div>
+      )}
       <VisualPicker
         b={b}
         open={picking}
@@ -180,7 +198,10 @@ function DraftEditor({ post, b }: { post: Post; b: ClientBundle }) {
       {(post.checks ?? []).length > 0 && (
         <ul className="flex flex-col gap-2">
           {post.checks!.map((k) => (
-            <li key={k.id} className={`flex flex-col gap-2 rounded-md border p-3 sm:flex-row sm:items-center ${k.state === "open" ? (k.kind === "off-limits" ? "border-danger bg-danger-bg" : "border-warning bg-warning-bg") : "border-border"}`}>
+            <li
+              key={k.id}
+              className={`flex flex-col gap-2 rounded-md border p-3 sm:flex-row sm:items-center ${k.state === "open" ? (k.kind === "off-limits" ? "border-danger bg-danger-bg" : "border-warning bg-warning-bg") : "border-border"}`}
+            >
               <span className="flex flex-1 items-center gap-2 text-body-sm text-primary">
                 {k.state === "open" ? <WarningCircle className="size-5 shrink-0 text-danger" aria-hidden /> : <CheckCircle className="size-5 shrink-0 text-success" aria-hidden />}
                 <span>
@@ -300,7 +321,17 @@ function TimeDialog({ open, onClose, initial, onSave, busy }: { open: boolean; o
   const [error, setError] = useState<string>();
   return (
     <Dialog open={open} onClose={onClose} title="Choose a time">
-      <Input label="Day and time" type="datetime-local" value={value} onChange={(e) => { setValue(e.target.value); setError(undefined); }} error={error} help="In the client's time zone." />
+      <Input
+        label="Day and time"
+        type="datetime-local"
+        value={value}
+        onChange={(e) => {
+          setValue(e.target.value);
+          setError(undefined);
+        }}
+        error={error}
+        help="In the client's time zone."
+      />
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
         <Button variant="ghost" onClick={onClose}>
           Cancel
@@ -350,15 +381,41 @@ function Scheduler({ post, b }: { post: Post; b: ClientBundle }) {
 }
 
 /** M5 scheduled: move the time, or take it off the schedule. */
-function ScheduledActions({ post }: { post: Post }) {
+function ScheduledActions({ post, b }: { post: Post; b: ClientBundle }) {
   const confirm = useConfirm();
   const { run, pending } = useTask();
   const [choosing, setChoosing] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const first = b.user?.firstName;
   return (
     <div className="flex flex-wrap gap-2">
-      <Button variant="secondary" onClick={() => setChoosing(true)}>
+      <Button variant="secondary" onClick={() => setEditing(true)}>
+        Edit
+      </Button>
+      <Button variant="ghost" onClick={() => setChoosing(true)}>
         Change time
       </Button>
+      {editing && (
+        <EditTextDialog
+          open
+          onClose={() => setEditing(false)}
+          title="Edit a scheduled post"
+          intro={`${first} approved the earlier wording, so a change goes back to them for approval and comes off the schedule until they answer.`}
+          smallFixOption={`Small fix only (spelling or punctuation): keep the time and tell ${first}.`}
+          initial={post.text}
+          busy={pending("edit")}
+          onSave={async (text, smallFix) => {
+            if (
+              await run(
+                "edit",
+                () => act.editScheduledPost(post.id, text, smallFix),
+                smallFix ? `Saved. It still goes out ${dayTimeIn(post.scheduledFor!)}. ${first} is told.` : `Sent back to ${first} for approval.`,
+              )
+            )
+              setEditing(false);
+          }}
+        />
+      )}
       <Button
         variant="ghost"
         onClick={() =>
@@ -388,22 +445,80 @@ function ScheduledActions({ post }: { post: Post }) {
   );
 }
 
-function LiveActions({ post, b }: { post: Post; b: ClientBundle }) {
+/** Edit a post's text: a live post in place on LinkedIn, or a scheduled post before it goes out. */
+function EditTextDialog({
+  open,
+  onClose,
+  title,
+  intro,
+  initial,
+  busy,
+  smallFixOption,
+  onSave,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  intro: string;
+  initial: string;
+  busy: boolean;
+  smallFixOption?: string;
+  onSave: (text: string, smallFix: boolean) => void;
+}) {
+  const [text, setText] = useState(initial);
+  const [smallFix, setSmallFix] = useState(false);
+  const [error, setError] = useState<string>();
+  return (
+    <Dialog open={open} onClose={onClose} title={title}>
+      <p className="text-body-sm text-secondary">{intro}</p>
+      <Textarea
+        label="Post text"
+        rows={8}
+        value={text}
+        onChange={(e) => {
+          setText(e.target.value);
+          setError(undefined);
+        }}
+        error={error}
+      />
+      {smallFixOption && (
+        <label className="flex cursor-pointer items-start gap-3">
+          <input type="checkbox" checked={smallFix} onChange={(e) => setSmallFix(e.target.checked)} className="mt-1 size-4 accent-primary-600" />
+          <span className="text-body-sm text-primary">{smallFixOption}</span>
+        </label>
+      )}
+      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <Button variant="ghost" onClick={onClose}>
+          Cancel
+        </Button>
+        <Button
+          loading={busy}
+          onClick={() => {
+            if (!text.trim()) return setError("The post needs some text.");
+            if (text.trim() === initial.trim()) return setError("Nothing has changed yet.");
+            onSave(text.trim(), smallFix);
+          }}
+        >
+          Save
+        </Button>
+      </div>
+    </Dialog>
+  );
+}
+
+const repostLabel = { reshare: "share it again with a new comment", new: "post it again as a new post" };
+
+/** M7 Live: edit the text in place, post again, replace, or take down. Answers the client's requests. */
+function LiveActions({ post, b, onDraft }: { post: Post; b: ClientBundle; onDraft: () => void }) {
+  const confirm = useConfirm();
   const { run, pending } = useTask();
-  if (post.fixRequested)
-    return (
-      <Banner
-        tone="danger"
-        title="Fix asked for"
-        action={
-          <Button variant="secondary" loading={pending("fixed")} onClick={() => run("fixed", () => act.setPostStatus(post.id, "published", { fixRequested: undefined }), `Fixed. ${b.user?.firstName} is told.`)}>
-            Mark fixed
-          </Button>
-        }
-      >
-        {post.fixRequested}
-      </Banner>
-    );
+  const [editing, setEditing] = useState(false);
+  const [again, setAgain] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const [closeNote, setCloseNote] = useState("");
+  const first = b.user?.firstName;
+  const req = post.request;
+
   if (post.status === "failed")
     return (
       <Banner
@@ -413,7 +528,13 @@ function LiveActions({ post, b }: { post: Post; b: ClientBundle }) {
           <Button
             variant="secondary"
             loading={pending("retry")}
-            onClick={() => run("retry", () => act.setPostStatus(post.id, "scheduled", { failedReason: undefined, scheduledFor: new Date(Date.now() + 3_600_000).toISOString() }), "Fixed and scheduled for an hour from now.")}
+            onClick={() =>
+              run(
+                "retry",
+                () => act.setPostStatus(post.id, "scheduled", { failedReason: undefined, scheduledFor: new Date(Date.now() + 3_600_000).toISOString() }),
+                "Fixed and scheduled for an hour from now.",
+              )
+            }
           >
             Fix and retry
           </Button>
@@ -422,8 +543,144 @@ function LiveActions({ post, b }: { post: Post; b: ClientBundle }) {
         {post.failedReason}
       </Banner>
     );
-  if (post.status === "taken-down") return <p className="text-body-sm text-secondary">The client took this post down.</p>;
-  return null;
+
+  const replace = () =>
+    confirm({
+      title: "Take it down and replace it?",
+      body: `Use this when more than the text must change, such as the image. The post comes off LinkedIn now and an editable copy goes to Drafts. ${first} reviews the new version before it goes out.`,
+      warning: "The reactions and comments on the live post are lost. This cannot be undone.",
+      confirmLabel: "Take down and replace",
+      tone: "danger",
+      action: async () => {
+        await act.replacePost(post.id);
+      },
+      success: { text: `Taken down. The copy is in Drafts. ${first} is told.`, action: { label: "Open drafts", onClick: onDraft } },
+    });
+
+  const takeDown = () =>
+    confirm({
+      title: "Take this post down?",
+      body: `It comes off LinkedIn now. ${first} is told by email.`,
+      warning: "The post and its reactions and comments cannot be brought back. You can post it again later as a new post.",
+      confirmLabel: "Take it down",
+      cancelLabel: "Keep it",
+      tone: "danger",
+      action: () => act.takeDown(post.id, "team"),
+      success: `Taken down. ${first} is told.`,
+    });
+
+  const dialogs = (
+    <>
+      {editing && (
+        <EditTextDialog
+          open
+          onClose={() => setEditing(false)}
+          title="Edit the live post"
+          intro="The change goes live on LinkedIn at once. Reactions and comments stay, and LinkedIn marks the post as edited. Only the text can change: to change an image, replace the post."
+          initial={post.text}
+          busy={pending("edit")}
+          onSave={async (text) => {
+            if (await run("edit", () => act.editLivePost(post.id, text), req?.kind === "fix" ? `Fixed on LinkedIn. ${first} is told.` : `Updated on LinkedIn. ${first} is told.`)) setEditing(false);
+          }}
+        />
+      )}
+      {again && (
+        <PostAgainDialog
+          open
+          onClose={() => setAgain(false)}
+          title="Post it again"
+          intro={`A draft is made for you to finish. It goes to ${first} for review like any other post.`}
+          initial={req?.repostAs ?? "reshare"}
+          onlyNew={post.status === "taken-down"}
+          noteLabel={(c) => (c === "reshare" ? "New comment above the original" : "Anything to change in the words? (optional)")}
+          notePlaceholder={req?.kind === "repost" ? `${first} asked: ${req.text}` : undefined}
+          noteRequired={(c) => c === "reshare"}
+          busy={pending("again")}
+          submitLabel="Make the draft"
+          onSubmit={async (choice, note) => {
+            const text = choice === "reshare" ? note : note || post.text;
+            if (await run("again", () => act.preparePostAgain(post.id, choice, text), { text: "Draft ready in Drafts.", action: { label: "Open drafts", onClick: onDraft } })) setAgain(false);
+          }}
+        />
+      )}
+      <Dialog open={closing} onClose={() => setClosing(false)} title="Close the request without changes?">
+        <p className="text-body-sm text-secondary">For when you have agreed something else with {first}, for example in Messages. They see your note.</p>
+        <Textarea label={`Note to ${first}`} rows={2} value={closeNote} onChange={(e) => setCloseNote(e.target.value)} placeholder="As agreed on our call, we will leave the post as it is." />
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <Button variant="ghost" onClick={() => setClosing(false)}>
+            Cancel
+          </Button>
+          <Button
+            disabled={!closeNote.trim()}
+            loading={pending("close")}
+            onClick={async () => {
+              if (await run("close", () => act.closePostRequest(post.id, closeNote.trim()), `Request closed. ${first} has your note.`)) setClosing(false);
+            }}
+          >
+            Close request
+          </Button>
+        </div>
+      </Dialog>
+    </>
+  );
+
+  if (post.status === "taken-down")
+    return (
+      <div className="flex flex-col gap-3">
+        <p className="text-body-sm text-secondary">{post.takenDownBy === "team" ? "You took this post down." : `${first} took this post down.`} It is no longer on LinkedIn.</p>
+        {req?.kind === "repost" && (
+          <Banner tone="info" title={`${first} asked to post it again`}>
+            {req.text}
+          </Banner>
+        )}
+        <Button variant="secondary" className="self-start" onClick={() => setAgain(true)}>
+          Post it again
+        </Button>
+        {dialogs}
+      </div>
+    );
+
+  return (
+    <div className="flex flex-col gap-3">
+      {req && (
+        <Banner tone={req.kind === "fix" ? "danger" : "info"} title={req.kind === "fix" ? `Fix asked for ${agoIn(req.at)}` : `${first} asked you to ${repostLabel[req.repostAs ?? "reshare"]}`}>
+          {req.text}
+        </Banner>
+      )}
+      <div className="flex flex-wrap items-center gap-2">
+        {req?.kind === "repost" ? (
+          <Button variant="secondary" onClick={() => setAgain(true)}>
+            Prepare the repost
+          </Button>
+        ) : (
+          <Button variant="secondary" onClick={() => setEditing(true)}>
+            Edit text
+          </Button>
+        )}
+        {req?.kind === "repost" ? (
+          <Button variant="ghost" onClick={() => setEditing(true)}>
+            Edit text
+          </Button>
+        ) : (
+          <Button variant="ghost" onClick={() => setAgain(true)}>
+            Post again
+          </Button>
+        )}
+        <Menu
+          label="More actions"
+          align="start"
+          trigger={<span className="px-4 text-body-sm font-medium text-primary-700">More</span>}
+          triggerClassName="flex min-h-11 items-center rounded-md hover:bg-primary-50 focus-visible:focus-ring"
+          items={[
+            { label: "Replace the post (to change an image)", onSelect: replace },
+            { label: "Take it down", onSelect: takeDown },
+            ...(req ? [{ label: "Close the request without changes", onSelect: () => setClosing(true) }] : []),
+          ]}
+        />
+      </div>
+      {dialogs}
+    </div>
+  );
 }
 
 function ContentWorkspace({ id }: { id: string }) {
@@ -468,7 +725,7 @@ function ContentWorkspace({ id }: { id: string }) {
               { value: "client", label: "With client", count: groups.client.length },
               { value: "schedule", label: "To schedule", count: groups.schedule.length },
               { value: "scheduled", label: "Scheduled" },
-              { value: "live", label: "Live", count: groups.live.filter((p) => p.status === "failed" || p.fixRequested).length },
+              { value: "live", label: "Live", count: groups.live.filter((p) => p.status === "failed" || p.request).length },
             ]}
           />
         </div>
@@ -548,8 +805,8 @@ function ContentWorkspace({ id }: { id: string }) {
                       </p>
                     )}
                     {tab === "schedule" && <Scheduler post={p} b={b} />}
-                    {tab === "scheduled" && <ScheduledActions post={p} />}
-                    {tab === "live" && <LiveActions post={p} b={b} />}
+                    {tab === "scheduled" && <ScheduledActions post={p} b={b} />}
+                    {tab === "live" && <LiveActions post={p} b={b} onDraft={() => goTo("drafts")} />}
                   </PostPreview>
                 )}
               </li>

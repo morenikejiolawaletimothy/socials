@@ -12,12 +12,15 @@ export function Menu({
   items,
   header,
   triggerClassName = "flex items-center rounded-full focus-visible:focus-ring",
+  align = "end",
 }: {
   trigger: React.ReactNode;
   label: string;
   items: MenuItem[];
   header?: React.ReactNode;
   triggerClassName?: string;
+  /** Which edge of the trigger the menu lines up with. "start" for menus on the left of a card. */
+  align?: "start" | "end";
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -52,7 +55,7 @@ export function Menu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-40 mt-2 w-60 rounded-md border border-border bg-card p-2 shadow-lg"
+          className={`absolute ${align === "end" ? "right-0" : "left-0"} z-40 mt-2 w-60 rounded-md border border-border bg-card p-2 shadow-lg`}
         >
           {header && <div className="border-b border-border px-3 pb-3 pt-1 mb-2">{header}</div>}
           {items.map((item) =>

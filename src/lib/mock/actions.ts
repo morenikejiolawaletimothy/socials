@@ -97,20 +97,30 @@ export async function askForChanges(postId: string, text: string, voice = false)
   update((db) => {
     const p = db.posts.find((x) => x.id === postId);
     if (!p) return db;
-    let next = setPost(db, postId, { status: "changes-requested", feedback: [...(p.feedback ?? []), { text, at: nowIso(), voice }] });
+    let next = setPost(db, postId, { status: "changes-requested", scheduledFor: undefined, feedback: [...(p.feedback ?? []), { text, at: nowIso(), voice }] });
     next = log(next, p.clientId, "you", "post", `Asked for changes on ${short(p.text)}`);
     return notify(next, managerUserOf(db, p.clientId)?.id, `${clientUser(db, p.clientId)?.firstName} asked for changes on ${short(p.text)}.`, `/manager/clients/${p.clientId}/content?tab=changes`);
   });
 }
 
-export async function takeDown(postId: string) {
+/**
+ * Takes a live post off LinkedIn (LinkedIn: delete the post). It cannot be put back with its reactions,
+ * only posted again as a new post. The client can do this themselves; the team does it when asked.
+ */
+export async function takeDown(postId: string, by: "client" | "team" = "client") {
   await delay(700);
   update((db) => {
     const p = db.posts.find((x) => x.id === postId);
     if (!p) return db;
-    let next = log(setPost(db, postId, { status: "taken-down" }), p.clientId, "you", "post", `Took down ${short(p.text)}`);
-    next = notify(next, managerUserOf(db, p.clientId)?.id, `${clientUser(db, p.clientId)?.firstName} took down ${short(p.text)}.`, `/manager/clients/${p.clientId}/content?tab=live`, { urgent: true });
-    return audit(next, "Took down a live post", nameOf(clientUser(db, p.clientId)), "content", nameOf(clientUser(db, p.clientId)));
+    let next = setPost(db, postId, { status: "taken-down", takenDownBy: by, request: undefined });
+    if (by === "client") {
+      next = log(next, p.clientId, "you", "post", `Took down ${short(p.text)}`);
+      next = notify(next, managerUserOf(db, p.clientId)?.id, `${clientUser(db, p.clientId)?.firstName} took down ${short(p.text)}.`, `/manager/clients/${p.clientId}/content?tab=live`, { urgent: true });
+      return audit(next, "Took down a live post", nameOf(clientUser(db, p.clientId)), "content", nameOf(clientUser(db, p.clientId)));
+    }
+    next = log(next, p.clientId, "team", "post", `Took down ${short(p.text)}`);
+    next = notify(next, clientUser(db, p.clientId)?.id, `Your manager took down ${short(p.text)}. It is no longer on LinkedIn.`, "/content?tab=live", { email: true });
+    return audit(next, "Took down a live post", nameOf(clientUser(db, p.clientId)), "content");
   });
 }
 
@@ -119,14 +129,152 @@ export async function askForFix(postId: string, text: string) {
   update((db) => {
     const p = db.posts.find((x) => x.id === postId);
     if (!p) return db;
-    const next = log(setPost(db, postId, { fixRequested: text }), p.clientId, "you", "post", `Asked for a fix on ${short(p.text)}`);
-    return notify(next, managerUserOf(db, p.clientId)?.id, `Urgent: ${clientUser(db, p.clientId)?.firstName} asked for a fix on a live post.`, `/manager/clients/${p.clientId}/content?tab=live`, { urgent: true });
+    const next = log(setPost(db, postId, { request: { kind: "fix", text, at: nowIso() } }), p.clientId, "you", "post", `Asked for a fix on ${short(p.text)}`);
+    return notify(next, managerUserOf(db, p.clientId)?.id, `Urgent: ${clientUser(db, p.clientId)?.firstName} asked for a fix on a live post.`, `/manager/clients/${p.clientId}/content?tab=live`, { urgent: true, email: true });
   });
 }
 
-export async function cancelFix(postId: string) {
+/** The client asks for a post to go out again: reshared with a new comment, or posted again as a new post. */
+export async function askForRepost(postId: string, repostAs: "reshare" | "new", text: string) {
   await delay();
-  update((db) => setPost(db, postId, { fixRequested: undefined }));
+  update((db) => {
+    const p = db.posts.find((x) => x.id === postId);
+    if (!p) return db;
+    const next = log(setPost(db, postId, { request: { kind: "repost", repostAs, text, at: nowIso() } }), p.clientId, "you", "post", `Asked to post ${short(p.text)} again`);
+    return notify(next, managerUserOf(db, p.clientId)?.id, `${clientUser(db, p.clientId)?.firstName} asked to post ${short(p.text)} again.`, `/manager/clients/${p.clientId}/content?tab=live`, { email: true });
+  });
+}
+
+/** The client withdraws their own request on a post. */
+export async function cancelPostRequest(postId: string) {
+  await delay();
+  update((db) => {
+    const p = db.posts.find((x) => x.id === postId);
+    if (!p?.request) return db;
+    const next = setPost(db, postId, { request: undefined });
+    return notify(next, managerUserOf(db, p.clientId)?.id, `${clientUser(db, p.clientId)?.firstName} withdrew their request on ${short(p.text)}.`, `/manager/clients/${p.clientId}/content?tab=live`);
+  });
+}
+
+/** The team closes a request without changing the post, for example after agreeing it in Messages. */
+export async function closePostRequest(postId: string, note: string) {
+  await delay();
+  update((db) => {
+    const p = db.posts.find((x) => x.id === postId);
+    if (!p) return db;
+    const next = log(setPost(db, postId, { request: undefined }), p.clientId, "team", "post", `Closed your request on ${short(p.text)}: ${note}`);
+    return notify(next, clientUser(db, p.clientId)?.id, `Your manager closed your request: ${note}`, "/content?tab=live");
+  });
+}
+
+/**
+ * Edits the text of a live post in place (LinkedIn: partial update of the post's commentary).
+ * Reactions and comments stay. LinkedIn shows the post as edited. Images and video cannot change once live.
+ */
+export async function editLivePost(postId: string, text: string) {
+  await delay(800);
+  update((db) => {
+    const p = db.posts.find((x) => x.id === postId);
+    if (!p) return db;
+    const wasFix = p.request?.kind === "fix";
+    let next = setPost(db, postId, { text, editedAt: nowIso(), request: wasFix ? undefined : p.request });
+    next = log(next, p.clientId, "team", "post", `Edited the live post ${short(text)}`);
+    return notify(next, clientUser(db, p.clientId)?.id, wasFix ? "Your post has been fixed. The change is live on LinkedIn." : `Your manager edited ${short(text)} on LinkedIn.`, "/content?tab=live", { email: wasFix });
+  });
+}
+
+function copyOf(p: Db["posts"][number], reshare: boolean, text: string): Db["posts"][number] {
+  return {
+    id: id("p"),
+    clientId: p.clientId,
+    status: "draft",
+    topic: p.topic,
+    format: p.format,
+    text,
+    why: reshare ? "Sharing a post that did well again, with a new comment." : "Posting this again.",
+    image: reshare ? undefined : p.image,
+    repostOf: { id: p.id, text: p.text, publishedAt: p.publishedAt, reshare },
+    version: 1,
+    checks: [],
+  };
+}
+
+/**
+ * Prepares a post to go out again as a draft, so it follows the normal review: a reshare (LinkedIn: a new post
+ * whose reshare parent is the original, which stays up) or a new post with the same words. Returns the draft's id.
+ */
+export async function preparePostAgain(postId: string, as: "reshare" | "new", text: string) {
+  await delay(700);
+  const newId = id("p");
+  update((db) => {
+    const p = db.posts.find((x) => x.id === postId);
+    if (!p) return db;
+    const draft = { ...copyOf(p, as === "reshare", text), id: newId };
+    let next: Db = { ...db, posts: [draft, ...setPost(db, postId, { request: p.request?.kind === "repost" ? undefined : p.request }).posts] };
+    if (p.request?.kind === "repost") next = notify(next, clientUser(db, p.clientId)?.id, "Your manager is preparing your repost. You will review it before it goes out.", "/content");
+    return next;
+  });
+  return newId;
+}
+
+/**
+ * Replaces a live post when more than the text must change (an image, a tag): takes the original down
+ * and puts an editable copy in Drafts. Reactions and comments on the original are lost.
+ */
+export async function replacePost(postId: string) {
+  await delay(900);
+  const newId = id("p");
+  update((db) => {
+    const p = db.posts.find((x) => x.id === postId);
+    if (!p) return db;
+    const draft = { ...copyOf(p, false, p.text), id: newId, why: "Replaces a live post that needed more than a text fix." };
+    let next: Db = { ...db, posts: [draft, ...setPost(db, postId, { status: "taken-down", takenDownBy: "team", request: undefined }).posts] };
+    next = log(next, p.clientId, "team", "post", `Took down ${short(p.text)} to replace it`);
+    next = notify(next, clientUser(db, p.clientId)?.id, "Your manager took the post down to fix it. You will review the new version before it goes out.", "/content?tab=live", { email: true });
+    return audit(next, "Replaced a live post", nameOf(clientUser(db, p.clientId)), "content");
+  });
+  return newId;
+}
+
+/**
+ * Edits a scheduled post. A small fix keeps the time and tells the client; anything else takes it off
+ * the schedule and sends it back for the client's approval, since they approved the earlier wording.
+ */
+export async function editScheduledPost(postId: string, text: string, smallFix: boolean) {
+  await delay(700);
+  update((db) => {
+    const p = db.posts.find((x) => x.id === postId);
+    if (!p) return db;
+    if (smallFix) {
+      const next = log(setPost(db, postId, { text, noAsk: true }), p.clientId, "team", "post", `Made a small fix to ${short(text)}`);
+      return notify(next, clientUser(db, p.clientId)?.id, `Your manager made a small fix to a scheduled post: ${short(text)}.`, "/content?tab=upcoming");
+    }
+    const next = setPost(db, postId, { text, status: "awaiting-client", scheduledFor: undefined, version: (p.version ?? 1) + 1, dueAt: new Date(Date.now() + 2 * 86_400_000).toISOString() });
+    return notify(next, clientUser(db, p.clientId)?.id, "A changed post is ready for your review.", "/content/review", { email: true });
+  });
+}
+
+/** The client stops a scheduled post before it goes out. Reversible with resumePost. */
+export async function stopPost(postId: string) {
+  await delay();
+  update((db) => {
+    const p = db.posts.find((x) => x.id === postId);
+    if (!p) return db;
+    let next = setPost(db, postId, { status: "on-hold", heldReason: "You stopped this post before it went out." });
+    next = log(next, p.clientId, "you", "post", `Stopped ${short(p.text)}`);
+    return notify(next, managerUserOf(db, p.clientId)?.id, `${clientUser(db, p.clientId)?.firstName} stopped a scheduled post: ${short(p.text)}.`, `/manager/clients/${p.clientId}/content?tab=client`, { urgent: true });
+  });
+}
+
+export async function resumePost(postId: string) {
+  await delay();
+  update((db) => {
+    const p = db.posts.find((x) => x.id === postId);
+    if (!p) return db;
+    const future = p.scheduledFor && new Date(p.scheduledFor).getTime() > Date.now();
+    const next = setPost(db, postId, future ? { status: "scheduled", heldReason: undefined } : { status: "approved", heldReason: undefined, scheduledFor: undefined });
+    return notify(next, managerUserOf(db, p.clientId)?.id, future ? `${clientUser(db, p.clientId)?.firstName} put a post back on the schedule.` : `${clientUser(db, p.clientId)?.firstName} wants a stopped post to go out. Pick a new time.`, `/manager/clients/${p.clientId}/content?tab=${future ? "scheduled" : "schedule"}`);
+  });
 }
 
 /* ---------- Client: quick tasks ---------- */
@@ -274,6 +422,18 @@ export async function answerRequest(requestId: string, approve: boolean) {
     let next: Db = { ...db, requests: db.requests.map((x) => (x.id === requestId ? { ...x, status: approve ? ("approved" as const) : ("declined" as const) } : x)) };
     next = log(next, r.clientId, "you", "setting", `${approve ? "Approved" : "Declined"}: ${r.text}`);
     return notify(next, managerUserOf(db, r.clientId)?.id, `${clientUser(db, r.clientId)?.firstName} ${approve ? "approved" : "declined"}: ${r.text}`, `/manager/clients/${r.clientId}`);
+  });
+}
+
+/** The client changes their mind about a one-off permission. Anything already done under it stays done. */
+export async function withdrawApproval(requestId: string) {
+  await delay();
+  update((db) => {
+    const r = db.requests.find((x) => x.id === requestId);
+    if (!r) return db;
+    let next: Db = { ...db, requests: db.requests.map((x) => (x.id === requestId ? { ...x, status: "declined" as const } : x)) };
+    next = log(next, r.clientId, "you", "setting", `Withdrew approval: ${r.text}`);
+    return notify(next, managerUserOf(db, r.clientId)?.id, `${clientUser(db, r.clientId)?.firstName} withdrew their approval: ${r.text}. Do not go ahead.`, `/manager/clients/${r.clientId}`, { urgent: true });
   });
 }
 
@@ -508,7 +668,6 @@ export async function setPostStatus(postId: string, status: PostStatus, patch: P
     let next = setPost(db, postId, { status, ...patch });
     if (p && status === "awaiting-client") next = notify(next, clientUser(db, p.clientId)?.id, "A post is ready for your review.", "/content/review");
     if (p && status === "scheduled") next = log(next, p.clientId, "team", "post", `Scheduled ${short(p.text)}`);
-    if (p && patch.fixRequested === undefined && p.fixRequested && "fixRequested" in patch) next = notify(next, clientUser(db, p.clientId)?.id, "Your post has been fixed.", "/content?tab=live");
     return next;
   });
 }

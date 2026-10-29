@@ -325,7 +325,9 @@ Bluecut Socials is a LinkedIn account management service for busy senior profess
 
 **US-9.5 (P0, new)** As a client, I want to take a live post down at once, or ask for a fix. (C8)
 - "Take it down now": removed from LinkedIn after one confirmation; logged.
-- "Ask for a fix": urgent note or voice note to the manager.
+- "Ask for a fix": urgent note or voice note to the manager. The manager edits the text in place, or replaces the post when an image must change.
+- "Post it again": reshare with a new comment, or post again as new. Prepared as a draft and reviewed like any post.
+- Before a post goes out the client can ask for a change or stop it, and put it back.
 
 ## Epic 10. Progress and updates
 

@@ -88,7 +88,7 @@ export function seed(): Db {
   });
 
   return {
-    version: 3,
+    version: 4,
     session: {
       role: "client",
       userIds: { client: "u-chidi", manager: "u-ada", owner: "u-fola" },
@@ -161,7 +161,7 @@ export function seed(): Db {
       { id: "p-c6", clientId: "c-chidi", status: "published", publishedAt: hoursAgo(20), topic: "Cross-border payments", format: "opinion",
         text: "Cross-border payments in Africa are not slow because of technology. They are slow because of rules written for a different decade. Three changes regulators could make this year.",
         why: "", stats: { impressions: 8420, reactions: 214, comments: 37, reposts: 12 }, image: { src: IMG.meeting, alt: "Chidi in a meeting with regulators" } },
-      { id: "p-c7", clientId: "c-chidi", status: "published", publishedAt: at(-4, 9), topic: "Leadership", format: "story",
+      { id: "p-c7", clientId: "c-chidi", status: "published", publishedAt: at(-4, 9), topic: "Leadership", format: "story", request: { kind: "repost", repostAs: "reshare", text: "This one did so well. Can we share it again next week with a line about the new office?", at: hoursAgo(5) },
         text: "I almost shut Paystream down in 2021. This is the message from a customer that made me stay.", why: "", stats: { impressions: 12950, reactions: 486, comments: 61, reposts: 23 } },
       { id: "p-c8", clientId: "c-chidi", status: "published", publishedAt: at(-8, 8, 30), topic: "Team", format: "carousel",
         text: "5 things we changed about hiring after we hit 50 people.", why: "", stats: { impressions: 5310, reactions: 132, comments: 18, reposts: 4 }, image: { src: IMG.office, alt: "The Paystream office" } },
@@ -191,7 +191,7 @@ export function seed(): Db {
       { id: "p-z1", clientId: "c-zainab", status: "on-hold", topic: "Maternal health", format: "story", heldReason: "Waiting for Zainab's review, 2 days late.", text: "The first 42 days after birth.", why: "" },
       { id: "p-z2", clientId: "c-zainab", status: "on-hold", topic: "Maternal health", format: "opinion", heldReason: "Waiting for Zainab's review, 2 days late.", text: "We count births. We should count recoveries.", why: "" },
       { id: "p-z3", clientId: "c-zainab", status: "awaiting-client", dueAt: at(0, 18), topic: "Speaking", format: "story", text: "What I said to 400 midwives in Abuja.", why: "" },
-      { id: "p-z4", clientId: "c-zainab", status: "published", publishedAt: at(-3, 10), topic: "Maternal health", format: "story", fixRequested: "The clinic name in paragraph 2 is wrong. It should be Garki, not Gwarinpa.", text: "A morning at the Garki clinic.", why: "", stats: { impressions: 3020, reactions: 88, comments: 9, reposts: 2 } },
+      { id: "p-z4", clientId: "c-zainab", status: "published", publishedAt: at(-3, 10), topic: "Maternal health", format: "story", request: { kind: "fix", text: "The clinic name in paragraph 2 is wrong. It should be Garki, not Gwarinpa.", at: hoursAgo(3) }, text: "A morning at the Garki clinic.", why: "", stats: { impressions: 3020, reactions: 88, comments: 9, reposts: 2 } },
       // Tobi
       { id: "p-t1", clientId: "c-tobi", status: "published", publishedAt: at(-2, 9), topic: "Engineering culture", format: "opinion", text: "We deleted our on-call rota. Here is what replaced it.", why: "", stats: { impressions: 6110, reactions: 170, comments: 24, reposts: 9 } },
     ],
