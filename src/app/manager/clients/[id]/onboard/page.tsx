@@ -6,7 +6,7 @@ import { use, useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { OffLimitsBox } from "@/components/manager/ClientTabs";
 import { rails } from "@/components/rails";
-import { Badge, Banner, Breadcrumbs, Button, Card, EmptyState, Input, Stepper, Textarea, useConfirm, useTask } from "@/components/ui";
+import { Badge, Banner, Breadcrumbs, Button, Card, EmptyState, Input, Stepper, Textarea, useConfirm, useTask, buttonClass } from "@/components/ui";
 import { dayTime, fullName } from "@/lib/format";
 import { act, clientBundle, useMyManager, type ClientBundle } from "@/lib/mock";
 
@@ -39,7 +39,7 @@ function Onboard({ id }: { id: string }) {
   }));
   const [summaryError, setSummaryError] = useState<string>();
   const field = (k: keyof typeof summary) => ({ value: summary[k], onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => { setSummary({ ...summary, [k]: e.target.value }); setSummaryError(undefined); } });
-  if (!b.client || !b.user) return <EmptyState title="Client not found">Go back to Clients.</EmptyState>;
+  if (!b.client || !b.user) return <EmptyState title="Client not found" action={<Link href="/manager/clients" className={buttonClass("secondary")}>Go to Clients</Link>}>This client is not on your list.</EmptyState>;
 
   const goals = b.calls.find((c) => c.kind === "goals");
   const stratCall = b.calls.find((c) => c.kind === "strategy");
@@ -53,7 +53,7 @@ function Onboard({ id }: { id: string }) {
         eyebrow={<Breadcrumbs items={[{ label: "Clients", href: "/manager/clients" }, { label: fullName(b.user), href: `/manager/clients/${id}` }, { label: "Onboarding" }]} />}
       >
         <div className="flex flex-col gap-8">
-          <div className="overflow-x-auto">
+          <div role="region" aria-label="Steps" tabIndex={0} className="overflow-x-auto rounded-sm focus-visible:focus-ring">
             <div className="min-w-xl">
               <Stepper steps={steps} current={step} />
             </div>

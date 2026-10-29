@@ -70,7 +70,7 @@ function ClientsPage() {
           </span>
         }
       >
-        <Table head={["Client", "Status", "Manager", "This week", "At risk"]}>
+        <Table label="Clients" head={["Client", "Status", "Manager", "This week", "At risk"]}>
           {list.map((c) => {
             const b = statusBadge[c.status];
             const w = db.progress.find((p) => p.clientId === c.id);

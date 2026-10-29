@@ -27,7 +27,7 @@ function PersonRow({ task, person }: { task: QuickTask; person: Person }) {
   const [note, setNote] = useState(person.note);
 
   return (
-    <li className={`flex flex-col gap-3 border-b border-border py-5 last:border-b-0 ${person.done ? "opacity-70" : ""}`}>
+    <li className={`flex flex-col gap-3 border-b border-border py-5 last:border-b-0 ${person.done ? "bg-neutral-25" : ""}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 flex-col">
           <span className="text-body font-medium text-primary">{person.name}</span>

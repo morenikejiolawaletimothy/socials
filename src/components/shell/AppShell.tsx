@@ -7,7 +7,7 @@ import { Avatar, EmptyState, Logo, Menu } from "@/components/ui";
 import { useNotifications, useSession } from "@/lib/mock";
 import { CoveringBanner } from "./CoveringBanner";
 import { DemoBar } from "./DemoBar";
-import { isActive, mainNav, meHref, meIcon as MeIcon, navItemClass, profileNav, type NavItem } from "./nav";
+import { isActive, mainNav, pageName, meHref, meIcon as MeIcon, navItemClass, profileNav, type NavItem } from "./nav";
 import { PageSkeleton } from "./PageSkeleton";
 import { usePageReady } from "./useMounted";
 import { useRoleSync } from "./useRoleSync";
@@ -48,6 +48,8 @@ export function AppShell({ role, children }: { role: "client" | "manager"; child
   useRoleSync(role);
   const pathname = usePathname();
   const mounted = usePageReady(pathname);
+  const title = pageName(pathname);
+
   const { user } = useSession();
   const unread = useNotifications(user?.id).filter((n) => !n.read).length;
   const name = user ? `${user.firstName} ${user.lastName}` : "";
@@ -61,6 +63,9 @@ export function AppShell({ role, children }: { role: "client" | "manager"; child
 
   return (
     <>
+      <a href="#main" className="sr-only z-50 rounded-md bg-card px-4 py-2 text-body-sm font-medium text-primary-700 focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus-visible:focus-ring">
+        Skip to content
+      </a>
       <DemoBar />
       {role === "manager" && <CoveringBanner />}
       <header className="sticky top-0 z-30 border-b border-border bg-card">
@@ -120,7 +125,10 @@ export function AppShell({ role, children }: { role: "client" | "manager"; child
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-6xl px-4 pb-32 pt-6 md:pb-16">{!mounted ? (
+      <main id="main" tabIndex={-1} className="mx-auto outline-none w-full max-w-6xl px-4 pb-32 pt-6 md:pb-16">
+        <title>{`${title} · Bluecut Socials`}</title>
+        <h1 className="sr-only">{title}</h1>
+        {!mounted ? (
           <PageSkeleton />
         ) : user?.deletedAt ? (
           <EmptyState

@@ -20,6 +20,13 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   loading?: boolean;
 };
 
+const base = "inline-flex min-h-11 items-center justify-center gap-2 rounded-md border px-5 py-3 text-body leading-none font-medium transition-colors focus-visible:focus-ring";
+
+/** Button styling for a link that acts as a button (navigation), so it matches Button exactly. */
+export function buttonClass(variant: Variant = "primary") {
+  return `${base} ${variants[variant]}`;
+}
+
 /** One primary button per view. Label says the action. No arrows. */
 export function Button({
   variant = "primary",
@@ -36,7 +43,7 @@ export function Button({
       type={type}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-md border px-5 py-3 text-body leading-none font-medium transition-colors focus-visible:focus-ring disabled:cursor-not-allowed ${variants[variant]} ${fullWidth ? "w-full" : ""} ${className}`}
+      className={`${base} disabled:cursor-not-allowed ${variants[variant]} ${fullWidth ? "w-full" : ""} ${className}`}
       {...props}
     >
       {loading && <CircleNotch className="size-5 shrink-0 animate-spin" aria-hidden />}

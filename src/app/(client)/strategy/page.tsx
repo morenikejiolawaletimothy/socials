@@ -107,7 +107,7 @@ export default function StrategyPage() {
           )}
 
           <Section title="The plan in numbers">
-            <div className="overflow-x-auto">
+            <div role="region" aria-label="Steps" tabIndex={0} className="overflow-x-auto rounded-sm focus-visible:focus-ring">
               <table className="w-full min-w-96 text-left text-body-sm">
                 <thead className="text-caption text-secondary">
                   <tr>

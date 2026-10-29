@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { use, useState } from "react";
 import { managerName } from "@/components/admin/parts";
 import { ActivityTab, BrandTab, CallsTab, ContentTab, EngagementTab, OverviewTab, PlanTab, UpdatesTab } from "@/components/manager/ClientTabs";
-import { Avatar, Badge, Button, Card, EmptyState, PageHeader, Tabs, useConfirm, useToast } from "@/components/ui";
+import { Avatar, Badge, Button, Card, EmptyState, PageHeader, Tabs, useConfirm, useToast, buttonClass } from "@/components/ui";
 import { date, fullName, money } from "@/lib/format";
 import { act, clientBundle, useData } from "@/lib/mock";
 import { statusBadge } from "@/lib/status";
@@ -31,7 +31,7 @@ export default function OwnerClientPage({ params }: { params: Promise<{ id: stri
   const db = useData();
   const b = clientBundle(db, id);
   const [tab, setTab] = useState<(typeof tabs)[number]["value"]>("overview");
-  if (!b.client || !b.user) return <EmptyState title="Client not found">Go back to Clients.</EmptyState>;
+  if (!b.client || !b.user) return <EmptyState title="Client not found" action={<Link href="/admin/clients" className={buttonClass("secondary")}>Go to Clients</Link>}>They may have been removed, or the link is wrong.</EmptyState>;
   const badge = statusBadge[b.client.status];
   const mName = managerName(db, b.client.managerId);
 

@@ -16,6 +16,7 @@ export function AuthScreen({
 }) {
   return (
     <div className="flex flex-col gap-8">
+      <title>{`${title} · Bluecut Socials`}</title>
       <Link href="/" aria-label="Bluecut Socials home" className="self-start rounded-full focus-visible:focus-ring">
         <Logo size={44} />
       </Link>

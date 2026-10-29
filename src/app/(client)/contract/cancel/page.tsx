@@ -6,7 +6,7 @@ import { useState } from "react";
 import { pullOutTerms } from "@/components/client/contract";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Banner, Breadcrumbs, Button, Card, Stepper, Textarea, useTask } from "@/components/ui";
+import { Banner, Breadcrumbs, Button, Card, EmptyState, Stepper, Textarea, buttonClass, useTask } from "@/components/ui";
 import { date, money } from "@/lib/format";
 import { act, useMyClient } from "@/lib/mock";
 
@@ -31,7 +31,22 @@ export default function CancelPage() {
   const [note, setNote] = useState("");
   const [error, setError] = useState<string>();
   const [done, setDone] = useState(false);
-  if (!client || !contract) return null;
+  if (!client) return null;
+  if (!contract || (contract.status === "cancelled" && !done))
+    return (
+      <Columns {...rails.clientSettings}>
+        <EmptyState
+          title={contract ? "You have already pulled out" : "You do not have a contract yet"}
+          action={
+            <Link href={contract ? "/contract" : "/setup/plan"} className={buttonClass("secondary")}>
+              {contract ? "Go to Contract" : "Choose a plan"}
+            </Link>
+          }
+        >
+          {contract ? "Your service runs to the end date shown in Contract. You can still change your mind there." : "There is nothing to pull out of. You can choose a plan when you are ready."}
+        </EmptyState>
+      </Columns>
+    );
   const terms = pullOutTerms(contract, invoices);
   const offer = offers[reason] ?? offers.Other;
 

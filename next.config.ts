@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Bundle only the icons each page uses.
+  experimental: { optimizePackageImports: ["@phosphor-icons/react"] },
 };
 
 export default nextConfig;

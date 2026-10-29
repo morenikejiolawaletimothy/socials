@@ -63,7 +63,8 @@ function TypedQuery({ text }: { text: string }) {
     return () => clearInterval(id);
   }, [inView, text]);
   return (
-    <span ref={ref} className="lp-small text-neutral-400" aria-label={text}>
+    <span ref={ref} className="lp-small text-neutral-400">
+      <span className="sr-only">{text}</span>
       <span aria-hidden>{text.slice(0, n)}</span>
       <span aria-hidden className={`ml-px inline-block h-4 w-px translate-y-0.5 bg-neutral-400 ${n >= text.length ? "animate-pulse" : ""}`} />
     </span>

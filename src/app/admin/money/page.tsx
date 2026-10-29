@@ -89,7 +89,7 @@ function MoneyPage() {
         </div>
         <div className="p-6">
           {tab === "contracts" && (
-            <Table head={["Client", "Status", "Plan", "Dates", "Paid", ""]}>
+            <Table label="Contracts" head={["Client", "Status", "Plan", "Dates", "Paid", ""]}>
               {db.contracts.map((k) => (
                 <tr key={k.id}>
                   <td className={td}>
@@ -116,7 +116,7 @@ function MoneyPage() {
           )}
 
           {tab === "payments" && (
-            <Table head={["Invoice", "Client", "For", "Amount", "Date", "Status"]}>
+            <Table label="Invoices" head={["Invoice", "Client", "For", "Amount", "Date", "Status"]}>
               {[...db.invoices]
                 .sort((a, b) => b.at.localeCompare(a.at))
                 .map((i) => (

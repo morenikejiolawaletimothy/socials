@@ -16,7 +16,7 @@ import {
   PlanTab,
   UpdatesTab,
 } from "@/components/manager/ClientTabs";
-import { Avatar, Badge, Breadcrumbs, Card, EmptyState, ProgressBar, Tabs } from "@/components/ui";
+import { Avatar, Badge, Breadcrumbs, Card, EmptyState, ProgressBar, Tabs, buttonClass } from "@/components/ui";
 import { fullName } from "@/lib/format";
 import { clientBundle, useMyManager } from "@/lib/mock";
 import { statusBadge } from "@/lib/status";
@@ -44,7 +44,7 @@ function ClientPage({ id }: { id: string }) {
   if (!b.client || !b.user) {
     return (
       <Columns {...rails.managerMain}>
-        <EmptyState title="Client not found">This client is not on your list. Go back to Clients.</EmptyState>
+        <EmptyState title="Client not found" action={<Link href="/manager/clients" className={buttonClass("secondary")}>Go to Clients</Link>}>This client is not on your list.</EmptyState>
       </Columns>
     );
   }

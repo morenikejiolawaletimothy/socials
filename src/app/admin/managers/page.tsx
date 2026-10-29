@@ -21,7 +21,7 @@ export default function ManagersPage() {
       <PageHeader title="Managers" description="Invite, train, assign and support your managers." action={<Button onClick={() => setInviting(true)}>Invite a manager</Button>} />
 
       <Card title="Your team">
-        <Table head={["Manager", "Status", "Clients", "On time", "Approved first time", "Missed", "Complaints"]}>
+        <Table label="Your team" head={["Manager", "Status", "Clients", "On time", "Approved first time", "Missed", "Complaints"]}>
           {db.managers.map((m) => {
             const s = managerStatus[m.status];
             const load = db.clients.filter((c) => c.managerId === m.id).length;
@@ -99,7 +99,7 @@ export default function ManagersPage() {
       )}
 
       <Card title="Payouts">
-        <Table head={["Manager", "Period", "Active clients", "Amount", ""]}>
+        <Table label="Payouts" head={["Manager", "Period", "Active clients", "Amount", ""]}>
           {db.payouts.map((p) => (
             <tr key={p.id}>
               <td className={td}>{managerName(db, p.managerId)}</td>

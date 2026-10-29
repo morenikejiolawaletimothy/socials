@@ -164,7 +164,7 @@ const socials = [
 export function ClosingAndFooter() {
   return (
     <div className="bg-primary-900 pb-28 md:pb-0">
-      <section className="flex flex-col items-center px-5 pb-[50px] pt-[100px] md:px-10">
+      <section aria-label="Get started" className="flex flex-col items-center px-5 pb-[50px] pt-[100px] md:px-10">
         <div className="flex w-full max-w-[1280px] flex-col items-center gap-6 md:px-10">
           <Reveal as="h2" className="max-w-[560px] text-center lp-h2-regular font-medium text-inverse">
             Less time on LinkedIn.

@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { use, useState } from "react";
 import { ClientCell, complaintKind, managerName } from "@/components/admin/parts";
-import { Badge, Banner, Button, Card, EmptyState, PageHeader, Textarea, useConfirm } from "@/components/ui";
+import { Badge, Banner, Button, Card, EmptyState, PageHeader, Textarea, useConfirm, buttonClass } from "@/components/ui";
 import { dayTime } from "@/lib/format";
 import { act, useData } from "@/lib/mock";
 
@@ -28,7 +29,7 @@ export default function ComplaintPage({ params }: { params: Promise<{ id: string
   const c = db.complaints.find((x) => x.id === id);
   const [outcome, setOutcome] = useState("");
   const [note, setNote] = useState("");
-  if (!c) return <EmptyState title="Complaint not found">Go back to Complaints.</EmptyState>;
+  if (!c) return <EmptyState title="Complaint not found" action={<Link href="/admin/complaints" className={buttonClass("secondary")}>Go to Complaints</Link>}>The link may be wrong.</EmptyState>;
   const client = db.clients.find((x) => x.id === c.clientId);
   const managerDelay = c.timeline.some((t) => t.who === "manager" && /late|missed/i.test(t.text));
 

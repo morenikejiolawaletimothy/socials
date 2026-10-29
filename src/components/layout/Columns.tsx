@@ -11,12 +11,17 @@
 export function Columns({
   left,
   right,
+  leftLabel = "Side panel",
+  rightLabel = "More",
   children,
   leftOnMobile = "hide",
   rightOnMobile = "hide",
 }: {
   left?: React.ReactNode;
   right?: React.ReactNode;
+  /** Names for the side columns, so screen reader users can tell them apart. */
+  leftLabel?: string;
+  rightLabel?: string;
   children: React.ReactNode;
   leftOnMobile?: "hide" | "show";
   rightOnMobile?: "hide" | "show";
@@ -28,11 +33,11 @@ export function Columns({
   return (
     <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-12">
       {left && (
-        <aside className={`${leftOnMobile === "hide" ? "hidden lg:flex" : "flex"} flex-col gap-4 ${leftSpan}`}>{left}</aside>
+        <aside aria-label={leftLabel} className={`${leftOnMobile === "hide" ? "hidden lg:flex" : "flex"} flex-col gap-4 ${leftSpan}`}>{left}</aside>
       )}
       <div className={`flex min-w-0 flex-col gap-4 ${span}`}>{children}</div>
       {right && (
-        <aside className={`${rightOnMobile === "hide" ? "hidden lg:flex" : "flex"} flex-col gap-4 ${rightSpan}`}>{right}</aside>
+        <aside aria-label={rightLabel} className={`${rightOnMobile === "hide" ? "hidden lg:flex" : "flex"} flex-col gap-4 ${rightSpan}`}>{right}</aside>
       )}
     </div>
   );

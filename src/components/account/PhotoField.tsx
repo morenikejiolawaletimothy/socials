@@ -17,6 +17,7 @@ export function PhotoField({ user, name }: { user: User; name: string }) {
       <input
         ref={ref}
         type="file"
+        aria-label="Choose a photo"
         accept="image/png,image/jpeg,image/webp"
         className="sr-only"
         tabIndex={-1}

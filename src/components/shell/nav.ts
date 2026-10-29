@@ -78,3 +78,46 @@ export const navItemClass = (active: boolean, direction: "horizontal" | "vertica
         }`
       : "text-secondary hover:text-primary"
   }`;
+
+/** Page names for the browser tab and the screen-reader heading (client and manager pages have no visible title). */
+const pageNames: [RegExp, string][] = [
+  [/^\/home$/, "Home"],
+  [/^\/content\/review$/, "Review your posts"],
+  [/^\/content$/, "Your content"],
+  [/^\/strategy$/, "Your strategy"],
+  [/^\/progress\/[^/]+$/, "Update"],
+  [/^\/progress$/, "Progress"],
+  [/^\/tasks\/[^/]+$/, "Quick task"],
+  [/^\/messages$/, "Messages"],
+  [/^\/notifications$/, "Notifications"],
+  [/^\/brand$/, "Your brand"],
+  [/^\/control\/complaint$/, "Raise a complaint"],
+  [/^\/control$/, "Control"],
+  [/^\/contract\/cancel$/, "Pull out of your contract"],
+  [/^\/contract$/, "Contract"],
+  [/^\/account$/, "Account"],
+  [/^\/me$/, "Me"],
+  [/^\/setup\/linkedin$/, "Connect LinkedIn"],
+  [/^\/setup\/calls$/, "Book your calls"],
+  [/^\/setup\/plan$/, "Choose a plan"],
+  [/^\/setup\/review$/, "Set how you review"],
+  [/^\/manager$/, "Home"],
+  [/^\/manager\/clients\/[^/]+\/content$/, "Client content"],
+  [/^\/manager\/clients\/[^/]+\/onboard$/, "Onboarding"],
+  [/^\/manager\/clients\/[^/]+$/, "Client"],
+  [/^\/manager\/clients$/, "Your clients"],
+  [/^\/manager\/messages$/, "Messages"],
+  [/^\/manager\/notifications$/, "Notifications"],
+  [/^\/manager\/calls$/, "Calls and availability"],
+  [/^\/manager\/profile$/, "Profile"],
+  [/^\/manager\/me$/, "Me"],
+  [/^\/admin$/, "Overview"],
+  [/^\/admin\/clients\/[^/]+$/, "Client"],
+  [/^\/admin\/managers\/[^/]+$/, "Manager"],
+  [/^\/admin\/complaints\/[^/]+$/, "Complaint"],
+  [/^\/admin\/notifications$/, "Notifications"],
+];
+
+export function pageName(pathname: string) {
+  return pageNames.find(([re]) => re.test(pathname))?.[1] ?? ownerNav.find((i) => isActive(pathname, i))?.label ?? "Bluecut Socials";
+}

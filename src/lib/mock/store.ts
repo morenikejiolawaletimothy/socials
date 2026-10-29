@@ -30,7 +30,9 @@ function save(next: Db) {
   try {
     window.localStorage.setItem(KEY, JSON.stringify(next));
   } catch {
-    // Storage can be unavailable (private mode). The demo still works in memory.
+    // Storage can be unavailable (private mode) or full (many large uploads). The demo still works in
+    // memory; the demo bar says the latest change will not survive a reload.
+    window.dispatchEvent(new Event("bluecut-storage-full"));
   }
   listeners.forEach((l) => l());
 }

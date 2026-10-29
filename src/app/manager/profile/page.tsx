@@ -6,7 +6,7 @@ import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
 import { PhotoField } from "@/components/account/PhotoField";
 import { Badge, Button, Card, Input, Select, Switch, Textarea, useConfirm, useTask } from "@/components/ui";
-import { zoneLabel, zones } from "@/lib/timezones";
+import { timeZones, zoneLabel } from "@/lib/timezones";
 import { fullName } from "@/lib/format";
 import { act, useMyManager } from "@/lib/mock";
 
@@ -45,7 +45,7 @@ export default function ManagerProfile() {
           </div>
           <Textarea label="Short intro" value={intro} onChange={(e) => setIntro(e.target.value)} help="Clients see this when they book their calls with you." error={introError} />
           <Select label="Time zone" help="Your call slots and due times use this time zone." value={zone} onChange={(e) => setZone(e.target.value)}>
-            {zones.map((z) => (
+            {timeZones(user.timeZone).map((z) => (
               <option key={z} value={z}>
                 {zoneLabel(z)}
               </option>

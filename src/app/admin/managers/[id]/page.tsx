@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use } from "react";
 import { ClientCell, Stats, managerName, managerStatus } from "@/components/admin/parts";
-import { Badge, Banner, Button, Card, EmptyState, PageHeader, useConfirm, useToast } from "@/components/ui";
+import { Badge, Banner, Button, Card, EmptyState, PageHeader, useConfirm, useToast, buttonClass } from "@/components/ui";
 import { dayIn, dayTime, fullName } from "@/lib/format";
 import { act, useData, type Db } from "@/lib/mock";
 import { statusBadge } from "@/lib/status";
@@ -20,7 +21,7 @@ export default function ManagerPage({ params }: { params: Promise<{ id: string }
   const confirm = useConfirm();
   const db = useData();
   const m = db.managers.find((x) => x.id === id);
-  if (!m) return <EmptyState title="Manager not found">Go back to Managers.</EmptyState>;
+  if (!m) return <EmptyState title="Manager not found" action={<Link href="/admin/managers" className={buttonClass("secondary")}>Go to Managers</Link>}>They may have been removed, or the link is wrong.</EmptyState>;
   const u = db.users.find((x) => x.id === m.userId);
   const clients = db.clients.filter((c) => c.managerId === id);
   const s = managerStatus[m.status];

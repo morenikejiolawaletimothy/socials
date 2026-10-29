@@ -2,7 +2,7 @@ export { Avatar } from "./Avatar";
 export { Badge } from "./Badge";
 export { Banner } from "./Banner";
 export { Breadcrumbs, type Crumb } from "./Breadcrumbs";
-export { Button } from "./Button";
+export { Button, buttonClass } from "./Button";
 export { Card, CardText, CardTitle } from "./Card";
 export { CodeInput } from "./CodeInput";
 export { Dialog } from "./Dialog";

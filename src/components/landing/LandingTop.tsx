@@ -115,26 +115,21 @@ export function Hero() {
             <h1 className="w-full max-w-[757px] pt-[35px] text-center lp-h1 text-primary">
               <WordsReveal text="Be known for the right things on LinkedIn." />
             </h1>
-            <Reveal as="p" delay={0.45} className="w-full max-w-[606px] text-center lp-lead text-neutral-500">
+            {/* Above the fold, these animate in CSS so they show on first paint, not after JavaScript loads. */}
+            <p className="lp-rise w-full max-w-[606px] text-center lp-lead text-neutral-500" style={{ animationDelay: "0.45s" }}>
               A dedicated expert runs your LinkedIn around your goals. You approve every post before it goes live, and you stay in control of your account.
-            </Reveal>
+            </p>
           </div>
-          <Reveal delay={0.6} className="flex w-full flex-col items-stretch justify-center gap-3 sm:w-auto sm:flex-row">
+          <div className="lp-rise flex w-full flex-col items-stretch justify-center gap-3 sm:w-auto sm:flex-row" style={{ animationDelay: "0.6s" }}>
             <Link href="/signup" className={btnPrimary}>
               Get started
             </Link>
             <a href="#how" className={btnSecondary}>
               See how it works
             </a>
-          </Reveal>
+          </div>
         </div>
-        <motion.div
-          ref={photoRef}
-          initial={{ opacity: 0, y: 40, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: DUR.slow, ease: EASE, delay: 0.7 }}
-          className="relative w-full max-w-[1088.6px]"
-        >
+        <div ref={photoRef} className="lp-rise-photo relative w-full max-w-[1088.6px]" style={{ animationDelay: "0.7s" }}>
           <div className="group relative aspect-[1.867] w-full overflow-hidden rounded-[14.5px]">
             <motion.div style={{ y: imgY }} className="absolute -inset-y-[10%] inset-x-0">
               <Image
@@ -149,7 +144,7 @@ export function Hero() {
             <div className="absolute inset-0 bg-neutral-950/30" />
           </div>
           <HeroProfileCard />
-        </motion.div>
+        </div>
       </div>
     </section>
   );
@@ -183,9 +178,10 @@ export function Intro() {
                 <span className="rounded-[6px] bg-gradient-to-b from-neutral-950/[0.03] to-neutral-950/15 p-px">
                   <span className="block rounded-[5px] bg-card px-2 py-1 lp-tag text-neutral-950/80">{s.tag}</span>
                 </span>
-                <p className="flex items-end text-neutral-950" aria-label={`${s.value}%`}>
-                  <CountUp to={s.value} className="lp-stat tabular-nums" />
-                  <span className="lp-stat-unit">%</span>
+                <p className="flex items-end text-neutral-950">
+                  <span className="sr-only">{`${s.value}%`}</span>
+                  <span aria-hidden><CountUp to={s.value} className="lp-stat tabular-nums" /></span>
+                  <span aria-hidden className="lp-stat-unit">%</span>
                 </p>
               </div>
               <p className="max-w-[237px] text-[14px] leading-[18.2px] tracking-[-0.28px]">

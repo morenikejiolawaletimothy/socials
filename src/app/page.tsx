@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { ClosingAndFooter, Faq, Industries } from "@/components/landing/LandingEnd";
 import { Connected, Statement } from "@/components/landing/LandingFeatures";
 import { Features } from "@/components/landing/LandingNavy";
@@ -6,6 +7,8 @@ import { Testimonials } from "@/components/landing/LandingTestimonials";
 import { Hero, Intro, LandingNav } from "@/components/landing/LandingTop";
 import { SmoothScroll } from "@/components/landing/motion";
 import { StickyCta } from "@/components/marketing/StickyCta";
+
+export const metadata: Metadata = { title: "Bluecut Socials: be known for the right things on LinkedIn" };
 
 /** Landing page, built from the approved Figma template (1440w light). Inter only. Motion lives in landing/motion.tsx. */
 export default function Landing() {

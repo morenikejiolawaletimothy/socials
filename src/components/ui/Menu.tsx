@@ -56,6 +56,27 @@ export function Menu({
     else setPos(null);
   }, [open, place]);
 
+  // Keyboard: focus the first item on open; arrows move, Home and End jump, Tab closes.
+  useEffect(() => {
+    if (open && pos) menu.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus();
+  }, [open, pos]);
+  const onMenuKey = (e: React.KeyboardEvent) => {
+    const items = Array.from(menu.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? []);
+    const i = items.indexOf(document.activeElement as HTMLElement);
+    const go = (n: number) => {
+      e.preventDefault();
+      items[(n + items.length) % items.length]?.focus();
+    };
+    if (e.key === "ArrowDown") go(i + 1);
+    else if (e.key === "ArrowUp") go(i - 1);
+    else if (e.key === "Home") go(0);
+    else if (e.key === "End") go(items.length - 1);
+    else if (e.key === "Tab") {
+      setOpen(false);
+      button.current?.focus();
+    }
+  };
+
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
@@ -94,6 +115,7 @@ export function Menu({
             ref={menu}
             role="menu"
             aria-label={label}
+            onKeyDown={onMenuKey}
             style={{ top: pos?.top ?? 0, left: pos?.left ?? 0 }}
             className={`fixed z-50 w-64 rounded-md border border-border bg-card p-2 shadow-lg ${pos ? "visible" : "invisible"}`}
           >

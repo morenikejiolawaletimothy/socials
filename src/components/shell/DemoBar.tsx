@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { act, resetDemo, setDemoRole, setFailMode, useData, useFailMode, useSession, type Role } from "@/lib/mock";
 import { Select, useToast } from "@/components/ui";
 
@@ -25,8 +26,14 @@ export function DemoBar() {
   const clientUserId = useData().session.userIds.client;
   const failing = useFailMode();
 
+  useEffect(() => {
+    const full = () => toast("This browser is out of room for demo data, so your latest change will not survive a reload. Reset demo to clear space.", "danger");
+    window.addEventListener("bluecut-storage-full", full);
+    return () => window.removeEventListener("bluecut-storage-full", full);
+  }, [toast]);
+
   return (
-    <div className="bg-dark text-inverse">
+    <aside aria-label="Demo controls" className="bg-dark text-inverse">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-3 gap-y-2 px-4 py-2">
         <div className="flex items-center gap-2 sm:order-1">
           <span className="hidden text-caption text-neutral-300 sm:inline">Demo view</span>
@@ -90,6 +97,6 @@ export function DemoBar() {
           </Select>
         )}
       </div>
-    </div>
+    </aside>
   );
 }

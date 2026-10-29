@@ -1,5 +1,18 @@
-/** Time zones people can choose in Account and Profile. Phase 2 can widen this to the full IANA list. */
-export const zones = ["Africa/Lagos", "Africa/Accra", "Africa/Nairobi", "Africa/Johannesburg", "Europe/London", "America/Toronto", "America/New_York"];
+const fallback = ["Africa/Lagos", "Africa/Accra", "Africa/Nairobi", "Africa/Johannesburg", "Europe/London", "America/Toronto", "America/New_York"];
 
-/** "Africa/Lagos" as "Africa, Lagos". */
-export const zoneLabel = (z: string) => z.replace("_", " ").replace("/", ", ");
+/**
+ * Every time zone the browser knows (about 400), grouped by region as the names already are.
+ * Falls back to a short list on old browsers. Always includes `current`, so a saved zone never disappears.
+ */
+export function timeZones(current?: string) {
+  let all: string[] = fallback;
+  try {
+    all = Intl.supportedValuesOf("timeZone");
+  } catch {
+    // Older browsers: the short list.
+  }
+  return current && !all.includes(current) ? [current, ...all] : all;
+}
+
+/** "America/New_York" as "America, New York". */
+export const zoneLabel = (z: string) => z.replaceAll("_", " ").replace("/", ", ").replaceAll("/", ", ");

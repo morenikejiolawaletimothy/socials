@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { CheckCircle, Clock, Image as ImageIcon, Sparkle, Trash, WarningCircle } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -9,8 +10,8 @@ import { PostPreview, RepostNote } from "@/components/content/PostPreview";
 import { Columns } from "@/components/layout/Columns";
 import { OffLimitsBox } from "@/components/manager/ClientTabs";
 import { rails } from "@/components/rails";
-import { Badge, Banner, Breadcrumbs, Button, Dialog, EmptyState, Card, Input, Menu, Tabs, Textarea, useConfirm, useTask, useToast } from "@/components/ui";
-import { photoProblem } from "@/lib/image";
+import { Badge, Banner, Breadcrumbs, Button, Dialog, EmptyState, Card, Input, Menu, Tabs, Textarea, useConfirm, useTask, useToast, buttonClass } from "@/components/ui";
+import { fileSize, photoProblem, toImage } from "@/lib/image";
 import { ago, agoIn, dayTime, dayTimeIn, fullName, time } from "@/lib/format";
 import { act, clientBundle, useMyManager, type ClientBundle, type Post } from "@/lib/mock";
 
@@ -47,6 +48,7 @@ function VisualPicker({ b, open, onClose, onPick }: { b: ClientBundle; open: boo
       <input
         ref={upload}
         type="file"
+        aria-label="Choose a photo to upload"
         accept="image/png,image/jpeg,image/webp"
         className="sr-only"
         tabIndex={-1}
@@ -56,8 +58,8 @@ function VisualPicker({ b, open, onClose, onPick }: { b: ClientBundle; open: boo
           if (!f) return;
           const problem = photoProblem(f);
           if (problem) return toast(problem, "danger");
-          const src = URL.createObjectURL(f);
-          if (await run("upload", () => act.addBrandFile(b.client!.id, "photos", f.name, `${Math.max(1, Math.round(f.size / 1024))} KB`, src), "Photo saved to their Brand.")) onPick(src, f.name.replace(/[-_]/g, " ").replace(/\.\w+$/, ""));
+          let src = "";
+          if (await run("upload", async () => act.addBrandFile(b.client!.id, "photos", f.name, fileSize(f.size), (src = await toImage(f))), "Photo saved to their Brand.")) onPick(src, f.name.replace(/[-_]/g, " ").replace(/\.\w+$/, ""));
         }}
       />
       <Button variant="secondary" className="self-start" loading={pending("upload")} onClick={() => upload.current?.click()}>
@@ -714,7 +716,7 @@ function ContentWorkspace({ id }: { id: string }) {
   const { db } = useMyManager();
   const b = clientBundle(db, id);
   const [ideas, setIdeas] = useState(firstIdeas);
-  if (!b.client || !b.user) return <EmptyState title="Client not found">Go back to Clients.</EmptyState>;
+  if (!b.client || !b.user) return <EmptyState title="Client not found" action={<Link href="/manager/clients" className={buttonClass("secondary")}>Go to Clients</Link>}>This client is not on your list.</EmptyState>;
   const author = { name: fullName(b.user), title: b.user.title };
   const goTo = (t: Tab) => router.replace(`/manager/clients/${id}/content?tab=${t}`, { scroll: false });
 

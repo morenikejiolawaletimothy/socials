@@ -9,7 +9,7 @@ import { pullOutTerms } from "@/components/client/contract";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
 import { Banner, Button, Card, Dialog, Input, Select, Switch, useConfirm, useTask } from "@/components/ui";
-import { zoneLabel, zones } from "@/lib/timezones";
+import { timeZones, zoneLabel } from "@/lib/timezones";
 import { fullName, money } from "@/lib/format";
 import { act, useMyClient } from "@/lib/mock";
 
@@ -65,7 +65,7 @@ export default function AccountPage() {
             <Input label="Last name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
           </div>
           <Select label="Time zone" help="We show call times and due times in this time zone." value={zone} onChange={(e) => setZone(e.target.value)}>
-              {zones.map((z) => (
+              {timeZones(user.timeZone).map((z) => (
                 <option key={z} value={z}>
                   {zoneLabel(z)}
                 </option>

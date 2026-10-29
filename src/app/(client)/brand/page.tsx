@@ -7,6 +7,7 @@ import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
 import { Badge, Button, Card, Dialog, Input, Select, Textarea, useConfirm, useTask, useToast } from "@/components/ui";
 import { agoIn, date } from "@/lib/format";
+import { fileSize, photoProblem, toImage } from "@/lib/image";
 import { act, useMyClient, type BrandFile, type OffLimit } from "@/lib/mock";
 
 const linkButton = "rounded-sm text-body-sm font-medium text-primary-600 hover:text-primary-700 hover:underline focus-visible:focus-ring";
@@ -32,6 +33,7 @@ function Upload({ clientId, section }: { clientId: string; section: BrandFile["s
       <input
         ref={ref}
         type="file"
+        aria-label={`Choose a file for ${section}`}
         accept={limits[section].types}
         className="sr-only"
         tabIndex={-1}
@@ -43,7 +45,7 @@ function Upload({ clientId, section }: { clientId: string; section: BrandFile["s
           if (!accepted.includes(f.type) && !accepted.includes(ext)) return setError(`That type of file is not allowed here. Use ${limits[section].label}.`);
           if (f.size > max * 1024 * 1024) return setError(`That file is over ${max} MB. Use ${limits[section].label}.`);
           setError(undefined);
-          await run("upload", () => act.addBrandFile(clientId, section, f.name, `${(f.size / 1024 / 1024).toFixed(1)} MB`, section === "photos" ? "/landing/statement-1.jpg" : undefined), `${f.name} uploaded.`);
+          await run("upload", async () => act.addBrandFile(clientId, section, f.name, fileSize(f.size), section === "documents" ? undefined : await toImage(f, section === "logos" ? 600 : 1200)), `${f.name} uploaded.`);
         }}
       />
       <button type="button" disabled={pending("upload")} onClick={() => ref.current?.click()} className={`${linkButton} inline-flex items-center gap-1`}>
@@ -118,12 +120,15 @@ function OffLimitRow({ clientId, item }: { clientId: string; item: OffLimit }) {
 
 /** C15 Your brand: everything that makes content sound and look like the client. The manager uses it for every post. */
 export default function BrandPage() {
-  const { client, brand, files, moments } = useMyClient();
+  const { client, brand: saved, files, moments } = useMyClient();
+  // A new client has no Brand yet: start from an empty one, created on their first change.
+  const brand = saved ?? { clientId: client?.id ?? "", colours: [], voice: "", wordsUse: [], wordsAvoid: [], examples: [], offLimits: [] };
   const confirm = useConfirm();
   const { run, pending } = useTask();
   const [momentOpen, setMomentOpen] = useState(false);
   const [momentNote, setMomentNote] = useState("");
   const [momentError, setMomentError] = useState<string>();
+  const [momentPhotos, setMomentPhotos] = useState<string[]>([]);
   const [offKind, setOffKind] = useState<OffLimit["kind"]>("topic");
   const [offText, setOffText] = useState("");
   const [offError, setOffError] = useState<string>();
@@ -133,7 +138,7 @@ export default function BrandPage() {
   const [avoid, setAvoid] = useState(brand?.wordsAvoid.join(", ") ?? "");
   const [colour, setColour] = useState("");
   const [colourError, setColourError] = useState<string>();
-  if (!client || !brand) return null;
+  if (!client) return null;
 
   const photos = files.filter((f) => f.section === "photos");
   const logos = files.filter((f) => f.section === "logos");
@@ -329,8 +334,8 @@ export default function BrandPage() {
         <div className="flex flex-col gap-4">
           {logos.map((f) => (
             <div key={f.id} className="flex items-center gap-3">
-              <span className="flex size-12 items-center justify-center rounded-md bg-primary-50">
-                <Sparkle className="size-6 text-primary-600" aria-hidden />
+              <span className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-card">
+                {f.src ? <Image src={f.src} alt={f.name} fill sizes="48px" className="object-contain p-1" /> : <Sparkle className="size-6 text-primary-600" aria-hidden />}
               </span>
               <span className="flex flex-1 flex-col">
                 <span className="text-body font-medium text-primary">{f.name}</span>
@@ -423,10 +428,45 @@ export default function BrandPage() {
           }}
           error={momentError}
         />
-        <label className="flex flex-col gap-2">
-          <span className="text-body-sm font-medium text-primary">Photos (optional)</span>
-          <input type="file" multiple accept={limits.photos.types} className="text-body-sm text-secondary file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-border-strong file:bg-card file:px-4 file:py-2 file:text-body-sm file:font-medium file:text-primary-700" />
-        </label>
+        <div className="flex flex-col gap-2">
+          <label htmlFor="moment-photos" className="text-body-sm font-medium text-primary">
+            Photos (optional, up to 4)
+          </label>
+          <input
+            id="moment-photos"
+            type="file"
+            multiple
+            accept={limits.photos.types}
+            onChange={async (e) => {
+              const picked = Array.from(e.target.files ?? []);
+              e.target.value = "";
+              const bad = picked.map(photoProblem).find(Boolean);
+              if (bad) return setMomentError(bad);
+              if (momentPhotos.length + picked.length > 4) return setMomentError("Add up to 4 photos. Remove one to add another.");
+              setMomentError(undefined);
+              const added = await Promise.all(picked.map((f) => toImage(f, 1200)));
+              setMomentPhotos((list) => [...list, ...added]);
+            }}
+            className="text-body-sm text-secondary file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-border-strong file:bg-card file:px-4 file:py-2 file:text-body-sm file:font-medium file:text-primary-700"
+          />
+          {momentPhotos.length > 0 && (
+            <ul className="flex flex-wrap gap-2">
+              {momentPhotos.map((src, i) => (
+                <li key={i} className="relative size-16 overflow-hidden rounded-sm">
+                  <Image src={src} alt={`Photo ${i + 1}`} fill sizes="64px" className="object-cover" />
+                  <button
+                    type="button"
+                    aria-label={`Remove photo ${i + 1}`}
+                    onClick={() => setMomentPhotos((list) => list.filter((_, j) => j !== i))}
+                    className="absolute right-1 top-1 flex size-6 items-center justify-center rounded-full bg-card text-secondary shadow-sm hover:text-danger focus-visible:focus-ring"
+                  >
+                    <X className="size-3" aria-hidden />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Button variant="ghost" onClick={() => setMomentOpen(false)}>
             Cancel
@@ -435,8 +475,9 @@ export default function BrandPage() {
             loading={pending("moment")}
             onClick={async () => {
               if (!momentNote.trim()) return setMomentError("Write a short note, so your manager knows what you want.");
-              if (await run("moment", () => act.addMoment(client.id, momentNote.trim(), []), "Sent to your manager. They will reply in Messages.")) {
+              if (await run("moment", () => act.addMoment(client.id, momentNote.trim(), momentPhotos), "Sent to your manager. They will reply in Messages.")) {
                 setMomentNote("");
+                setMomentPhotos([]);
                 setMomentOpen(false);
               }
             }}

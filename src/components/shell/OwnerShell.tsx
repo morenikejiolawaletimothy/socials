@@ -11,7 +11,7 @@ import { NotificationBell } from "./NotificationBell";
 import { PageSkeleton } from "./PageSkeleton";
 import { usePageReady } from "./useMounted";
 import { useRoleSync } from "./useRoleSync";
-import { isActive, navItemClass, ownerNav } from "./nav";
+import { isActive, navItemClass, ownerNav, pageName } from "./nav";
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -42,12 +42,16 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
   useRoleSync("owner");
   const pathname = usePathname();
   const mounted = usePageReady(pathname);
+
   const [menuOpen, setMenuOpen] = useState(false);
   const { user } = useSession();
   const name = user ? `${user.firstName} ${user.lastName}` : "";
 
   return (
     <>
+      <a href="#main" className="sr-only z-50 rounded-md bg-card px-4 py-2 text-body-sm font-medium text-primary-700 focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus-visible:focus-ring">
+        Skip to content
+      </a>
       <div className="lg:flex">
         <aside className="hidden w-64 shrink-0 flex-col gap-6 border-r border-border bg-card px-4 py-6 lg:sticky lg:top-0 lg:flex lg:h-dvh">
           <Link href="/admin" className="flex items-center gap-2 rounded-full px-2 focus-visible:focus-ring">
@@ -82,7 +86,9 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
             </div>
             <NotificationBell href="/admin/notifications" />
           </header>
-          <main className="px-4 py-6 lg:px-8 lg:py-8">{mounted ? children : <PageSkeleton />}</main>
+          <main id="main" tabIndex={-1} className="px-4 py-6 outline-none lg:px-8 lg:py-8">
+            <title>{`${pageName(pathname)} · Bluecut Socials`}</title>
+            {mounted ? children : <PageSkeleton />}</main>
         </div>
       </div>
 

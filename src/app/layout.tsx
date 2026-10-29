@@ -19,9 +19,10 @@ const jetbrains = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+// No site-wide title: the landing page sets its own, and each app page names itself with a <title>
+// (see AppShell, OwnerShell and AuthScreen), so the browser tab says where you are.
 export const metadata: Metadata = {
-  title: "Bluecut Socials",
-  description: "Social media and brand studio.",
+  description: "A dedicated expert runs your LinkedIn around your goals. You approve every post.",
 };
 
 export const viewport: Viewport = {

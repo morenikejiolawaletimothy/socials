@@ -67,7 +67,7 @@ export default function AuditPage() {
           </Select>
         }
       >
-        <Table head={["When", "Who", "What", "On"]}>
+        <Table label="Audit log" head={["When", "Who", "What", "On"]}>
           {list.map((a) => (
             <tr key={a.id}>
               <td className={`${td} whitespace-nowrap text-secondary`}>{dayTime(a.at)}</td>

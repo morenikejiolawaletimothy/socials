@@ -34,15 +34,16 @@ export function Stats({
 }
 
 /** Tables scroll inside their card on small screens, never the page. */
-export function Table({ head, children }: { head: string[]; children: React.ReactNode }) {
+export function Table({ head, label = "Table", children }: { head: string[]; label?: string; children: React.ReactNode }) {
   return (
-    <div className="-mx-6 overflow-x-auto px-6">
+    // Focusable so keyboard users can scroll a wide table sideways.
+    <div role="region" aria-label={label} tabIndex={0} className="relative -mx-6 overflow-x-auto px-6 focus-visible:focus-ring">
       <table className="w-full min-w-xl text-left text-body-sm">
         <thead>
           <tr className="text-caption text-secondary">
             {head.map((h) => (
               <th key={h} className="whitespace-nowrap px-3 py-2 font-medium first:pl-0 last:pr-0">
-                {h}
+                {h || <span className="sr-only">Actions</span>}
               </th>
             ))}
           </tr>

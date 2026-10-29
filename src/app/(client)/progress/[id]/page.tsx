@@ -1,10 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { use } from "react";
 import { PostPreview } from "@/components/content/PostPreview";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Avatar, Breadcrumbs, Button, Card, EmptyState } from "@/components/ui";
+import { Avatar, Breadcrumbs, Button, Card, EmptyState, buttonClass } from "@/components/ui";
 import { ago, agoIn, fullName } from "@/lib/format";
 import { useMyClient } from "@/lib/mock";
 
@@ -26,7 +27,7 @@ export default function UpdatePage({ params }: { params: Promise<{ id: string }>
   if (!u) {
     return (
       <Columns {...rails.clientMain}>
-        <EmptyState title="Update not found">It may have been removed. All your updates are on Progress.</EmptyState>
+        <EmptyState title="Update not found" action={<Link href="/progress" className={buttonClass("secondary")}>Go to Progress</Link>}>It may have been removed.</EmptyState>
       </Columns>
     );
   }

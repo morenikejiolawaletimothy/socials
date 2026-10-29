@@ -17,7 +17,7 @@ export function Switch({
   return (
     <label className={`flex items-start justify-between gap-4 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
       <span className="flex flex-col gap-1">
-        <span className={`text-body font-medium ${disabled ? "text-neutral-300" : "text-primary"}`}>{label}</span>
+        <span className={`text-body font-medium ${disabled ? "text-secondary" : "text-primary"}`}>{label}</span>
         {description && <span className="text-body-sm text-secondary">{description}</span>}
       </span>
       <button

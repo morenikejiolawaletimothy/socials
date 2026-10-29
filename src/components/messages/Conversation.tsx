@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Avatar, Button, useConfirm, useTask, useToast } from "@/components/ui";
 import { day, fullName, time } from "@/lib/format";
+import { fileSize, toImage } from "@/lib/image";
 import { act, type Message, type User } from "@/lib/mock";
 
 function Bubble({ m, mine, author, onSave, onDelete, saveLabel, saving }: { m: Message; mine: boolean; author: string; onSave?: () => void; onDelete?: () => void; saveLabel: string; saving: boolean }) {
@@ -169,6 +170,7 @@ export function Conversation({
         <input
           ref={fileRef}
           type="file"
+          aria-label="Choose a file to send"
           className="sr-only"
           tabIndex={-1}
           onChange={async (e) => {
@@ -177,7 +179,10 @@ export function Conversation({
             e.target.value = "";
             if (f.size > 25 * 1024 * 1024) return toast("That file is over 25 MB. Send a smaller one, or a link.", "danger");
             setUploading(f.name);
-            await run("file", () => act.sendMessage(clientId, me.id, { file: { name: f.name, size: `${(f.size / 1024 / 1024).toFixed(1)} MB`, kind: f.type.startsWith("image/") ? "image" : f.type === "application/pdf" ? "pdf" : "doc" } }, asTeam));
+            const image = ["image/jpeg", "image/png", "image/webp"].includes(f.type);
+            await run("file", async () =>
+              act.sendMessage(clientId, me.id, { file: { name: f.name, size: fileSize(f.size), kind: image ? "image" : f.type === "application/pdf" ? "pdf" : "doc", src: image ? await toImage(f) : undefined } }, asTeam),
+            );
             setUploading(null);
           }}
         />

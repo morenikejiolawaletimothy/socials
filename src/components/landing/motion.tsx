@@ -137,28 +137,21 @@ export function StaggerItem({ children, className, as = "div" }: { children: Rea
 
 /** Splits a heading into words that rise in one after another. */
 export function WordsReveal({ text, className, delay = 0 }: { text: string; className?: string; delay?: number }) {
+  // CSS, not Motion: the headline starts animating on first paint instead of waiting for JavaScript,
+  // so it shows sooner (it is the largest thing on the first screen). Same ease, duration and stagger.
   const words = text.split(" ");
   return (
-    <motion.span
-      className={className}
-      initial="hidden"
-      whileInView="show"
-      viewport={{ once: true }}
-      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05, delayChildren: delay } } }}
-      aria-label={text}
-    >
+    <span className={className}>
+      <span className="sr-only">{text}</span>
       {words.map((w, i) => (
         <span key={i} aria-hidden className="inline-block overflow-hidden pb-[0.08em] align-top">
-          <motion.span
-            className="inline-block"
-            variants={{ hidden: { y: "100%" }, show: { y: 0, transition: { duration: DUR.slow, ease: EASE } } }}
-          >
+          <span className="lp-word inline-block" style={{ animationDelay: `${delay + i * 0.05}s` }}>
             {w}
-            {i < words.length - 1 ? " " : ""}
-          </motion.span>
+            {i < words.length - 1 ? " " : ""}
+          </span>
         </span>
       ))}
-    </motion.span>
+    </span>
   );
 }
 
@@ -168,7 +161,8 @@ export function ScrollWords({ text, className }: { text: string; className?: str
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start 85%", "end 45%"] });
   const words = text.split(" ");
   return (
-    <p ref={ref} className={className} aria-label={text}>
+    <p ref={ref} className={className}>
+      <span className="sr-only">{text}</span>
       {words.map((w, i) => (
         <ScrollWord key={i} progress={scrollYProgress} range={[i / words.length, (i + 1) / words.length]}>
           {w}
