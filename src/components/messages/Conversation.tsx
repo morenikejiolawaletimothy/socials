@@ -212,7 +212,7 @@ export function Conversation({
                 }
               }}
               placeholder="Write a message"
-              className="min-h-11 w-full resize-none rounded-md border border-border-strong bg-card px-4 py-2.5 text-body-sm text-primary placeholder:text-neutral-400 focus-visible:border-primary-600 focus-visible:focus-ring"
+              className="min-h-11 w-full resize-none rounded-sm border border-border-strong bg-card px-4 py-2.5 text-body text-primary shadow-sm placeholder:text-neutral-400 focus-visible:border-primary-600 focus-visible:focus-ring"
             />
           </label>
         )}

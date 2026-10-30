@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Landing page tone: <PageTone> sets data-tone="dark" while a dark section holds the page background.
+   Text on the background uses tone-dark:* so it always matches the colour on screen right now. */
+@custom-variant tone-dark (&:where([data-tone="dark"] *));
+
 /*
  * Bluecut Socials design tokens.
  * Source of truth: design-system/tokens.json. Change values there first, then mirror here.
@@ -281,7 +285,19 @@ body {
   }
 }
 @utility lp-zoom {
-  transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  /* Tailwind v4 scale-* sets the `scale` property, not `transform`, so both are transitioned. */
+  transition:
+    transform 700ms cubic-bezier(0.22, 1, 0.36, 1),
+    scale 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* Colour fade for the landing page tone: same duration and curve as the page background (THEME_FADE). */
+@utility lp-tone {
+  transition-property: background-color, color, border-color, outline-color, box-shadow;
+  transition-duration: 1000ms;
+  transition-timing-function: cubic-bezier(0.45, 0, 0.2, 1);
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
 }
 /* Hero headline words rise into place on first paint (same ease and duration as landing/motion.tsx). */
 @keyframes lp-word-up {

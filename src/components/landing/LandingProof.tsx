@@ -138,9 +138,9 @@ export function HowItWorks() {
   };
 
   return (
-    <section id="how" className="flex scroll-mt-16 flex-col items-center gap-[60px] overflow-hidden bg-card px-5 py-[100px] md:px-20">
+    <section id="how" className="flex scroll-mt-16 flex-col items-center gap-[60px] overflow-hidden px-5 py-[100px] md:px-20">
       <div className="w-full max-w-[1280px] md:px-10">
-        <Reveal as="h2" className="max-w-[527px] lp-h2 text-neutral-950">
+        <Reveal as="h2" className="max-w-[527px] lp-h2 lp-tone text-neutral-950 tone-dark:text-inverse">
           How it works, from first call to first results
         </Reveal>
       </div>
@@ -158,13 +158,13 @@ export function HowItWorks() {
                   onClick={() => select(i)}
                   className="group relative flex flex-1 flex-col gap-[7.4px] pt-[27.33px] text-left focus-visible:focus-ring"
                 >
-                  <span className="absolute inset-x-0 top-0 h-[3px] overflow-hidden bg-neutral-50">
+                  <span className="lp-tone absolute inset-x-0 top-0 h-[3px] overflow-hidden bg-neutral-50 tone-dark:bg-inverse/15">
                     {active === i && (
                       <motion.span style={{ scaleX: reduce ? 1 : progress }} className="absolute inset-0 origin-left bg-primary-600" />
                     )}
                   </span>
-                  <span className="lp-tab-title text-primary">{t.title}</span>
-                  <span className={`lp-body text-neutral-400 transition-opacity duration-300 ${active === i ? "" : "opacity-40 group-hover:opacity-70"}`}>{t.text}</span>
+                  <span className="lp-tab-title lp-tone text-primary tone-dark:text-inverse">{t.title}</span>
+                  <span className={`lp-body text-neutral-400 transition-[opacity,color] duration-300 tone-dark:text-neutral-300 ${active === i ? "" : "opacity-40 group-hover:opacity-70"}`}>{t.text}</span>
                 </button>
               </StaggerItem>
             ))}
@@ -247,14 +247,14 @@ export function Results() {
   });
 
   return (
-    <section className="flex flex-col items-center gap-[60px] overflow-hidden bg-card px-5 py-[100px] md:px-20">
+    <section id="results" className="flex scroll-mt-16 flex-col items-center gap-[60px] overflow-hidden px-5 py-[100px] md:px-20">
       <div className="flex w-full max-w-[1280px] flex-col gap-[23px] md:px-10">
-        <Reveal as="h2" className="max-w-[620px] lp-h2 text-neutral-950">
+        <Reveal as="h2" className="max-w-[620px] lp-h2 lp-tone text-neutral-950 tone-dark:text-inverse">
           Results measured
           <br />
           against your goal
         </Reveal>
-        <Reveal as="p" delay={0.1} className="max-w-[500px] lp-body text-neutral-950 opacity-60">
+        <Reveal as="p" delay={0.1} className="max-w-[500px] lp-body opacity-60 lp-tone text-neutral-950 tone-dark:text-inverse">
           We agree your goal on the first call, then track what moves it. Likes and followers come second.
         </Reveal>
       </div>
@@ -277,7 +277,7 @@ export function Results() {
               <li
                 key={i}
                 aria-hidden={i >= results.length}
-                className="group relative mr-5 h-[360px] w-[260px] shrink-0 overflow-hidden rounded-[12px] md:h-[400px] md:w-[300px]"
+                className="group relative mr-5 h-[360px] w-[260px] shrink-0 overflow-hidden rounded-[12px] outline-1 -outline-offset-1 lp-tone outline-transparent tone-dark:outline-inverse/15 md:h-[400px] md:w-[300px]"
               >
                 <Image src={r.img} alt="" fill sizes="300px" draggable={false} className="lp-zoom object-cover group-hover:scale-[1.04]" />
                 <div className="absolute inset-0 bg-gradient-to-b from-transparent from-[40%] to-neutral-950/75 to-[75%]" />

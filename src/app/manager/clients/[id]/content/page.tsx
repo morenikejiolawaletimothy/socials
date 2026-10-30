@@ -159,7 +159,7 @@ function DraftEditor({ post, b }: { post: Post; b: ClientBundle }) {
             value={direction}
             onChange={(e) => setDirection(e.target.value)}
             placeholder="Shorter. Open with the story. Less formal."
-            className="min-h-11 rounded-sm border border-border-strong bg-card px-4 text-body text-primary placeholder:text-neutral-400 focus-visible:border-primary-600 focus-visible:focus-ring"
+            className="min-h-11 rounded-sm border border-border-strong bg-card px-4 py-3 text-body text-primary shadow-sm placeholder:text-neutral-400 focus-visible:border-primary-600 focus-visible:focus-ring"
           />
         </label>
         <Button type="submit" variant="secondary" loading={pending("rewrite")}>

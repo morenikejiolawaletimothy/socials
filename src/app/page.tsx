@@ -5,32 +5,47 @@ import { Features } from "@/components/landing/LandingNavy";
 import { HowItWorks, Results } from "@/components/landing/LandingProof";
 import { Testimonials } from "@/components/landing/LandingTestimonials";
 import { Hero, Intro, LandingNav } from "@/components/landing/LandingTop";
-import { SmoothScroll } from "@/components/landing/motion";
+import { PageTone, SmoothScroll, ToneZone } from "@/components/landing/motion";
 import { StickyCta } from "@/components/marketing/StickyCta";
 
 export const metadata: Metadata = { title: "Bluecut Socials: be known for the right things on LinkedIn" };
 
 /** Landing page, built from the approved Figma template (1440w light). Inter only. Motion lives in landing/motion.tsx. */
+// One page background (PageTone). Each ToneZone names its section colour; the zone in the middle of the screen sets it.
 export default function Landing() {
   return (
     <SmoothScroll>
-      <div className="bg-card font-sans">
+      <PageTone initialBg="bg-page" className="font-sans">
         <LandingNav />
         <main>
-          <Hero />
-          <Intro />
-          <Statement />
-          <Connected />
-          <Features />
-          <Testimonials />
-          <HowItWorks />
-          <Results />
-          <Industries />
-          <Faq />
+          <ToneZone bg="bg-page">
+            <Hero />
+            <Intro />
+          </ToneZone>
+          <ToneZone bg="bg-card">
+            <Statement />
+            <Connected />
+          </ToneZone>
+          <ToneZone bg="bg-primary-900" dark>
+            <Features />
+          </ToneZone>
+          <ToneZone bg="bg-card">
+            <Testimonials />
+            <HowItWorks />
+          </ToneZone>
+          <ToneZone bg="bg-neutral-950" dark>
+            <Results />
+            <Industries />
+          </ToneZone>
+          <ToneZone bg="bg-card">
+            <Faq />
+          </ToneZone>
         </main>
-        <ClosingAndFooter />
+        <ToneZone bg="bg-primary-900" dark>
+          <ClosingAndFooter />
+        </ToneZone>
         <StickyCta watchId="hero" />
-      </div>
+      </PageTone>
     </SmoothScroll>
   );
 }

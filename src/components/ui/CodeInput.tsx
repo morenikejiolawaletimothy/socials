@@ -33,7 +33,7 @@ export function CodeInput({
         aria-invalid={error ? true : undefined}
         aria-describedby={message ? `${id}-message` : undefined}
         placeholder="000000"
-        className={`min-h-14 rounded-sm border bg-card px-4 text-center font-mono text-display-xl tracking-widest text-primary shadow-sm placeholder:text-neutral-300 focus-visible:border-primary-600 focus-visible:focus-ring ${error ? "border-danger" : "border-border-strong"}`}
+        className={`min-h-14 rounded-sm border bg-card px-4 text-center font-mono text-display-xl tracking-widest text-primary shadow-sm placeholder:text-neutral-400 focus-visible:border-primary-600 focus-visible:focus-ring ${error ? "border-danger" : "border-border-strong"}`}
       />
       {message && (
         <span id={`${id}-message`} className={`text-body-sm ${error ? "text-danger" : "text-secondary"}`}>

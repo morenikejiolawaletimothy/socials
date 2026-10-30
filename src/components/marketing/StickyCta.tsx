@@ -22,7 +22,7 @@ export function StickyCta({ watchId }: { watchId: string }) {
       <Link
         href="/signup"
         tabIndex={show ? 0 : -1}
-        className="flex min-h-12 w-full items-center justify-center rounded-md bg-primary-600 text-body font-medium text-inverse shadow-lg hover:bg-primary-700 focus-visible:focus-ring"
+        className="flex min-h-11 w-full items-center justify-center rounded-md bg-primary-600 text-body font-medium text-inverse shadow-lg hover:bg-primary-700 focus-visible:focus-ring"
       >
         Get started
       </Link>
