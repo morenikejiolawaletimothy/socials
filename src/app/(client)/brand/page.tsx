@@ -77,7 +77,7 @@ function OffLimitRow({ clientId, item }: { clientId: string; item: OffLimit }) {
         >
           <label className="flex-1">
             <span className="sr-only">Edit</span>
-            <input value={text} onChange={(e) => setText(e.target.value)} className="min-h-10 w-full rounded-sm border border-border-strong px-3 text-body-sm text-primary focus-visible:border-primary-600 focus-visible:focus-ring" />
+            <input value={text} onChange={(e) => setText(e.target.value)} className="min-h-11 w-full rounded-sm border border-border-strong bg-card px-4 py-3 text-body text-primary shadow-sm placeholder:text-neutral-400 focus-visible:border-primary-600 focus-visible:focus-ring" />
           </label>
           <span className="flex gap-2">
             <Button type="submit" variant="secondary" loading={pending("edit")}>

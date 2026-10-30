@@ -24,6 +24,14 @@ export function BluecutMark({ size = 36, textClass = "text-[18px] leading-[23.4p
 
 const navLink = "relative rounded-[6px] lp-nav focus-visible:focus-ring after:absolute after:inset-x-0 after:-bottom-1 after:h-px after:origin-left after:scale-x-0 after:bg-current after:transition-transform after:duration-300 hover:after:scale-x-100";
 
+// Page sections in the order they appear. Keep this to four links at most.
+const pageLinks = [
+  { href: "#features", label: "What you get" },
+  { href: "#how", label: "How it works" },
+  { href: "#results", label: "Results" },
+  { href: "#faq", label: "FAQ" },
+];
+
 /** Hides while scrolling down, comes back when scrolling up; gains a soft shadow once the page moves. */
 export function LandingNav() {
   const { scrollY } = useScroll();
@@ -41,27 +49,26 @@ export function LandingNav() {
       transition={{ duration: 0.35, ease: EASE }}
       className={`sticky top-0 z-30 border-b-[0.667px] border-neutral-100 bg-card/90 backdrop-blur-md transition-shadow duration-300 ${scrolled ? "shadow-[0px_4px_20px_rgba(20,23,20,0.06)]" : ""}`}
     >
-      <div className="mx-auto flex h-16 w-full max-w-[1440px] items-center justify-between px-4">
-        <Link href="/" aria-label="Bluecut Socials home" className="rounded-full focus-visible:focus-ring">
+      {/* Three zones: logo left, page links centred, account actions right. New page links go in the nav. */}
+      <div className="mx-auto grid h-16 w-full max-w-[1440px] grid-cols-[1fr_auto_1fr] items-center gap-6 px-4">
+        <Link href="/" aria-label="Bluecut Socials home" className="justify-self-start rounded-full focus-visible:focus-ring">
           <BluecutMark />
         </Link>
-        <nav aria-label="Main" className="flex items-center gap-6">
-          <a href="#how" className={`hidden text-neutral-500 hover:text-primary md:inline ${navLink}`}>
-            How it works
-          </a>
-          <a href="#faq" className={`hidden text-neutral-500 hover:text-primary md:inline ${navLink}`}>
-            FAQ
-          </a>
-          <Link href="/signin" className={`mx-2 hidden text-primary-700 sm:inline ${navLink}`}>
+        <nav aria-label="Main" className="hidden items-center gap-8 md:flex">
+          {pageLinks.map((l) => (
+            <a key={l.href} href={l.href} className={`text-neutral-500 hover:text-primary ${navLink}`}>
+              {l.label}
+            </a>
+          ))}
+        </nav>
+        <div className="col-start-3 flex items-center gap-6 justify-self-end">
+          <Link href="/signin" className={`hidden text-primary-700 sm:inline ${navLink}`}>
             Sign in
           </Link>
-          <Link
-            href="/signup"
-            className="lp-btn inline-flex min-h-[44px] items-center justify-center rounded-[10px] border-[0.667px] border-neutral-400 bg-primary-600 px-5 py-3 text-[14px] font-medium leading-[14px] text-inverse hover:bg-primary-700 focus-visible:focus-ring"
-          >
+          <Link href="/signup" className={btnPrimary}>
             Get started
           </Link>
-        </nav>
+        </div>
       </div>
     </motion.header>
   );
@@ -108,15 +115,15 @@ export function Hero() {
   const imgY = useTransform(scrollYProgress, [0, 1], ["-8%", "8%"]);
 
   return (
-    <section id="hero" className="bg-page px-5 py-[72px] md:px-20 md:py-[120px]">
+    <section id="hero" className="px-5 py-[72px] md:px-20 md:py-[120px]">
       <div className="mx-auto flex w-full max-w-[1440px] flex-col items-center gap-10">
         <div className="flex w-full max-w-[1280px] flex-col items-center gap-10 md:px-10">
           <div className="flex w-full flex-col items-center gap-8">
-            <h1 className="w-full max-w-[757px] pt-[35px] text-center lp-h1 text-primary">
+            <h1 className="w-full max-w-[757px] pt-[35px] text-center text-balance lp-h1 lp-tone text-primary tone-dark:text-inverse">
               <WordsReveal text="Be known for the right things on LinkedIn." />
             </h1>
             {/* Above the fold, these animate in CSS so they show on first paint, not after JavaScript loads. */}
-            <p className="lp-rise w-full max-w-[606px] text-center lp-lead text-neutral-500" style={{ animationDelay: "0.45s" }}>
+            <p className="lp-rise w-full max-w-[606px] text-center lp-lead lp-tone text-neutral-500 tone-dark:text-neutral-300" style={{ animationDelay: "0.45s" }}>
               A dedicated expert runs your LinkedIn around your goals. You approve every post before it goes live, and you stay in control of your account.
             </p>
           </div>
@@ -130,15 +137,16 @@ export function Hero() {
           </div>
         </div>
         <div ref={photoRef} className="lp-rise-photo relative w-full max-w-[1088.6px]" style={{ animationDelay: "0.7s" }}>
-          <div className="group relative aspect-[1.867] w-full overflow-hidden rounded-[14.5px]">
-            <motion.div style={{ y: imgY }} className="absolute -inset-y-[10%] inset-x-0">
+          {/* transform-gpu keeps the rounded clip steady while the photo moves and zooms inside it. */}
+          <div className="group relative aspect-[1.867] w-full transform-gpu overflow-hidden rounded-[14.5px]">
+            <motion.div style={{ y: imgY }} className="absolute -inset-y-[10%] inset-x-0 will-change-transform">
               <Image
                 src="/landing/hero.jpg"
                 alt="A senior professional working with her team"
                 fill
                 priority
                 sizes="(min-width: 1100px) 1089px, 100vw"
-                className="lp-zoom object-cover object-[50%_30%] group-hover:scale-[1.04]"
+                className="lp-zoom object-cover object-[50%_30%] will-change-transform group-hover:scale-[1.04]"
               />
             </motion.div>
             <div className="absolute inset-0 bg-neutral-950/30" />
@@ -159,14 +167,14 @@ const stats = [
 
 export function Intro() {
   return (
-    <section className="relative flex flex-col items-center gap-20 overflow-hidden bg-page px-5 pb-[120px] pt-16 md:px-20">
+    <section className="relative flex flex-col items-center gap-20 overflow-hidden px-5 pb-[120px] pt-16 md:px-20">
       <div className="flex w-full max-w-[1280px] flex-col items-center gap-3 md:px-10">
-        <Reveal as="h2" className="w-full max-w-[500px] text-center lp-h2 text-neutral-950">
+        <Reveal as="h2" className="w-full max-w-[500px] text-center lp-h2 lp-tone text-neutral-950 tone-dark:text-inverse">
           Your reputation
           <br />
           lives on LinkedIn.
         </Reveal>
-        <Reveal as="p" delay={0.1} className="w-full max-w-[500px] py-[11px] text-center lp-body text-neutral-950 opacity-50">
+        <Reveal as="p" delay={0.1} className="w-full max-w-[500px] py-[11px] text-center lp-body opacity-50 lp-tone text-neutral-950 tone-dark:text-inverse">
           Clients, investors and boards judge leaders by what they share. Most leaders do not have the time to share well, or often enough.
         </Reveal>
       </div>
@@ -192,7 +200,7 @@ export function Intro() {
           </StaggerItem>
         ))}
       </Stagger>
-      <p className="absolute inset-x-5 bottom-12 text-center lp-tag text-neutral-500">Source: 2024 Edelman and LinkedIn B2B Thought Leadership Impact Report.</p>
+      <p className="absolute inset-x-5 bottom-12 text-center lp-tag lp-tone text-neutral-500 tone-dark:text-neutral-300">Source: 2024 Edelman and LinkedIn B2B Thought Leadership Impact Report.</p>
     </section>
   );
 }

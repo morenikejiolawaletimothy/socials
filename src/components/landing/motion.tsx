@@ -14,7 +14,7 @@ import {
   type MotionValue,
   type Variants,
 } from "motion/react";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, Fragment, useContext, useEffect, useId, useRef, useState } from "react";
 
 /*
  * One motion language for the landing page:
@@ -144,12 +144,16 @@ export function WordsReveal({ text, className, delay = 0 }: { text: string; clas
     <span className={className}>
       <span className="sr-only">{text}</span>
       {words.map((w, i) => (
-        <span key={i} aria-hidden className="inline-block overflow-hidden pb-[0.08em] align-top">
-          <span className="lp-word inline-block" style={{ animationDelay: `${delay + i * 0.05}s` }}>
-            {w}
-            {i < words.length - 1 ? " " : ""}
+        <Fragment key={i}>
+          {/* Extra bottom padding keeps descenders (g, y, p) inside the clip; the negative margin keeps line spacing unchanged. */}
+          <span aria-hidden className="-mb-[0.14em] inline-block overflow-hidden pb-[0.22em] align-top">
+            <span className="lp-word inline-block" style={{ animationDelay: `${delay + i * 0.05}s` }}>
+              {w}
+            </span>
           </span>
-        </span>
+          {/* The space sits between the word boxes: inside an inline-block it would be trimmed at line ends. */}
+          {i < words.length - 1 ? " " : null}
+        </Fragment>
       ))}
     </span>
   );
@@ -243,3 +247,78 @@ export const cardHover = {
   whileHover: { y: -4, boxShadow: "0px 12px 32px rgba(20,23,20,0.10)" },
   transition: { duration: DUR.fast, ease: EASE },
 };
+
+/*
+ * Page tone: the landing page has ONE background, owned by <PageTone>. Every section sits in a <ToneZone>
+ * that names its colour and whether it is dark. Whichever zone crosses the middle of the screen sets the
+ * page colour, and the whole background fades to it, so two section colours never meet at a hard edge.
+ * PageTone also sets data-tone="dark" | "light". Text on the background follows THE PAGE, not its own
+ * section: `lp-tone text-neutral-950 tone-dark:text-inverse`. So a light section still shows light text
+ * while the page is navy, and both fade together when the page turns (lp-tone matches THEME_FADE).
+ */
+export const THEME_FADE =
+  "transition-[background-color,color,outline-color,box-shadow] duration-1000 ease-[cubic-bezier(0.45,0,0.2,1)] motion-reduce:transition-none";
+
+type Zone = { el: HTMLElement; bg: string; dark: boolean };
+const PageToneContext = createContext<(id: string, zone: Zone) => () => void>(() => () => {});
+
+export function PageTone({ children, className = "", initialBg }: { children: React.ReactNode; className?: string; initialBg: string }) {
+  const zones = useRef(new Map<string, Zone>());
+  const [activeBg, setActiveBg] = useState<string | null>(null);
+  const [dark, setDark] = useState(false);
+
+  // The zone under the middle of the screen wins. Checked once per frame at most while scrolling or resizing.
+  // Both states are primitives, so React skips the re-render while the same zone stays in place.
+  const pick = useRef(() => {
+    const line = window.innerHeight / 2;
+    let found: Zone | null = null;
+    for (const z of zones.current.values()) {
+      const r = z.el.getBoundingClientRect();
+      if (r.top <= line && r.bottom > line) {
+        found = z;
+        break;
+      }
+    }
+    setActiveBg(found ? found.bg : null);
+    setDark(found ? found.dark : false);
+  });
+
+  useEffect(() => {
+    let frame = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(pick.current);
+    };
+    pick.current();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
+
+  const [register] = useState(() => (id: string, zone: Zone) => {
+    zones.current.set(id, zone);
+    pick.current();
+    return () => {
+      zones.current.delete(id);
+    };
+  });
+
+  return (
+    <div data-tone={dark ? "dark" : "light"} className={`${THEME_FADE} ${activeBg ?? initialBg} ${className}`}>
+      <PageToneContext.Provider value={register}>{children}</PageToneContext.Provider>
+    </div>
+  );
+}
+
+/** A run of one or more sections that share a page colour. Pass a full bg-* token class, and `dark` for dark colours. */
+export function ToneZone({ children, bg, dark = false }: { children: React.ReactNode; bg: string; dark?: boolean }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const id = useId();
+  const register = useContext(PageToneContext);
+  useEffect(() => (ref.current ? register(id, { el: ref.current, bg, dark }) : undefined), [id, bg, dark, register]);
+  return <div ref={ref}>{children}</div>;
+}

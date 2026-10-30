@@ -15,7 +15,7 @@ const photos = [
 /** Big statement on the masked dot pattern. Words light up as you scroll; photos drift at different speeds. */
 export function Statement() {
   return (
-    <section className="relative overflow-hidden bg-card">
+    <section className="relative overflow-hidden">
       <div
         aria-hidden
         className="absolute inset-0"
@@ -32,7 +32,7 @@ export function Statement() {
         <div className="relative w-full max-w-[1280px] lg:px-10">
           <ScrollWords
             text="Bluecut runs your LinkedIn end to end: strategy, posts, engagement and progress, with you in control of every step."
-            className="mx-auto max-w-[1055px] text-center lp-h2 text-neutral-950 lg:px-[31px]"
+            className="mx-auto max-w-[1055px] text-center lp-h2 lp-tone text-neutral-950 tone-dark:text-inverse lg:px-[31px]"
           />
           {photos.map((p) => (
             <Parallax key={p.src} distance={p.distance} className={`absolute hidden w-[220px] lg:block ${p.pos}`}>
@@ -168,12 +168,12 @@ function ApprovalPanel() {
 
 export function Connected() {
   return (
-    <section className="flex flex-col items-center gap-[60px] overflow-hidden bg-card px-5 py-[100px] md:px-20">
+    <section id="features" className="flex scroll-mt-16 flex-col items-center gap-[60px] overflow-hidden px-5 py-[100px] md:px-20">
       <div className="flex w-full max-w-[1280px] flex-col gap-4 md:flex-row md:items-end md:justify-between md:px-10">
-        <Reveal as="h2" className="max-w-[580px] lp-h2 text-neutral-950">
+        <Reveal as="h2" className="max-w-[580px] lp-h2 lp-tone text-neutral-950 tone-dark:text-inverse">
           Everything in one place, nothing behind your back
         </Reveal>
-        <Reveal as="p" delay={0.1} className="max-w-[420px] lp-body text-neutral-950 opacity-60">
+        <Reveal as="p" delay={0.1} className="max-w-[420px] lp-body opacity-60 lp-tone text-neutral-950 tone-dark:text-inverse">
           Your strategy, your posts and your progress live in one app you can open from your phone.
         </Reveal>
       </div>
@@ -185,8 +185,8 @@ export function Connected() {
           <Reveal key={c.title} delay={i * 0.12} className="flex flex-1 flex-col items-center gap-6">
             {c.panel}
             <div className="flex w-full max-w-[588px] flex-col gap-3">
-              <h3 className="lp-title text-neutral-950">{c.title}</h3>
-              <p className="max-w-[500px] lp-body text-neutral-400">{c.text}</p>
+              <h3 className="lp-title lp-tone text-neutral-950 tone-dark:text-inverse">{c.title}</h3>
+              <p className="max-w-[500px] lp-body lp-tone text-neutral-400 tone-dark:text-neutral-300">{c.text}</p>
             </div>
           </Reveal>
         ))}

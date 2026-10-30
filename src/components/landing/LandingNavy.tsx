@@ -23,8 +23,8 @@ function Bullets({ items }: { items: string[] }) {
   return (
     <Stagger as="ul" delay={0.2} className="flex flex-col gap-4">
       {items.map((i) => (
-        <StaggerItem as="li" key={i} className="flex items-start gap-2.5 lp-body text-neutral-300">
-          <CheckCircle className="size-6 shrink-0 text-neutral-300" aria-hidden />
+        <StaggerItem as="li" key={i} className="flex items-start gap-2.5 lp-body lp-tone text-neutral-500 tone-dark:text-neutral-300">
+          <CheckCircle className="size-6 shrink-0" aria-hidden />
           <span className="pt-px">{i}</span>
         </StaggerItem>
       ))}
@@ -33,13 +33,14 @@ function Bullets({ items }: { items: string[] }) {
 }
 
 function TextBlock({ title, text, bullets, side }: { title: string; text: string; bullets: string[]; side: "left" | "right" }) {
+  // Text follows the page tone (PageTone in page.tsx): light on navy, dark on white.
   return (
     <div className={`flex w-full max-w-[588px] flex-col justify-center gap-8 ${side === "left" ? "md:pr-10" : "md:pl-10"}`}>
       <div className="flex flex-col gap-4">
-        <Reveal as="h3" className="lp-h3 text-inverse">
+        <Reveal as="h3" className="lp-h3 lp-tone text-neutral-950 tone-dark:text-inverse">
           {title}
         </Reveal>
-        <Reveal as="p" delay={0.1} className="max-w-[500px] lp-body text-inverse">
+        <Reveal as="p" delay={0.1} className="max-w-[500px] lp-body lp-tone text-neutral-700 tone-dark:text-inverse">
           {text}
         </Reveal>
       </div>
@@ -212,7 +213,7 @@ function StrategyPanel() {
 
 export function Features() {
   return (
-    <section className="flex flex-col items-center gap-[60px] overflow-hidden bg-primary-900 px-5 py-[100px] md:px-20">
+    <section className="flex flex-col items-center gap-[60px] overflow-hidden px-5 py-[100px] md:px-20">
       <div className="flex w-full max-w-[1440px] flex-col items-center justify-center gap-10 md:flex-row md:items-stretch md:gap-6 md:px-10">
         <TextBlock
           side="left"

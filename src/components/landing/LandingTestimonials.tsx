@@ -131,8 +131,8 @@ export function Testimonials() {
   const current = mod(active, items.length);
 
   return (
-    <section className="flex flex-col items-center gap-[60px] overflow-hidden bg-card px-5 py-[100px] md:px-10">
-      <Reveal as="h2" className="w-full max-w-[730px] text-center lp-h2 text-neutral-950">
+    <section className="flex flex-col items-center gap-[60px] overflow-hidden px-5 py-[100px] md:px-10">
+      <Reveal as="h2" className="w-full max-w-[730px] text-center lp-h2 lp-tone text-neutral-950 tone-dark:text-inverse">
         Trusted by leaders who value their reputation.
       </Reveal>
 
@@ -247,7 +247,7 @@ export function Testimonials() {
                 <motion.span
                   animate={{ width: on ? 40 : 8 }}
                   transition={{ duration: DUR.base, ease: EASE }}
-                  className="relative block h-1.5 overflow-hidden rounded-full bg-neutral-100 transition-colors duration-300 hover:bg-neutral-200"
+                  className="relative block h-1.5 overflow-hidden rounded-full bg-neutral-100 transition-colors duration-300 hover:bg-neutral-200 tone-dark:bg-inverse/20 tone-dark:hover:bg-inverse/40"
                 >
                   {on && <motion.span style={{ scaleX: reduce ? 1 : progress }} className="absolute inset-0 origin-left rounded-full bg-primary-600" />}
                 </motion.span>

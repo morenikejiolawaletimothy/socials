@@ -40,8 +40,10 @@ function LeaderRow({ faces, reverse, offset }: { faces: string[]; reverse?: bool
             <Image src={src} alt="" fill sizes="80px" className="object-cover" />
             <span
               aria-hidden
-              className={`absolute inset-0 rounded-[20px] ${
-                i % faces.length === 0 ? "shadow-[inset_0px_0px_0px_2px_white]" : "shadow-[inset_0px_0px_0px_1px_var(--color-neutral-100)]"
+              className={`lp-tone absolute inset-0 rounded-[20px] ${
+                i % faces.length === 0
+                  ? "shadow-[inset_0px_0px_0px_2px_white]"
+                  : "shadow-[inset_0px_0px_0px_1px_var(--color-neutral-100)] tone-dark:shadow-[inset_0px_0px_0px_1px_color-mix(in_oklab,var(--color-inverse)_15%,transparent)]"
               }`}
             />
           </li>
@@ -53,9 +55,9 @@ function LeaderRow({ faces, reverse, offset }: { faces: string[]; reverse?: bool
 
 export function Industries() {
   return (
-    <section className="flex flex-col items-center gap-[60px] overflow-hidden bg-card pt-[100px] pb-[124px]">
+    <section className="flex flex-col items-center gap-[60px] overflow-hidden pt-[100px] pb-[124px]">
       <div className="flex w-full max-w-[1280px] flex-col items-center gap-3 px-5 md:px-10">
-        <Reveal as="h2" className="w-full max-w-[730px] text-center lp-h2 text-neutral-950">
+        <Reveal as="h2" className="w-full max-w-[730px] text-center lp-h2 lp-tone text-neutral-950 tone-dark:text-inverse">
           Leaders we work with
         </Reveal>
       </div>
@@ -87,21 +89,18 @@ const faqs = [
 export function Faq() {
   const [open, setOpen] = useState(0);
   return (
-    <section id="faq" className="flex scroll-mt-16 flex-col items-center gap-[60px] bg-card px-5 py-[100px] md:px-10">
+    <section id="faq" className="flex scroll-mt-16 flex-col items-center gap-[60px] px-5 py-[100px] md:px-10">
       <div className="grid w-full max-w-[980px] grid-cols-1 gap-8 md:grid-cols-[2fr_1fr] md:px-10">
-        <div className="flex flex-col items-start gap-6 self-end">
-          <Reveal as="span" className="rounded-[5px] bg-card py-1.5 lp-small text-neutral-950 opacity-80">
-            FAQ
-          </Reveal>
-          <Reveal as="h2" delay={0.05} className="lp-h2-regular text-neutral-950">
+        <div className="flex flex-col items-start gap-6 self-start">
+          <Reveal as="h2" delay={0.05} className="lp-h2-regular lp-tone text-neutral-950 tone-dark:text-inverse">
             Common questions,
             <br />
             straight answers
           </Reveal>
         </div>
-        <Reveal delay={0.1} className="flex flex-col items-start gap-6 self-end md:w-[300px]">
-          <p className="lp-body text-neutral-950 opacity-50">Have a question that is not covered here? Write to us and we will reply within 24 hours.</p>
-          <a href="mailto:hello@bluecut.example" className={`${btnPrimary} h-11`}>
+        <Reveal delay={0.1} className="flex flex-col items-start gap-6 self-start md:w-[300px]">
+          <p className="lp-body opacity-50 lp-tone text-neutral-950 tone-dark:text-inverse">Have a question that is not covered here? Write to us and we will reply within 24 hours.</p>
+          <a href="mailto:hello@bluecut.example" className={btnPrimary}>
             Contact us
           </a>
         </Reveal>
@@ -110,7 +109,7 @@ export function Faq() {
         {faqs.map((f, i) => {
           const isOpen = open === i;
           return (
-            <StaggerItem key={f.q} className="border-b-[0.667px] border-neutral-100">
+            <StaggerItem key={f.q} className="lp-tone border-b-[0.667px] border-neutral-100 tone-dark:border-inverse/15">
               <h3>
                 <button
                   type="button"
@@ -120,9 +119,9 @@ export function Faq() {
                   onClick={() => setOpen(isOpen ? -1 : i)}
                   className="group flex w-full items-center gap-6 rounded-sm py-6 text-left focus-visible:focus-ring"
                 >
-                  <span className="flex-1 lp-body-medium text-neutral-950 transition-colors duration-300 group-hover:text-primary-700">{f.q}</span>
+                  <span className="flex-1 lp-body-medium text-neutral-950 transition-colors duration-300 group-hover:text-primary-700 tone-dark:text-inverse tone-dark:group-hover:text-primary-300">{f.q}</span>
                   <motion.span animate={{ rotate: isOpen ? 45 : 0 }} transition={{ duration: DUR.fast, ease: EASE }} className="flex">
-                    <Plus className="size-5 text-neutral-950" aria-hidden />
+                    <Plus className="lp-tone size-5 text-neutral-950 tone-dark:text-inverse" aria-hidden />
                   </motion.span>
                 </button>
               </h3>
@@ -138,7 +137,7 @@ export function Faq() {
                     transition={{ duration: 0.4, ease: EASE }}
                     className="overflow-hidden"
                   >
-                    <p className="pb-6 lp-body text-neutral-950 opacity-50">{f.a}</p>
+                    <p className="pb-6 lp-body opacity-50 lp-tone text-neutral-950 tone-dark:text-inverse">{f.a}</p>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -162,20 +161,21 @@ const socials = [
 ];
 
 export function ClosingAndFooter() {
+  // Text follows the page tone (PageTone in page.tsx): light on navy, dark before the page turns.
   return (
-    <div className="bg-primary-900 pb-28 md:pb-0">
+    <div className="pb-28 md:pb-0">
       <section aria-label="Get started" className="flex flex-col items-center px-5 pb-[50px] pt-[100px] md:px-10">
         <div className="flex w-full max-w-[1280px] flex-col items-center gap-6 md:px-10">
-          <Reveal as="h2" className="max-w-[560px] text-center lp-h2-regular font-medium text-inverse">
+          <Reveal as="h2" className="max-w-[560px] text-center lp-h2-regular font-medium lp-tone text-neutral-950 tone-dark:text-inverse">
             Less time on LinkedIn.
             <br />
             More of the right attention.
           </Reveal>
-          <Reveal as="p" delay={0.1} className="max-w-[475px] px-2 text-center lp-body text-neutral-300">
+          <Reveal as="p" delay={0.1} className="max-w-[475px] px-2 text-center lp-body lp-tone text-neutral-500 tone-dark:text-neutral-300">
             A dedicated expert runs your LinkedIn around your goals, and you approve everything. Your first 2 weeks are free.
           </Reveal>
           <Reveal delay={0.2}>
-            <Link href="/signup" className={`${btnPrimary} h-11`}>
+            <Link href="/signup" className={btnPrimary}>
               Get started
             </Link>
           </Reveal>
@@ -203,17 +203,21 @@ export function ClosingAndFooter() {
                 ))}
               </div>
               <form className="relative flex w-full flex-col gap-4 md:max-w-[280px]" action="#">
-                <label htmlFor="newsletter" className="text-[14px] font-medium leading-[14.4px] tracking-[-0.24px] text-neutral-900">
+                <label htmlFor="newsletter" className="text-body-sm font-medium text-primary">
                   Newsletter
                 </label>
                 <div className="relative">
+                  {/* Same field style as the shared Input (sign-in, sign-up): text, placeholder, border, focus. */}
                   <input
                     id="newsletter"
                     type="email"
-                    placeholder="Your email"
-                    className="w-full rounded-[8px] border border-neutral-100 bg-neutral-25 py-2.5 pl-3 pr-16 text-[14px] font-medium tracking-[-0.28px] text-primary placeholder:text-neutral-300 focus-visible:border-primary-600 focus-visible:focus-ring"
+                    autoComplete="email"
+                    placeholder="name@company.com"
+                    className="min-h-11 w-full rounded-sm border border-border-strong bg-card py-3 pl-4 pr-16 text-body text-primary shadow-sm placeholder:text-neutral-400 focus-visible:border-primary-600 focus-visible:focus-ring"
                   />
-                  <button type="submit" aria-label="Subscribe" className="absolute right-1 top-1 flex items-center justify-center rounded-[6px] bg-primary-600 px-4 py-2 text-inverse hover:bg-primary-700 focus-visible:focus-ring">
+                  {/* Inset 4px from the top, right and bottom so the gap around the button is even at any field height.
+                      Corner radius = field radius (6px) minus the inset, rounded up, so the two corners run parallel. */}
+                  <button type="submit" aria-label="Subscribe" className="absolute inset-y-1 right-1 flex items-center justify-center rounded-[4px] bg-primary-600 px-4 text-inverse hover:bg-primary-700 focus-visible:focus-ring">
                     <PaperPlaneTilt className="size-4" aria-hidden />
                   </button>
                 </div>
@@ -231,10 +235,7 @@ export function ClosingAndFooter() {
               <div className="h-px w-full bg-neutral-100" />
               <div className="flex items-end justify-between gap-4">
                 <BluecutMark size={40} textClass="text-[20px] leading-[26px]" />
-                <a
-                  href="mailto:hello@bluecut.example"
-                  className="lp-btn inline-flex items-center justify-center rounded-[10px] bg-primary-600 px-[18px] py-[13px] text-[15px] font-medium leading-[15px] tracking-[-0.3px] text-inverse hover:bg-primary-700 focus-visible:focus-ring"
-                >
+                <a href="mailto:hello@bluecut.example" className={btnPrimary}>
                   Contact us
                 </a>
               </div>
