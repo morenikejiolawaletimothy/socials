@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PayDialog } from "@/components/client/PayDialog";
 import { SetupFrame } from "@/components/client/SetupFrame";
-import { VideoAddonPicker, makerLabel, type Maker } from "@/components/client/VideoAddon";
+import { VideoAddonPicker, addonCents, addonReady, makerLabel, needsQuote, type AddonChoice } from "@/components/client/VideoAddon";
 import { Banner, Button, Input, useTask } from "@/components/ui";
 import { date, fullName, money } from "@/lib/format";
 import { act, useData, useMyClient } from "@/lib/mock";
@@ -19,8 +19,10 @@ export default function PlanPage() {
   const { client, user, contract } = useMyClient();
   const [step, setStep] = useState(contract && client?.setupDone.includes("plan") ? 2 : 0);
   const [planId, setPlanId] = useState<PlanId>("6m");
-  const [video, setVideo] = useState<{ on: boolean; maker: Maker }>({ on: false, maker: "client" });
-  const addonCents = useData().settings.videoAddonCents;
+  const [video, setVideo] = useState<AddonChoice>({ on: false, maker: "client", understood: false });
+  const [videoError, setVideoError] = useState(false);
+  const videoPrice = useData().settings.videoAddonCents;
+  const videoMonthly = video.on ? addonCents(video.maker, videoPrice) : 0;
   const [name, setName] = useState("");
   const [error, setError] = useState<string>();
   const { run, pending } = useTask();
@@ -57,7 +59,7 @@ export default function PlanPage() {
               </label>
             ))}
           </div>
-          <VideoAddonPicker on={video.on} maker={video.maker} priceCents={addonCents} onChange={(on, maker) => setVideo({ on, maker })} />
+          <VideoAddonPicker value={video} priceCents={videoPrice} onChange={setVideo} />
           <ul className="flex flex-col gap-2">
             {included.map((i) => (
               <li key={i} className="flex items-center gap-2 text-body-sm text-primary">
@@ -65,7 +67,8 @@ export default function PlanPage() {
               </li>
             ))}
           </ul>
-          <Button className="self-start" onClick={() => setStep(1)}>
+          {videoError && !addonReady(video) && <p className="text-body-sm text-danger">Tick that you understand video production is quoted separately, or choose &ldquo;I will supply the videos&rdquo;.</p>}
+          <Button className="self-start" onClick={() => (addonReady(video) ? setStep(1) : setVideoError(true))}>
             Continue
           </Button>
         </div>
@@ -92,10 +95,17 @@ export default function PlanPage() {
           <dl className="grid grid-cols-1 gap-4 rounded-md border border-border p-4 sm:grid-cols-2">
             {[
               ["Plan", `${plan.label}, ${money(plan.monthlyUsdCents)} a month`],
-              ["Video add-on", video.on ? `${money(addonCents)} a month. ${makerLabel[video.maker]}` : "Not added"],
+              [
+                "Video add-on",
+                !video.on
+                  ? "Not added"
+                  : video.maker === "bluecut"
+                    ? `${makerLabel.bluecut}. Production quoted after your onboarding call`
+                    : `${money(videoPrice)} a month. ${makerLabel[video.maker]}${video.maker === "both" ? ". Production quoted after your onboarding call" : ""}`,
+              ],
               ["Free 2 weeks", `Today to ${date(freeEnds)}, with the full service`],
               ["Contract", `${date(freeEnds)} to ${date(ends)}`],
-              ["Total", money((plan.monthlyUsdCents + (video.on ? addonCents : 0)) * plan.months)],
+              ["Total", `${money((plan.monthlyUsdCents + videoMonthly) * plan.months)}${video.on && needsQuote(video.maker) ? ", plus video production once you agree a quote" : ""}`],
             ].map(([k, v]) => (
               <div key={k} className="flex flex-col gap-1">
                 <dt className="text-caption text-secondary">{k}</dt>
@@ -168,7 +178,7 @@ export default function PlanPage() {
           setStep(3);
         }}
         clientId={client.id}
-        amountCents={plan.monthlyUsdCents + (video.on ? addonCents : 0)}
+        amountCents={plan.monthlyUsdCents + videoMonthly}
       />
     </SetupFrame>
   );

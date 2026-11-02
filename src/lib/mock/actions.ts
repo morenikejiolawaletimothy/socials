@@ -695,7 +695,9 @@ export async function setVideoAddon(clientId: string, maker: "client" | "bluecut
   update((db) => {
     let next: Db = { ...db, contracts: db.contracts.map((k) => (k.clientId === clientId ? { ...k, videoAddon: maker ? { maker, since: k.videoAddon?.since ?? nowIso() } : undefined } : k)) };
     const who = nameOf(clientUser(db, clientId));
-    const what = maker ? `added the video add-on (${maker === "client" ? "they supply the videos" : maker === "bluecut" ? "Bluecut makes the videos" : "both"})` : "removed the video add-on";
+    const what = maker
+      ? `added the video add-on (${maker === "client" ? "they supply the videos" : maker === "bluecut" ? "Bluecut makes the videos: agree the production and send a quote" : "both: agree the production and send a quote"})`
+      : "removed the video add-on";
     next = notify(next, managerUserOf(db, clientId)?.id, `${who} ${what}.`, `/manager/clients/${clientId}`, { email: true });
     next = notify(next, OWNER, `${who} ${what}.`, `/admin/clients/${clientId}`);
     next = log(next, clientId, "you", "account", maker ? "Added the video add-on" : "Removed the video add-on");
@@ -764,7 +766,7 @@ export async function signContract(clientId: string, months: 3 | 6 | 12, monthly
     };
     const signed = notify(next, clientUser(db, clientId)?.id, `Your contract is signed. Your free 2 weeks have started.`, "/contract");
     // The manager plans the video conversation for the goals call.
-    return videoAddon ? notify(signed, managerUserOf(db, clientId)?.id, `${nameOf(clientUser(db, clientId))} added the video add-on. Talk about video on the goals call.`, `/manager/clients/${clientId}`) : signed;
+    return videoAddon ? notify(signed, managerUserOf(db, clientId)?.id, `${nameOf(clientUser(db, clientId))} added the video add-on${videoAddon === "client" ? "" : " with Bluecut-made video"}. Talk about video on the goals call${videoAddon === "client" ? "" : ", then send a quote for production"}.`, `/manager/clients/${clientId}`) : signed;
   });
 }
 

@@ -115,7 +115,9 @@ export default function OwnerClientPage({ params }: { params: Promise<{ id: stri
                     <div>
                       <dt className="text-caption text-secondary">Video add-on</dt>
                       <dd className="text-primary">
-                        {b.contract.videoAddon ? `On, ${money(db.settings.videoAddonCents)} a month. ${{ client: "Client supplies the videos", bluecut: "Bluecut makes the videos", both: "Both" }[b.contract.videoAddon.maker]}` : "Off"}
+                        {b.contract.videoAddon
+                          ? { client: `On, ${money(db.settings.videoAddonCents)} a month. Client supplies the videos`, bluecut: "On. Bluecut makes the videos: production quoted separately", both: `On, ${money(db.settings.videoAddonCents)} a month, plus production quoted separately` }[b.contract.videoAddon.maker]
+                          : "Off"}
                       </dd>
                     </div>
                     <div>
