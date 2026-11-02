@@ -6,7 +6,8 @@ import Link from "next/link";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Avatar, Button, Dialog, Input, Menu, Pill, TextLink, textActionClass, useConfirm, useTask, useToast } from "@/components/ui";
 import { day, fullName, time } from "@/lib/format";
-import { fileSize, toImage } from "@/lib/image";
+import { prepareAttachment } from "@/lib/upload";
+import { VideoPlayer } from "@/components/content/PostMedia";
 import { act, type Message, type Reaction, type Thread, type User } from "@/lib/mock";
 import { MessageActions, MessageEditor, MessageMarks, PinnedStrip, ReactionChips } from "./MessageActions";
 
@@ -41,7 +42,9 @@ function Linked({ text }: { text: string }) {
 function FileCard({ file, action }: { file: Attachment; action?: React.ReactNode }) {
   return (
     <div className="flex w-full max-w-xs flex-col overflow-hidden rounded-lg border border-border bg-card">
-      {file.kind === "image" && file.src ? (
+      {file.kind === "video" && file.src ? (
+        <VideoPlayer video={{ src: file.src, poster: file.poster ?? "", alt: file.name, seconds: file.seconds ?? 0 }} />
+      ) : file.kind === "image" && file.src ? (
         <div className="relative aspect-video w-full bg-neutral-100">
           <Image src={file.src} alt={file.name} fill sizes="320px" className="object-cover" />
         </div>
@@ -501,9 +504,9 @@ export function ClientChat({ clientId, me, manager, messages, threads }: { clien
           <div className="flex flex-col gap-2 rounded-lg border border-border-strong bg-card p-2 focus-within:border-primary-600">
             {file && (
               <span className="flex items-center gap-3 self-start rounded-md bg-neutral-50 px-3 py-2">
-                {file.kind === "image" && file.src ? (
+                {(file.kind === "image" && file.src) || file.poster ? (
                   <span className="relative size-10 shrink-0 overflow-hidden rounded-sm">
-                    <Image src={file.src} alt="" fill sizes="40px" className="object-cover" />
+                    <Image src={(file.poster ?? file.src)!} alt="" fill sizes="40px" className="object-cover" />
                   </span>
                 ) : (
                   <FileText className="size-6 shrink-0 text-primary-600" aria-hidden />
@@ -546,9 +549,11 @@ export function ClientChat({ clientId, me, manager, messages, threads }: { clien
                     const f = e.target.files?.[0];
                     if (!f) return;
                     e.target.value = "";
-                    if (f.size > 25 * 1024 * 1024) return toast("That file is over 25 MB. Send a smaller one, or paste a link to it.", "danger");
-                    const image = ["image/jpeg", "image/png", "image/webp"].includes(f.type);
-                    setFile({ name: f.name, size: fileSize(f.size), kind: image ? "image" : f.type === "application/pdf" ? "pdf" : "doc", src: image ? await toImage(f) : undefined });
+                    try {
+                      setFile(await prepareAttachment(f));
+                    } catch (err) {
+                      toast((err as Error).message, "danger");
+                    }
                   }}
                 />
                 <button

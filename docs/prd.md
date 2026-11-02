@@ -230,9 +230,9 @@ Bluecut Socials is a LinkedIn account management service for busy senior profess
 - The manager creates, sources or uploads the media and attaches it.
 - Per-client template library. Optional simple text-graphic maker, never applied by default.
 
-**US-5.9 (P0, new, proposed)** As a client or manager, I want to upload videos and carousels and attach them to posts, so that content is not limited to text and images. (C15, M4, C17)
+**US-5.9 (P0, new)** As a client or manager, I want to upload videos and carousels and attach them to posts, so that content is not limited to text and images. (C15, M4, C17)
 - Video and carousels are made off the platform: shot by the client with our guidance, filmed by us, made with AI tools, or designed in Canva or Figma. The platform uploads, checks, attaches and publishes.
-- Client-supplied video and carousels: every plan. Bluecut-made video: higher plan only (form to be decided: add-on or tier).
+- Client-supplied video and carousels: every plan. Bluecut-made video: a paid video add-on to any contract, offered at onboarding and managed in Contract. The video guide is recommended by the system from the strategy; the manager can edit it.
 - Your brand gains Videos and Carousels; Moments take video; the manager can upload while drafting, saved to the client's Brand.
 - Checks against LinkedIn's limits (format, length, size, captions, cover frame, page descriptions). Video posts add a Processing state.
 - Quick task "Record a short video" with what to shoot. Weekly targets can count posts by format. Full detail: flow map section 9a.

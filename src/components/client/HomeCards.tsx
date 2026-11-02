@@ -11,9 +11,10 @@ import { callTitle, upcomingCalls } from "@/components/rails/NextCallCard";
 import { Avatar, Badge, Banner, Button, buttonClass, Card, Meta, Pill, ProgressBar, Select, TextButton, textActionClass, Tile, TileAction, TileFooter, TileIcon, useToast } from "@/components/ui";
 import { isOverdue } from "@/lib/status";
 import { ago, agoIn, date, day, dayIn, dayTime, dayTimeIn, daysFrom, fullName, money, plural, time } from "@/lib/format";
-import type { ClientBundle, Post, QuickTask, TaskEvent } from "@/lib/mock";
+import { useData, type ClientBundle, type Post, type QuickTask, type TaskEvent } from "@/lib/mock";
 import { LivePostActions } from "./LivePostActions";
 import { PayDialog } from "./PayDialog";
+import { monthlyTotal } from "./VideoAddon";
 import { reportActivity } from "./reportActivity";
 import { nextSetupStep, setupSteps } from "./setup";
 
@@ -26,6 +27,7 @@ const buttonLink = (primary: boolean) => `self-start ${buttonClass(primary ? "pr
 export function PausedCard({ b }: { b: ClientBundle }) {
   const toast = useToast();
   const [paying, setPaying] = useState(false);
+  const addonCents = useData().settings.videoAddonCents;
   const { client, contract, posts } = b;
   if (client?.status !== "paused") return null;
   const daysPaused = client.pausedAt ? -daysFrom(client.pausedAt) : 0;
@@ -41,7 +43,7 @@ export function PausedCard({ b }: { b: ClientBundle }) {
         <ul className="flex flex-col gap-2 text-body-sm text-secondary">
           <li>Paused for {plural(daysPaused, "day")}.</li>
           <li>{waiting ? `Waiting for you: ${plural(waiting, "post")}, your strategy and your settings.` : "Your strategy, brand and settings are kept."} Nothing is lost.</li>
-          {contract && <li>Amount due: {money(contract.monthlyCents)} for month 1.</li>}
+          {contract && <li>Amount due: {money(monthlyTotal(contract, addonCents))} for month 1.</li>}
         </ul>
         {daysPaused >= 15 && (
           <Banner tone="warning" title="Your account will be removed in 30 days">
@@ -58,7 +60,7 @@ export function PausedCard({ b }: { b: ClientBundle }) {
           onClose={() => setPaying(false)}
           onPaid={() => toast("Your account is active again. Scheduled posts are back on.")}
           clientId={client.id}
-          amountCents={contract.monthlyCents}
+          amountCents={monthlyTotal(contract, addonCents)}
         />
       )}
     </Card>
@@ -242,6 +244,7 @@ export function eventLength(e: TaskEvent) {
 function TaskIcon({ t, className }: { t: QuickTask; className: string }) {
   if (t.kind === "connect") return <UserPlus className={className} aria-hidden />;
   if (t.kind === "event") return t.event?.type === "program" ? <GraduationCap className={className} aria-hidden /> : <CalendarStar className={className} aria-hidden />;
+  if (t.kind === "video") return <VideoCamera className={className} aria-hidden />;
   return <LinkedinLogo className={className} aria-hidden />;
 }
 
@@ -269,6 +272,7 @@ function TaskVisual({ t }: { t: QuickTask }) {
 function taskStatus(t: QuickTask) {
   if (t.kind === "connect") return `${t.people?.filter((p) => p.done).length ?? 0} of ${t.people?.length ?? 0} sent`;
   if (t.kind === "event" && t.event) return `${t.event.type === "program" ? "Program" : "Event"} ${dayIn(t.event.startsAt)} · ${t.event.place}`;
+  if (t.kind === "video" && t.video) return `${t.video.idea}. ${t.video.length}`;
   return "Copy and paste in a minute";
 }
 
@@ -308,7 +312,7 @@ export function TasksCard({ b }: { b: ClientBundle }) {
                   <Meta icon={CalendarBlank}>
                     {t.kind === "event" ? "Closing by" : "Due"} {dayIn(t.dueAt)}
                   </Meta>
-                  <TileAction>{t.kind === "event" ? (t.event?.type === "program" ? "Apply" : "Register") : sent > 0 ? "Continue" : "Start"}</TileAction>
+                  <TileAction>{t.kind === "event" ? (t.event?.type === "program" ? "Apply" : "Register") : t.kind === "video" ? "See what to record" : sent > 0 ? "Continue" : "Start"}</TileAction>
                 </TileFooter>
               </Tile>
             </li>

@@ -566,7 +566,7 @@ Once approved, these will be written into `docs/prd.md`.
 
 ---
 
-## 9a. Media: images, carousels and video (proposed, awaiting approval)
+## 9a. Media: images, carousels and video (approved)
 
 **Principle.** Bluecut never makes video on the platform. Video is shot by the client (we guide them on what to shoot), filmed by us in person, or made with AI tools, all off the platform. Carousels are designed off the platform too (Canva, Figma, the client's templates) or supplied by the client. The platform's job is to get the finished file in, check it against LinkedIn's rules, attach it to a post, and publish it.
 
@@ -587,7 +587,7 @@ Once approved, these will be written into `docs/prd.md`.
 - **Post format** gains Video and Newsletter, matching the PRD list (text, image, carousel, video, article, newsletter).
 - **"Add media"** replaces "Add a visual", with three choices: **Image**, **Carousel**, **Video**. Each picks from the client's Brand or uploads a new file. One per post: image, carousel or video.
 - **Video:** choose or upload the cover frame; add captions (.srt, English) or mark "No speech". Length, shape and size are shown.
-- **Carousel:** a title (shown on LinkedIn as "Title · 7 pages"); reorder or remove pages before sending.
+- **Carousel:** a title (shown on LinkedIn as "Title · 7 pages"). The pages and their order come from the file; to change them, edit the file and upload it again. PDFs show their pages here; PowerPoint and Word show as a document until LinkedIn converts them.
 - **New checks:** video is MP4 or MOV, 3 seconds to 30 minutes, within the size limit; captions present (or "No speech"); cover frame set; carousel is a PDF within the page and size limits; every image and carousel page has a description. Checks that fail LinkedIn's rules cannot be dismissed.
 - **Ideas** can suggest "Ask {client} for a short video on this", which sends the client a quick task (C17) with what to shoot, and the post waits for the clip.
 
@@ -603,10 +603,10 @@ Once approved, these will be written into `docs/prd.md`.
 
 **LinkedIn limits to design for.** Video: MP4, 3 seconds to 30 minutes; Microsoft's documentation gives two size limits (500 MB and 5 GB), to be confirmed against the API version used in Phase 2; one English caption file; optional thumbnail. Carousels are posted as documents (PDF).
 
-**Open for Fola.**
-1. **"Higher plan":** plans today are contract lengths (3, 6, 12 months). Is Bluecut-made video an add-on to any plan (recommended: price per video or per month), or a separate tier?
-2. **Carousels we design:** in every plan (assumed above), or also higher plan only?
-3. **Video guide:** one shared guide for all clients to start, or written per client by the manager?
+**Decided (Fola).**
+1. **Video add-on:** an add-on to any contract, paid on top of the plan. Offered at onboarding (Choose a plan) and addable or removable later from Contract. Turning it on starts an onboarding conversation: the client supplies the video, Bluecut makes it (studio visit or AI-made, off the platform), or both. The client states which.
+2. **Carousels:** every plan, like images. LinkedIn standard: a document post (PDF, PowerPoint or Word), up to 100 MB and 300 pages.
+3. **Video guide:** the system recommends it (what kind of video, when, and why it serves the client's goal), from the strategy. The manager can edit, add to or remove from it before it goes to the client. Video sizes and lengths follow LinkedIn's standard.
 
 ## 10. Open questions
 

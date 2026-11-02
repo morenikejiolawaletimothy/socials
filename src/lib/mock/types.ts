@@ -135,14 +135,34 @@ export type Post = {
   clientId: string;
   text: string;
   topic: string;
-  format: "story" | "opinion" | "how-to" | "carousel" | "article";
+  format: "story" | "opinion" | "how-to" | "carousel" | "video" | "article" | "newsletter";
   /** The manager's short note to the client: why this post. */
   why: string;
   image?: { src: string; alt: string };
   /** A video post: the clip, the frame shown before it plays, its length and its shape. Use one of image, video or carousel. */
-  video?: { src: string; poster: string; alt: string; seconds: number; shape?: "landscape" | "portrait" | "square" };
+  video?: {
+    src: string;
+    poster: string;
+    alt: string;
+    seconds: number;
+    shape?: "landscape" | "portrait" | "square";
+    /** The caption file's name (LinkedIn takes one English .srt). */
+    captions?: string;
+    /** The manager confirmed the video has no speech, so it needs no captions. */
+    noSpeech?: boolean;
+    /** The Brand file it came from, if any. */
+    fileId?: string;
+  };
   /** A LinkedIn document carousel: a title and its pages, swiped one at a time. */
-  carousel?: { title: string; slides: { src: string; alt: string }[] };
+  carousel?: {
+    title: string;
+    slides: { src: string; alt: string }[];
+    /** The document LinkedIn receives (PDF, PowerPoint or Word). PowerPoint and Word have no page preview here. */
+    file?: { name: string; size: string; src?: string; pages?: number };
+    fileId?: string;
+  };
+  /** A post waiting for a video the client was asked to record (quick task id). */
+  waitingForVideo?: string;
   status: PostStatus;
   /** When the client's review is due. */
   dueAt?: string;
@@ -194,7 +214,7 @@ export type TaskEvent = {
 export type QuickTask = {
   id: string;
   clientId: string;
-  kind: "connect" | "profile" | "event";
+  kind: "connect" | "profile" | "event" | "video";
   title: string;
   /** For "event" tasks: register by this date. */
   dueAt: string;
@@ -205,6 +225,8 @@ export type QuickTask = {
   where?: string;
   /** "event" tasks: an event or program to register for and attend. Done means registered. */
   event?: TaskEvent;
+  /** "video" tasks: what to record (suggested by the system from the strategy, edited by the manager), and the clip once uploaded. */
+  video?: VideoBrief;
   done: boolean;
   sentAt: string;
 };
@@ -239,7 +261,7 @@ export type Strategy = {
   tone: string;
   measures: string[];
   /** Weekly targets by period. */
-  targets: { period: string; posts: number; comments: number; connections: number; extra?: string }[];
+  targets: { period: string; posts: number; comments: number; connections: number; videos?: number; extra?: string }[];
   changeNote?: string;
   approvedAt?: string;
   frameworkVersion: string;
@@ -287,7 +309,7 @@ export type Message = {
   threadId?: string;
   fromUserId: string;
   text?: string;
-  file?: { name: string; size: string; kind: "image" | "pdf" | "doc"; src?: string };
+  file?: { name: string; size: string; kind: "image" | "pdf" | "doc" | "video"; src?: string; poster?: string; seconds?: number };
   voice?: { seconds: number; transcript: string };
   at: string;
   savedToBrand?: boolean;
@@ -341,20 +363,44 @@ export type PermissionRequest = {
 export type BrandFile = {
   id: string;
   clientId: string;
-  section: "photos" | "logos" | "documents";
+  section: "photos" | "logos" | "documents" | "videos" | "carousels";
   name: string;
   src?: string;
   size: string;
   at: string;
+  /** Videos: cover frame, length and shape. */
+  video?: { poster: string; seconds: number; shape: "landscape" | "portrait" | "square" };
+  /** Carousels: page count and page previews (PDF only). */
+  carousel?: { pages?: number; slides: { src: string; alt: string }[] };
+  /** Who added it: the client, or the manager while drafting. */
+  addedBy?: "client" | "team";
 };
 
 export type OffLimit = { id: string; kind: "topic" | "person" | "company" | "interaction"; text: string };
+
+/** What to record, for a "Record a short video" quick task. */
+export type VideoBrief = {
+  idea: string;
+  /** Why this video helps the client's goal. */
+  why: string;
+  /** What to say or show, in order. */
+  shots: string[];
+  length: string;
+  shape: "landscape" | "portrait" | "square";
+  tips: string[];
+  /** The post this video is for, if any. */
+  postId?: string;
+  /** The Brand file once the client uploads the clip. */
+  fileId?: string;
+};
 
 export type Moment = {
   id: string;
   clientId: string;
   note: string;
   photos: string[];
+  /** Videos attached to the Moment (sources, as in Brand files). */
+  videos?: { src: string; poster: string; seconds: number }[];
   at: string;
   status: "new" | "seen" | "post-drafted";
 };
@@ -382,6 +428,8 @@ export type Contract = {
   startsAt: string;
   endsAt: string;
   status: "free" | "active" | "ending" | "paused" | "completed" | "cancelled";
+  /** Video add-on: paid on top of the plan. Who makes the videos was agreed at onboarding. */
+  videoAddon?: { maker: "client" | "bluecut" | "both"; since: string };
   /** The status before the client pulled out, so they can change their mind. */
   cancelledFrom?: Exclude<Contract["status"], "cancelled">;
   paid: boolean;
@@ -485,6 +533,8 @@ export type Settings = {
   maxClientsPerManager: number;
   daysBetweenCalls: number;
   sessionTimeoutMinutes: number;
+  /** Video add-on price, a month, on top of the plan (USD cents). */
+  videoAddonCents: number;
 };
 
 export type ManagerChangeRequest = { id: string; clientId: string; reason: string; at: string; status: "open" | "done" };

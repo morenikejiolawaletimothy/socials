@@ -113,6 +113,12 @@ export default function OwnerClientPage({ params }: { params: Promise<{ id: stri
                       </dd>
                     </div>
                     <div>
+                      <dt className="text-caption text-secondary">Video add-on</dt>
+                      <dd className="text-primary">
+                        {b.contract.videoAddon ? `On, ${money(db.settings.videoAddonCents)} a month. ${{ client: "Client supplies the videos", bluecut: "Bluecut makes the videos", both: "Both" }[b.contract.videoAddon.maker]}` : "Off"}
+                      </dd>
+                    </div>
+                    <div>
                       <dt className="text-caption text-secondary">Dates</dt>
                       <dd className="text-primary">
                         {date(b.contract.startsAt)} to {date(b.contract.endsAt)}

@@ -5,7 +5,8 @@ import Image from "next/image";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Avatar, Button, useConfirm, useTask, useToast } from "@/components/ui";
 import { day, fullName, time } from "@/lib/format";
-import { fileSize, toImage } from "@/lib/image";
+import { prepareAttachment } from "@/lib/upload";
+import { VideoPlayer } from "@/components/content/PostMedia";
 import { act, type Message, type Reaction, type User } from "@/lib/mock";
 import { MessageActions, MessageEditor, MessageMarks, PinnedStrip, ReactionChips } from "./MessageActions";
 
@@ -59,7 +60,9 @@ function Bubble({
         )}
         {m.file && (
           <div className="flex w-64 flex-col overflow-hidden rounded-lg border border-border bg-card">
-            {m.file.kind === "image" && m.file.src ? (
+            {m.file.kind === "video" && m.file.src ? (
+              <VideoPlayer video={{ src: m.file.src, poster: m.file.poster ?? "", alt: m.file.name, seconds: m.file.seconds ?? 0 }} />
+            ) : m.file.kind === "image" && m.file.src ? (
               <div className="relative aspect-video w-full bg-neutral-100">
                 <Image src={m.file.src} alt={m.file.name} fill sizes="256px" className="object-cover" />
               </div>
@@ -218,12 +221,17 @@ export function Conversation({
             const f = e.target.files?.[0];
             if (!f) return;
             e.target.value = "";
-            if (f.size > 25 * 1024 * 1024) return toast("That file is over 25 MB. Send a smaller one, or a link.", "danger");
             setUploading(f.name);
-            const image = ["image/jpeg", "image/png", "image/webp"].includes(f.type);
-            await run("file", async () =>
-              act.sendMessage(clientId, me.id, { file: { name: f.name, size: fileSize(f.size), kind: image ? "image" : f.type === "application/pdf" ? "pdf" : "doc", src: image ? await toImage(f) : undefined } }, asTeam),
-            );
+            await run("file", async () => {
+              let file;
+              try {
+                file = await prepareAttachment(f);
+              } catch (err) {
+                toast((err as Error).message, "danger");
+                return;
+              }
+              await act.sendMessage(clientId, me.id, { file }, asTeam);
+            });
             setUploading(null);
           }}
         />

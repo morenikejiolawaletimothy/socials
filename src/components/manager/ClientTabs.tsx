@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { Badge, Banner, Button, Card, Dialog, Input, ProgressBar, Textarea, useConfirm, useTask, useToast } from "@/components/ui";
 import { ago, agoIn, dayTime, fullName, plural } from "@/lib/format";
+import { MediaThumb } from "@/components/content/MediaThumb";
+import { duration } from "@/lib/linkedin";
 import { act, type ClientBundle, type Lead, type Update } from "@/lib/mock";
 
 const linkClass = "rounded-sm text-body-sm font-medium text-primary-600 hover:text-primary-700 hover:underline focus-visible:focus-ring";
@@ -143,7 +145,7 @@ export function PlanTab({ b, id }: { b: ClientBundle; id: string }) {
           <span className="text-caption text-secondary">Weekly targets</span>
           {s.targets.map((t) => (
             <p key={t.period} className="text-body-sm text-primary">
-              <span className="font-medium">{t.period}:</span> {t.posts} posts, {t.comments} comments, {t.connections} connection requests. {t.extra}
+              <span className="font-medium">{t.period}:</span> {t.posts} posts{t.videos ? ` (${t.videos} video)` : ""}, {t.comments} comments, {t.connections} connection requests. {t.extra}
             </p>
           ))}
         </div>
@@ -520,11 +522,17 @@ export function BrandTab({ b }: { b: ClientBundle }) {
                   {m.status === "new" && <Badge status="info">New</Badge>}
                 </span>
                 <p className="text-body-sm text-primary">{m.note}</p>
-                {m.photos.length > 0 && (
-                  <div className="flex gap-2">
+                {(m.photos.length > 0 || (m.videos?.length ?? 0) > 0) && (
+                  <div className="flex flex-wrap gap-2">
                     {m.photos.map((p) => (
                       <span key={p} className="relative size-16 overflow-hidden rounded-sm">
                         <Image src={p} alt="" fill sizes="64px" className="object-cover" />
+                      </span>
+                    ))}
+                    {m.videos?.map((v) => (
+                      <span key={v.src} className="relative size-16 overflow-hidden rounded-sm">
+                        <Image src={v.poster} alt="Video" fill sizes="64px" className="object-cover" />
+                        <span className="absolute bottom-1 left-1 rounded-sm bg-neutral-900/70 px-1 text-caption text-inverse">{duration(v.seconds)}</span>
                       </span>
                     ))}
                   </div>
@@ -549,9 +557,13 @@ export function BrandTab({ b }: { b: ClientBundle }) {
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {b.files.map((f) => (
             <li key={f.id} className="flex flex-col gap-2">
-              <span className="relative flex aspect-square items-center justify-center overflow-hidden rounded-md bg-neutral-50">
-                {f.src ? <Image src={f.src} alt={f.name} fill sizes="160px" className="object-cover" /> : <span className="text-caption text-secondary">{f.section}</span>}
-              </span>
+              {f.video || f.carousel ? (
+                <MediaThumb file={f} />
+              ) : (
+                <span className="relative flex aspect-square items-center justify-center overflow-hidden rounded-md bg-neutral-50">
+                  {f.src ? <Image src={f.src} alt={f.name} fill sizes="160px" className="object-cover" /> : <span className="text-caption text-secondary">{f.section}</span>}
+                </span>
+              )}
               <span className="truncate text-caption text-secondary">{f.name}</span>
             </li>
           ))}

@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PayDialog } from "@/components/client/PayDialog";
 import { SetupFrame } from "@/components/client/SetupFrame";
+import { VideoAddonPicker, makerLabel, type Maker } from "@/components/client/VideoAddon";
 import { Banner, Button, Input, useTask } from "@/components/ui";
 import { date, fullName, money } from "@/lib/format";
-import { act, useMyClient } from "@/lib/mock";
+import { act, useData, useMyClient } from "@/lib/mock";
 import { included, plans, type PlanId } from "@/lib/pricing";
 
 const DAY = 86_400_000;
@@ -18,6 +19,8 @@ export default function PlanPage() {
   const { client, user, contract } = useMyClient();
   const [step, setStep] = useState(contract && client?.setupDone.includes("plan") ? 2 : 0);
   const [planId, setPlanId] = useState<PlanId>("6m");
+  const [video, setVideo] = useState<{ on: boolean; maker: Maker }>({ on: false, maker: "client" });
+  const addonCents = useData().settings.videoAddonCents;
   const [name, setName] = useState("");
   const [error, setError] = useState<string>();
   const { run, pending } = useTask();
@@ -54,6 +57,7 @@ export default function PlanPage() {
               </label>
             ))}
           </div>
+          <VideoAddonPicker on={video.on} maker={video.maker} priceCents={addonCents} onChange={(on, maker) => setVideo({ on, maker })} />
           <ul className="flex flex-col gap-2">
             {included.map((i) => (
               <li key={i} className="flex items-center gap-2 text-body-sm text-primary">
@@ -77,7 +81,7 @@ export default function PlanPage() {
             const ok = await run(
               "sign",
               async () => {
-                await act.signContract(client.id, plan.months, plan.monthlyUsdCents, name.trim());
+                await act.signContract(client.id, plan.months, plan.monthlyUsdCents, name.trim(), video.on ? video.maker : undefined);
                 await act.completeSetupStep(client.id, "plan");
               },
               "Signed. Your free 2 weeks have started.",
@@ -88,9 +92,10 @@ export default function PlanPage() {
           <dl className="grid grid-cols-1 gap-4 rounded-md border border-border p-4 sm:grid-cols-2">
             {[
               ["Plan", `${plan.label}, ${money(plan.monthlyUsdCents)} a month`],
+              ["Video add-on", video.on ? `${money(addonCents)} a month. ${makerLabel[video.maker]}` : "Not added"],
               ["Free 2 weeks", `Today to ${date(freeEnds)}, with the full service`],
               ["Contract", `${date(freeEnds)} to ${date(ends)}`],
-              ["Total", money(plan.monthlyUsdCents * plan.months)],
+              ["Total", money((plan.monthlyUsdCents + (video.on ? addonCents : 0)) * plan.months)],
             ].map(([k, v]) => (
               <div key={k} className="flex flex-col gap-1">
                 <dt className="text-caption text-secondary">{k}</dt>
@@ -163,7 +168,7 @@ export default function PlanPage() {
           setStep(3);
         }}
         clientId={client.id}
-        amountCents={plan.monthlyUsdCents}
+        amountCents={plan.monthlyUsdCents + (video.on ? addonCents : 0)}
       />
     </SetupFrame>
   );

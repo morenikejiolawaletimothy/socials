@@ -41,6 +41,12 @@ export default function SettingsPage() {
               }
               help={`Now ${money(s.autoRefundLimitCents)}. Larger refunds wait for you.`}
             />
+            <Input
+              label="Video add-on, a month (USD)"
+              value={String(s.videoAddonCents / 100)}
+              onChange={(e) => setS({ ...s, videoAddonCents: (Number(e.target.value) || 0) * 100 })}
+              help={`Now ${money(s.videoAddonCents)} on top of the plan. Applies to new add-ons.`}
+            />
             <Input label="Free period (days)" value={String(s.freeDays)} onChange={num("freeDays")} />
             <Input
               label="Payment reminders (days before the free period ends)"

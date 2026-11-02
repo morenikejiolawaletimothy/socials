@@ -67,6 +67,7 @@ Corrections Fola has already made. Check every new screen against them before sh
 - Avatars: when the text beside them runs two or more lines, align to the top (`items-start`), as LinkedIn does; one line centres.
 - Dropdowns use `Select` (caret evenly inset). Popovers use `Menu`, which renders above the page and opens upwards near the bottom. Never put a dropdown inside a card with `absolute` positioning.
 - Toasts appear bottom right (bottom centre above the tab bar on phones).
+- Media follows LinkedIn's rules, kept in one place: `src/lib/linkedin.ts`. Every upload goes through `prepareUpload` / `prepareAttachment` in `src/lib/upload.ts` (checks, cover frames, PDF pages). Large files live in the browser via `src/lib/media.ts` in Phase 1; show them with `useMediaSrc`, never `next/image` on an `idb:` source.
 
 ## Landing page exception
 
