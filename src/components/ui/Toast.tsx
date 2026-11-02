@@ -2,6 +2,7 @@
 
 import { CheckCircle, Info, WarningCircle, X } from "@phosphor-icons/react";
 import { createContext, useCallback, useContext, useRef, useState } from "react";
+import { Banner } from "./Banner";
 import { Button } from "./Button";
 import { Dialog } from "./Dialog";
 
@@ -94,16 +95,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         <Dialog open={!!ask} onClose={() => !busy && close(false)} title={ask?.title ?? ""}>
           {ask && (
             <>
+              {/* What cannot be undone comes first, right under the title, then the details, then the buttons on the right. */}
+              {ask.warning && <Banner tone={ask.tone === "danger" ? "danger" : "warning"}>{ask.warning}</Banner>}
               <div className="text-body text-secondary">{ask.body}</div>
-              {ask.warning && (
-                <p className={`flex items-start gap-2 rounded-md px-4 py-3 text-body-sm text-primary ${ask.tone === "danger" ? "bg-danger-bg" : "bg-warning-bg"}`}>
-                  <WarningCircle className={`mt-0.5 size-5 shrink-0 ${ask.tone === "danger" ? "text-danger" : "text-warning"}`} aria-hidden />
-                  {ask.warning}
-                </p>
-              )}
               {error && <p className="text-body-sm text-danger">{error}</p>}
-              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-                <Button variant="ghost" disabled={busy} onClick={() => close(false)}>
+              <div className="flex flex-wrap justify-end gap-3">
+                <Button variant="cancel" disabled={busy} onClick={() => close(false)}>
                   {ask.cancelLabel ?? "Cancel"}
                 </Button>
                 <Button

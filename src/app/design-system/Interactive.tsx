@@ -55,6 +55,7 @@ function Demo() {
           </Banner>
           <Banner tone="danger" title="Your LinkedIn connection expired">Reconnect so we can keep posting.</Banner>
           <Banner tone="info">If you do not reply by then, we hold them and nothing goes out.</Banner>
+          <Banner tone="info" closeKey="design-system-example">A note people can close once they have read it. It shows again when the page reloads.</Banner>
           <Banner tone="neutral">You took this post down. It is no longer on LinkedIn.</Banner>
         </div>
         <p className="text-body-sm text-secondary">Anything the person should act on or know before they act is a notice, never grey text. Without a title it sits inside a card.</p>

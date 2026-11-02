@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, use, useRef, useState } from "react";
 import { PostAgainDialog } from "@/components/content/PostAgainDialog";
 import { PostPreview, RepostNote } from "@/components/content/PostPreview";
+import { plainText } from "@/components/content/PostText";
 import { Columns } from "@/components/layout/Columns";
 import { OffLimitsBox } from "@/components/manager/ClientTabs";
 import { rails } from "@/components/rails";
@@ -114,7 +115,7 @@ function DraftEditor({ post, b }: { post: Post; b: ClientBundle }) {
             onClick={() =>
               confirm({
                 title: "Delete this draft?",
-                body: `"${post.text.split("\n")[0].slice(0, 80)}" and all its versions are removed. ${first} has not seen it.`,
+                body: `"${plainText(post.text).split("\n")[0].slice(0, 80)}" and all its versions are removed. ${first} has not seen it.`,
                 warning: "You cannot undo this.",
                 confirmLabel: "Delete draft",
                 tone: "danger",
@@ -712,7 +713,9 @@ function ContentWorkspace({ id }: { id: string }) {
   const router = useRouter();
   const toast = useToast();
   const { run, pending } = useTask();
-  const tab = (useSearchParams().get("tab") as Tab) || "drafts";
+  // Unknown tab names in a link open Drafts instead of breaking the page.
+  const asked = useSearchParams().get("tab") as Tab | null;
+  const tab: Tab = asked && (["ideas", "drafts", "changes", "client", "schedule", "scheduled", "live"] as Tab[]).includes(asked) ? asked : "drafts";
   const { db } = useMyManager();
   const b = clientBundle(db, id);
   const [ideas, setIdeas] = useState(firstIdeas);

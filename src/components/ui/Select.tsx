@@ -1,17 +1,18 @@
 import { CaretDown } from "@phosphor-icons/react/dist/ssr";
 import { useId, type SelectHTMLAttributes } from "react";
+import { Banner } from "./Banner";
 
 /*
  * The caret sits on the same inset as the text (16px on md, 12px on sm), and the text stops a full
  * caret-width plus gap before it, so long options never run under the icon.
  */
 const sizes = {
-  md: { field: "min-h-11 pl-4 pr-11 text-body", caret: "right-4 size-4" },
-  sm: { field: "min-h-10 pl-3 pr-9 text-body-sm", caret: "right-3 size-4" },
-  xs: { field: "min-h-8 pl-3 pr-8 text-caption", caret: "right-2.5 size-3.5" },
+  md: { field: "h-11 pl-4 pr-11 text-body", caret: "right-4 size-4" },
+  sm: { field: "h-10 pl-3 pr-9 text-body-sm", caret: "right-3 size-4" },
+  xs: { field: "h-8 pl-3 pr-8 text-caption", caret: "right-2.5 size-3.5" },
 };
 const tones = {
-  light: { field: "border border-border-strong bg-card text-primary hover:border-neutral-500", caret: "text-secondary" },
+  light: { field: "border border-border-strong bg-card text-primary shadow-sm hover:border-neutral-500", caret: "text-secondary" },
   dark: { field: "bg-neutral-800 text-inverse hover:bg-neutral-700", caret: "text-neutral-300" },
 };
 
@@ -47,14 +48,14 @@ export function Select({ label, help, size = "md", tone = "light", id, wrapperCl
   if (!label) return field;
   return (
     <div className={`flex flex-col gap-2 ${wrapperClassName}`}>
-      <label htmlFor={selectId} className="text-body-sm font-medium text-primary">
+      <label htmlFor={selectId} className="text-body-sm leading-5 font-medium text-primary">
         {label}
       </label>
       {field}
       {help && (
-        <span id={`${selectId}-help`} className="text-body-sm text-secondary">
-          {help}
-        </span>
+        <div id={`${selectId}-help`}>
+          <Banner tone="info">{help}</Banner>
+        </div>
       )}
     </div>
   );

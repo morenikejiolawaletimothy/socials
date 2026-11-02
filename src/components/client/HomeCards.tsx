@@ -1,22 +1,24 @@
 "use client";
 
-import { CalendarBlank, CheckCircle, Circle, LinkedinLogo, UserPlus, VideoCamera } from "@phosphor-icons/react";
+import { CalendarBlank, CalendarStar, CheckCircle, Circle, GraduationCap, LinkedinLogo, MagnifyingGlass, UserPlus, VideoCamera, X } from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { PostThumb } from "@/components/content/PostMedia";
+import { plainText } from "@/components/content/PostText";
 import { PostPreview } from "@/components/content/PostPreview";
-import { Avatar, Banner, Button, Card, ProgressBar, useToast } from "@/components/ui";
-import { ago, date, day, dayIn, dayTime, dayTimeIn, daysFrom, fullName, money, plural, time } from "@/lib/format";
-import type { ClientBundle } from "@/lib/mock";
+import { callTitle, upcomingCalls } from "@/components/rails/NextCallCard";
+import { Avatar, Badge, Banner, Button, buttonClass, Card, Meta, Pill, ProgressBar, Select, TextButton, textActionClass, Tile, TileAction, TileFooter, TileIcon, useToast } from "@/components/ui";
+import { isOverdue } from "@/lib/status";
+import { ago, agoIn, date, day, dayIn, dayTime, dayTimeIn, daysFrom, fullName, money, plural, time } from "@/lib/format";
+import type { ClientBundle, Post, QuickTask, TaskEvent } from "@/lib/mock";
 import { LivePostActions } from "./LivePostActions";
 import { PayDialog } from "./PayDialog";
+import { reportActivity } from "./reportActivity";
 import { nextSetupStep, setupSteps } from "./setup";
 
-const linkClass = "rounded-sm text-body-sm font-medium text-primary-600 hover:text-primary-700 hover:underline focus-visible:focus-ring";
-const buttonLink = (primary: boolean) =>
-  `inline-flex min-h-11 items-center justify-center gap-2 self-start rounded-md border px-5 py-3 text-body font-medium leading-none transition-colors focus-visible:focus-ring ${
-    primary ? "border-transparent bg-primary-600 text-inverse hover:bg-primary-700" : "border-border-strong bg-card text-primary-700 hover:border-primary-300 hover:bg-primary-50"
-  }`;
+const linkClass = textActionClass;
+const buttonLink = (primary: boolean) => `self-start ${buttonClass(primary ? "primary" : "secondary")}`;
 
 /* ---------- States at the top of Home ---------- */
 
@@ -31,7 +33,7 @@ export function PausedCard({ b }: { b: ClientBundle }) {
   const why = client.pausedReason === "contract-ended" ? "Your contract ended." : "Your free 2 weeks ended before we received payment.";
 
   return (
-    <Card title="Your account is paused">
+    <Card title="Account paused">
       <div className="flex flex-col gap-4">
         <p className="text-body text-primary">
           {why} Nothing is being posted or engaged with. Pay to pick up where you left off, with the same account manager.
@@ -102,7 +104,7 @@ export function SetupCard({ b }: { b: ClientBundle }) {
   if (!client || client.status !== "setting-up") return null;
   const next = nextSetupStep(client.setupDone);
   return (
-    <Card title="Set up your account">
+    <Card title="Account setup">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col gap-2">
           <span className="flex items-center justify-between text-body-sm">
@@ -206,7 +208,7 @@ export function StrategyReadyCard({ b }: { b: ClientBundle }) {
   if (!strategy || (strategy.status !== "shared" && strategy.status !== "agreed-sent")) return null;
   const call = calls.find((c) => c.kind === "strategy");
   return (
-    <Card title={strategy.status === "agreed-sent" ? "What we agreed is ready to approve" : "Your strategy is ready"}>
+    <Card title={strategy.status === "agreed-sent" ? "Approve your strategy" : "Strategy ready"}>
       <div className="flex flex-col gap-4">
         <p className="text-body text-primary">{strategy.goal}</p>
         <Banner tone="info">
@@ -224,136 +226,446 @@ export function StrategyReadyCard({ b }: { b: ClientBundle }) {
 
 /* ---------- The feed (after the calls) ---------- */
 
+/** Events and programs the client has registered for that have not started yet. They show in Coming up; unregistered ones stay in Tasks. */
+export function upcomingEvents(tasks: QuickTask[]) {
+  return tasks.filter((t) => t.kind === "event" && t.done && t.event && new Date(t.event.startsAt).getTime() > Date.now());
+}
+
+/** "6 weeks" for a program, from its start and end. */
+export function eventLength(e: TaskEvent) {
+  if (!e.endsAt) return undefined;
+  const days = Math.round((new Date(e.endsAt).getTime() - new Date(e.startsAt).getTime()) / 86_400_000);
+  return days >= 7 ? plural(Math.round(days / 7), "week") : plural(Math.max(days, 1), "day");
+}
+
+/** The icon for a quick task. */
+function TaskIcon({ t, className }: { t: QuickTask; className: string }) {
+  if (t.kind === "connect") return <UserPlus className={className} aria-hidden />;
+  if (t.kind === "event") return t.event?.type === "program" ? <GraduationCap className={className} aria-hidden /> : <CalendarStar className={className} aria-hidden />;
+  return <LinkedinLogo className={className} aria-hidden />;
+}
+
+/** The picture on a Quick tasks tile: the people's photos overlapping, LinkedIn for profile tasks, the event's own picture. */
+function TaskVisual({ t }: { t: QuickTask }) {
+  if (t.kind === "connect" && t.people?.length) {
+    return (
+      <span className="flex shrink-0 -space-x-4">
+        {t.people.slice(0, 3).map((p) => (
+          <Avatar key={p.id} name={p.name} src={p.photo} size="lg" className="ring-2 ring-card" />
+        ))}
+      </span>
+    );
+  }
+  if (t.kind === "event" && t.event?.image) return <Avatar name={t.event.name} src={t.event.image} size="lg" />;
+  if (t.kind === "profile") return <Image src="/brand/linkedin.svg" alt="" width={56} height={56} unoptimized className="size-14 shrink-0" />;
+  return (
+    <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-700">
+      <TaskIcon t={t} className="size-7" />
+    </span>
+  );
+}
+
+/** The grey line under a task's title. */
+function taskStatus(t: QuickTask) {
+  if (t.kind === "connect") return `${t.people?.filter((p) => p.done).length ?? 0} of ${t.people?.length ?? 0} sent`;
+  if (t.kind === "event" && t.event) return `${t.event.type === "program" ? "Program" : "Event"} ${dayIn(t.event.startsAt)} · ${t.event.place}`;
+  return "Copy and paste in a minute";
+}
+
 /** C17: quick tasks only the client can do. */
 export function TasksCard({ b }: { b: ClientBundle }) {
   const open = b.tasks.filter((t) => !t.done);
   if (!open.length || b.client?.stage !== "running") return null;
+  const doneCount = b.tasks.length - open.length;
   return (
-    <Card title="Quick tasks for you" action={<span className="text-caption text-secondary">About {open.length * 3} minutes</span>}>
-      <ul className="flex flex-col">
-        {open.map((t, i) => {
+    <Card
+      title="Quick tasks"
+      action={<Pill label={`${doneCount} of ${b.tasks.length} tasks done`}>{doneCount} of {b.tasks.length} done</Pill>}
+    >
+      <Banner tone="info" closeKey="home-tasks-note" className="mb-4">Things only you can do: on LinkedIn, or events and programs to sign up for. We prepare everything, so each one takes a minute or two.</Banner>
+      <ul className="flex flex-col gap-3">
+        {open.map((t) => {
           const sent = t.people?.filter((p) => p.done).length ?? 0;
           const total = t.people?.length ?? 1;
           return (
-            <li key={t.id} className={i < open.length - 1 ? "border-b border-border" : ""}>
-              <Link href={`/tasks/${t.id}`} className="flex items-center gap-4 py-3 hover:bg-neutral-25 focus-visible:focus-ring">
-                <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-700">
-                  {t.kind === "connect" ? <UserPlus className="size-5" aria-hidden /> : <LinkedinLogo className="size-5" aria-hidden />}
-                </span>
-                <span className="flex min-w-0 flex-1 flex-col gap-1">
-                  <span className="text-body font-medium text-primary">{t.title}</span>
-                  <span className="text-body-sm text-secondary">
-                    {t.kind === "connect" ? `${sent} of ${total} sent` : "Copy and paste, 1 minute"} · Due {dayIn(t.dueAt)}
+            <li key={t.id}>
+              <Tile href={`/tasks/${t.id}`}>
+                <span className="flex items-center gap-4">
+                  <TaskVisual t={t} />
+                  <span className="flex min-w-0 flex-1 flex-col gap-1">
+                    <span className="text-body font-medium text-primary">{t.title}</span>
+                    <span className="text-body-sm text-secondary">
+                      {taskStatus(t)} · Assigned {agoIn(t.sentAt)}
+                    </span>
+                    {t.kind === "connect" && (
+                      <span className="max-w-xs">
+                        <ProgressBar value={sent} max={total} />
+                      </span>
+                    )}
                   </span>
-                  {t.kind === "connect" && <ProgressBar value={sent} max={total} />}
                 </span>
-              </Link>
+                <TileFooter>
+                  <Meta icon={CalendarBlank}>
+                    {t.kind === "event" ? "Closing by" : "Due"} {dayIn(t.dueAt)}
+                  </Meta>
+                  <TileAction>{t.kind === "event" ? (t.event?.type === "program" ? "Apply" : "Register") : sent > 0 ? "Continue" : "Start"}</TileAction>
+                </TileFooter>
+              </Tile>
             </li>
           );
         })}
       </ul>
-      <p className="pt-3 text-caption text-secondary">LinkedIn only lets you do these yourself. We prepare everything, so each one is quick.</p>
     </Card>
   );
 }
 
-/** C7 entry: posts waiting for the client's review. */
-export function ReviewCard({ b, primary }: { b: ClientBundle; primary: boolean }) {
-  const waiting = b.posts.filter((p) => p.status === "awaiting-client");
+/**
+ * C7 entry: posts waiting for the client's review. Each post is a clickable tile with its own due time, like Quick tasks.
+ * Overdue posts (not reviewed in time, so held) are listed after them with an Overdue tag: they can still be reviewed.
+ * The Content page has its own Overdue tab, so it passes `overdue={false}`.
+ */
+export function ReviewCard({ b, overdue: withOverdue = true }: { b: ClientBundle; primary?: boolean; overdue?: boolean }) {
+  const due = b.posts.filter((p) => p.status === "awaiting-client");
+  const late = withOverdue ? b.posts.filter(isOverdue) : [];
+  const waiting = [...due, ...late];
   if (!waiting.length) return null;
-  const due = waiting[0].dueAt;
   const wait = b.client?.review.ifNoReply === "wait";
+  // This review round: posts sent with the same due time. Reviewed ones count as done.
+  const round = due.length ? b.posts.filter((p) => p.dueAt && p.dueAt === due[0].dueAt) : [];
+  const total = Math.max(round.length, due.length);
+  const reviewed = total - due.length;
   return (
-    <Card title={`${plural(waiting.length, "post")} ready for your review`} action={due && <span className="text-caption text-secondary">Due {dayTimeIn(due)}</span>}>
+    <Card
+      title="Review posts"
+      action={
+        due.length ? (
+          <Pill label={`${reviewed} of ${plural(total, "post")} reviewed`}>{reviewed} of {total} done</Pill>
+        ) : (
+          <Pill label={`${plural(late.length, "post")} overdue`}>{plural(late.length, "post")} overdue</Pill>
+        )
+      }
+    >
       <div className="flex flex-col gap-4">
-        <ul className="flex flex-col gap-3">
-          {waiting.map((p) => (
-            <li key={p.id} className="flex items-center gap-3">
-              {p.image ? (
-                <span className="relative size-12 shrink-0 overflow-hidden rounded-sm">
-                  <Image src={p.image.src} alt="" fill sizes="48px" className="object-cover" />
-                </span>
-              ) : (
-                <span className="flex size-12 shrink-0 items-center justify-center rounded-sm bg-neutral-50 text-caption text-secondary">Text</span>
-              )}
-              <span className="flex min-w-0 flex-col">
-                <span className="truncate text-body font-medium text-primary">{p.text.split("\n")[0]}</span>
-                <span className="text-caption text-secondary">{p.topic}</span>
-              </span>
-            </li>
-          ))}
-        </ul>
-        <Banner tone="info">
-          {wait ? "If you do not reply by then, we hold them and nothing goes out." : "If you do not reply within 24 hours, your manager posts them. You can still take any post down."}
+        <Banner tone="info" closeKey={`home-review-note-${wait ? "wait" : "post"}`}>
+          {wait
+            ? "Any post you have not reviewed by its due time is held. Nothing goes out without your approval, and you can still review it at any time."
+            : `Any post you have not reviewed by its due time is posted by ${b.managerUser?.firstName ?? "your manager"} as planned. You can still take a post down at any time.`}
         </Banner>
-        <Link href="/content/review" className={buttonLink(primary)}>
-          Review now
+        <ul className="flex flex-col gap-3">
+          {waiting.map((p) => {
+            const isLate = isOverdue(p);
+            return (
+              <li key={p.id}>
+                <Tile href={`/content/review?post=${p.id}`}>
+                  <span className="flex items-start gap-4">
+                    <PostThumb post={p} size="lg" />
+                    <span className="flex min-w-0 flex-1 flex-col gap-1">
+                      <span className="line-clamp-2 text-body font-medium text-primary">{plainText(p.text).split("\n")[0]}</span>
+                      <span className="text-body-sm text-secondary">
+                        {p.topic}
+                        {p.sentAt && ` · Assigned ${agoIn(p.sentAt)}`}
+                      </span>
+                    </span>
+                  </span>
+                  <TileFooter>
+                    <span className="flex flex-wrap items-center gap-3">
+                      <Meta icon={CalendarBlank}>{p.dueAt ? `${isLate ? "Was due" : "Due"} ${dayIn(p.dueAt)}` : "No due date"}</Meta>
+                      {isLate && <Badge status="danger">Overdue</Badge>}
+                    </span>
+                    <TileAction>Review</TileAction>
+                  </TileFooter>
+                </Tile>
+              </li>
+            );
+          })}
+        </ul>
+        <Link href="/content/review" className={`self-start ${textActionClass}`}>
+          Review all
         </Link>
       </div>
     </Card>
   );
 }
 
-/** C9 entry: the latest weekly update. */
+/** C9 entry: the latest weekly update, as a short report: the headline and the same "what we did against the plan" table as the full report. */
 export function UpdateCard({ b }: { b: ClientBundle }) {
   const u = b.updates.filter((x) => x.status === "sent").sort((x, y) => (y.sentAt ?? "").localeCompare(x.sentAt ?? ""))[0];
   if (!u) return null;
+  const recorded = reportActivity(u, b.activity).total;
   return (
-    <Card title={u.title} action={<span className="text-caption text-secondary">{ago(u.sentAt!)}</span>}>
-      <div className="flex flex-col gap-4">
-        <p className="text-body text-primary">{u.headline}</p>
-        <ul className="grid grid-cols-3 gap-3">
-          {u.did.map((d) => (
-            <li key={d.label} className="flex flex-col gap-1 rounded-md bg-neutral-25 p-3">
-              <span className="font-display text-display-xl text-primary">
-                {d.done}
-                <span className="text-body-sm font-normal text-secondary"> / {d.target}</span>
-              </span>
-              <span className="text-caption text-secondary">{d.label}</span>
-            </li>
-          ))}
-        </ul>
-        <Link href={`/progress/${u.id}`} className={linkClass}>
-          Read the update
+    <Card
+      title={u.title}
+      action={<Meta icon={CalendarBlank}>{day(u.sentAt!)}</Meta>}
+    >
+      <div className="flex flex-col gap-5">
+        <p className="text-body text-neutral-500">{u.headline}</p>
+
+        <table className="w-full text-left text-body-sm">
+          <thead className="text-caption text-primary-600">
+            <tr>
+              <th className="py-2 font-medium">Work</th>
+              <th className="w-20 py-2 font-medium sm:w-28">Planned</th>
+              <th className="w-16 py-2 font-medium sm:w-20">Done</th>
+            </tr>
+          </thead>
+          <tbody>
+            {u.did.map((d) => (
+              <tr key={d.label} className="border-t border-border">
+                <td className="py-3 pr-6 text-primary">
+                  <span className="flex flex-col gap-1">
+                    {d.label}
+                    <span className="max-w-56">
+                      <ProgressBar value={d.done} max={d.target} />
+                    </span>
+                  </span>
+                </td>
+                <td className="py-3 text-secondary">{d.target}</td>
+                <td className="py-3 font-medium text-primary">{d.done}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {recorded > 0 && (
+          <p className="text-body-sm text-secondary">
+            {plural(recorded, "activity", "activities")} recorded {u.kind === "monthly" ? "this month" : "this week"}, by you and {b.managerUser?.firstName ?? "your team"}.
+          </p>
+        )}
+
+        <Link href={`/progress/${u.id}`} className={`self-start ${linkClass}`}>
+          Read full details
         </Link>
       </div>
     </Card>
   );
 }
 
-/** C8: the latest live post, with take down and fix. */
+const liveSince = {
+  any: { label: "Any time", days: 0 },
+  week: { label: "Past week", days: 7 },
+  month: { label: "Past month", days: 30 },
+  quarter: { label: "Past 3 months", days: 91 },
+  year: { label: "Past year", days: 365 },
+};
+type LiveSince = keyof typeof liveSince;
+
+const liveSorts = {
+  newest: { label: "Newest first", by: (p: Post) => -new Date(p.publishedAt ?? 0).getTime() },
+  oldest: { label: "Oldest first", by: (p: Post) => new Date(p.publishedAt ?? 0).getTime() },
+  "most-reactions": { label: "Most reactions", by: (p: Post) => -(p.stats?.reactions ?? 0) },
+  "fewest-reactions": { label: "Fewest reactions", by: (p: Post) => p.stats?.reactions ?? 0 },
+  "most-impressions": { label: "Most impressions", by: (p: Post) => -(p.stats?.impressions ?? 0) },
+  "most-comments": { label: "Most comments", by: (p: Post) => -(p.stats?.comments ?? 0) },
+};
+type LiveSort = keyof typeof liveSorts;
+
+const livePageSize = 5;
+
+/** C8: every live post, newest first, with search, a date range and a sort so an old post is easy to find. */
 export function LiveCard({ b }: { b: ClientBundle }) {
-  const live = b.posts.filter((p) => p.status === "published").sort((x, y) => (y.publishedAt ?? "").localeCompare(x.publishedAt ?? ""))[0];
-  if (!live || !b.user) return null;
+  const [query, setQuery] = useState("");
+  const [since, setSince] = useState<LiveSince>("any");
+  const [sort, setSort] = useState<LiveSort>("newest");
+  const [shown, setShown] = useState(livePageSize);
+
+  const published = b.posts.filter((p) => p.status === "published");
+  if (!published.length || !b.user) return null;
+
+  const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const from = liveSince[since].days ? Date.now() - liveSince[since].days * 86_400_000 : 0;
+  const results = published
+    .filter((p) => words.every((w) => `${plainText(p.text)} ${p.topic}`.toLowerCase().includes(w)))
+    .filter((p) => !from || new Date(p.publishedAt ?? 0).getTime() >= from)
+    .sort((x, y) => liveSorts[sort].by(x) - liveSorts[sort].by(y));
+  const filtered = words.length > 0 || since !== "any";
+  const reset = () => {
+    setQuery("");
+    setSince("any");
+    setShown(livePageSize);
+  };
+  const author = { name: fullName(b.user), title: b.user.title };
+
   return (
-    <Card title="Live on LinkedIn" action={<Link href="/content?tab=live" className={linkClass}>All live posts</Link>}>
-      <PostPreview post={live} author={{ name: fullName(b.user), title: b.user.title }} meta={ago(live.publishedAt!)}>
-        <LivePostActions post={live} />
-      </PostPreview>
-    </Card>
+    <>
+      <div role="search" aria-label="Live posts" className="flex flex-col gap-3 rounded-lg border border-border bg-card p-3 sm:flex-row sm:items-center">
+        <label className="relative flex min-w-0 flex-1 items-center sm:order-last">
+          <span className="sr-only">Search live posts</span>
+          <MagnifyingGlass className="pointer-events-none absolute left-3 size-4 text-secondary" aria-hidden />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setShown(livePageSize);
+            }}
+            placeholder="Search by word or topic"
+            className="min-h-10 w-full rounded-sm border border-border-strong bg-card pl-9 pr-10 text-body-sm text-primary placeholder:text-neutral-400 hover:border-neutral-500 focus-visible:border-primary-600 focus-visible:focus-ring [&::-webkit-search-cancel-button]:hidden"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              aria-label="Clear search"
+              className="absolute right-2 flex size-6 items-center justify-center rounded-full text-secondary hover:bg-neutral-100 hover:text-primary focus-visible:focus-ring"
+            >
+              <X className="size-4" aria-hidden />
+            </button>
+          )}
+        </label>
+        <div className="flex gap-3">
+          <Select
+            size="sm"
+            aria-label="Posted"
+            value={since}
+            onChange={(e) => {
+              setSince(e.target.value as LiveSince);
+              setShown(livePageSize);
+            }}
+            wrapperClassName="flex-1 sm:flex-none"
+          >
+            {Object.entries(liveSince).map(([value, o]) => (
+              <option key={value} value={value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+          <Select size="sm" aria-label="Sort by" value={sort} onChange={(e) => setSort(e.target.value as LiveSort)} wrapperClassName="flex-1 sm:flex-none">
+            {Object.entries(liveSorts).map(([value, o]) => (
+              <option key={value} value={value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+        </div>
+      </div>
+
+      <Card
+        title="Live on LinkedIn"
+        action={
+          <Pill label={filtered ? `${results.length} of ${plural(published.length, "live post")} match` : `${plural(published.length, "post")} live`}>
+            <span aria-live="polite">{filtered ? `${results.length} of ${published.length}` : plural(published.length, "post")}</span>
+          </Pill>
+        }
+      >
+        {results.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-8 text-center">
+            <p className="text-body font-medium text-primary">No live posts match</p>
+            <p className="max-w-sm text-body-sm text-secondary">Try another word or a longer date range.</p>
+            <TextButton onClick={reset} className="mt-1">
+              Clear search
+            </TextButton>
+          </div>
+        ) : (
+          <div className="flex flex-col">
+            <ul className="flex flex-col divide-y divide-border">
+              {results.slice(0, shown).map((p) => (
+                <li key={p.id} className="py-6 first:pt-2 last:pb-2">
+                  <PostPreview post={p} author={author} meta={ago(p.publishedAt!)}>
+                    <LivePostActions post={p} />
+                  </PostPreview>
+                </li>
+              ))}
+            </ul>
+            {results.length > shown && (
+              <div className="mt-2 flex justify-center border-t border-border pt-4">
+                <TextButton onClick={() => setShown((n) => n + livePageSize)}>Show {Math.min(livePageSize, results.length - shown)} more</TextButton>
+              </div>
+            )}
+          </div>
+        )}
+      </Card>
+    </>
   );
 }
 
-/** Upcoming scheduled posts. */
+/** Upcoming scheduled posts, booked calls, and events or programs the client has registered for, soonest first. */
 export function UpcomingCard({ b }: { b: ClientBundle }) {
-  const next = b.posts.filter((p) => p.status === "scheduled").sort((x, y) => (x.scheduledFor ?? "").localeCompare(y.scheduledFor ?? ""));
-  if (!next.length) return null;
+  const posts = b.posts.filter((p) => p.status === "scheduled");
+  const events = upcomingEvents(b.tasks);
+  const calls = upcomingCalls(b.calls);
+  const items: UpcomingItem[] = [
+    ...posts.map((p) => ({
+      id: p.id,
+      at: p.scheduledFor ?? "",
+      when: "Goes live",
+      href: "/content?tab=upcoming",
+      action: "Review",
+      thumb: <PostThumb post={p} size="lg" />,
+      title: plainText(p.text).split("\n")[0],
+      meta: `${p.topic}${p.scheduledAt ? ` · Scheduled ${agoIn(p.scheduledAt)}` : ""}`,
+    })),
+    ...calls.map((c) => ({
+      id: c.id,
+      at: c.at,
+      when: "Starts",
+      href: "/calls",
+      action: "View details",
+      thumb: (
+        <TileIcon>
+          <VideoCamera className="size-6" aria-hidden />
+        </TileIcon>
+      ),
+      title: callTitle(c),
+      meta: `Call with ${b.managerUser?.firstName ?? "your manager"} · ${c.minutes} min · Google Meet`,
+    })),
+    ...events.map((t) => ({
+      id: t.id,
+      at: t.event!.startsAt,
+      when: "Starts",
+      href: `/tasks/${t.id}`,
+      action: "View details",
+      thumb: (
+        <TileIcon>
+          <TaskIcon t={t} className="size-6" />
+        </TileIcon>
+      ),
+      title: t.event!.name,
+      meta: `${t.event!.type === "program" ? `Program${eventLength(t.event!) ? `, ${eventLength(t.event!)}` : ""}` : "Event"} · ${t.event!.place}`,
+    })),
+  ].sort((x, y) => x.at.localeCompare(y.at));
+  if (!items.length) return null;
+
+  const count = [
+    posts.length && plural(posts.length, "post"),
+    calls.length && plural(calls.length, "call"),
+    events.length && plural(events.length, "event"),
+  ]
+    .filter(Boolean)
+    .join(" · ");
   return (
-    <Card title="Coming up" action={<Link href="/content?tab=scheduled" className={linkClass}>See all</Link>}>
-      <ul className="flex flex-col">
-        {next.map((p, i) => (
-          <li key={p.id} className={`flex items-start gap-4 py-3 ${i < next.length - 1 ? "border-b border-border" : ""}`}>
-            <span className="flex w-16 shrink-0 flex-col">
-              <span className="text-body font-medium text-primary">{day(p.scheduledFor!)}</span>
-              <span className="text-caption text-secondary">{time(p.scheduledFor!)}</span>
-            </span>
-            <span className="text-body-sm text-primary">{p.text.split("\n")[0]}</span>
+    <Card
+      title="Coming up"
+      action={<Pill label={`${count} coming up`}>{count}</Pill>}
+    >
+      <ul className="flex flex-col gap-3">
+        {items.map((it) => (
+          <li key={it.id}>
+            <Link
+              href={it.href}
+              className="group flex flex-col rounded-md border border-border transition-colors hover:border-primary-300 hover:bg-primary-50 focus-visible:focus-ring"
+            >
+              <span className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 group-hover:border-primary-200">
+                <Meta icon={CalendarBlank}>
+                  {it.when} {dayIn(it.at)} · {time(it.at)}
+                </Meta>
+                <TileAction>{it.action}</TileAction>
+              </span>
+              <span className="flex items-start gap-4 p-4">
+                {it.thumb}
+                <span className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="line-clamp-2 text-body font-medium text-primary">{it.title}</span>
+                  <span className="text-body-sm text-secondary">{it.meta}</span>
+                </span>
+              </span>
+            </Link>
           </li>
         ))}
       </ul>
     </Card>
   );
 }
+
+type UpcomingItem = { id: string; at: string; when: string; href: string; action: string; thumb: ReactNode; title: string; meta: string };
 
 /** C10 entry: the latest message from the manager. */
 export function MessageCard({ b }: { b: ClientBundle }) {

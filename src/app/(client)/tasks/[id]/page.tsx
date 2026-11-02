@@ -1,15 +1,14 @@
 "use client";
 
-import { CheckCircle, Circle, CircleNotch, Copy, LinkedinLogo, PencilSimple } from "@phosphor-icons/react";
-import { use, useState } from "react";
+import { CalendarBlank, CalendarStar, Circle, Clock, Copy, GraduationCap, LinkedinLogo, LinkSimple, MapPin, PencilSimple } from "@phosphor-icons/react";
+import Image from "next/image";
+import { use, useState, type ReactNode } from "react";
+import { eventLength } from "@/components/client/HomeCards";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Banner, Breadcrumbs, Button, Card, Dialog, EmptyState, Input, ProgressBar, Textarea, useTask, useToast } from "@/components/ui";
-import { dayIn } from "@/lib/format";
+import { Avatar, Badge, Banner, Breadcrumbs, Button, Card, Dialog, EmptyState, Input, Meta, ProgressBar, Textarea, TextButton, textActionClass, useTask, useToast } from "@/components/ui";
+import { agoIn, day, dayIn, time } from "@/lib/format";
 import { act, useMyClient, type Person, type QuickTask } from "@/lib/mock";
-
-const smallButton =
-  "inline-flex min-h-10 items-center gap-2 rounded-md border border-border-strong bg-card px-3 py-2 text-body-sm font-medium text-primary-700 transition-colors hover:border-primary-300 hover:bg-primary-50 focus-visible:focus-ring";
 
 async function copy(text: string) {
   try {
@@ -19,36 +18,54 @@ async function copy(text: string) {
   }
 }
 
-/** One person to connect with: why they matter, a ready note (editable), and the three buttons. */
+/**
+ * One person to connect with, as a tile like the Home tiles: who they are and why on top, the ready note
+ * (editable), then a divider and the actions, with Mark as sent on the right.
+ */
 function PersonRow({ task, person }: { task: QuickTask; person: Person }) {
   const toast = useToast();
   const { run, pending } = useTask();
   const [editing, setEditing] = useState(false);
   const [note, setNote] = useState(person.note);
 
+  const toggleSent = () =>
+    run("sent", () => act.togglePersonSent(task.id, person.id), {
+      text: person.done ? `${person.name} marked as not sent.` : `${person.name} marked as sent.`,
+      action: { label: "Undo", onClick: () => act.togglePersonSent(task.id, person.id) },
+    });
+
   return (
-    <li className={`flex flex-col gap-3 border-b border-border py-5 last:border-b-0 ${person.done ? "bg-neutral-25" : ""}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 flex-col">
+    <li className={`flex flex-col rounded-md border border-border p-4 ${person.done ? "bg-neutral-25" : "bg-card"}`}>
+      {/* Who: avatar, name and role, with Sent or Mark as sent on the right. */}
+      <div className="flex items-center gap-4 border-b border-border pb-3">
+        <Avatar name={person.name} src={person.photo} size="md" />
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="text-body font-medium text-primary">{person.name}</span>
           <span className="text-body-sm text-secondary">{person.role}</span>
         </div>
-        {person.done && (
-          <span className="flex shrink-0 items-center gap-1 text-caption text-success">
-            <CheckCircle className="size-4" aria-hidden /> Sent
+        {person.done ? (
+          <span className="shrink-0">
+            <Badge status="success">Sent</Badge>
           </span>
+        ) : (
+          <Button size="sm" variant="secondary" className="shrink-0" loading={pending("sent")} onClick={toggleSent}>
+            {!pending("sent") && <Circle className="size-4" aria-hidden />}
+            Mark as sent
+          </Button>
         )}
       </div>
-      <p className="text-body-sm text-primary">
-        <span className="font-medium">Why: </span>
-        {person.why}
-      </p>
+
+      {/* Why this person. */}
+      <Banner tone="info" className="mt-3">
+        Why: {person.why}
+      </Banner>
+
+      {/* The ready note, plain text, or the editor. */}
       {editing ? (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-3 py-4">
           <Textarea label="Your note" value={note} onChange={(e) => setNote(e.target.value)} help={`${note.length} of 300 characters. LinkedIn allows 300.`} maxLength={300} />
           <div className="flex gap-2">
             <Button
-              variant="secondary"
               loading={pending("note")}
               onClick={async () => {
                 if (await run("note", () => act.editPersonNote(task.id, person.id, note), "Note saved.")) setEditing(false);
@@ -56,50 +73,97 @@ function PersonRow({ task, person }: { task: QuickTask; person: Person }) {
             >
               Save note
             </Button>
-            <Button variant="ghost" onClick={() => { setNote(person.note); setEditing(false); }}>
+            <Button variant="cancel" onClick={() => { setNote(person.note); setEditing(false); }}>
               Cancel
             </Button>
           </div>
         </div>
       ) : (
-        <blockquote className="rounded-md bg-neutral-25 px-4 py-3 text-body-sm text-primary">{person.note}</blockquote>
+        <p className="px-4 py-4 text-body-sm text-primary">{person.note}</p>
       )}
+
+      {/* Actions in a row on the left. Edit only while the note is not sent yet. */}
       {!editing && (
-        <div className="flex flex-wrap gap-2">
-          <a href={person.profileUrl} target="_blank" rel="noreferrer" className={smallButton}>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-border pt-3">
+          <a href={person.profileUrl} target="_blank" rel="noreferrer" className={textActionClass}>
             <LinkedinLogo className="size-4" aria-hidden /> Open profile
           </a>
-          <button
-            type="button"
-            className={smallButton}
+          <TextButton
             onClick={async () => {
               await copy(person.note);
               toast("Note copied. Paste it into LinkedIn's \"Add a note\".");
             }}
           >
             <Copy className="size-4" aria-hidden /> Copy note
-          </button>
-          <button type="button" className={smallButton} onClick={() => setEditing(true)}>
-            <PencilSimple className="size-4" aria-hidden /> Edit
-          </button>
-          <button
-            type="button"
-            className={smallButton}
-            aria-pressed={person.done}
-            disabled={pending("sent")}
-            onClick={() =>
-              run("sent", () => act.togglePersonSent(task.id, person.id), {
-                text: person.done ? `${person.name} marked as not sent.` : `${person.name} marked as sent.`,
-                action: { label: "Undo", onClick: () => act.togglePersonSent(task.id, person.id) },
-              })
-            }
-          >
-            {pending("sent") ? <CircleNotch className="size-4 animate-spin" aria-hidden /> : person.done ? <CheckCircle className="size-4 text-success" aria-hidden /> : <Circle className="size-4" aria-hidden />}
-            {person.done ? "Sent" : "Mark as sent"}
-          </button>
+          </TextButton>
+          {!person.done && (
+            <TextButton onClick={() => setEditing(true)}>
+              <PencilSimple className="size-4" aria-hidden /> Edit
+            </TextButton>
+          )}
         </div>
       )}
     </li>
+  );
+}
+
+/**
+ * A single quick task (profile update, event, program) in the same layout as a person tile: icon, title and
+ * subtitle with the status tag or mark button on the right; a tinted note; the content; then the actions.
+ */
+function TaskTile({
+  icon,
+  title,
+  subtitle,
+  done,
+  doneLabel,
+  markLabel,
+  busy,
+  onMark,
+  note,
+  actions,
+  children,
+}: {
+  icon: ReactNode;
+  title: string;
+  subtitle: string;
+  done: boolean;
+  doneLabel: string;
+  markLabel: string;
+  busy: boolean;
+  onMark: () => void;
+  note: ReactNode;
+  actions: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className={`flex flex-col rounded-md border border-border p-4 ${done ? "bg-neutral-25" : "bg-card"}`}>
+      <div className="flex items-center gap-4 border-b border-border pb-3">
+        <span className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-50 text-primary-700">{icon}</span>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="text-body font-medium text-primary">{title}</span>
+          <span className="text-body-sm text-secondary">{subtitle}</span>
+        </div>
+        {done ? (
+          <span className="shrink-0">
+            <Badge status="success">{doneLabel}</Badge>
+          </span>
+        ) : (
+          <Button size="sm" variant="secondary" className="shrink-0" loading={busy} onClick={onMark}>
+            {!busy && <Circle className="size-4" aria-hidden />}
+            {markLabel}
+          </Button>
+        )}
+      </div>
+
+      <Banner tone="info" className="mt-3">
+        {note}
+      </Banner>
+
+      <div className="px-4 py-4">{children}</div>
+
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-border pt-3">{actions}</div>
+    </div>
   );
 }
 
@@ -130,72 +194,135 @@ export default function TaskPage({ params }: { params: Promise<{ id: string }> }
       <Card
         title={task.title}
         eyebrow={<Breadcrumbs items={[{ label: "Home", href: "/home" }, { label: "Quick tasks" }]} />}
-        action={<span className="text-caption text-secondary">Due {dayIn(task.dueAt)}</span>}
+        action={
+          <Meta icon={CalendarBlank}>
+            {task.kind === "event" && task.done && task.event ? `Starts ${dayIn(task.event.startsAt)}` : `${task.kind === "event" ? "Closing by" : "Due"} ${dayIn(task.dueAt)}`}
+          </Meta>
+        }
       >
-        <div className="flex flex-col gap-6">
-          <p className="text-body-sm text-secondary">
-            LinkedIn only lets you do this yourself, so {managerUser?.firstName ?? "your manager"} has prepared everything. {task.kind === "connect" ? "About 30 seconds a person." : "About 1 minute."}
-          </p>
+        <div className="flex flex-col gap-4">
+          <Banner tone="info" closeKey={`task-note-${task.kind}`}>
+            {task.kind === "event"
+              ? `${managerUser?.firstName ?? "Your manager"} picked this for you. Open the ${task.event?.type === "program" ? "program" : "event"} page, register, then mark it as registered here so we can plan posts around it.`
+              : `LinkedIn only lets you do this yourself, so ${managerUser?.firstName ?? "your manager"} has prepared everything. `}
+            {task.kind === "connect" && "Open each profile, press Connect, then \u201cAdd a note\u201d, paste the note and send. Then mark it as sent here. About 30 seconds a person."}
+            {task.kind === "profile" && "Copy the text, paste it where shown, then mark it as done. About a minute."}
+          </Banner>
+
+          <div className="flex flex-col gap-2">
+            <span className="text-body-sm text-secondary">
+              {task.kind === "connect"
+                ? `${sent} of ${total} sent`
+                : task.kind === "event"
+                  ? task.done
+                    ? "Registered"
+                    : "Not registered yet"
+                  : task.done
+                    ? "Done"
+                    : "Copy and paste in a minute"}{" "}
+              · Assigned {agoIn(task.sentAt)}
+            </span>
+            {task.kind === "connect" && (
+              <span className="max-w-xs">
+                <ProgressBar value={sent} max={total} />
+              </span>
+            )}
+          </div>
 
           {task.kind === "connect" && (
-            <>
-              <div className="flex flex-col gap-2">
-                <span className="flex justify-between text-body-sm">
-                  <span className="text-primary">{sent} of {total} sent</span>
-                  {sent === total && <span className="text-success">All done</span>}
-                </span>
-                <ProgressBar value={sent} max={total} tone={sent === total ? "success" : "brand"} />
-              </div>
-              <Banner tone="info" title="How to send each one">
-                Open the profile, press Connect, then &ldquo;Add a note&rdquo;, paste the note and send. Then mark it as sent here.
-              </Banner>
-              <ul className="flex flex-col">
-                {task.people!.map((p) => (
-                  <PersonRow key={p.id} task={task} person={p} />
-                ))}
-              </ul>
-            </>
+            <ul className="flex flex-col gap-3">
+              {task.people!.map((p) => (
+                <PersonRow key={p.id} task={task} person={p} />
+              ))}
+            </ul>
           )}
 
           {task.kind === "profile" && (
-            <div className="flex flex-col gap-4">
-              <blockquote className="rounded-md bg-neutral-25 px-4 py-4 text-body text-primary">{task.text}</blockquote>
-              <p className="text-body-sm text-secondary">
-                <span className="font-medium text-primary">Where: </span>
-                {task.where}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  className={smallButton}
+            <TaskTile
+              icon={<Image src="/brand/linkedin.svg" alt="" width={48} height={48} unoptimized className="size-full" />}
+              title={task.title}
+              subtitle="Profile update"
+              done={task.done}
+              doneLabel="Done"
+              markLabel="Mark as done"
+              busy={pending("done")}
+              onMark={() =>
+                run("done", () => act.markTaskDone(task.id, true), {
+                  text: "Marked as done. Your manager can see it.",
+                  action: { label: "Undo", onClick: () => act.markTaskDone(task.id, false) },
+                })
+              }
+              note={<>Where: {task.where}</>}
+              actions={
+                <TextButton
                   onClick={async () => {
                     await copy(task.text ?? "");
                     toast("Copied. Paste it into LinkedIn.");
                   }}
                 >
                   <Copy className="size-4" aria-hidden /> Copy text
-                </button>
-                <button
-                  type="button"
-                  className={smallButton}
-                  aria-pressed={task.done}
-                  disabled={pending("done")}
-                  onClick={() => run("done", () => act.markTaskDone(task.id, !task.done), task.done ? "Marked as not done." : "Done. Your manager can see it.")}
-                >
-                  {pending("done") ? <CircleNotch className="size-4 animate-spin" aria-hidden /> : task.done ? <CheckCircle className="size-4 text-success" aria-hidden /> : <Circle className="size-4" aria-hidden />}
-                  {task.done ? "Done" : "Mark as done"}
-                </button>
-              </div>
-            </div>
+                </TextButton>
+              }
+            >
+              <p className="text-body-sm text-primary">{task.text}</p>
+            </TaskTile>
           )}
 
-          <div className="flex flex-col gap-2 border-t border-border pt-6">
-            <p className="text-body font-semibold text-primary">Someone does this for you?</p>
-            <p className="text-body-sm text-secondary">Send the list and notes to your assistant. They do not need an account.</p>
-            <Button variant="secondary" className="self-start" onClick={() => setAssistant(true)}>
-              Send to my assistant
-            </Button>
-          </div>
+          {task.kind === "event" && task.event && (
+            <TaskTile
+              icon={
+                task.event.image ? (
+                  <Avatar name={task.event.name} src={task.event.image} size="lg" className="size-full!" />
+                ) : task.event.type === "program" ? (
+                  <GraduationCap className="size-6" aria-hidden />
+                ) : (
+                  <CalendarStar className="size-6" aria-hidden />
+                )
+              }
+              title={task.event.name}
+              subtitle={`${task.event.type === "program" ? "Program" : "Event"} by ${task.event.host}`}
+              done={task.done}
+              doneLabel={task.event.type === "program" ? "Applied" : "Registered"}
+              markLabel={task.event.type === "program" ? "Mark as applied" : "Mark as registered"}
+              busy={pending("done")}
+              onMark={() =>
+                run("done", () => act.markTaskDone(task.id, true), {
+                  text: `${task.event?.type === "program" ? "Applied" : "Registered"}. ${managerUser?.firstName ?? "Your manager"} can see it, and it shows in Coming up.`,
+                  action: { label: "Undo", onClick: () => act.markTaskDone(task.id, false) },
+                })
+              }
+              note={<>Why: {task.event.why}</>}
+              actions={
+                <a href={task.event.url} target="_blank" rel="noreferrer" className={textActionClass}>
+                  <LinkSimple className="size-4" aria-hidden /> Open {task.event.type === "program" ? "program" : "event"} page
+                </a>
+              }
+            >
+              <ul className="flex flex-col gap-2 text-body-sm text-primary">
+                <li className="flex items-start gap-2">
+                  <Clock className="mt-0.5 size-4 shrink-0 text-primary-600" aria-hidden />
+                  {task.event.type === "program" && task.event.endsAt
+                    ? `${day(task.event.startsAt)} to ${day(task.event.endsAt)} · ${eventLength(task.event)}`
+                    : `${day(task.event.startsAt)} · ${time(task.event.startsAt)}${task.event.endsAt ? ` to ${time(task.event.endsAt)}` : ""}`}
+                </li>
+                <li className="flex items-start gap-2">
+                  <MapPin className="mt-0.5 size-4 shrink-0 text-primary-600" aria-hidden />
+                  {task.event.place}
+                </li>
+              </ul>
+            </TaskTile>
+          )}
+        </div>
+      </Card>
+
+      <Card title="Someone does this for you?">
+        <div className="flex flex-col gap-4">
+          <p className="text-body-sm text-secondary">
+            {task.kind === "event" ? "Send the details to your assistant so they can register you. They do not need an account." : "Send the list and notes to your assistant. They do not need an account."}
+          </p>
+          <Button className="self-start" onClick={() => setAssistant(true)}>
+            Send to my assistant
+          </Button>
         </div>
       </Card>
 

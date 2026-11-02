@@ -1,7 +1,7 @@
 "use client";
 
 import { delay, getDb, update } from "./store";
-import type { Activity, Client, Db, Message, Permissions, PostStatus, ReviewSettings, SetupStep } from "./types";
+import type { Activity, Client, Db, Message, Permissions, PostStatus, Reaction, ReviewSettings, SetupStep } from "./types";
 
 /*
  * Every change a screen can make. Phase 2 swaps each body for an API call; screens keep calling the same names.
@@ -199,6 +199,8 @@ function copyOf(p: Db["posts"][number], reshare: boolean, text: string): Db["pos
     text,
     why: reshare ? "Sharing a post that did well again, with a new comment." : "Posting this again.",
     image: reshare ? undefined : p.image,
+    video: reshare ? undefined : p.video,
+    carousel: reshare ? undefined : p.carousel,
     repostOf: { id: p.id, text: p.text, publishedAt: p.publishedAt, reshare },
     version: 1,
     checks: [],
@@ -255,7 +257,7 @@ export async function editScheduledPost(postId: string, text: string, smallFix: 
       const next = log(setPost(db, postId, { text, noAsk: true }), p.clientId, "team", "post", `Made a small fix to ${short(text)}`);
       return notify(next, clientUser(db, p.clientId)?.id, `Your manager made a small fix to a scheduled post: ${short(text)}.`, "/content?tab=upcoming");
     }
-    const next = setPost(db, postId, { text, status: "awaiting-client", scheduledFor: undefined, version: (p.version ?? 1) + 1, dueAt: new Date(Date.now() + 2 * 86_400_000).toISOString() });
+    const next = setPost(db, postId, { text, status: "awaiting-client", scheduledFor: undefined, version: (p.version ?? 1) + 1, sentAt: new Date().toISOString(), dueAt: new Date(Date.now() + 2 * 86_400_000).toISOString() });
     return notify(next, clientUser(db, p.clientId)?.id, "A changed post is ready for your review.", "/content/review", { email: true });
   });
 }
@@ -310,10 +312,32 @@ export async function resumePost(postId: string) {
 
 export async function togglePersonSent(taskId: string, personId: string) {
   await delay(250);
-  update((db) => ({
-    ...db,
-    tasks: db.tasks.map((t) => (t.id !== taskId ? t : { ...t, people: t.people?.map((p) => (p.id === personId ? { ...p, done: !p.done } : p)) })),
-  }));
+  update((db) => {
+    const t = db.tasks.find((x) => x.id === taskId);
+    const person = t?.people?.find((p) => p.id === personId);
+    let next: Db = {
+      ...db,
+      tasks: db.tasks.map((x) => (x.id !== taskId ? x : { ...x, people: x.people?.map((p) => (p.id === personId ? { ...p, done: !p.done } : p)) })),
+    };
+    // Recorded in the activity log, so it shows in the report for this period. Undo removes the record.
+    if (t && person) next = person.done ? unlog(next, t.clientId, connectionText(person.name)) : log(next, t.clientId, "you", "connection", connectionText(person.name));
+    return next;
+  });
+}
+
+const connectionText = (name: string) => `Sent a connection request to ${name}`;
+
+/** What a finished quick task says in the activity log and the report. */
+function taskDoneText(t: Db["tasks"][number]) {
+  if (t.kind === "event" && t.event) return `${t.event.type === "program" ? "Applied for" : "Registered for"} ${t.event.name}`;
+  return `Done: ${t.title}`;
+}
+const taskLogKind = (t: Db["tasks"][number]): Activity["kind"] => (t.kind === "event" ? "event" : t.kind === "connect" ? "connection" : "profile");
+
+/** Removes the latest activity record with this text (when the client undoes a step). */
+function unlog(db: Db, clientId: string, text: string): Db {
+  const i = db.activity.findIndex((a) => a.clientId === clientId && a.text === text);
+  return i < 0 ? db : { ...db, activity: db.activity.filter((_, j) => j !== i) };
 }
 
 export async function editPersonNote(taskId: string, personId: string, note: string) {
@@ -326,7 +350,12 @@ export async function editPersonNote(taskId: string, personId: string, note: str
 
 export async function markTaskDone(taskId: string, done = true) {
   await delay(300);
-  update((db) => ({ ...db, tasks: db.tasks.map((t) => (t.id === taskId ? { ...t, done } : t)) }));
+  update((db) => {
+    const t = db.tasks.find((x) => x.id === taskId);
+    let next: Db = { ...db, tasks: db.tasks.map((x) => (x.id === taskId ? { ...x, done } : x)) };
+    if (t && t.done !== done) next = done ? log(next, t.clientId, "you", taskLogKind(t), taskDoneText(t)) : unlog(next, t.clientId, taskDoneText(t));
+    return next;
+  });
 }
 
 /** C17: email the task list to an assistant. Phase 2 sends it with Resend. */
@@ -355,7 +384,7 @@ export async function removeResult(clientId: string, text: string) {
 
 /* ---------- Messages ---------- */
 
-export async function sendMessage(clientId: string, fromUserId: string, body: Pick<Message, "text" | "file" | "voice">, asTeam = false) {
+export async function sendMessage(clientId: string, fromUserId: string, body: Pick<Message, "text" | "file" | "voice" | "threadId">, asTeam = false) {
   await delay(300);
   update((db) => {
     const next: Db = { ...db, messages: [...db.messages, { id: id("ms"), clientId, fromUserId, at: nowIso(), asTeam, ...body }] };
@@ -369,6 +398,54 @@ export async function sendMessage(clientId: string, fromUserId: string, body: Pi
 export async function deleteMessage(messageId: string) {
   await delay();
   update((db) => ({ ...db, messages: db.messages.filter((m) => m.id !== messageId) }));
+}
+
+/** Adds a reaction, swaps it for another, or takes it off when the same one is chosen again. One per person. */
+export async function reactToMessage(messageId: string, userId: string, kind: Reaction) {
+  await delay(150);
+  update((db) => ({
+    ...db,
+    messages: db.messages.map((m) => {
+      if (m.id !== messageId) return m;
+      const mine = m.reactions?.find((r) => r.userId === userId);
+      const others = (m.reactions ?? []).filter((r) => r.userId !== userId);
+      return { ...m, reactions: mine?.kind === kind ? others : [...others, { userId, kind }] };
+    }),
+  }));
+}
+
+export async function togglePinMessage(messageId: string) {
+  await delay(150);
+  update((db) => ({ ...db, messages: db.messages.map((m) => (m.id === messageId ? { ...m, pinned: !m.pinned } : m)) }));
+}
+
+/** The sender changes the text of a message they sent. */
+export async function editMessage(messageId: string, text: string) {
+  await delay();
+  update((db) => ({ ...db, messages: db.messages.map((m) => (m.id === messageId ? { ...m, text, editedAt: nowIso() } : m)) }));
+}
+
+/* Conversations: each one has a title and its own messages, like chats in an AI app. */
+
+/** Starts a conversation, titled from its first message. Returns its id so the first message can go in it. */
+export async function startThread(clientId: string, firstText: string) {
+  await delay(200);
+  const threadId = id("th");
+  const words = firstText.trim().replace(/\s+/g, " ");
+  const title = words ? (words.length > 48 ? `${words.slice(0, 48).trimEnd()}…` : words) : "New conversation";
+  update((db) => ({ ...db, threads: [...(db.threads ?? []), { id: threadId, clientId, title, createdAt: nowIso() }] }));
+  return threadId;
+}
+
+export async function renameThread(threadId: string, title: string) {
+  await delay();
+  update((db) => ({ ...db, threads: (db.threads ?? []).map((t) => (t.id === threadId ? { ...t, title } : t)) }));
+}
+
+/** Deletes a conversation and its messages, for both people. */
+export async function deleteThread(threadId: string) {
+  await delay();
+  update((db) => ({ ...db, threads: (db.threads ?? []).filter((t) => t.id !== threadId), messages: db.messages.filter((m) => m.threadId !== threadId) }));
 }
 
 export async function saveFileToBrand(messageId: string) {
@@ -748,6 +825,17 @@ export async function cancelCall(callId: string) {
   });
 }
 
+/** C1: the client asks to move a booked call. The call stays booked until the manager offers a new time. */
+export async function askToMoveCall(callId: string) {
+  await delay();
+  update((db) => {
+    const c = db.calls.find((x) => x.id === callId);
+    if (!c) return db;
+    const name = c.title?.toLowerCase() ?? { goals: "goals call", strategy: "strategy call", "check-in": "check-in call" }[c.kind];
+    return notify(db, managerUserOf(db, c.clientId)?.id, `${nameOf(clientUser(db, c.clientId))} asked to move their ${name}. Offer a new time.`, "/manager/calls", { email: true });
+  });
+}
+
 /** M8: correct an update after sending it. The client is told what changed. */
 export async function correctUpdate(updateId: string, headline: string, note: string) {
   await delay();
@@ -821,7 +909,10 @@ export async function setPostStatus(postId: string, status: PostStatus, patch: P
   await delay();
   update((db) => {
     const p = db.posts.find((x) => x.id === postId);
-    let next = setPost(db, postId, { status, ...patch });
+    // Record when it went to the client or onto the schedule, for "Assigned 6 hours ago" and "Scheduled 6 hours ago".
+    const when = new Date().toISOString();
+    const stamp = status === "awaiting-client" ? { sentAt: when } : status === "scheduled" ? { scheduledAt: when } : {};
+    let next = setPost(db, postId, { status, ...stamp, ...patch });
     if (p && status === "awaiting-client") next = notify(next, clientUser(db, p.clientId)?.id, "A post is ready for your review.", "/content/review");
     if (p && status === "scheduled") next = log(next, p.clientId, "team", "post", `Scheduled ${short(p.text)}`);
     return next;

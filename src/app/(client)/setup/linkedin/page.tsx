@@ -52,7 +52,6 @@ function ConnectLinkedIn() {
 
       {step === 1 && (
         <div className="flex flex-col gap-4">
-          <p className="text-caption text-secondary">This is LinkedIn&apos;s own screen. (Shown here as a demo.)</p>
           <Card className="flex flex-col gap-6">
             <div className="flex items-center justify-center gap-4">
               <LinkedinLogo className="size-12 text-primary-600" aria-hidden />
@@ -72,7 +71,7 @@ function ConnectLinkedIn() {
             </ul>
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
               <Button
-                variant="ghost"
+                variant="cancel"
                 onClick={() => {
                   setDeclined(true);
                   setStep(0);
@@ -105,7 +104,7 @@ function ConnectLinkedIn() {
         <div className="flex flex-col gap-6">
           <Banner tone="success" title="LinkedIn is connected" />
           <div className="flex flex-col gap-2">
-            <h3 className="font-display text-display-lg text-primary">What should we do for you?</h3>
+            <h3 className="text-body font-semibold text-primary">What should we do for you?</h3>
             <Banner tone="neutral">Change these any time in Control. Whether each one needs your approval first is set in the last setup step.</Banner>
           </div>
           <PermissionsForm client={client} />

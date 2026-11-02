@@ -1,4 +1,5 @@
 import { useId, type TextareaHTMLAttributes } from "react";
+import { FieldMessage } from "./Input";
 
 /** Multi-line field with a visible label. Same look as Input. */
 export function Textarea({
@@ -12,7 +13,7 @@ export function Textarea({
   const message = error ?? help;
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor={id} className="text-body-sm font-medium text-primary">
+      <label htmlFor={id} className="text-body-sm leading-5 font-medium text-primary">
         {label}
       </label>
       <textarea
@@ -23,11 +24,7 @@ export function Textarea({
         className={`rounded-sm border bg-card px-4 py-3 text-body text-primary shadow-sm placeholder:text-neutral-400 focus-visible:border-primary-600 focus-visible:focus-ring ${error ? "border-danger" : "border-border-strong"} ${className}`}
         {...props}
       />
-      {message && (
-        <span id={`${id}-message`} className={`text-body-sm ${error ? "text-danger" : "text-secondary"}`}>
-          {message}
-        </span>
-      )}
+      {message && <FieldMessage id={`${id}-message`} error={error} help={help} />}
     </div>
   );
 }

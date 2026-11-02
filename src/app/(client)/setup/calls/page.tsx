@@ -1,11 +1,11 @@
 "use client";
 
-import { CalendarPlus, CheckCircle, VideoCamera } from "@phosphor-icons/react";
+import { CalendarBlank, CalendarPlus, CheckCircle } from "@phosphor-icons/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import { SetupFrame } from "@/components/client/SetupFrame";
-import { Avatar, Banner, Button, useTask, useToast } from "@/components/ui";
-import { day, dayTime, fullName, time } from "@/lib/format";
+import { Avatar, Banner, Button, Meta, TextButton, Tile, TileFooter, useTask, useToast } from "@/components/ui";
+import { day, dayTime, dayTimeIn, fullName, time } from "@/lib/format";
 import { downloadCall } from "@/lib/calendar";
 import { act, useData, useMyClient } from "@/lib/mock";
 
@@ -146,7 +146,7 @@ function BookCalls() {
               loading={pending("goals")}
               onClick={async () => {
                 if (!goals) return setError("Pick a time for your goals call.");
-                if (await run("goals", () => act.bookCall(client.id, "goals", goals, record ?? true), `Goals call booked: ${dayTime(goals)}.`)) setStep(2);
+                if (await run("goals", () => act.bookCall(client.id, "goals", goals, record ?? true), `Goals call booked: ${dayTimeIn(goals)}.`)) setStep(2);
               }}
             >
               {pending("goals") ? "Booking" : "Book goals call"}
@@ -157,7 +157,7 @@ function BookCalls() {
 
       {step === 2 && (
         <div className="flex flex-col gap-6">
-          {goals && <Banner tone="neutral">Goals call: {dayTime(goals)}. These times are at least {gap} days later.</Banner>}
+          {goals && <Banner tone="neutral">Goals call: {dayTimeIn(goals)}. These times are at least {gap} days later.</Banner>}
           {strategyTimes.length ? (
             <TimePicker times={strategyTimes} value={strategy} onChange={(t) => { setStrategy(t); setError(undefined); }} />
           ) : (
@@ -192,23 +192,25 @@ function BookCalls() {
               { name: "Goals call", at: goals },
               { name: "Strategy call", at: strategy },
             ].map((c) => (
-              <li key={c.name} className="flex flex-col gap-2 rounded-md border border-border p-4">
-                <span className="text-body font-medium text-primary">{c.name}</span>
-                <span className="text-body-sm text-primary">{c.at && dayTime(c.at)}, 30 minutes</span>
-                <span className="flex flex-wrap gap-4 text-body-sm">
-                  <span className="inline-flex items-center gap-1 text-secondary">
-                    <VideoCamera className="size-4" aria-hidden /> Google Meet link sent by email
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!c.at) return;
-                      downloadCall({ title: `${c.name} with ${mu ? fullName(mu) : "your manager"}`, start: c.at, minutes: 30, url: "https://meet.google.com/", description: "Bluecut Socials. The Google Meet link is in your email." });
-                      toast(`${c.name} downloaded. Open the file to add it to your calendar.`);
-                    }} className="inline-flex items-center gap-1 rounded-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
-                    <CalendarPlus className="size-4" aria-hidden /> Add to calendar
-                  </button>
-                </span>
+              <li key={c.name}>
+                <Tile>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-body font-medium text-primary">{c.name}</span>
+                    <span className="text-body-sm text-secondary">30 minutes · Google Meet link sent by email</span>
+                  </div>
+                  <TileFooter>
+                    {c.at && <Meta icon={CalendarBlank}>{dayTime(c.at)}</Meta>}
+                    <TextButton
+                      onClick={() => {
+                        if (!c.at) return;
+                        downloadCall({ title: `${c.name} with ${mu ? fullName(mu) : "your manager"}`, start: c.at, minutes: 30, url: "https://meet.google.com/", description: "Bluecut Socials. The Google Meet link is in your email." });
+                        toast(`${c.name} downloaded. Open the file to add it to your calendar.`);
+                      }}
+                    >
+                      <CalendarPlus className="size-4" aria-hidden /> Add to calendar
+                    </TextButton>
+                  </TileFooter>
+                </Tile>
               </li>
             ))}
           </ul>

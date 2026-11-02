@@ -81,6 +81,18 @@ export type Manager = {
   inviteExpiresAt?: string;
   status: "invited" | "waiting-for-training" | "active" | "suspended";
   intro: string;
+  /** What the client sees on the manager's profile. Name, photo and work only: never their own accounts. */
+  profile?: {
+    location: string;
+    languages: string[];
+    yearsExperience: number;
+    /** Short proof points ("Took a fintech founder from 2k to 18k followers in a year"). */
+    highlights: string[];
+    /** Past roles, newest first. */
+    background: { role: string; place: string; years: string }[];
+    /** How they like to work with clients, in their own words. */
+    approach: string;
+  };
   maxClients: number;
   /** Open call slots, as "mon-morning" style keys. */
   slots?: string[];
@@ -127,9 +139,17 @@ export type Post = {
   /** The manager's short note to the client: why this post. */
   why: string;
   image?: { src: string; alt: string };
+  /** A video post: the clip, the frame shown before it plays, its length and its shape. Use one of image, video or carousel. */
+  video?: { src: string; poster: string; alt: string; seconds: number; shape?: "landscape" | "portrait" | "square" };
+  /** A LinkedIn document carousel: a title and its pages, swiped one at a time. */
+  carousel?: { title: string; slides: { src: string; alt: string }[] };
   status: PostStatus;
   /** When the client's review is due. */
   dueAt?: string;
+  /** When the post was sent to the client for review. */
+  sentAt?: string;
+  /** When the post was put on the schedule. */
+  scheduledAt?: string;
   scheduledFor?: string;
   publishedAt?: string;
   stats?: { impressions: number; reactions: number; comments: number; reposts: number };
@@ -153,19 +173,38 @@ export type Post = {
 
 /* ---------- Quick tasks (C17, M6) ---------- */
 
-export type Person = { id: string; name: string; role: string; profileUrl: string; why: string; note: string; done: boolean };
+export type Person = { id: string; name: string; role: string; profileUrl: string; why: string; note: string; done: boolean; /** Their LinkedIn photo, when we have it. */ photo?: string };
+
+export type TaskEvent = {
+  type: "event" | "program";
+  name: string;
+  host: string;
+  startsAt: string;
+  /** Programs run over weeks; events can leave this out. */
+  endsAt?: string;
+  /** "Online" or a venue ("Eko Hotel, Lagos"). */
+  place: string;
+  /** Where to register. */
+  url: string;
+  why: string;
+  /** The event's own picture (banner or venue), shown round on task tiles. */
+  image?: string;
+};
 
 export type QuickTask = {
   id: string;
   clientId: string;
-  kind: "connect" | "profile";
+  kind: "connect" | "profile" | "event";
   title: string;
+  /** For "event" tasks: register by this date. */
   dueAt: string;
   /** "connect" tasks: the people to connect with. */
   people?: Person[];
   /** "profile" tasks: the text to paste, and where. */
   text?: string;
   where?: string;
+  /** "event" tasks: an event or program to register for and attend. Done means registered. */
+  event?: TaskEvent;
   done: boolean;
   sentAt: string;
 };
@@ -177,6 +216,8 @@ export type Call = {
   clientId: string;
   managerId: string;
   kind: "goals" | "strategy" | "check-in";
+  /** The call's name as the client sees it ("Onboarding call", "Quarterly review"). Falls back to a name for its kind. */
+  title?: string;
   at: string;
   minutes: number;
   meetUrl: string;
@@ -242,6 +283,8 @@ export type Update = {
 export type Message = {
   id: string;
   clientId: string;
+  /** The conversation it belongs to. Older messages without one belong to the client's first conversation. */
+  threadId?: string;
   fromUserId: string;
   text?: string;
   file?: { name: string; size: string; kind: "image" | "pdf" | "doc"; src?: string };
@@ -250,6 +293,22 @@ export type Message = {
   savedToBrand?: boolean;
   /** Signed "Your account team" when the owner covers for the manager. */
   asTeam?: boolean;
+  /** Quick reactions, one per person: like, dislike or "got it". */
+  reactions?: { userId: string; kind: Reaction }[];
+  /** Pinned to the top of its conversation, so it is easy to find again. */
+  pinned?: boolean;
+  /** Set when the sender changed the text after sending. */
+  editedAt?: string;
+};
+
+export type Reaction = "like" | "dislike" | "done";
+
+/** One conversation between a client and their manager, like a chat in an AI app: a title and its own messages. */
+export type Thread = {
+  id: string;
+  clientId: string;
+  title: string;
+  createdAt: string;
 };
 
 /* ---------- Activity (C11) and requests ---------- */
@@ -258,7 +317,11 @@ export type Activity = {
   id: string;
   clientId: string;
   who: "you" | "team" | "system";
-  kind: "post" | "engagement" | "setting" | "account" | "message";
+  /**
+   * Every action on the account, by the client or by the team on their behalf. Reports list all of it for their period
+   * except "setting" and "account" (housekeeping, not work toward the goal).
+   */
+  kind: "post" | "engagement" | "connection" | "follow-up" | "event" | "profile" | "call" | "setting" | "account" | "message";
   text: string;
   at: string;
 };
@@ -448,6 +511,7 @@ export type Db = {
   progress: WeekProgress[];
   updates: Update[];
   messages: Message[];
+  threads: Thread[];
   activity: Activity[];
   requests: PermissionRequest[];
   brands: Brand[];

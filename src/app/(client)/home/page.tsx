@@ -4,17 +4,12 @@ import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
 import {
   CallsCard,
-  LiveCard,
-  MessageCard,
   PausedCard,
-  ReviewCard,
   SetupCard,
   StateBanners,
   StrategyReadyCard,
-  TasksCard,
-  UpcomingCard,
-  UpdateCard,
 } from "@/components/client/HomeCards";
+import { HomeFeed } from "@/components/client/HomeFeed";
 import { useMyClient } from "@/lib/mock";
 
 /**
@@ -34,16 +29,7 @@ export default function HomePage() {
       <SetupCard b={b} />
       <StrategyReadyCard b={b} />
       <CallsCard b={b} />
-      {running && (
-        <>
-          <TasksCard b={b} />
-          <ReviewCard b={b} primary={!paused} />
-          <UpdateCard b={b} />
-          <LiveCard b={b} />
-          <UpcomingCard b={b} />
-          <MessageCard b={b} />
-        </>
-      )}
+      {running && <HomeFeed b={b} primary={!paused} />}
     </Columns>
   );
 }

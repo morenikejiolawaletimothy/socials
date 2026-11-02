@@ -6,7 +6,7 @@ import { useState } from "react";
 import { PayDialog } from "@/components/client/PayDialog";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Avatar, Badge, Banner, Button, Card, Dialog, EmptyState, Textarea, useConfirm, useTask } from "@/components/ui";
+import { Avatar, Badge, Banner, Button, buttonClass, Card, Dialog, EmptyState, Pill, Textarea, Tile, TileIcon, useConfirm, useTask } from "@/components/ui";
 import { date, daysFrom, fullName, money } from "@/lib/format";
 import { act, useData, useMyClient } from "@/lib/mock";
 
@@ -36,7 +36,7 @@ export default function ContractPage() {
     return (
       <Columns {...rails.clientSettings}>
         <Card title="Contract">
-          <EmptyState title="No contract yet" action={<Link href="/setup/plan" className="rounded-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">Choose your plan</Link>}>
+          <EmptyState title="No contract yet" action={<Link href="/setup/plan" className={buttonClass("primary")}>Choose your plan</Link>}>
             You choose a 3, 6 or 12-month plan and sign during setup. Your first 2 weeks are free.
           </EmptyState>
         </Card>
@@ -70,7 +70,6 @@ export default function ContractPage() {
               action={
                 daysFrom(contract.endsAt) > 0 && (
                   <Button
-                    variant="secondary"
                     onClick={() =>
                       confirm({
                         title: "Stay with Bluecut?",
@@ -90,11 +89,12 @@ export default function ContractPage() {
               Service runs to {date(contract.endsAt)}. Any refund is shown under Payments. Changed your mind? You can stay until then.
             </Banner>
           )}
-          <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {/* Question on the left, answer on the right, as in How you review. */}
+          <dl className="flex flex-col divide-y divide-border">
             {rows.map(([k, v]) => (
-              <div key={k} className="flex flex-col gap-1">
-                <dt className="text-caption text-secondary">{k}</dt>
-                <dd className="text-body text-primary">{v}</dd>
+              <div key={k} className="flex flex-col gap-1 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                <dt className="text-body-sm text-secondary">{k}</dt>
+                <dd className="text-body-sm font-medium text-primary sm:text-right">{v}</dd>
               </div>
             ))}
           </dl>
@@ -110,78 +110,93 @@ export default function ContractPage() {
       {manager && managerUser && (
         <Card title="Your account manager">
           <div className="flex flex-col gap-4">
-            <div className="flex items-start gap-3">
-              <Avatar name={fullName(managerUser)} size="md" />
-              <div className="flex flex-col">
-                <span className="text-body font-medium text-primary">{fullName(managerUser)}</span>
+            <Link href="/account-manager" className="group flex items-start gap-3 self-start rounded-md focus-visible:focus-ring">
+              <Avatar name={fullName(managerUser)} src={managerUser.photo} size="md" />
+              <span className="flex flex-col gap-1">
+                <span className="text-body font-medium text-primary group-hover:underline">{fullName(managerUser)}</span>
                 <span className="text-body-sm text-secondary">Since {date(client.joinedAt)}. You keep the same manager when you renew.</span>
-              </div>
-            </div>
+              </span>
+            </Link>
             {changeRequest ? (
-              <div className="flex flex-col gap-2 rounded-md bg-info-bg p-4">
-                <span className="text-body font-medium text-primary">You asked for a different manager</span>
-                <span className="text-body-sm text-secondary">&ldquo;{changeRequest.reason}&rdquo; The owner will get back to you within 1 working day.</span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    confirm({
-                      title: "Withdraw your request?",
-                      body: `You keep ${managerUser.firstName} as your account manager. The owner is told.`,
-                      confirmLabel: "Withdraw request",
-                      action: () => act.cancelManagerChange(changeRequest.id),
-                      success: "Request withdrawn.",
-                    })
-                  }
-                  className="self-start rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring"
-                >
-                  Withdraw request
-                </button>
-              </div>
+              <Banner
+                tone="info"
+                title="You asked for a different manager"
+                action={
+                  <Button
+                    variant="remove"
+                    size="sm"
+                    onClick={() =>
+                      confirm({
+                        title: "Withdraw your request?",
+                        body: `You keep ${managerUser.firstName} as your account manager. The owner is told.`,
+                        confirmLabel: "Withdraw request",
+                        action: () => act.cancelManagerChange(changeRequest.id),
+                        success: "Request withdrawn.",
+                      })
+                    }
+                  >
+                    Withdraw request
+                  </Button>
+                }
+              >
+                &ldquo;{changeRequest.reason}&rdquo; The owner will get back to you within 1 working day.
+              </Banner>
             ) : (
-              <button type="button" onClick={() => setChanging(true)} className="self-start rounded-sm text-body-sm font-medium text-primary-600 hover:text-primary-700 hover:underline focus-visible:focus-ring">
+              <Button variant="secondary" className="self-start" onClick={() => setChanging(true)}>
                 Ask for a different manager
-              </button>
+              </Button>
             )}
           </div>
         </Card>
       )}
 
-      <Card title="Payments">
+      <Card title="Payments" action={invoices.length > 0 && <Pill>{invoices.length === 1 ? "1 invoice" : `${invoices.length} invoices`}</Pill>}>
         <div className="flex flex-col gap-6">
-          <div className="flex items-center gap-3 rounded-md border border-border p-4">
-            <CreditCard className="size-6 text-primary-600" aria-hidden />
-            <span className="flex-1 text-body text-primary">{contract.card ? `${contract.card.brand} ending ${contract.card.last4}` : "No card yet"}</span>
-            <button type="button" onClick={() => setPaying(true)} className="rounded-sm text-body-sm font-medium text-primary-600 hover:text-primary-700 hover:underline focus-visible:focus-ring">
-              {contract.card ? "Update card" : "Add a card"}
-            </button>
-          </div>
+          <Tile>
+            <div className="flex items-center gap-3">
+              <TileIcon round>
+                <CreditCard className="size-6" aria-hidden />
+              </TileIcon>
+              <span className="flex min-w-0 flex-1 flex-col gap-1">
+                <span className="text-body font-medium text-primary">{contract.card ? `${contract.card.brand} ending ${contract.card.last4}` : "No card yet"}</span>
+                <span className="text-body-sm text-secondary">{contract.card ? "Used for your monthly payment." : "Add a card to pay each month."}</span>
+              </span>
+              <Button variant="secondary" size="sm" onClick={() => setPaying(true)}>
+                {contract.card ? "Update card" : "Add a card"}
+              </Button>
+            </div>
+          </Tile>
           {invoices.length ? (
-            <ul className="flex flex-col">
-              {invoices.map((i) => {
-                const ib = invoiceBadge[i.status];
-                return (
-                  <li key={i.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border py-3 last:border-b-0">
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="text-body font-medium text-primary">{i.label}</span>
-                      <span className="text-caption text-secondary">
-                        {i.number}, {date(i.at)}
+            <div className="flex flex-col gap-2">
+              <h3 className="text-body font-medium text-primary">Invoices</h3>
+              <ul className="flex flex-col rounded-md border border-border">
+                {invoices.map((i) => {
+                  const ib = invoiceBadge[i.status];
+                  return (
+                    <li key={i.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-4 py-3 last:border-b-0">
+                      <span className="flex min-w-0 flex-1 flex-col gap-1">
+                        <span className="text-body-sm font-medium text-primary">{i.label}</span>
+                        <span className="text-caption text-secondary">
+                          {i.number} · {date(i.at)}
+                        </span>
                       </span>
-                    </span>
-                    <span className="text-body-sm text-primary">{money(i.amountCents)}</span>
-                    <Badge status={ib.tone}>{ib.label}</Badge>
-                    <button
-                      type="button"
-                      disabled={pending(i.id)}
-                      onClick={() => run(i.id, () => act.save(), `${i.number}.pdf downloaded.`)}
-                      aria-label={`Download invoice ${i.number}`}
-                      className="flex size-10 items-center justify-center rounded-full text-secondary hover:bg-primary-50 hover:text-primary-700 focus-visible:focus-ring"
-                    >
-                      {pending(i.id) ? <CircleNotch className="size-5 animate-spin" aria-hidden /> : <DownloadSimple className="size-5" aria-hidden />}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
+                      <span className="text-body-sm font-medium text-primary">{money(i.amountCents)}</span>
+                      <Badge status={ib.tone}>{ib.label}</Badge>
+                      <button
+                        type="button"
+                        disabled={pending(i.id)}
+                        onClick={() => run(i.id, () => act.save(), `${i.number}.pdf downloaded.`)}
+                        aria-label={`Download invoice ${i.number}`}
+                        title="Download PDF"
+                        className="flex size-9 items-center justify-center rounded-full text-secondary transition-colors hover:bg-primary-50 hover:text-primary-700 focus-visible:focus-ring disabled:cursor-not-allowed"
+                      >
+                        {pending(i.id) ? <CircleNotch className="size-5 animate-spin" aria-hidden /> : <DownloadSimple className="size-5" aria-hidden />}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
           ) : (
             <p className="text-body-sm text-secondary">No payments yet. Receipts appear here.</p>
           )}
@@ -190,9 +205,9 @@ export default function ContractPage() {
 
       {contract.status !== "cancelled" && (
         <Card title="Pull out">
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             <p className="text-body-sm text-secondary">You can pull out of your contract at any time. We show you the end date and your refund before you confirm.</p>
-            <Link href="/contract/cancel" className="self-start rounded-sm text-body-sm font-medium text-primary-600 hover:text-primary-700 hover:underline focus-visible:focus-ring">
+            <Link href="/contract/cancel" className={`self-start ${buttonClass("remove")}`}>
               Pull out of my contract
             </Link>
           </div>
@@ -205,7 +220,7 @@ export default function ContractPage() {
         <p className="text-body-sm text-secondary">The owner reads this and gets back to you within 1 working day. Your new manager receives a full handover, so nothing is lost.</p>
         <Textarea label="Why would you like a change?" value={reason} onChange={(e) => { setReason(e.target.value); setError(undefined); }} error={error} />
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => setChanging(false)}>
+          <Button variant="cancel" onClick={() => setChanging(false)}>
             Cancel
           </Button>
           <Button

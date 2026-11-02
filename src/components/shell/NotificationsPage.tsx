@@ -20,15 +20,15 @@ export function NotificationsPage({ layout }: { layout?: RailSet }) {
 
   const actions =
     user && items.length > 0 ? (
-      <span className="flex gap-1">
+      <span className="flex items-center gap-2">
         {unread > 0 && (
-          <Button variant="ghost" loading={pending("all")} onClick={() => run("all", () => act.markAllRead(user.id), "All notifications marked as read.")}>
-            Mark all as read
+          <Button variant="secondary" size="sm" loading={pending("all")} onClick={() => run("all", () => act.markAllRead(user.id), "All notifications marked as read.")}>
+            {pending("all") ? "Marking as read" : "Mark all as read"}
           </Button>
         )}
         {read > 0 && (
-          <Button variant="ghost" loading={pending("clear")} onClick={() => run("clear", () => act.clearRead(user.id), `Cleared ${read} read notification${read === 1 ? "" : "s"}.`)}>
-            Clear read
+          <Button variant="secondary" size="sm" loading={pending("clear")} onClick={() => run("clear", () => act.clearRead(user.id), `Cleared ${read} read notification${read === 1 ? "" : "s"}.`)}>
+            {pending("clear") ? "Clearing" : "Clear read"}
           </Button>
         )}
       </span>
@@ -36,12 +36,12 @@ export function NotificationsPage({ layout }: { layout?: RailSet }) {
 
   const list =
     items.length === 0 ? (
-      <p className="px-4 py-8 text-center text-body-sm text-secondary">Nothing new. We will tell you here when something needs you.</p>
+      <p className="px-6 py-8 text-center text-body-sm text-secondary">Nothing new. We will tell you here when something needs you.</p>
     ) : (
-      <ul className="flex flex-col">
+      <ul className="flex flex-col divide-y divide-border">
         {items.map((n) => (
-          <li key={n.id} className="group flex items-start gap-1 rounded-md hover:bg-primary-50">
-            <Link href={n.href} onClick={() => act.markRead(n.id)} className="flex flex-1 items-start gap-3 rounded-md px-4 py-3 focus-visible:focus-ring">
+          <li key={n.id} className="group flex items-start gap-1 transition-colors hover:bg-primary-50">
+            <Link href={n.href} onClick={() => act.markRead(n.id)} className="flex flex-1 items-start gap-3 py-4 pl-6 pr-2 focus-visible:focus-ring">
               <span aria-hidden className={`mt-2 size-2 shrink-0 rounded-full ${n.read ? "bg-transparent" : n.urgent ? "bg-danger" : "bg-primary-600"}`} />
               <span className="flex flex-col gap-1">
                 <span className={`text-body-sm ${n.read ? "text-secondary" : "font-medium text-primary"}`}>
@@ -70,7 +70,7 @@ export function NotificationsPage({ layout }: { layout?: RailSet }) {
                   toast("That did not go through. Check your connection and try again.", "danger");
                 }
               }}
-              className="mr-2 mt-2 flex size-9 shrink-0 items-center justify-center rounded-full text-secondary opacity-100 hover:bg-card hover:text-danger focus-visible:focus-ring sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+              className="mr-4 mt-3 flex size-9 shrink-0 items-center justify-center rounded-full text-secondary opacity-100 hover:bg-card hover:text-danger focus-visible:focus-ring sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
             >
               <Trash className="size-4" aria-hidden />
             </button>
@@ -80,7 +80,7 @@ export function NotificationsPage({ layout }: { layout?: RailSet }) {
     );
 
   const card = (
-    <Card title="Notifications" action={actions} padding="sm">
+    <Card title="Notifications" action={actions} padding="none">
       {list}
     </Card>
   );

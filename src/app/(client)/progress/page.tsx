@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Button, Card, Dialog, ProgressBar, Textarea, useConfirm, useTask } from "@/components/ui";
+import { Banner, Button, Card, Dialog, ProgressBar, TextButton, Textarea, useConfirm, useTask } from "@/components/ui";
 import { ago, daysFrom } from "@/lib/format";
 import { act, useMyClient } from "@/lib/mock";
 
@@ -66,14 +66,13 @@ export default function ProgressPage() {
               ))}
             </ul>
             {week.held.length > 0 && (
-              <div className="flex flex-col gap-2 rounded-md bg-warning-bg p-4">
-                <span className="text-body font-semibold text-primary">Waiting on you</span>
-                <ul className="flex flex-col gap-1 text-body-sm text-primary">
+              <Banner tone="warning" title="Waiting on you">
+                <ul className="flex flex-col gap-1">
                   {week.held.map((h) => (
                     <li key={h}>{h}</li>
                   ))}
                 </ul>
-              </div>
+              </Banner>
             )}
           </div>
         </Card>
@@ -81,11 +80,7 @@ export default function ProgressPage() {
 
       <Card
         title="Results"
-        action={
-          <button type="button" onClick={() => setAdding(true)} className="rounded-sm text-body-sm font-medium text-primary-600 hover:text-primary-700 hover:underline focus-visible:focus-ring">
-            Add a result
-          </button>
-        }
+        action={<TextButton onClick={() => setAdding(true)}>Add a result</TextButton>}
       >
         {results.length ? (
           <ul className="flex flex-col gap-3">
@@ -151,7 +146,7 @@ export default function ProgressPage() {
           error={error}
         />
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => setAdding(false)}>
+          <Button variant="cancel" onClick={() => setAdding(false)}>
             Cancel
           </Button>
           <Button
