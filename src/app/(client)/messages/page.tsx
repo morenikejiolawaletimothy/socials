@@ -2,21 +2,21 @@
 
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Conversation } from "@/components/messages/Conversation";
-import { Card, EmptyState } from "@/components/ui";
-import { fullName } from "@/lib/format";
-import { useData, useMyClient } from "@/lib/mock";
+import { ClientChat } from "@/components/messages/ClientChat";
+import { Card, EmptyState, Pill } from "@/components/ui";
+import { useMyClient } from "@/lib/mock";
 
-/** C10 Messages: one conversation with the account manager. Text, files and voice notes. */
+/** C10 Messages: conversations with the account manager, laid out like an AI chat app. Text, files, links and voice typing. */
 export default function MessagesPage() {
-  const { client, user, managerUser, messages } = useMyClient();
-  const { users } = useData();
+  const { client, user, managerUser, messages, threads } = useMyClient();
+  const count = threads.length + (messages.some((m) => !m.threadId) ? 1 : 0);
 
   return (
-    <Columns {...rails.clientMain}>
-      <Card title={managerUser ? fullName(managerUser) : "Messages"} padding="none" action={managerUser && <span className="text-caption text-secondary">Your account manager</span>}>
+    <Columns {...rails.clientMessages} wide>
+      {/* No clipping, so the message box inside can stay pinned to the bottom of the screen. */}
+      <Card title="Messages" padding="none" className="overflow-visible!" action={count > 0 && <Pill>{count === 1 ? "1 conversation" : `${count} conversations`}</Pill>}>
         {client && user && managerUser ? (
-          <Conversation clientId={client.id} messages={messages} me={user} users={users} />
+          <ClientChat clientId={client.id} me={user} manager={managerUser} messages={messages} threads={threads} />
         ) : (
           <div className="p-6">
             <EmptyState title="No manager yet">Once we choose your account manager, you can message them here.</EmptyState>

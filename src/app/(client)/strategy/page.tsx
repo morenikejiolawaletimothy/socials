@@ -1,15 +1,16 @@
 "use client";
 
+import { CheckCircle, XCircle } from "@phosphor-icons/react";
 import { useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Badge, Banner, Button, Card, Dialog, EmptyState, Textarea, useTask } from "@/components/ui";
+import { Badge, Banner, Button, Card, Dialog, EmptyState, Textarea, TextLink, useTask } from "@/components/ui";
 import { date } from "@/lib/format";
 import { act, useMyClient } from "@/lib/mock";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="flex flex-col gap-3 border-t border-border pt-6">
+    <section className="flex flex-col gap-2 border-t border-border pt-6">
       <h3 className="font-display text-display-lg text-primary">{title}</h3>
       {children}
     </section>
@@ -97,47 +98,51 @@ export default function StrategyPage() {
             <Section title="Off limits">
               <ul className="flex flex-wrap gap-2">
                 {brand.offLimits.map((o) => (
-                  <li key={o.id} className="rounded-full bg-danger-bg px-3 py-1 text-body-sm text-primary">
+                  <li key={o.id} className="flex items-center gap-1.5 rounded-full bg-danger-bg px-3 py-1 text-body-sm text-primary">
+                    <XCircle className="size-4 shrink-0 text-danger" aria-hidden />
                     {o.text}
                   </li>
                 ))}
               </ul>
-              <p className="text-caption text-secondary">We check every post and every comment against this. Change it any time in Your brand.</p>
+              <Banner tone="info">
+                We check every post and every comment against this. Change it any time in <TextLink href="/brand">Your brand</TextLink>.
+              </Banner>
             </Section>
           )}
 
           <Section title="The plan in numbers">
-            <div role="region" aria-label="Steps" tabIndex={0} className="overflow-x-auto rounded-sm focus-visible:focus-ring">
-              <table className="w-full min-w-96 text-left text-body-sm">
-                <thead className="text-caption text-secondary">
-                  <tr>
-                    <th className="py-2 font-medium">When</th>
-                    <th className="py-2 font-medium">Posts a week</th>
-                    <th className="py-2 font-medium">Comments a week</th>
-                    <th className="py-2 font-medium">Connections a week</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {strategy.targets.map((t) => (
-                    <tr key={t.period} className="border-t border-border">
-                      <td className="py-3 text-primary">
-                        {t.period}
-                        {t.extra && <span className="block text-caption text-secondary">{t.extra}</span>}
-                      </td>
-                      <td className="py-3 text-primary">{t.posts}</td>
-                      <td className="py-3 text-primary">{t.comments}</td>
-                      <td className="py-3 text-primary">{t.connections}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <p className="text-body-sm text-secondary">What we do for you each week, at each stage of the plan.</p>
+            <ul className="mt-2 flex flex-col rounded-md border border-border">
+              {strategy.targets.map((t) => (
+                <li key={t.period} className="flex flex-col gap-3 border-b border-border px-4 py-3 last:border-b-0 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                  <span className="flex min-w-0 flex-col gap-1">
+                    <span className="text-body font-medium text-primary">{t.period}</span>
+                    {t.extra && <span className="text-caption text-secondary">{t.extra}</span>}
+                  </span>
+                  <dl className="grid shrink-0 grid-cols-3 gap-6">
+                    {[
+                      { label: "Posts", value: t.posts },
+                      { label: "Comments", value: t.comments },
+                      { label: "Connections", value: t.connections },
+                    ].map((n) => (
+                      <div key={n.label} className="flex flex-col gap-1 sm:items-end">
+                        <dt className="text-caption text-secondary">{n.label}</dt>
+                        <dd className="text-body font-medium text-primary">{n.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </li>
+              ))}
+            </ul>
           </Section>
 
           <Section title="How we measure progress">
-            <ul className="flex list-disc flex-col gap-1 pl-5 text-body text-primary">
+            <ul className="flex flex-col gap-2 text-body text-primary">
               {strategy.measures.map((m) => (
-                <li key={m}>{m}</li>
+                <li key={m} className="flex items-start gap-2">
+                  <CheckCircle className="mt-0.5 size-5 shrink-0 text-success" aria-hidden />
+                  {m}
+                </li>
               ))}
             </ul>
           </Section>
@@ -147,7 +152,7 @@ export default function StrategyPage() {
               <Button loading={pending("approve")} onClick={() => run("approve", () => act.approveStrategy(client.id), "Approved. Your manager starts on your first posts.")}>
                 {pending("approve") ? "Approving" : "Approve"}
               </Button>
-              <Button variant="ghost" onClick={() => setAsking(true)}>
+              <Button variant="secondary" onClick={() => setAsking(true)}>
                 Ask for a change
               </Button>
             </div>
@@ -173,7 +178,7 @@ export default function StrategyPage() {
           error={error}
         />
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => setAsking(false)}>
+          <Button variant="cancel" onClick={() => setAsking(false)}>
             Cancel
           </Button>
           <Button

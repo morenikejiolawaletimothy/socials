@@ -2,7 +2,7 @@
 
 import { VideoCamera } from "@phosphor-icons/react";
 import Link from "next/link";
-import { Avatar, Card } from "@/components/ui";
+import { Avatar, Card, textActionClass } from "@/components/ui";
 import { day, fullName, time } from "@/lib/format";
 import { useMyManager } from "@/lib/mock";
 
@@ -14,7 +14,7 @@ export function CallsCard() {
   const today = db.calls.filter((c) => c.managerId === manager?.id && c.status === "booked" && day(c.at) === "Today").sort((a, b) => a.at.localeCompare(b.at));
 
   return (
-    <Card title="Calls today" action={<Link href="/manager/calls" className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">All calls</Link>}>
+    <Card title="Calls today" action={<Link href="/manager/calls" className={textActionClass}>All calls</Link>}>
       {today.length ? (
         <ul className="flex flex-col gap-4">
           {today.map((c) => {
@@ -32,10 +32,10 @@ export function CallsCard() {
                   </span>
                 </div>
                 <div className="flex gap-4 pl-13">
-                  <a href={c.meetUrl} className="inline-flex items-center gap-1 rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
+                  <a href={c.meetUrl} className={textActionClass}>
                     <VideoCamera className="size-4" aria-hidden /> Join
                   </a>
-                  <Link href={`/manager/clients/${c.clientId}/onboard`} className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
+                  <Link href={`/manager/clients/${c.clientId}/onboard`} className={textActionClass}>
                     Prep notes
                   </Link>
                 </div>

@@ -60,7 +60,7 @@ export default function CancelPage() {
             <p className="max-w-md text-body-sm text-secondary">
               {terms.inFree ? "Everything has stopped." : `Service runs to ${date(terms.endsAt)}.`} {terms.refundCents ? `Your refund of ${money(terms.refundCents)} is on its way. We email you when it is paid.` : ""}
             </p>
-            <Link href="/home" className="rounded-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
+            <Link href="/home" className={`mt-2 ${buttonClass("primary")}`}>
               Back to Home
             </Link>
           </div>
@@ -73,7 +73,7 @@ export default function CancelPage() {
                 <fieldset className="flex flex-col gap-2">
                   <legend className="mb-2 font-display text-display-lg text-primary">Why are you leaving?</legend>
                   {reasons.map((r) => (
-                    <label key={r} className={`flex cursor-pointer items-center gap-3 rounded-md border p-3 ${reason === r ? "border-primary-600 bg-primary-50" : "border-border hover:border-primary-300"}`}>
+                    <label key={r} className={`flex cursor-pointer items-center gap-3 rounded-md border p-3 transition-colors ${reason === r ? "border-primary-600 bg-primary-50" : "border-border hover:border-primary-300 hover:bg-primary-50"}`}>
                       <input type="radio" name="reason" checked={reason === r} onChange={() => { setReason(r); setError(undefined); }} className="size-4 accent-primary-600" />
                       <span className="text-body text-primary">{r}</span>
                     </label>
@@ -90,17 +90,17 @@ export default function CancelPage() {
             {step === 1 && (
               <div className="flex flex-col gap-4">
                 <h3 className="font-display text-display-lg text-primary">{offer.title}</h3>
-                <p className="text-body text-primary">{offer.text}</p>
-                <div className="flex flex-col gap-3 sm:flex-row">
-                  <Link
-                    href={offer.href}
-                    className="inline-flex min-h-11 items-center justify-center rounded-md border border-border-strong bg-card px-5 py-3 text-body font-medium text-primary-700 transition-colors hover:border-primary-300 hover:bg-primary-50 focus-visible:focus-ring"
-                  >
-                    {offer.yes}
-                  </Link>
-                  <Button variant="secondary" onClick={() => setStep(2)}>
+                <Banner tone="info">{offer.text}</Banner>
+                <div className="flex flex-col-reverse gap-3 border-t border-border pt-6 sm:flex-row sm:flex-wrap">
+                  <Button variant="secondary" onClick={() => setStep(0)}>
+                    Back
+                  </Button>
+                  <Button variant="remove" onClick={() => setStep(2)}>
                     No, continue to pull out
                   </Button>
+                  <Link href={offer.href} className={buttonClass("primary")}>
+                    {offer.yes}
+                  </Link>
                 </div>
               </div>
             )}
@@ -108,26 +108,28 @@ export default function CancelPage() {
             {step === 2 && (
               <div className="flex flex-col gap-6">
                 <h3 className="font-display text-display-lg text-primary">Here is what happens</h3>
-                <dl className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-1">
-                    <dt className="text-caption text-secondary">Service ends</dt>
-                    <dd className="text-body text-primary">{terms.inFree ? "Now" : date(terms.endsAt)}</dd>
+                {/* Label on the left, answer on the right, as on the Contract page. */}
+                <dl className="flex flex-col rounded-md border border-border">
+                  <div className="flex flex-col gap-1 border-b border-border px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                    <dt className="text-body-sm text-secondary">Service ends</dt>
+                    <dd className="text-body font-medium text-primary sm:text-right">{terms.inFree ? "Now" : date(terms.endsAt)}</dd>
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <dt className="text-caption text-secondary">What stops</dt>
-                    <dd className="text-body text-primary">Posts, engagement and quick tasks. Scheduled posts after the end date are cancelled.</dd>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <dt className="text-caption text-secondary">Your refund</dt>
-                    <dd className="text-body text-primary">{money(terms.refundCents)}</dd>
-                    <dd className="text-body-sm text-secondary">{terms.explain}</dd>
+                  <div className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                    <dt className="text-body-sm text-secondary">Your refund</dt>
+                    <dd className="flex flex-col gap-1 sm:items-end sm:text-right">
+                      <span className="text-body font-medium text-primary">{money(terms.refundCents)}</span>
+                      <span className="max-w-sm text-caption text-secondary">{terms.explain}</span>
+                    </dd>
                   </div>
                 </dl>
+                <Banner tone="warning" title="What stops">
+                  Posts, engagement and quick tasks. Scheduled posts after the end date are cancelled.
+                </Banner>
                 <Banner tone="info" title="Your data">
                   Your account stays open until the end date. Download anything you want to keep from Account.
                 </Banner>
-                <div className="flex flex-col-reverse gap-3 sm:flex-row">
-                  <Button variant="ghost" onClick={() => setStep(1)}>
+                <div className="flex flex-col-reverse gap-3 border-t border-border pt-6 sm:flex-row">
+                  <Button variant="secondary" onClick={() => setStep(1)}>
                     Back
                   </Button>
                   <Button

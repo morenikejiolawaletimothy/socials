@@ -8,7 +8,14 @@ The Bluecut Socials design system is the only source of visual decisions.
 
 - `design-system/` is a copy of the design system from Claude (https://claude.ai/artifact/RZzACyhFQGFyKyZb2cKJMJ). Read `design-system/README.md` before building any screen. It covers voice, color roles, type, spacing, icons, buttons, flows and mobile rules.
 - `design-system/tokens.json` holds the token values. `src/app/globals.css` mirrors them as the Tailwind theme. Tailwind's default colors, radii and shadows are removed, so only brand tokens exist.
-- Build screens from `src/components/ui` (Button, Badge, Card, Input, Stepper, Logo). Add a new primitive there only when no existing one fits, and follow the design-system README for it.
+- Build screens from `src/components/ui` (Button, Badge, Card, Input, Stepper, Logo, and the patterns below). Add a new primitive there only when no existing one fits, and follow the design-system README for it.
+- Shared patterns (all in `src/components/ui`, shown on `/design-system`):
+  - `Pill` counts things in a card header ("6 posts", "2 of 6 done"). `Badge` is a status (Sent, Done, Registered, Published) and is never clickable.
+  - `Meta` is one line of key info with a blue icon ("Due Fri 6 Nov", "Goes live today · 9am"), in a card header or a tile footer.
+  - `TextLink`, `TextButton` and `textActionClass`: the one blue text-action style (View all, Read full details, Copy note, Open profile). No local link-style class strings.
+  - `Tile` (+ `TileFooter`, `TileAction`, `TileIcon`): an item inside a card. Linked tiles turn light blue on hover; the footer sits under a divider with `Meta` left and the action right.
+  - `Button size="sm"` for actions inside a tile or row (Mark as sent). `variant="cancel"` for Cancel next to Save in inline editors (red on hover).
+  - A note inside a tile ("Why: …", "Where: …") is a `Banner` without a title.
 - `/design-system` renders every component. Update it when a component changes.
 
 Rules:
@@ -20,7 +27,7 @@ Rules:
 - Cursor: a pointer (hand) on everything clickable, `not-allowed` on anything disabled, `grab`/`grabbing` on things you drag, the text cursor only in fields. `globals.css` sets this for links, buttons, tabs, labels and checkboxes; when you make anything else clickable (a `div` or card with `onClick`, a hover-to-open card), add `cursor-pointer` yourself. Check the cursor when you review a screen.
 - Buttons have no shadow on hover, only a colour change (the landing `lp-btn` also lifts 1px).
 - One primary button per view. Sentence case. No em dashes, hype or emoji in UI copy. Errors say what happened and what to do.
-- Icons: Phosphor (`@phosphor-icons/react`) only, including social logos; no other icon set and no hand-drawn SVG icons. The one exception is Google's official multicolour "G" on "Continue with Google" (`public/brand/google-g.svg`), which Google's guidelines require. Regular weight only, functional only. No arrows on buttons or for navigation.
+- Icons: Phosphor (`@phosphor-icons/react`) only, including social logos; no other icon set and no hand-drawn SVG icons. The one exception is Google's official multicolour "G" on "Continue with Google" (`public/brand/google-g.svg`), which Google's guidelines require. The round LinkedIn "in" mark (`public/brand/linkedin.svg`) is the second exception, for LinkedIn profile tasks. Regular weight only, functional only. No arrows on buttons or for navigation.
 - Multi-step tasks show the Stepper.
 - Check every screen at 390px wide first, then desktop. No horizontal scroll.
 
@@ -33,7 +40,7 @@ Rules:
   - main pages (Content, Messages, client page): main plus right card (8 / 4)
   - settings pages (Your brand, Control, Contract, Account, Calls, Profile): left `SideMenu` plus main (3 / 9)
 - Content lives in cards with equal gaps (`gap-4` within a column, `gap-6` between columns). On mobile, columns stack and rails hide unless needed.
-- No page titles or subtitles on client and manager pages, so the first card in every column lines up at the top. Each card carries its own title through `Card title=...`: a header strip with a divider under it (breadcrumbs go in `eyebrow`). The owner dashboard may keep page titles.
+- No page titles or subtitles on client and manager pages, so the first card in every column lines up at the top. Each card carries its own title through `Card title=...`: a header strip with a divider under it (breadcrumbs go in `eyebrow`, which renders them above the card, under the top bar, never inside the card header). The owner dashboard may keep page titles.
 - The owner keeps the dashboard shell (sidebar).
 
 ## Lessons from reviews (do not repeat)
@@ -54,7 +61,7 @@ Corrections Fola has already made. Check every new screen against them before sh
 - Every add or create has a matching edit and remove.
 - Actions that tell someone use `notify(...)` in `src/lib/mock/actions.ts` (`email: true` marks the ones that will also send an email in Phase 2). Owner actions also write to the audit log.
 - Test error states with "Simulate errors" in the demo bar: every action must fail gracefully, keep what the person typed, and say what to do.
-- Type hierarchy is set by size, not only weight: card titles 22px (18px in narrow side cards, automatic in `Card`), item titles and subsection headings `text-body` (16px) medium or semibold, supporting text `text-body-sm text-secondary`, meta `text-caption`. Never a 14px bold title over 14px text.
+- Type hierarchy is set by size, not only weight: card titles 18px (`text-display-lg`, automatic in `Card`), item titles and subsection headings `text-body` (16px) medium or semibold, supporting text `text-body-sm text-secondary`, meta `text-caption`. Never a 14px bold title over 14px text.
 - Anything the person should act on, or know before they act (held, failed, taken down, what happens if they do not reply), is a `Banner` (with or without a title), not grey text. Grey text is for descriptions only.
 - Cards are flat: hairline border, no shadow. Shadows only on things that float (menus, dialogs, toasts, the phone bottom bar).
 - Avatars: when the text beside them runs two or more lines, align to the top (`items-start`), as LinkedIn does; one line centres.

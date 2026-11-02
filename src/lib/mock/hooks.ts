@@ -29,6 +29,7 @@ export function clientBundle(db: Db, clientId: string | undefined) {
     calls: byClient(db.calls).sort((a, b) => a.at.localeCompare(b.at)),
     updates: byClient(db.updates),
     messages: byClient(db.messages).sort((a, b) => a.at.localeCompare(b.at)),
+    threads: byClient(db.threads ?? []),
     activity: byClient(db.activity).sort((a, b) => b.at.localeCompare(a.at)),
     requests: byClient(db.requests),
     files: byClient(db.brandFiles),

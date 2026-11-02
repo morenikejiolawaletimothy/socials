@@ -1,4 +1,17 @@
-import type { ClientStatus, PostStatus } from "./mock/types";
+import type { ClientStatus, Post, PostStatus } from "./mock/types";
+
+/**
+ * A post the client did not review by its due time, so it was held. It is overdue, not lost:
+ * the client can still review it at any time (approve it or ask for changes).
+ */
+export function isOverdue(p: Post) {
+  return p.status === "on-hold" && !!p.heldReason?.startsWith("Not reviewed");
+}
+
+/** Posts the client can review now: waiting for them, or overdue. */
+export function canReview(p: Post) {
+  return p.status === "awaiting-client" || isOverdue(p);
+}
 
 type Tone = "success" | "warning" | "danger" | "info" | "neutral";
 

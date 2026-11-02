@@ -1,16 +1,27 @@
 "use client";
 
+import { PencilSimple, Repeat, Trash, type Icon } from "@phosphor-icons/react";
 import { useState } from "react";
 import { PostAgainDialog } from "@/components/content/PostAgainDialog";
 import { VoiceRecorder } from "@/components/content/VoiceRecorder";
-import { Banner, Button, Dialog, Textarea, useConfirm, useTask } from "@/components/ui";
+import { Banner, Button, Dialog, Textarea, TextButton, useConfirm, useTask } from "@/components/ui";
 import { act, type Post } from "@/lib/mock";
 
-const requestTitle = {
-  fix: "Fix asked for",
-  reshare: "You asked to share it again",
-  new: "You asked to post it again",
-};
+/** One action in the bar under a live post, LinkedIn style: icon and short label, equal width, no border. */
+function ActionBarButton({ icon: I, danger = false, onClick, children }: { icon: Icon; danger?: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex min-h-11 items-center justify-center gap-2 rounded-md px-3 text-body-sm font-medium text-secondary transition-colors focus-visible:focus-ring ${
+        danger ? "hover:bg-danger-bg hover:text-danger" : "hover:bg-primary-50 hover:text-primary-700"
+      }`}
+    >
+      <I className="size-5" aria-hidden />
+      {children}
+    </button>
+  );
+}
 
 /** Ask for something in writing or by voice: a fix to a live post, or a change to a scheduled one. */
 function AskDialog({
@@ -55,7 +66,7 @@ function AskDialog({
       />
       <VoiceRecorder sample={sample} onChange={setNote} />
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button variant="ghost" onClick={onClose}>
+        <Button variant="cancel" onClick={onClose}>
           Cancel
         </Button>
         <Button loading={busy} onClick={() => (note.trim() ? onSend(note.trim()) : setError("Write what you would like, or record a voice note."))}>
@@ -92,13 +103,14 @@ export function LivePostActions({ post }: { post: Post }) {
     />
   );
 
+  // The request itself, then Withdraw under a divider (no title: the text says what was asked).
   const banner = req && (
-    <Banner
-      tone="info"
-      title={req.kind === "fix" ? requestTitle.fix : requestTitle[req.repostAs ?? "reshare"]}
-      action={
-        <Button
-          variant="ghost"
+    <Banner tone="info">
+      <p>
+        {req.text} {req.kind === "fix" ? "Your manager will fix it today and tell you when it is done." : "Your manager will prepare it for your review."}
+      </p>
+      <div className="mt-3 border-t border-primary-200 pt-3">
+        <TextButton
           onClick={() =>
             confirm({
               title: "Withdraw your request?",
@@ -110,10 +122,8 @@ export function LivePostActions({ post }: { post: Post }) {
           }
         >
           Withdraw
-        </Button>
-      }
-    >
-      {req.text} {req.kind === "fix" ? "Your manager will fix it today and tell you when it is done." : "Your manager will prepare it for your review."}
+        </TextButton>
+      </div>
     </Banner>
   );
 
@@ -133,30 +143,31 @@ export function LivePostActions({ post }: { post: Post }) {
   return (
     <>
       {banner || (
-        <div className="flex flex-wrap gap-2">
-          <Button variant="secondary" onClick={() => setFixing(true)}>
-            Ask for a fix
-          </Button>
-          <Button variant="ghost" onClick={() => setAgain(true)}>
-            Post it again
-          </Button>
-          <Button
-            variant="ghost"
+        <div className="grid grid-cols-3 gap-1 border-t border-border pt-1">
+          <ActionBarButton icon={PencilSimple} onClick={() => setFixing(true)}>
+            Edit
+          </ActionBarButton>
+          <ActionBarButton icon={Repeat} onClick={() => setAgain(true)}>
+            Repost
+          </ActionBarButton>
+          <ActionBarButton
+            icon={Trash}
+            danger
             onClick={() =>
               confirm({
-                title: "Take this post down?",
+                title: "Delete this post?",
                 body: "It comes off LinkedIn straight away, with its reactions and comments. Your manager is told.",
                 warning: "You cannot undo this. The post cannot be put back with its reactions, only posted again as a new post.",
-                confirmLabel: "Take it down",
+                confirmLabel: "Delete",
                 cancelLabel: "Keep it",
                 tone: "danger",
                 action: () => act.takeDown(post.id),
-                success: "Post taken down. It is no longer on LinkedIn.",
+                success: "Post deleted. It is no longer on LinkedIn.",
               })
             }
           >
-            Take it down
-          </Button>
+            Delete
+          </ActionBarButton>
         </div>
       )}
 
@@ -199,16 +210,17 @@ export function UpcomingPostActions({ post }: { post: Post }) {
   return (
     <>
       <div className="flex flex-wrap gap-2">
-        <Button variant="secondary" onClick={() => setChanging(true)}>
+        <Button variant="secondary" size="sm" onClick={() => setChanging(true)}>
           Ask for a change
         </Button>
         <Button
-          variant="ghost"
+          variant="cancel"
+          size="sm"
           onClick={() =>
             confirm({
               title: "Stop this post?",
               body: "It will not go out. Your manager is told and holds it until you decide.",
-              warning: "You can put it back on the schedule later from Other.",
+              warning: "You can put it back on the schedule later from Held or changing.",
               confirmLabel: "Stop it",
               cancelLabel: "Keep it scheduled",
               action: () => act.stopPost(post.id),
@@ -252,11 +264,8 @@ export function ChangeRequestActions({ post }: { post: Post }) {
         title="You asked for changes"
         action={
           <>
-            <Button variant="secondary" onClick={() => setEditing(true)}>
-              Edit
-            </Button>
-            <Button
-              variant="ghost"
+            <TextButton onClick={() => setEditing(true)}>Edit</TextButton>
+            <TextButton
               onClick={() =>
                 confirm({
                   title: "Withdraw your change request?",
@@ -268,7 +277,7 @@ export function ChangeRequestActions({ post }: { post: Post }) {
               }
             >
               Withdraw
-            </Button>
+            </TextButton>
           </>
         }
       >

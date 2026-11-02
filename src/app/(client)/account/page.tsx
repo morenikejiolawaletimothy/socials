@@ -8,15 +8,15 @@ import { PhotoField } from "@/components/account/PhotoField";
 import { pullOutTerms } from "@/components/client/contract";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Banner, Button, Card, Dialog, Input, Select, Switch, useConfirm, useTask } from "@/components/ui";
+import { Badge, Banner, Button, Card, Dialog, Input, Select, Switch, TextButton, textActionClass, useConfirm, useTask } from "@/components/ui";
 import { timeZones, zoneLabel } from "@/lib/timezones";
 import { fullName, money } from "@/lib/format";
 import { act, useMyClient } from "@/lib/mock";
 
 const allSessions = [
-  { id: "s1", icon: Desktop, name: "Chrome on Mac", where: "Lagos, now", current: true },
-  { id: "s2", icon: DeviceMobile, name: "Safari on iPhone", where: "Lagos, 2 hours ago", current: false },
-  { id: "s3", icon: Desktop, name: "Edge on Windows", where: "Abuja, 5 days ago", current: false },
+  { id: "s1", icon: Desktop, name: "Chrome on Mac", where: "Lagos · now", current: true },
+  { id: "s2", icon: DeviceMobile, name: "Safari on iPhone", where: "Lagos · 2 hours ago", current: false },
+  { id: "s3", icon: Desktop, name: "Edge on Windows", where: "Abuja · 5 days ago", current: false },
 ];
 
 const emailItems = [
@@ -51,7 +51,7 @@ export default function AccountPage() {
       <Card title="Profile">
         <form
           noValidate
-          className="flex flex-col gap-6"
+          className="flex flex-col gap-4"
           onSubmit={async (e) => {
             e.preventDefault();
             if (!firstName.trim() || !lastName.trim()) return setNameError("Enter your first and last name.");
@@ -83,7 +83,7 @@ export default function AccountPage() {
             <dt className="text-caption text-secondary">Email</dt>
             <dd className="text-body text-primary">{user.email}</dd>
           </dl>
-          <Link href="/reset" className="self-start rounded-sm text-body-sm font-medium text-primary-600 hover:text-primary-700 hover:underline focus-visible:focus-ring">
+          <Link href="/reset" className={`self-start ${textActionClass}`}>
             Change password
           </Link>
           <Switch
@@ -109,8 +109,7 @@ export default function AccountPage() {
             <span className="flex items-center justify-between gap-3">
               <span className="text-body font-semibold text-primary">Where you are signed in</span>
               {sessions.length > 1 && (
-                <button
-                  type="button"
+                <TextButton
                   onClick={() =>
                     confirm({
                       title: "Sign out everywhere else?",
@@ -120,10 +119,9 @@ export default function AccountPage() {
                       success: "Signed out of all other devices.",
                     })
                   }
-                  className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring"
                 >
                   Sign out everywhere else
-                </button>
+                </TextButton>
               )}
             </span>
             <ul className="flex flex-col rounded-md border border-border">
@@ -132,13 +130,12 @@ export default function AccountPage() {
                   <s.icon className="size-6 text-secondary" aria-hidden />
                   <span className="flex flex-1 flex-col">
                     <span className="text-body font-medium text-primary">{s.name}</span>
-                    <span className="text-caption text-secondary">{s.where}</span>
+                    <span className="text-body-sm text-secondary">{s.where}</span>
                   </span>
                   {s.current ? (
-                    <span className="text-caption text-success">This device</span>
+                    <Badge status="success">This device</Badge>
                   ) : (
-                    <button
-                      type="button"
+                    <TextButton
                       onClick={() =>
                         confirm({
                           title: `Sign out of ${s.name}?`,
@@ -148,10 +145,9 @@ export default function AccountPage() {
                           success: `Signed out of ${s.name}.`,
                         })
                       }
-                      className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring"
                     >
                       Sign out
-                    </button>
+                    </TextButton>
                   )}
                 </li>
               ))}
@@ -192,23 +188,24 @@ export default function AccountPage() {
             This removes your account and deletes your data. We keep only invoices and payment records, as the law requires.
             {activeContract ? " Your contract is cancelled first, with any refund due." : ""}
           </Banner>
-          <Button variant="ghost" className="self-start" onClick={() => setDeleting(true)}>
+          <Button variant="remove" className="self-start" onClick={() => setDeleting(true)}>
             Delete my account
           </Button>
         </div>
       </Card>
 
       <Dialog open={deleting} onClose={() => setDeleting(false)} title="Delete your account?">
+        {/* Warnings first, right under the title, then the details, then the buttons on the right. */}
+        <Banner tone="danger">You cannot undo this. To come back, you would sign up and start again.</Banner>
         {activeContract && terms && (
           <Banner tone="warning" title="This cancels your contract first">
             {terms.explain} Refund: {money(terms.refundCents)}.
           </Banner>
         )}
         <p className="text-body text-secondary">Your strategy, posts, brand files and messages are deleted. Download your data first if you want to keep it.</p>
-        <p className="rounded-md bg-danger-bg px-4 py-3 text-body-sm text-primary">You cannot undo this. To come back, you would sign up and start again.</p>
         <Input label='Type "delete" to confirm' value={confirmText} onChange={(e) => setConfirmText(e.target.value)} />
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => setDeleting(false)}>
+        <div className="flex flex-wrap justify-end gap-3">
+          <Button variant="cancel" onClick={() => setDeleting(false)}>
             Keep my account
           </Button>
           <Button

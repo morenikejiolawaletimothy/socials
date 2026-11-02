@@ -1,20 +1,54 @@
 "use client";
 
-import { CircleNotch, FileText, Microphone, PaperPlaneTilt, Paperclip, Stop, Trash, Waveform } from "@phosphor-icons/react";
+import { CircleNotch, FileText, Microphone, PaperPlaneTilt, Paperclip, Stop, Waveform } from "@phosphor-icons/react";
 import Image from "next/image";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Avatar, Button, useConfirm, useTask, useToast } from "@/components/ui";
 import { day, fullName, time } from "@/lib/format";
 import { fileSize, toImage } from "@/lib/image";
-import { act, type Message, type User } from "@/lib/mock";
+import { act, type Message, type Reaction, type User } from "@/lib/mock";
+import { MessageActions, MessageEditor, MessageMarks, PinnedStrip, ReactionChips } from "./MessageActions";
 
-function Bubble({ m, mine, author, onSave, onDelete, saveLabel, saving }: { m: Message; mine: boolean; author: string; onSave?: () => void; onDelete?: () => void; saveLabel: string; saving: boolean }) {
+function Bubble({
+  m,
+  mine,
+  author,
+  meId,
+  nameOf,
+  onSave,
+  onDelete,
+  onReact,
+  onPin,
+  onEdit,
+  savingEdit,
+  saveLabel,
+  saving,
+}: {
+  m: Message;
+  mine: boolean;
+  author: string;
+  meId: string;
+  nameOf: (userId: string) => string;
+  onSave?: () => void;
+  onDelete?: () => void;
+  onReact: (kind: Reaction) => void;
+  onPin: () => void;
+  onEdit: (text: string) => Promise<boolean>;
+  savingEdit: boolean;
+  saveLabel: string;
+  saving: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
   const body = mine ? "bg-primary-600 text-inverse" : "bg-neutral-50 text-primary";
   return (
-    <li className={`group flex items-end gap-2 ${mine ? "flex-row-reverse" : ""}`}>
+    <li id={`msg-${m.id}`} className={`group flex scroll-mt-4 items-end gap-2 ${mine ? "flex-row-reverse" : ""}`}>
       {!mine && <Avatar name={author} size="sm" />}
       <div className={`flex max-w-xs flex-col gap-1 sm:max-w-md ${mine ? "items-end" : "items-start"}`}>
-        {m.text && <p className={`whitespace-pre-line rounded-lg px-4 py-3 text-body-sm ${body}`}>{m.text}</p>}
+        {editing ? (
+          <MessageEditor initial={m.text ?? ""} saving={savingEdit} onSave={onEdit} onCancel={() => setEditing(false)} />
+        ) : (
+          m.text && <p className={`whitespace-pre-line rounded-lg px-4 py-3 text-body-sm ${body}`}>{m.text}</p>
+        )}
         {m.voice && (
           <div className={`flex flex-col gap-2 rounded-lg px-4 py-3 ${body}`}>
             <span className="flex items-center gap-2 text-body-sm font-medium">
@@ -51,20 +85,17 @@ function Bubble({ m, mine, author, onSave, onDelete, saveLabel, saving }: { m: M
             </div>
           </div>
         )}
-        <span className="flex items-center gap-2 px-1 text-caption text-secondary">
-          {m.asTeam ? "Your account team, " : ""}
-          {time(m.at)}
-          {onDelete && (
-            <button
-              type="button"
-              onClick={onDelete}
-              aria-label="Delete message"
-              className="rounded-sm text-secondary opacity-100 hover:text-danger focus-visible:focus-ring sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
-            >
-              <Trash className="size-4" aria-hidden />
-            </button>
-          )}
-        </span>
+        <ReactionChips m={m} meId={meId} nameOf={nameOf} onReact={onReact} align={mine ? "end" : "start"} />
+        {!editing && (
+          <span className={`flex items-center gap-2 px-1 text-caption text-secondary ${mine ? "flex-row-reverse" : ""}`}>
+            <span className="flex items-center gap-2">
+              {m.asTeam ? "Your account team, " : ""}
+              {time(m.at)}
+              <MessageMarks m={m} />
+            </span>
+            <MessageActions m={m} meId={meId} onReact={onReact} onPin={onPin} onEdit={mine ? () => setEditing(true) : undefined} onDelete={onDelete} />
+          </span>
+        )}
       </div>
     </li>
   );
@@ -99,7 +130,10 @@ export function Conversation({
   const endRef = useRef<HTMLLIElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => endRef.current?.scrollIntoView({ block: "nearest" }), [messages.length]);
+  // Keep the newest message in view. Block body on purpose: an effect must return nothing or a clean-up function.
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ block: "nearest" });
+  }, [messages.length]);
   useEffect(() => {
     if (!recording) return;
     const t = setInterval(() => setSeconds((s) => s + 1), 1000);
@@ -117,6 +151,7 @@ export function Conversation({
   let lastDay = "";
   return (
     <div className="flex flex-col">
+      <PinnedStrip key={clientId} messages={messages} />
       <ol className="flex max-h-160 min-h-80 flex-col gap-4 overflow-y-auto px-6 py-6" aria-live="polite">
         {messages.map((m) => {
           const d = day(m.at);
@@ -130,6 +165,12 @@ export function Conversation({
                 m={m}
                 mine={m.fromUserId === me.id}
                 author={m.asTeam ? "Your account team" : fullName(author)}
+                meId={me.id}
+                nameOf={(id) => users.find((u) => u.id === id)?.firstName ?? "Your account team"}
+                onReact={(kind) => run(`react-${m.id}`, () => act.reactToMessage(m.id, me.id, kind))}
+                onPin={() => run(`pin-${m.id}`, () => act.togglePinMessage(m.id), m.pinned ? "Unpinned." : "Pinned to the top of this conversation.")}
+                onEdit={(t) => run(`edit-${m.id}`, () => act.editMessage(m.id, t), "Message updated.")}
+                savingEdit={pending(`edit-${m.id}`)}
                 saveLabel={saveLabel}
                 saving={pending(`save-${m.id}`)}
                 onSave={() => run(`save-${m.id}`, () => act.saveFileToBrand(m.id), "Saved to Your brand.")}

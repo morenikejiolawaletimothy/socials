@@ -1,16 +1,15 @@
 "use client";
 
-import { FileText, PencilSimple, Plus, Sparkle, Trash, UploadSimple, X } from "@phosphor-icons/react";
+import { CheckCircle, FileText, PencilSimple, Plus, Sparkle, Trash, UploadSimple, X, XCircle } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Badge, Button, Card, Dialog, Input, Select, Textarea, useConfirm, useTask, useToast } from "@/components/ui";
+import { Badge, Banner, Button, Card, Dialog, fieldClass, Input, Select, Textarea, Tile, TileFooter, useConfirm, useTask, useToast } from "@/components/ui";
 import { agoIn, date } from "@/lib/format";
 import { fileSize, photoProblem, toImage } from "@/lib/image";
 import { act, useMyClient, type BrandFile, type OffLimit } from "@/lib/mock";
 
-const linkButton = "rounded-sm text-body-sm font-medium text-primary-600 hover:text-primary-700 hover:underline focus-visible:focus-ring";
 const iconButton = "flex size-9 shrink-0 items-center justify-center rounded-full text-secondary hover:bg-danger-bg hover:text-danger focus-visible:focus-ring";
 const offKinds: { value: OffLimit["kind"]; label: string }[] = [
   { value: "topic", label: "Topic" },
@@ -48,9 +47,9 @@ function Upload({ clientId, section }: { clientId: string; section: BrandFile["s
           await run("upload", async () => act.addBrandFile(clientId, section, f.name, fileSize(f.size), section === "documents" ? undefined : await toImage(f, section === "logos" ? 600 : 1200)), `${f.name} uploaded.`);
         }}
       />
-      <button type="button" disabled={pending("upload")} onClick={() => ref.current?.click()} className={`${linkButton} inline-flex items-center gap-1`}>
-        <UploadSimple className={`size-4 ${pending("upload") ? "animate-pulse" : ""}`} aria-hidden /> {pending("upload") ? "Uploading" : "Add"}
-      </button>
+      <Button variant="secondary" size="sm" loading={pending("upload")} onClick={() => ref.current?.click()}>
+        {!pending("upload") && <UploadSimple className="size-4" aria-hidden />} {pending("upload") ? "Uploading" : "Upload"}
+      </Button>
       {error && <span className="max-w-60 text-right text-caption text-danger">{error}</span>}
     </div>
   );
@@ -77,13 +76,13 @@ function OffLimitRow({ clientId, item }: { clientId: string; item: OffLimit }) {
         >
           <label className="flex-1">
             <span className="sr-only">Edit</span>
-            <input value={text} onChange={(e) => setText(e.target.value)} className="min-h-11 w-full rounded-sm border border-border-strong bg-card px-4 py-3 text-body text-primary shadow-sm placeholder:text-neutral-400 focus-visible:border-primary-600 focus-visible:focus-ring" />
+            <input value={text} onChange={(e) => setText(e.target.value)} className={`${fieldClass} border-border-strong`} />
           </label>
           <span className="flex gap-2">
-            <Button type="submit" variant="secondary" loading={pending("edit")}>
-              Save
+            <Button type="submit" loading={pending("edit")} disabled={!text.trim()}>
+              {pending("edit") ? "Saving" : "Save"}
             </Button>
-            <Button variant="ghost" onClick={() => { setText(item.text); setEditing(false); }}>
+            <Button variant="cancel" onClick={() => { setText(item.text); setEditing(false); }}>
               Cancel
             </Button>
           </span>
@@ -138,6 +137,7 @@ export default function BrandPage() {
   const [avoid, setAvoid] = useState(brand?.wordsAvoid.join(", ") ?? "");
   const [colour, setColour] = useState("");
   const [colourError, setColourError] = useState<string>();
+  const momentFileRef = useRef<HTMLInputElement>(null);
   if (!client) return null;
 
   const photos = files.filter((f) => f.section === "photos");
@@ -160,48 +160,52 @@ export default function BrandPage() {
       <Card
         title="Moments"
         action={
-          <button type="button" onClick={() => setMomentOpen(true)} className={`${linkButton} inline-flex items-center gap-1`}>
+          <Button variant="secondary" size="sm" onClick={() => setMomentOpen(true)}>
             <Plus className="size-4" aria-hidden /> Add a Moment
-          </button>
+          </Button>
         }
       >
         <div className="flex flex-col gap-4">
-          <p className="text-body-sm text-secondary">Something you want a post about, like an event you spoke at or a milestone. Add a note and photos. Your manager is told at once.</p>
+          <Banner tone="info" closeKey="brand-moments">
+            Something you want a post about, like an event you spoke at or a milestone. Add a note and photos. Your manager is told at once.
+          </Banner>
           <ul className="flex flex-col gap-4">
             {moments.map((m) => (
-              <li key={m.id} className="flex flex-col gap-3 rounded-md border border-border p-4">
-                <div className="flex items-start justify-between gap-3">
+              <li key={m.id}>
+                <Tile>
+                  {m.photos.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {m.photos.map((p) => (
+                        <span key={p} className="relative size-16 overflow-hidden rounded-sm">
+                          <Image src={p} alt="" fill sizes="64px" className="object-cover" />
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   <p className="text-body-sm text-primary">{m.note}</p>
-                  <Badge status={momentStatus[m.status].tone}>{momentStatus[m.status].label}</Badge>
-                </div>
-                {m.photos.length > 0 && (
-                  <div className="flex gap-2">
-                    {m.photos.map((p) => (
-                      <span key={p} className="relative size-16 overflow-hidden rounded-sm">
-                        <Image src={p} alt="" fill sizes="64px" className="object-cover" />
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <span className="flex items-center justify-between gap-3">
-                  <span className="text-caption text-secondary">Added {agoIn(m.at)}</span>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      confirm({
-                        title: "Remove this Moment?",
-                        body: m.status === "post-drafted" ? "Your manager has already drafted a post from it. The draft is kept until you review it." : "Your manager will no longer see it.",
-                        confirmLabel: "Remove",
-                        tone: "danger",
-                        action: () => act.deleteMoment(m.id),
-                        success: "Moment removed.",
-                      })
-                    }
-                    className={linkButton}
-                  >
-                    Remove
-                  </button>
-                </span>
+                  <TileFooter>
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="text-caption text-secondary">Added {agoIn(m.at)}</span>
+                      <Badge status={momentStatus[m.status].tone}>{momentStatus[m.status].label}</Badge>
+                    </span>
+                    <Button
+                      variant="remove"
+                      size="sm"
+                      onClick={() =>
+                        confirm({
+                          title: "Remove this Moment?",
+                          body: m.status === "post-drafted" ? "Your manager has already drafted a post from it. The draft is kept until you review it." : "Your manager will no longer see it.",
+                          confirmLabel: "Remove",
+                          tone: "danger",
+                          action: () => act.deleteMoment(m.id),
+                          success: "Moment removed.",
+                        })
+                      }
+                    >
+                      Remove
+                    </Button>
+                  </TileFooter>
+                </Tile>
               </li>
             ))}
             {moments.length === 0 && <li className="text-body-sm text-secondary">No Moments yet. Add one when something happens you want a post about.</li>}
@@ -211,7 +215,9 @@ export default function BrandPage() {
 
       <Card title="Off limits">
         <div className="flex flex-col gap-4">
-          <p className="text-body-sm text-secondary">What we never post, comment on or engage with. We check every post and every comment against this list.</p>
+          <Banner tone="info" closeKey="brand-off-limits">
+            What we never post, comment on or engage with. We check every post and every comment against this list.
+          </Banner>
           <ul className="flex flex-col">
             {brand.offLimits.map((o) => (
               <OffLimitRow key={o.id} clientId={client.id} item={o} />
@@ -239,8 +245,8 @@ export default function BrandPage() {
             <div className="flex-1">
               <Input label="What to avoid" placeholder="For example: never comment on politics" value={offText} onChange={(e) => { setOffText(e.target.value); setOffError(undefined); }} error={offError} />
             </div>
-            <Button type="submit" variant="secondary" className="sm:mt-7" loading={pending("off")}>
-              Add
+            <Button type="submit" className="sm:mt-7" loading={pending("off")}>
+              {pending("off") ? "Adding" : "Add"}
             </Button>
           </form>
         </div>
@@ -250,9 +256,9 @@ export default function BrandPage() {
         title="Your voice"
         action={
           !editingVoice && (
-            <button type="button" onClick={() => setEditingVoice(true)} className={linkButton}>
-              Edit
-            </button>
+            <Button variant="secondary" size="sm" onClick={() => setEditingVoice(true)}>
+              <PencilSimple className="size-4" aria-hidden /> Edit
+            </Button>
           )
         }
       >
@@ -272,7 +278,7 @@ export default function BrandPage() {
                 {pending("voice") ? "Saving" : "Save"}
               </Button>
               <Button
-                variant="ghost"
+                variant="cancel"
                 onClick={() => {
                   setVoice(brand.voice);
                   setWordsIn(brand.wordsUse.join(", "));
@@ -287,19 +293,22 @@ export default function BrandPage() {
         ) : (
           <div className="flex flex-col gap-4">
             <p className="text-body text-primary">{brand.voice || "Not written yet. Your manager fills this in after your goals call, and you can change it."}</p>
-            {[
-              ["Words you use", brand.wordsUse, "bg-success-bg"],
-              ["Words you avoid", brand.wordsAvoid, "bg-danger-bg"],
-            ].map(([label, words, bg]) => (
-              <div key={label as string} className="flex flex-col gap-2">
-                <span className="text-caption text-secondary">{label as string}</span>
+            {(
+              [
+                { label: "Words you use", words: brand.wordsUse, bg: "bg-success-bg", icon: <CheckCircle className="size-4 shrink-0 text-success" aria-hidden /> },
+                { label: "Words you avoid", words: brand.wordsAvoid, bg: "bg-danger-bg", icon: <XCircle className="size-4 shrink-0 text-danger" aria-hidden /> },
+              ] as const
+            ).map(({ label, words, bg, icon }) => (
+              <div key={label} className="flex flex-col gap-2">
+                <span className="text-caption text-secondary">{label}</span>
                 <ul className="flex flex-wrap gap-2">
-                  {(words as string[]).map((w) => (
-                    <li key={w} className={`rounded-full px-3 py-1 text-body-sm text-primary ${bg}`}>
+                  {words.map((w) => (
+                    <li key={w} className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-body-sm text-primary ${bg}`}>
+                      {icon}
                       {w}
                     </li>
                   ))}
-                  {!(words as string[]).length && <li className="text-body-sm text-secondary">None yet</li>}
+                  {!words.length && <li className="text-body-sm text-secondary">None yet</li>}
                 </ul>
               </div>
             ))}
@@ -339,7 +348,7 @@ export default function BrandPage() {
               </span>
               <span className="flex flex-1 flex-col">
                 <span className="text-body font-medium text-primary">{f.name}</span>
-                <span className="text-caption text-secondary">{f.size}</span>
+                <span className="text-body-sm text-secondary">{f.size}</span>
               </span>
               <button type="button" aria-label={`Remove ${f.name}`} onClick={() => removeFile(f)} className={iconButton}>
                 <Trash className="size-4" aria-hidden />
@@ -387,8 +396,8 @@ export default function BrandPage() {
             <div className="flex-1">
               <Input label="Add a colour" placeholder="#224cd5" value={colour} onChange={(e) => { setColour(e.target.value); setColourError(undefined); }} error={colourError} />
             </div>
-            <Button type="submit" variant="secondary" className="sm:mt-7" loading={pending("colour")}>
-              Add
+            <Button type="submit" className="sm:mt-7" loading={pending("colour")}>
+              {pending("colour") ? "Adding" : "Add"}
             </Button>
           </form>
         </div>
@@ -399,11 +408,14 @@ export default function BrandPage() {
           <ul className="flex flex-col">
             {docs.map((f) => (
               <li key={f.id} className="flex items-center gap-3 border-b border-border py-3 last:border-b-0">
-                <FileText className="size-6 shrink-0 text-primary-600" aria-hidden />
-                <span className="flex flex-1 flex-col">
-                  <span className="text-body font-medium text-primary">{f.name}</span>
-                  <span className="text-caption text-secondary">
-                    {f.size}, added {date(f.at)}
+                {/* Icon on the title's line; the remove button centred on the row. */}
+                <span className="flex flex-1 items-start gap-3">
+                  <FileText className="mt-px size-6 shrink-0 text-primary-600" aria-hidden />
+                  <span className="flex min-w-0 flex-1 flex-col">
+                    <span className="text-body font-medium text-primary">{f.name}</span>
+                    <span className="text-body-sm text-secondary">
+                      {f.size} · Added {date(f.at)}
+                    </span>
                   </span>
                 </span>
                 <button type="button" aria-label={`Remove ${f.name}`} onClick={() => removeFile(f)} className={iconButton}>
@@ -428,15 +440,17 @@ export default function BrandPage() {
           }}
           error={momentError}
         />
-        <div className="flex flex-col gap-2">
-          <label htmlFor="moment-photos" className="text-body-sm font-medium text-primary">
-            Photos (optional, up to 4)
-          </label>
+        <div className="flex flex-col items-start gap-2">
+          <span className="text-body-sm leading-5 font-medium text-primary">Photos (optional, up to 4)</span>
           <input
+            ref={momentFileRef}
             id="moment-photos"
             type="file"
             multiple
+            aria-label="Choose photos"
             accept={limits.photos.types}
+            className="sr-only"
+            tabIndex={-1}
             onChange={async (e) => {
               const picked = Array.from(e.target.files ?? []);
               e.target.value = "";
@@ -447,8 +461,11 @@ export default function BrandPage() {
               const added = await Promise.all(picked.map((f) => toImage(f, 1200)));
               setMomentPhotos((list) => [...list, ...added]);
             }}
-            className="text-body-sm text-secondary file:mr-3 file:cursor-pointer file:rounded-md file:border file:border-border-strong file:bg-card file:px-4 file:py-2 file:text-body-sm file:font-medium file:text-primary-700"
           />
+          <Button variant="secondary" size="sm" disabled={momentPhotos.length >= 4} onClick={() => momentFileRef.current?.click()}>
+            <UploadSimple className="size-4" aria-hidden /> Add photos
+          </Button>
+          <span className="text-caption text-secondary">{limits.photos.label}.</span>
           {momentPhotos.length > 0 && (
             <ul className="flex flex-wrap gap-2">
               {momentPhotos.map((src, i) => (
@@ -468,7 +485,7 @@ export default function BrandPage() {
           )}
         </div>
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => setMomentOpen(false)}>
+          <Button variant="cancel" onClick={() => setMomentOpen(false)}>
             Cancel
           </Button>
           <Button

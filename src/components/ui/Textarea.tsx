@@ -12,7 +12,7 @@ export function Textarea({
   const message = error ?? help;
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor={id} className="text-body-sm font-medium text-primary">
+      <label htmlFor={id} className="text-body-sm leading-5 font-medium text-primary">
         {label}
       </label>
       <textarea

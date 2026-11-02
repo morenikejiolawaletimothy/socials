@@ -4,9 +4,9 @@ const paddings = { none: "", sm: "p-2", md: "p-6" };
 
 type CardProps = Omit<HTMLAttributes<HTMLDivElement>, "title"> & {
   padding?: keyof typeof paddings;
-  /** Card title, in a header strip with a divider under it: 22px in main cards, 18px in narrow side cards. */
+  /** Card title, in a header strip with a divider under it: 18px (display-lg) in every card. */
   title?: React.ReactNode;
-  /** Small line above the title, such as breadcrumbs. */
+  /** Breadcrumbs for the page. Rendered above the card (on the page, under the top bar), not inside it. */
   eyebrow?: React.ReactNode;
   /** One action on the right of the header. */
   action?: React.ReactNode;
@@ -22,16 +22,16 @@ export function Card({ className = "", padding = "md", title, eyebrow, action, c
     );
   }
   return (
-    <section className={`@container overflow-hidden rounded-lg border border-border bg-card ${className}`} {...props}>
-      <header className="flex flex-col gap-2 border-b border-border px-6 py-4">
-        {eyebrow}
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="font-display text-display-lg text-primary @md:text-display-xl">{title}</h2>
+    <>
+      {eyebrow}
+      <section className={`@container overflow-hidden rounded-lg border border-border bg-card ${className}`} {...props}>
+        <header className="flex items-center justify-between gap-4 border-b border-border px-6 py-4">
+          <h2 className="font-display text-display-lg text-primary">{title}</h2>
           {action}
-        </div>
-      </header>
-      <div className={paddings[padding]}>{children}</div>
-    </section>
+        </header>
+        <div className={padding === "md" ? "px-6 py-4" : paddings[padding]}>{children}</div>
+      </section>
+    </>
   );
 }
 

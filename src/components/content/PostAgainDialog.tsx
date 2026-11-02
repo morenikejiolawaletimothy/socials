@@ -59,10 +59,10 @@ export function PostAgainDialog({
           <legend className="sr-only">How to post it again</legend>
           {options.map((o) => (
             <label key={o.value} className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 ${choice === o.value ? "border-primary-600 bg-primary-50" : "border-border hover:border-primary-300"}`}>
-              <input type="radio" name="repost" checked={choice === o.value} onChange={() => { setChoice(o.value); setError(undefined); }} className="mt-1 size-4 accent-primary-600" />
+              <input type="radio" name="repost" checked={choice === o.value} onChange={() => { setChoice(o.value); setError(undefined); }} className="mt-1 size-4 accent-primary-600 focus-visible:focus-ring" />
               <span className="flex flex-col gap-1">
                 <span className="text-body font-medium text-primary">{o.label}</span>
-                <span className="text-caption text-secondary">{o.help}</span>
+                <span className="text-body-sm text-secondary">{o.help}</span>
               </span>
             </label>
           ))}
@@ -80,7 +80,7 @@ export function PostAgainDialog({
         error={error}
       />
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button variant="ghost" onClick={onClose}>
+        <Button variant="cancel" onClick={onClose}>
           Cancel
         </Button>
         <Button

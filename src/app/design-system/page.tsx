@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Badge, Button, Card, CardText, CardTitle, Input, Logo, Stepper } from "@/components/ui";
+import { Bell, CalendarBlank, Circle, Copy, PencilSimple, UserPlus } from "@phosphor-icons/react/dist/ssr";
+import { Badge, Button, Card, CardText, CardTitle, Input, Logo, Meta, Pill, ProgressBar, Stepper, TextButton, TextLink, Tile, TileAction, TileFooter, TileIcon, Tooltip } from "@/components/ui";
 import { InteractiveComponents } from "./Interactive";
 
 export const metadata: Metadata = { title: "Design system · Bluecut Socials" };
@@ -72,13 +73,78 @@ export default function DesignSystemPage() {
           <Button>Book a call</Button>
           <Button variant="secondary">See the work</Button>
           <Button variant="ghost">Learn more</Button>
+          <Button variant="cancel">Cancel</Button>
           <Button variant="danger">Delete</Button>
           <Button disabled>Disabled</Button>
         </div>
+        <p className="text-body-sm text-secondary">Small, for actions inside a tile or row and in card headers (Add, Upload, Edit). Cancel and Remove turn red on hover.</p>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button size="sm" variant="secondary">
+            <Circle className="size-4" aria-hidden /> Mark as sent
+          </Button>
+          <Button size="sm">Save note</Button>
+          <Button size="sm" variant="cancel">Cancel</Button>
+          <Button size="sm" variant="remove">Remove</Button>
+        </div>
+      </Section>
+
+      <Section title="Text actions">
+        <div className="flex flex-wrap gap-6">
+          <TextLink href="/design-system" className="text-body-sm">View all</TextLink>
+          <TextButton>
+            <Copy className="size-4" aria-hidden /> Copy note
+          </TextButton>
+          <TextButton>
+            <PencilSimple className="size-4" aria-hidden /> Edit
+          </TextButton>
+        </div>
+      </Section>
+
+      <Section title="Pills and meta">
+        <p className="text-body-sm text-secondary">Pill counts things in a card header. Meta is one line of key info with a blue icon. Badge is a status.</p>
+        <div className="flex flex-wrap items-center gap-4">
+          <Pill>6 posts</Pill>
+          <Pill>2 of 6 done</Pill>
+          <Meta icon={CalendarBlank}>Due Fri 6 Nov</Meta>
+          <Badge status="success">Sent</Badge>
+        </div>
+      </Section>
+
+      <Section title="Tile">
+        <p className="text-body-sm text-secondary">An item inside a card. Linked tiles turn light blue on hover; the footer has key info on the left and the action on the right.</p>
+        <Card title="Quick tasks" action={<Pill>1 of 3 done</Pill>}>
+          <div className="flex flex-col gap-3">
+            <Tile href="/design-system">
+              <span className="flex items-center gap-4">
+                <TileIcon round>
+                  <UserPlus className="size-7" aria-hidden />
+                </TileIcon>
+                <span className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="text-body font-medium text-primary">Connect with 6 people this week</span>
+                  <span className="text-body-sm text-secondary">2 of 6 sent · Assigned yesterday</span>
+                  <span className="max-w-xs">
+                    <ProgressBar value={2} max={6} />
+                  </span>
+                </span>
+              </span>
+              <TileFooter>
+                <Meta icon={CalendarBlank}>Due Fri 6 Nov</Meta>
+                <TileAction>Continue</TileAction>
+              </TileFooter>
+            </Tile>
+            <Tile done>
+              <span className="flex items-center justify-between gap-4">
+                <span className="text-body font-medium text-primary">Amaka Nwosu</span>
+                <Badge status="success">Sent</Badge>
+              </span>
+            </Tile>
+          </div>
+        </Card>
       </Section>
 
       <Section title="Badges">
         <div className="flex flex-wrap gap-3">
+          <Badge status="success" live>Active</Badge>
           <Badge status="success">Published</Badge>
           <Badge status="warning">Scheduled</Badge>
           <Badge status="danger">Failed</Badge>
@@ -114,6 +180,20 @@ export default function DesignSystemPage() {
       <Section title="Stepper">
         <Card>
           <Stepper steps={["Your details", "Brand goals", "Choose a plan", "Review"]} current={1} />
+        </Card>
+      </Section>
+
+      <Section title="Tooltip">
+        <Card>
+          <Tooltip label="Notifications">
+            <button
+              type="button"
+              aria-label="Notifications"
+              className="flex size-10 items-center justify-center rounded-full text-secondary hover:text-primary focus-visible:focus-ring"
+            >
+              <Bell className="size-6" aria-hidden />
+            </button>
+          </Tooltip>
         </Card>
       </Section>
 

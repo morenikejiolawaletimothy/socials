@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Button, Switch, useTask } from "@/components/ui";
+import { Banner, Button, Switch, useTask } from "@/components/ui";
 import type { ReviewSettings } from "@/lib/mock";
 
 const freq: { value: ReviewSettings["frequency"]; label: string; help: string }[] = [
@@ -124,17 +124,16 @@ export function ReviewForm({
         />
       </Question>
 
-      <div className="flex flex-col gap-4 rounded-md bg-neutral-25 p-4">
-        <p className="text-body-sm text-primary">
-          <span className="font-medium">Your choice: </span>
-          {summary}.
-        </p>
-        <p className="text-caption text-secondary">Changes apply to new posts. Posts already sent to you keep their path. Change this any time in Control.</p>
-      </div>
+      <Banner tone="info" title="Your choice">
+        <span className="flex flex-col gap-1">
+          <span className="text-primary">{summary.charAt(0).toUpperCase() + summary.slice(1)}.</span>
+          <span>Changes apply to new posts. Posts already sent to you keep their path. Change this any time in Control.</span>
+        </span>
+      </Banner>
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row">
         {onCancel && (
-          <Button variant="ghost" onClick={onCancel}>
+          <Button variant="cancel" onClick={onCancel}>
             Cancel
           </Button>
         )}
@@ -156,7 +155,7 @@ export function reviewSummary(r: ReviewSettings) {
   return {
     frequency: freq.find((f) => f.value === r.frequency)?.label ?? "",
     channels: [r.channels.email && "Email", r.channels.app && "In the app"].filter(Boolean).join(" and "),
-    approval: kinds.map((k) => `${k.label}: ${r.approval[k.key] === "ask" ? "ask me first" : "go ahead"}`),
+    approval: kinds.map((k) => ({ label: k.label, ask: r.approval[k.key] === "ask" })),
     noReply: r.ifNoReply === "wait" ? "Wait for me" : "Go ahead after 24 hours",
   };
 }

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Badge, Breadcrumbs, Button, Card, Textarea, useConfirm, useTask } from "@/components/ui";
+import { Badge, Breadcrumbs, Button, Card, TextButton, Textarea, useConfirm, useTask } from "@/components/ui";
 import { agoIn } from "@/lib/format";
 import { act, useMyClient, type Complaint } from "@/lib/mock";
 
@@ -83,8 +83,7 @@ export default function ComplaintPage() {
                 <span className="flex items-center justify-between gap-3">
                   <span className="text-caption text-secondary">Sent {agoIn(c.at)}</span>
                   {c.status !== "resolved" && (
-                    <button
-                      type="button"
+                    <TextButton
                       onClick={() =>
                         confirm({
                           title: "Withdraw this complaint?",
@@ -94,10 +93,9 @@ export default function ComplaintPage() {
                           success: "Complaint withdrawn.",
                         })
                       }
-                      className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring"
                     >
                       Withdraw
-                    </button>
+                    </TextButton>
                   )}
                 </span>
               </li>

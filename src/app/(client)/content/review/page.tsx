@@ -2,27 +2,27 @@
 
 import { CheckCircle } from "@phosphor-icons/react";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
 import { PostPreview } from "@/components/content/PostPreview";
 import { VoiceRecorder } from "@/components/content/VoiceRecorder";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Avatar, Banner, Breadcrumbs, Button, Card, Textarea, useConfirm, useTask } from "@/components/ui";
+import { Banner, Breadcrumbs, Button, Card, Pill, Textarea, textActionClass, Tile, useConfirm, useTask } from "@/components/ui";
 import { dayTimeIn, fullName, plural } from "@/lib/format";
 import { act, useMyClient, type Post } from "@/lib/mock";
+import { canReview, isOverdue } from "@/lib/status";
 
-/** One post in the review: the why-note, the post as it will look, then Approve or Ask for changes. */
+/** One post in the review: the why-note, the post as it will look, then Approve (always the primary action) or Ask for changes. */
 function ReviewItem({
   post,
   author,
   manager,
-  primary,
   onDone,
 }: {
   post: Post;
   author: { name: string; title?: string };
   manager?: string;
-  primary: boolean;
   onDone: () => void;
 }) {
   const { run, pending } = useTask();
@@ -32,21 +32,18 @@ function ReviewItem({
 
   return (
     <div className="flex flex-col gap-4">
-      {post.why && manager && (
-        <div className="flex items-start gap-3 rounded-md bg-primary-50 p-4">
-          <Avatar name={manager} size="sm" />
-          <p className="text-body-sm text-primary">
-            <span className="font-medium">Why this post: </span>
-            {post.why}
-          </p>
-        </div>
+      {post.why && (
+        <Banner tone="info">
+          <span className="font-medium">Why this post: </span>
+          {post.why}
+        </Banner>
       )}
-      <div className="rounded-md border border-border p-4">
+      <Tile>
         <PostPreview post={post} author={author} meta="Draft" clamp={false} />
-      </div>
+      </Tile>
 
       {changing ? (
-        <div className="flex flex-col gap-4 rounded-md border border-border p-4">
+        <Tile>
           <Textarea
             label="What would you like changed?"
             placeholder="For example: make the opening shorter, and do not name the bank."
@@ -60,7 +57,7 @@ function ReviewItem({
           />
           <VoiceRecorder sample="Can we open with the trader's story, and cut the last line about trust. It sounds a bit preachy." onChange={setNote} />
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-            <Button variant="ghost" onClick={() => setChanging(false)}>
+            <Button variant="cancel" onClick={() => setChanging(false)}>
               Cancel
             </Button>
             <Button
@@ -73,11 +70,10 @@ function ReviewItem({
               {pending("changes") ? "Sending" : "Send changes"}
             </Button>
           </div>
-        </div>
+        </Tile>
       ) : (
         <div className="flex flex-col gap-3 sm:flex-row">
           <Button
-            variant={primary ? "primary" : "secondary"}
             loading={pending("approve")}
             onClick={async () => {
               if (await run("approve", () => act.approvePost(post.id), "Approved. Your manager will schedule it.")) onDone();
@@ -96,42 +92,59 @@ function ReviewItem({
 
 /**
  * C7 Review content. Desktop: every post in one list. Phone: one post at a time, like stories.
+ * With ?post=ID (from a post tile) it opens just that post, with a link to review the rest.
  * Shows the due time and what happens if the client does not reply (their C5 choice).
  */
-export default function ReviewPage() {
+function ReviewScreen({ only }: { only?: string }) {
   const { posts, user, managerUser, client } = useMyClient();
   const confirm = useConfirm();
+  const waitingIds = posts.filter(canReview).map((p) => p.id);
+  const single = !!only && waitingIds.includes(only);
   // Keep the set of posts fixed while reviewing, so the list does not jump as each one is approved.
-  const [ids] = useState(() => posts.filter((p) => p.status === "awaiting-client").map((p) => p.id));
+  const [ids] = useState(() => (single ? [only!] : waitingIds));
   const items = useMemo(() => ids.map((id) => posts.find((p) => p.id === id)!).filter(Boolean), [ids, posts]);
-  const pending = items.filter((p) => p.status === "awaiting-client");
+  const pending = items.filter(canReview);
+  const others = posts.filter((p) => canReview(p) && !ids.includes(p.id)).length;
   const [index, setIndex] = useState(0);
   const author = { name: fullName(user), title: user?.title };
-  const due = items[0]?.dueAt;
+  const due = items.find((p) => !isOverdue(p))?.dueAt;
   const current = pending[Math.min(index, pending.length - 1)];
 
   return (
     <Columns {...rails.clientMain}>
       <Card
-        title="Review your posts"
+        title={single ? "Review this post" : "Review your posts"}
         eyebrow={<Breadcrumbs items={[{ label: "Content", href: "/content" }, { label: "Review" }]} />}
-        action={pending.length > 1 && <span className="text-caption text-secondary">{plural(pending.length, "post")} left</span>}
+        action={pending.length > 1 && <Pill>{plural(pending.length, "post")} left</Pill>}
       >
         {pending.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-8 text-center">
             <CheckCircle className="size-12 text-success" aria-hidden />
-            <p className="font-display text-display-lg text-primary">All done</p>
+            <p className="font-display text-display-lg text-primary">{others ? "Done" : "All done"}</p>
             <p className="max-w-sm text-body-sm text-secondary">
               {items.length
                 ? "Your manager schedules what you approved and works on any changes you asked for. You will see them under Coming up."
                 : "Nothing is waiting for your review right now."}
             </p>
-            <Link href="/content?tab=upcoming" className="rounded-sm font-medium text-primary-600 hover:text-primary-700 hover:underline focus-visible:focus-ring">
-              See what is coming up
-            </Link>
+            {others > 0 ? (
+              <Link href="/content/review" className={textActionClass}>
+                Review the other {plural(others, "post")}
+              </Link>
+            ) : (
+              <Link href="/content?tab=upcoming" className={textActionClass}>
+                See what is coming up
+              </Link>
+            )}
           </div>
         ) : (
           <div className="flex flex-col gap-6">
+            {pending.some(isOverdue) && (
+              <Banner tone="warning" title={pending.every(isOverdue) ? "Overdue" : "Some posts are overdue"}>
+                {pending.length === 1
+                  ? "This post was held because it was not reviewed by its due time. Nothing went out. Approve it or ask for changes now and it goes back on the plan."
+                  : "Overdue posts were held because they were not reviewed by their due time. Nothing went out. Approve them or ask for changes now and they go back on the plan."}
+              </Banner>
+            )}
             {due && (
               <Banner tone="info" title={`Due ${dayTimeIn(due)}`}>
                 {client?.review.ifNoReply === "wait"
@@ -151,7 +164,7 @@ export default function ReviewPage() {
                 Post {pending.indexOf(current) + 1} of {pending.length}
               </p>
               {current && (
-                <ReviewItem key={current.id} post={current} author={author} manager={fullName(managerUser)} primary onDone={() => setIndex(0)} />
+                <ReviewItem key={current.id} post={current} author={author} manager={fullName(managerUser)} onDone={() => setIndex(0)} />
               )}
               {pending.length > 1 && (
                 <Button variant="ghost" onClick={() => setIndex((i) => (i + 1) % pending.length)}>
@@ -166,8 +179,9 @@ export default function ReviewPage() {
                 <li key={p.id} className={i > 0 ? "border-t border-border pt-8" : ""}>
                   <p className="mb-3 text-caption text-secondary">
                     Post {i + 1} of {pending.length} · {p.topic}
+                    {isOverdue(p) && " · Overdue"}
                   </p>
-                  <ReviewItem post={p} author={author} manager={fullName(managerUser)} primary={i === 0} onDone={() => undefined} />
+                  <ReviewItem post={p} author={author} manager={fullName(managerUser)} onDone={() => undefined} />
                 </li>
               ))}
             </ol>
@@ -193,10 +207,32 @@ export default function ReviewPage() {
                 <p className="text-caption text-secondary">Only if you have read them all.</p>
               </div>
             )}
+
+            {single && others > 0 && (
+              <div className="border-t border-border pt-6">
+                <Link href="/content/review" className={textActionClass}>
+                  Review all {others + pending.length} waiting
+                </Link>
+              </div>
+            )}
           </div>
         )}
       </Card>
 
     </Columns>
+  );
+}
+
+function ReviewFromLink() {
+  const only = useSearchParams().get("post") ?? undefined;
+  // A new key when the post changes, so the fixed list above starts again.
+  return <ReviewScreen key={only ?? "all"} only={only} />;
+}
+
+export default function ReviewPage() {
+  return (
+    <Suspense>
+      <ReviewFromLink />
+    </Suspense>
   );
 }

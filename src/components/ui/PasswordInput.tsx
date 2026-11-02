@@ -2,6 +2,7 @@
 
 import { Eye, EyeSlash } from "@phosphor-icons/react";
 import { useId, useState, type InputHTMLAttributes } from "react";
+import { fieldClass } from "./Input";
 
 /** Password field with a visible label and a show/hide button. */
 export function PasswordInput({
@@ -16,7 +17,7 @@ export function PasswordInput({
 
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor={id} className="text-body-sm font-medium text-primary">
+      <label htmlFor={id} className="text-body-sm leading-5 font-medium text-primary">
         {label}
       </label>
       <div className="relative">
@@ -25,7 +26,7 @@ export function PasswordInput({
           type={shown ? "text" : "password"}
           aria-invalid={error ? true : undefined}
           aria-describedby={message ? `${id}-message` : undefined}
-          className={`min-h-11 w-full rounded-sm border bg-card py-3 pl-4 pr-12 text-body text-primary shadow-sm placeholder:text-neutral-400 focus-visible:border-primary-600 focus-visible:focus-ring ${error ? "border-danger" : "border-border-strong"}`}
+          className={`${fieldClass} pr-12 ${error ? "border-danger" : "border-border-strong"}`}
           {...props}
         />
         <button
