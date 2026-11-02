@@ -41,47 +41,50 @@ export const addonReady = (c: AddonChoice) => !c.on || !needsQuote(c.maker) || c
 export function VideoAddonPicker({ value, priceCents, onChange }: { value: AddonChoice; priceCents: number; onChange: (v: AddonChoice) => void }) {
   const { on, maker, understood } = value;
   return (
-    <div className={`flex flex-col gap-4 rounded-lg border p-4 ${on ? "border-primary-600 bg-primary-50" : "border-border"}`}>
-      <label className="flex cursor-pointer items-start gap-3">
-        <input type="checkbox" checked={on} onChange={(e) => onChange({ ...value, on: e.target.checked })} className="mt-1 size-4 accent-primary-600 focus-visible:focus-ring" />
-        <span className="flex flex-1 flex-col gap-1">
-          <span className="flex flex-wrap items-center justify-between gap-2">
-            <span className="flex items-center gap-2 text-body font-medium text-primary">
-              <VideoCamera className="size-5 text-primary-600" aria-hidden /> Add video
-            </span>
-            <span className="text-body font-medium text-primary">{on ? priceTag(maker, priceCents) : `From ${money(priceCents)} a month`}</span>
+    <div className={`flex flex-col rounded-lg border bg-card transition-colors ${on ? "border-primary-600" : "border-border hover:border-primary-300"}`}>
+      <label className="flex cursor-pointer items-start gap-3 p-4">
+        <input type="checkbox" checked={on} onChange={(e) => onChange({ ...value, on: e.target.checked })} className="mt-3 size-4 shrink-0 accent-primary-600 focus-visible:focus-ring" />
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700">
+          <VideoCamera className="size-5" aria-hidden />
+        </span>
+        <span className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <span className="text-body font-medium text-primary">Add video</span>
+            <span className="text-body-sm font-medium text-primary-700">{on ? priceTag(maker, priceCents) : `From ${money(priceCents)} a month`}</span>
           </span>
           <span className="text-body-sm text-secondary">Short videos become part of your plan, chosen to serve your goal. You can add or remove this later in Contract.</span>
         </span>
       </label>
       {on && (
-        <fieldset className="flex flex-col gap-2 pl-7">
-          <legend className="mb-2 text-body-sm font-medium text-primary">Who makes the videos?</legend>
-          {(Object.keys(makerLabel) as Maker[]).map((m) => (
-            <label key={m} className={`flex cursor-pointer items-start gap-3 rounded-md border bg-card p-3 ${maker === m ? "border-primary-600" : "border-border hover:border-primary-300"}`}>
-              <input type="radio" name="video-maker" checked={maker === m} onChange={() => onChange({ on: true, maker: m, understood: false })} className="mt-1 size-4 accent-primary-600 focus-visible:focus-ring" />
-              <span className="flex flex-1 flex-col gap-1">
-                <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                  <span className="text-body font-medium text-primary">{makerLabel[m]}</span>
-                  <span className="text-body-sm font-medium text-primary-700">{priceTag(m, priceCents)}</span>
+        <div className="border-t border-border p-4">
+          <fieldset className="flex flex-col gap-3">
+            <legend className="mb-3 text-body font-medium text-primary">Who makes the videos?</legend>
+            {(Object.keys(makerLabel) as Maker[]).map((m) => (
+              <label key={m} className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors ${maker === m ? "border-primary-600 bg-primary-50" : "border-border hover:border-primary-300"}`}>
+                <input type="radio" name="video-maker" checked={maker === m} onChange={() => onChange({ on: true, maker: m, understood: false })} className="mt-1 size-4 shrink-0 accent-primary-600 focus-visible:focus-ring" />
+                <span className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                    <span className="text-body font-medium text-primary">{makerLabel[m]}</span>
+                    <span className="text-body-sm font-medium text-primary-700">{priceTag(m, priceCents)}</span>
+                  </span>
+                  <span className="text-body-sm text-secondary">{makerHelp[m]}</span>
                 </span>
-                <span className="text-body-sm text-secondary">{makerHelp[m]}</span>
-              </span>
-            </label>
-          ))}
-          {needsQuote(maker) && (
-            <div className="mt-2 flex flex-col gap-3">
-              <Banner tone="warning" title="Video production is a separate service">
-                {maker === "both" ? `The ${money(priceCents)} a month covers the videos you supply. ` : ""}
-                Bluecut making your videos is priced on its own. Your account manager talks it through with you on your onboarding call, then sends you a quote. You pay nothing for production until you agree to the quote.
-              </Banner>
-              <label className="flex cursor-pointer items-start gap-3">
-                <input type="checkbox" checked={understood} onChange={(e) => onChange({ ...value, understood: e.target.checked })} className="mt-1 size-4 accent-primary-600 focus-visible:focus-ring" />
-                <span className="text-body-sm text-primary">I understand that video production by Bluecut is a separate service, quoted after my onboarding call.</span>
               </label>
-            </div>
-          )}
-        </fieldset>
+            ))}
+            {needsQuote(maker) && (
+              <div className="mt-1 flex flex-col gap-3">
+                <Banner tone="warning" title="Video production is a separate service">
+                  {maker === "both" ? `The ${money(priceCents)} a month covers the videos you supply. ` : ""}
+                  Bluecut making your videos is priced on its own. Your account manager talks it through with you on your onboarding call, then sends you a quote. You pay nothing for production until you agree to the quote.
+                </Banner>
+                <label className="flex cursor-pointer items-start gap-3">
+                  <input type="checkbox" checked={understood} onChange={(e) => onChange({ ...value, understood: e.target.checked })} className="mt-1 size-4 shrink-0 accent-primary-600 focus-visible:focus-ring" />
+                  <span className="text-body-sm text-primary">I understand that video production by Bluecut is a separate service, quoted after my onboarding call.</span>
+                </label>
+              </div>
+            )}
+          </fieldset>
+        </div>
       )}
     </div>
   );

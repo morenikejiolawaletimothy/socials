@@ -187,6 +187,7 @@ function BookCalls() {
             <CheckCircle className="size-8 text-success" aria-hidden />
             <p className="font-display text-display-lg text-primary">Both calls are booked</p>
           </div>
+          <Banner tone="info">We remind you by email the day before and 1 hour before each call.</Banner>
           <ul className="flex flex-col gap-3">
             {[
               { name: "Goals call", at: goals },
@@ -214,7 +215,6 @@ function BookCalls() {
               </li>
             ))}
           </ul>
-          <Banner tone="info">We remind you by email the day before and 1 hour before each call.</Banner>
           <Button className="self-start" onClick={() => router.push("/home")}>
             Continue setup
           </Button>

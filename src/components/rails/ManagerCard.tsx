@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Avatar, Banner, Card, buttonClass } from "@/components/ui";
+import { Avatar, Card, buttonClass } from "@/components/ui";
 import { fullName } from "@/lib/format";
 import { useMyClient } from "@/lib/mock";
 
@@ -26,7 +26,7 @@ export function ManagerCard() {
           </Link>
         </div>
       ) : (
-        <Banner tone="info">We are choosing the right manager for you. You will see them here soon.</Banner>
+        <p className="text-body-sm text-secondary">We are choosing the right manager for you. You will see them here soon.</p>
       )}
     </Card>
   );
