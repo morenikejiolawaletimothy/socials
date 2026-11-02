@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { ClientCell, Table, managerName, td } from "@/components/admin/parts";
 import { AssignDialog, suggest } from "@/components/admin/AssignDialog";
-import { Badge, Button, Card, PageHeader, ProgressBar, Select } from "@/components/ui";
+import { Badge, Button, Card, PageHeader, Pill, ProgressBar, Select, Tile, TileFooter, textActionClass } from "@/components/ui";
 import { daysFrom, plural } from "@/lib/format";
 import { useData, type Client } from "@/lib/mock";
 import { statusBadge } from "@/lib/status";
@@ -26,17 +26,23 @@ function ClientsPage() {
       <PageHeader title="Clients" description="Every client, their manager and how they are doing." />
 
       {waiting.length > 0 && (
-        <Card title="Waiting for a manager">
-          <ul className="flex flex-col">
+        <Card title="Waiting for a manager" action={<Pill>{plural(waiting.length, "client")}</Pill>}>
+          <ul className="flex flex-col gap-3">
             {waiting.map((c) => {
               const top = suggest(db, c)[0];
               return (
-                <li key={c.id} className="flex flex-col gap-3 border-b border-border py-3 first:pt-0 last:border-b-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
-                  <ClientCell db={db} clientId={c.id} sub={`${c.industry}, joined ${plural(-daysFrom(c.joinedAt), "day")} ago`} />
-                  <span className="flex items-center gap-1 text-body-sm text-secondary">
-                    <Sparkle className="size-4 text-primary-600" aria-hidden /> Suggested: {managerName(db, top?.m.id)}
-                  </span>
-                  <Button onClick={() => setAssigning(c)}>Assign</Button>
+                <li key={c.id}>
+                  <Tile>
+                    <ClientCell db={db} clientId={c.id} sub={`${c.industry}, joined ${plural(-daysFrom(c.joinedAt), "day")} ago`} />
+                    <TileFooter>
+                      <span className="flex items-center gap-1 text-body-sm text-primary">
+                        <Sparkle className="size-4 text-primary-600" aria-hidden /> Suggested: {managerName(db, top?.m.id)}
+                      </span>
+                      <Button size="sm" onClick={() => setAssigning(c)}>
+                        Assign
+                      </Button>
+                    </TileFooter>
+                  </Tile>
                 </li>
               );
             })}
@@ -88,7 +94,7 @@ function ClientsPage() {
                   {c.managerId ? (
                     managerName(db, c.managerId)
                   ) : (
-                    <button type="button" onClick={() => setAssigning(c)} className="rounded-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
+                    <button type="button" onClick={() => setAssigning(c)} className={textActionClass}>
                       Assign
                     </button>
                   )}

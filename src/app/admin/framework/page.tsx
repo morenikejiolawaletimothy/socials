@@ -1,9 +1,9 @@
 "use client";
 
-import { Plus, Trash } from "@phosphor-icons/react";
+import { CalendarBlank, Plus } from "@phosphor-icons/react";
 import { useState } from "react";
-import { Badge, Button, Card, Dialog, Input, PageHeader, Tabs, Textarea, useConfirm, useTask } from "@/components/ui";
-import { date } from "@/lib/format";
+import { Badge, Banner, Button, Card, Dialog, Input, Meta, PageHeader, Pill, Row, Rows, RowText, Tabs, Textarea, Tile, TileFooter, textActionClass, useConfirm, useTask } from "@/components/ui";
+import { date, plural } from "@/lib/format";
 import { act, useData, type FrameworkItem } from "@/lib/mock";
 
 const sections: { value: FrameworkItem["section"]; label: string }[] = [
@@ -23,64 +23,67 @@ function Item({ item }: { item: FrameworkItem }) {
   const [editing, setEditing] = useState(false);
   const [body, setBody] = useState(item.body);
   return (
-    <li className="flex flex-col gap-2 border-b border-border py-4 first:pt-0 last:border-b-0 last:pb-0">
-      <span className="flex items-center justify-between gap-3">
+    <li>
+      <Tile>
         <span className="text-body font-medium text-primary">{item.title}</span>
-        {!editing && (
-          <span className="flex items-center gap-1">
-            <button type="button" onClick={() => setEditing(true)} className="rounded-sm px-2 text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
-              Edit
-            </button>
-            <button
-              type="button"
-              aria-label={`Delete ${item.title}`}
-              onClick={() =>
-                confirm({
-                  title: `Delete "${item.title}"?`,
-                  body: "It is removed from the draft. Strategies already built keep the version they were built on.",
-                  warning: "New proposals stop following it once you publish the next version.",
-                  confirmLabel: "Delete",
-                  tone: "danger",
-                  action: () => act.deleteFrameworkItem(item.id),
-                  success: `"${item.title}" deleted. Publish a new version to apply it.`,
-                })
-              }
-              className="flex size-9 items-center justify-center rounded-full text-secondary hover:bg-danger-bg hover:text-danger focus-visible:focus-ring"
-            >
-              <Trash className="size-4" aria-hidden />
-            </button>
-          </span>
-        )}
-      </span>
-      {editing ? (
-        <div className="flex flex-col gap-3">
-          <Textarea label={item.title} rows={4} value={body} onChange={(e) => setBody(e.target.value)} />
-          <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              disabled={!body.trim() || body === item.body}
-              loading={pending("save")}
-              onClick={async () => {
-                if (await run("save", () => act.saveFrameworkItem(item.id, body), "Saved to the draft. Publish a new version to use it.")) setEditing(false);
-              }}
-            >
-              Save
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setBody(item.body);
-                setEditing(false);
-              }}
-            >
-              Cancel
-            </Button>
+        {editing ? (
+          <div className="flex flex-col gap-3">
+            <Textarea label={item.title} rows={4} value={body} onChange={(e) => setBody(e.target.value)} />
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={!body.trim() || body === item.body}
+                loading={pending("save")}
+                onClick={async () => {
+                  if (await run("save", () => act.saveFrameworkItem(item.id, body), "Saved to the draft. Publish a new version to use it.")) setEditing(false);
+                }}
+              >
+                Save
+              </Button>
+              <Button
+                variant="cancel"
+                size="sm"
+                onClick={() => {
+                  setBody(item.body);
+                  setEditing(false);
+                }}
+              >
+                Cancel
+              </Button>
+            </div>
           </div>
-        </div>
-      ) : (
-        <p className="text-body-sm text-secondary">{item.body}</p>
-      )}
-      <span className="text-caption text-secondary">Updated {date(item.updatedAt)}</span>
+        ) : (
+          <p className="text-body-sm text-secondary">{item.body}</p>
+        )}
+        <TileFooter>
+          <Meta icon={CalendarBlank}>Updated {date(item.updatedAt)}</Meta>
+          {!editing && (
+            <span className="flex items-center gap-2">
+              <Button
+                variant="remove"
+                size="sm"
+                onClick={() =>
+                  confirm({
+                    title: `Delete "${item.title}"?`,
+                    body: "It is removed from the draft. Strategies already built keep the version they were built on.",
+                    warning: "New proposals stop following it once you publish the next version.",
+                    confirmLabel: "Delete",
+                    tone: "danger",
+                    action: () => act.deleteFrameworkItem(item.id),
+                    success: `"${item.title}" deleted. Publish a new version to apply it.`,
+                  })
+                }
+              >
+                Delete
+              </Button>
+              <Button variant="secondary" size="sm" onClick={() => setEditing(true)}>
+                Edit
+              </Button>
+            </span>
+          )}
+        </TileFooter>
+      </Tile>
     </li>
   );
 }
@@ -111,7 +114,7 @@ export default function FrameworkPage() {
           <div className="px-6 pt-2">
             <Tabs label="Framework sections" value={section} onChange={setSection} tabs={sections} />
           </div>
-          <ul className="flex flex-col p-6">
+          <ul className="flex flex-col gap-3 p-6">
             {db.framework
               .filter((f) => f.section === section)
               .map((f) => (
@@ -123,26 +126,22 @@ export default function FrameworkPage() {
             <button
               type="button"
               onClick={() => setAdding(true)}
-              className="inline-flex items-center gap-1 rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring"
+              className={textActionClass}
             >
               <Plus className="size-4" aria-hidden /> Add to {label.toLowerCase()}
             </button>
           </div>
         </Card>
-        <Card title="Versions">
-          <ul className="flex flex-col gap-4">
+        <Card title="Versions" action={<Pill>{plural(db.frameworkVersions.length, "version")}</Pill>}>
+          <Rows>
             {db.frameworkVersions.map((v, i) => (
-              <li key={v.version} className="flex flex-col gap-1">
-                <span className="flex items-center gap-2">
-                  <span className="text-body font-medium text-primary">{v.version}</span>
-                  {i === 0 && <Badge status="success">In use</Badge>}
-                </span>
-                <span className="text-body-sm text-secondary">{v.note}</span>
-                <span className="text-caption text-secondary">{date(v.at)}</span>
-              </li>
+              <Row key={v.version} className="items-start">
+                <RowText title={v.version} sub={`${v.note} · ${date(v.at)}`} />
+                {i === 0 && <Badge status="success">In use</Badge>}
+              </Row>
             ))}
-          </ul>
-          <p className="pt-4 text-caption text-secondary">Each client&apos;s strategy records the version it was built on.</p>
+          </Rows>
+          <Banner tone="info" className="mt-4">Each client&apos;s strategy records the version it was built on.</Banner>
         </Card>
       </div>
 
@@ -158,7 +157,7 @@ export default function FrameworkPage() {
         />
         <Textarea label="The rule or guidance" rows={4} value={body} onChange={(e) => setBody(e.target.value)} />
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => setAdding(false)}>
+          <Button variant="cancel" onClick={() => setAdding(false)}>
             Cancel
           </Button>
           <Button
@@ -178,10 +177,10 @@ export default function FrameworkPage() {
       </Dialog>
 
       <Dialog open={publishing} onClose={() => setPublishing(false)} title={`Publish v${Number(current.version.slice(1)) + 1}?`}>
-        <p className="text-body-sm text-secondary">Every new strategy and proposal follows it from now on. Strategies already approved keep their version until their next review.</p>
+        <Banner tone="info">Every new strategy and proposal follows it from now on. Strategies already approved keep their version until their next review.</Banner>
         <Textarea label="What changed" rows={2} value={note} onChange={(e) => setNote(e.target.value)} help="Managers see this note." />
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => setPublishing(false)}>
+          <Button variant="cancel" onClick={() => setPublishing(false)}>
             Cancel
           </Button>
           <Button

@@ -174,7 +174,7 @@ export function DocumentCarousel({ carousel }: { carousel: NonNullable<Post["car
 
   return (
     <div role="region" aria-roledescription="carousel" aria-label={`${carousel.title}, ${count} pages`} className="relative">
-      <ul ref={track} onScroll={onScroll} className="no-scrollbar relative flex snap-x snap-mandatory gap-2 overflow-x-auto">
+      <ul ref={track} onScroll={onScroll} tabIndex={0} aria-label={`${carousel.title}, pages`} className="no-scrollbar relative flex snap-x snap-mandatory gap-2 overflow-x-auto rounded-md focus-visible:focus-ring">
         {carousel.slides.map((s, i) => (
           <li
             key={s.src + i}

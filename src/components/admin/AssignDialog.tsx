@@ -62,7 +62,7 @@ export function AssignDialog({ db, client, onClose, onAssign, title }: { db: Db;
         ))}
       </fieldset>
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button variant="ghost" onClick={onClose}>
+        <Button variant="cancel" onClick={onClose}>
           Cancel
         </Button>
         <Button

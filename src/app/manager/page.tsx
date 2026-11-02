@@ -1,42 +1,41 @@
 "use client";
 
-import { CaretDown, VideoCamera, WarningCircle } from "@phosphor-icons/react";
+import { CalendarBlank, Clock, VideoCamera, WarningCircle } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Avatar, Button, Card, Segmented, Select, Textarea, useTask } from "@/components/ui";
+import { Avatar, Banner, Button, buttonClass, Card, Meta, Pill, Segmented, Select, Textarea, TextButton, TextLink, Tile, TileAction, TileFooter, useTask } from "@/components/ui";
 import { dayTimeIn, fullName, plural, time } from "@/lib/format";
 import { act, useMyManager, type Db, type ManagerTask } from "@/lib/mock";
-
-const linkButton = (primary = false) =>
-  `inline-flex min-h-10 shrink-0 items-center justify-center rounded-md border px-4 py-2 text-body-sm font-medium transition-colors focus-visible:focus-ring ${
-    primary ? "border-transparent bg-primary-600 text-inverse hover:bg-primary-700" : "border-border-strong bg-card text-primary-700 hover:border-primary-300 hover:bg-primary-50"
-  }`;
 
 function who(db: Db, clientId: string) {
   const c = db.clients.find((x) => x.id === clientId);
   return fullName(db.users.find((u) => u.id === c?.userId));
 }
 
-/** One task: what it is, which client, when it is due, and one button to exactly the right screen. */
-function TaskRow({ t, db, primary }: { t: ManagerTask; db: Db; primary?: boolean }) {
+/** One task as a linked tile, like the client's quick tasks: who and what on top, the due time and the action in the footer. */
+function TaskTile({ t, db }: { t: ManagerTask; db: Db }) {
   const late = t.column !== "done" && t.group !== "waiting" && new Date(t.dueAt).getTime() < Date.now();
   return (
-    <li className="flex flex-col gap-3 border-b border-border py-4 first:pt-0 last:border-b-0 last:pb-0 sm:flex-row sm:items-start">
-      <div className="flex min-w-0 flex-1 items-start gap-3">
-        <Avatar name={who(db, t.clientId)} size="md" />
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="text-body font-medium text-primary">{t.title}</span>
-          <span className="text-body-sm text-secondary">
-            {who(db, t.clientId)} · {t.detail}
+    <li>
+      <Tile href={t.href}>
+        <span className="flex items-start gap-3">
+          <Avatar name={who(db, t.clientId)} size="md" />
+          <span className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="text-body font-medium text-primary">{t.title}</span>
+            <span className="text-body-sm text-secondary">
+              {who(db, t.clientId)} · {t.detail}
+            </span>
           </span>
-          <span className={`text-caption ${late ? "text-danger" : "text-secondary"}`}>{late ? `Was due ${dayTimeIn(t.dueAt)}` : `Due ${dayTimeIn(t.dueAt)}`}</span>
-        </div>
-      </div>
-      <Link href={t.href} className={`${linkButton(primary)} ml-13 self-start sm:ml-0 sm:self-center`}>
-        {t.action}
-      </Link>
+        </span>
+        <TileFooter>
+          <Meta icon={late ? WarningCircle : CalendarBlank} className={late ? "text-danger" : ""}>
+            {late ? `Was due ${dayTimeIn(t.dueAt)}` : `Due ${dayTimeIn(t.dueAt)}`}
+          </Meta>
+          <TileAction>{t.action}</TileAction>
+        </TileFooter>
+      </Tile>
     </li>
   );
 }
@@ -48,11 +47,11 @@ function MissedCard({ tasks, db }: { tasks: ManagerTask[]; db: Db }) {
   const late = tasks.filter((t) => t.group === "work" && t.column !== "done" && !t.missed && new Date(t.dueAt).getTime() < Date.now());
   if (!late.length) return null;
   return (
-    <Card title="You missed a due time">
+    <Card title="You missed a due time" action={<Meta icon={WarningCircle}>Was due {dayTimeIn(late[0].dueAt)}</Meta>}>
       <div className="flex flex-col gap-4">
-        <p className="text-body-sm text-primary">
-          &ldquo;{late[0].title}&rdquo; for {who(db, late[0].clientId)} was due {dayTimeIn(late[0].dueAt)}. Tell us why, in a line. The owner sees reasons only if misses repeat.
-        </p>
+        <Banner tone="warning">
+          &ldquo;{late[0].title}&rdquo; for {who(db, late[0].clientId)}. Tell us why, in a line. The owner sees reasons only if misses repeat.
+        </Banner>
         <Textarea label="What happened?" rows={2} value={reason} onChange={(e) => setReason(e.target.value)} />
         <Button
           variant="secondary"
@@ -119,9 +118,9 @@ function Board({ tasks, db }: { tasks: ManagerTask[]; db: Db }) {
               }}
               className={`${mobileCol === col.key ? "flex" : "hidden"} min-h-40 flex-col gap-2 rounded-lg p-2 transition-colors lg:flex ${over === col.key ? "bg-primary-50" : "bg-neutral-50"}`}
             >
-              <h3 className="flex items-center justify-between px-2 py-1 text-body-sm font-medium text-primary">
+              <h3 className="flex items-center justify-between px-2 py-1 text-body font-medium text-primary">
                 {col.label}
-                <span className="text-caption text-secondary">{items.length}</span>
+                <Pill>{items.length}</Pill>
               </h3>
               {items.map((t) => (
                 <Link
@@ -130,18 +129,24 @@ function Board({ tasks, db }: { tasks: ManagerTask[]; db: Db }) {
                   draggable={droppable}
                   onDragStart={() => setDragging(t.id)}
                   onDragEnd={() => setDragging(null)}
-                  className={`flex flex-col gap-1 rounded-md border border-border bg-card p-3 transition-colors hover:border-primary-300 focus-visible:focus-ring ${droppable ? "cursor-grab active:cursor-grabbing" : ""} ${t.group === "urgent" ? "border-l-4 border-l-danger" : ""}`}
+                  className={`flex flex-col gap-2 rounded-md border border-border bg-card p-3 transition-colors hover:border-primary-300 hover:bg-primary-50 focus-visible:focus-ring ${droppable ? "cursor-grab active:cursor-grabbing" : ""} ${t.group === "urgent" ? "border-l-4 border-l-danger" : ""}`}
                 >
-                  <span className="text-body-sm font-medium text-primary">{t.title}</span>
-                  <span className="text-caption text-secondary">{who(db, t.clientId)}</span>
-                  <span className="text-caption text-secondary">Due {dayTimeIn(t.dueAt)}</span>
+                  <span className="flex flex-col gap-1">
+                    <span className="text-body-sm font-medium text-primary">{t.title}</span>
+                    <span className="text-caption text-secondary">{who(db, t.clientId)}</span>
+                  </span>
+                  <Meta icon={CalendarBlank} className="border-t border-border pt-2 text-caption">
+                    Due {dayTimeIn(t.dueAt)}
+                  </Meta>
                 </Link>
               ))}
             </section>
           );
         })}
       </div>
-      <p className="text-caption text-secondary">Drag cards between To do and Doing. Cards move to Waiting on client and Done by themselves when the work is sent or finished.</p>
+      <Banner tone="info" closeKey="manager-board-note">
+        Drag cards between To do and Doing. Cards move to Waiting on client and Done by themselves when the work is sent or finished.
+      </Banner>
     </div>
   );
 }
@@ -200,78 +205,81 @@ export default function ManagerHome() {
                   <WarningCircle className="size-5 text-danger" aria-hidden /> Urgent
                 </span>
               }
-              action={<span className="text-caption text-secondary">{plural(urgent.length, "thing")}</span>}
+              action={<Pill>{plural(urgent.length, "thing")}</Pill>}
             >
-              <ul className="flex flex-col">
-                {urgent.map((t, i) => (
-                  <TaskRow key={t.id} t={t} db={db} primary={i === 0} />
+              <ul className="flex flex-col gap-3">
+                {urgent.map((t) => (
+                  <TaskTile key={t.id} t={t} db={db} />
                 ))}
               </ul>
             </Card>
           )}
 
           {calls.length > 0 && (
-            <Card title="Calls today">
-              <ul className="flex flex-col">
+            <Card title="Calls today" action={<Pill>{plural(calls.length, "call")}</Pill>}>
+              <ul className="flex flex-col gap-3">
                 {calls.map((c) => (
-                  <li key={c.id} className="flex flex-col gap-3 border-b border-border py-4 first:pt-0 last:border-b-0 last:pb-0 sm:flex-row sm:items-center">
-                    <div className="flex min-w-0 flex-1 items-start gap-3">
-                      <Avatar name={who(db, c.clientId)} size="md" />
-                      <div className="flex flex-1 flex-col gap-1">
-                        <span className="text-body font-medium text-primary">
-                          {who(db, c.clientId)}, {c.kind === "goals" ? "goals call" : c.kind === "strategy" ? "strategy call" : "check-in"}
+                  <li key={c.id}>
+                    <Tile>
+                      <span className="flex items-start gap-3">
+                        <Avatar name={who(db, c.clientId)} size="md" />
+                        <span className="flex min-w-0 flex-1 flex-col gap-1">
+                          <span className="text-body font-medium text-primary">
+                            {who(db, c.clientId)}, {c.kind === "goals" ? "goals call" : c.kind === "strategy" ? "strategy call" : "check-in"}
+                          </span>
+                          <span className="text-body-sm text-secondary">{c.recording ? "Recorded with consent." : "Not recorded: take notes."}</span>
                         </span>
-                        <span className="text-body-sm text-secondary">
-                          {time(c.at)}, 30 minutes. {c.recording ? "Recorded with consent." : "Not recorded: take notes."}
+                      </span>
+                      <TileFooter>
+                        <Meta icon={Clock}>{time(c.at)} · 30 min</Meta>
+                        <span className="flex items-center gap-4">
+                          <TextLink href={`/manager/clients/${c.clientId}/onboard`} className="text-body-sm">
+                            Prep notes
+                          </TextLink>
+                          <a href={c.meetUrl} className={buttonClass("secondary", "sm")}>
+                            <VideoCamera className="size-4" aria-hidden /> Join
+                          </a>
                         </span>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 pl-13 sm:pl-0">
-                      <Link href={`/manager/clients/${c.clientId}/onboard`} className={linkButton()}>
-                        Prep
-                      </Link>
-                      <a href={c.meetUrl} className={linkButton()}>
-                        <VideoCamera className="mr-1 size-4" aria-hidden /> Join
-                      </a>
-                    </div>
+                      </TileFooter>
+                    </Tile>
                   </li>
                 ))}
               </ul>
             </Card>
           )}
 
-          <Card title="Your work" action={<span className="text-caption text-secondary">By due time</span>}>
+          <Card title="Your work" action={<Pill label={`${plural(work.length, "task")}, by due time`}>{plural(work.length, "task")}</Pill>}>
             {work.length ? (
-              <ul className="flex flex-col">
+              <ul className="flex flex-col gap-3">
                 {work.map((t) => (
-                  <TaskRow key={t.id} t={t} db={db} primary={!urgent.length && t === work[0]} />
+                  <TaskTile key={t.id} t={t} db={db} />
                 ))}
               </ul>
             ) : (
-              <p className="text-body-sm text-secondary">All done. New work appears here as it comes in.</p>
+              <Banner tone="success">All done. New work appears here as it comes in.</Banner>
             )}
           </Card>
 
           {waiting.length > 0 && (
-            <Card padding="none">
-              <button
-                type="button"
-                aria-expanded={showWaiting}
-                onClick={() => setShowWaiting((s) => !s)}
-                className="flex w-full items-center justify-between px-6 py-4 text-left focus-visible:focus-ring"
-              >
-                <span className="font-display text-display-lg text-primary">Waiting on clients</span>
-                <span className="flex items-center gap-2 text-caption text-secondary">
-                  {waiting.length}
-                  <CaretDown className={`size-4 transition-transform ${showWaiting ? "rotate-180" : ""}`} aria-hidden />
+            <Card
+              title="Waiting on clients"
+              action={
+                <span className="flex items-center gap-3">
+                  <Pill>{waiting.length}</Pill>
+                  <TextButton aria-expanded={showWaiting} onClick={() => setShowWaiting((v) => !v)}>
+                    {showWaiting ? "Hide" : "Show"}
+                  </TextButton>
                 </span>
-              </button>
-              {showWaiting && (
-                <ul className="flex flex-col border-t border-border p-6">
+              }
+            >
+              {showWaiting ? (
+                <ul className="flex flex-col gap-3">
                   {waiting.map((t) => (
-                    <TaskRow key={t.id} t={t} db={db} />
+                    <TaskTile key={t.id} t={t} db={db} />
                   ))}
                 </ul>
+              ) : (
+                <p className="text-body-sm text-secondary">Posts and requests with clients. They move back to Your work when the client answers.</p>
               )}
             </Card>
           )}

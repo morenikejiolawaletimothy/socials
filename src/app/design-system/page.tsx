@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { Bell, CalendarBlank, Circle, Copy, PencilSimple, UserPlus } from "@phosphor-icons/react/dist/ssr";
-import { Badge, Button, Card, CardText, CardTitle, Input, Logo, Meta, Pill, ProgressBar, Stepper, TextButton, TextLink, Tile, TileAction, TileFooter, TileIcon, Tooltip } from "@/components/ui";
+import { Bell, CalendarBlank, Circle, Copy, DownloadSimple, PencilSimple, Trash, UserPlus } from "@phosphor-icons/react/dist/ssr";
+import { Badge, Button, Card, CardText, CardTitle, IconButton, Input, Logo, Meta, Pill, ProgressBar, Row, Rows, RowText, Stepper, TextButton, TextLink, Tile, TileAction, TileFooter, TileIcon, Tooltip } from "@/components/ui";
 import { InteractiveComponents } from "./Interactive";
 
 export const metadata: Metadata = { title: "Design system · Bluecut Socials" };
@@ -140,6 +140,39 @@ export default function DesignSystemPage() {
             </Tile>
           </div>
         </Card>
+      </Section>
+
+      <Section title="Rows">
+        <p className="text-body-sm text-secondary">A compact list in one bordered group: settings, invoices, a team, versions. Use Tiles when each item needs a footer or a picture. In a card with no padding, Rows flush fills it edge to edge (activity, messages).</p>
+        <Card title="How they review" action={<Pill>3 settings</Pill>}>
+          <Rows>
+            <Row>
+              <RowText title="How often" />
+              <span className="text-body-sm text-primary">Once a week</span>
+            </Row>
+            <Row>
+              <RowText title="Google Alert: Lagos fintech" sub="Last item 2 hours ago" />
+              <Badge status="success">Working</Badge>
+              <IconButton icon={Trash} tone="danger" label="Remove Lagos fintech" />
+            </Row>
+            <Row>
+              <RowText title="Invoice INV-0042" sub="Month 2 · 1 Nov 2026" />
+              <span className="text-body-sm font-medium text-primary">$800</span>
+              <IconButton icon={DownloadSimple} label="Download invoice INV-0042" />
+            </Row>
+          </Rows>
+        </Card>
+      </Section>
+
+      <Section title="Layout rules (client, manager and owner)">
+        <ul className="flex list-disc flex-col gap-2 pl-5 text-body-sm text-primary">
+          <li>Card header: title left; on the right a Pill (a count), a Meta (a date) or a text link. Never a bare grey caption.</li>
+          <li>How something works or what happens next: a Banner at the top of the card (closeable when it only explains). Grey text is for descriptions only.</li>
+          <li>Items in a card: Tiles, 12px apart. Picture slot, a 16px title, a 14px grey line, then a TileFooter: Meta left, the action right.</li>
+          <li>Compact records: Rows. Owner tables sit in the same bordered frame.</li>
+          <li>Actions: text actions are TextLink or TextButton; buttons inside tiles and rows are size sm; Delete and Withdraw use the remove variant; Cancel beside Save uses the cancel variant; icon-only actions are IconButton.</li>
+          <li>Sections inside a card: a 16px medium heading over Rows or Tiles.</li>
+        </ul>
       </Section>
 
       <Section title="Badges">

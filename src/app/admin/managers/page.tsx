@@ -1,10 +1,11 @@
 "use client";
 
+import { CalendarBlank } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useState } from "react";
 import { Table, managerName, managerStatus, td } from "@/components/admin/parts";
-import { Avatar, Badge, Button, Card, Dialog, Input, PageHeader, useConfirm, useTask } from "@/components/ui";
-import { dayIn, money } from "@/lib/format";
+import { Avatar, Badge, Banner, Button, Card, Dialog, Input, Meta, PageHeader, Pill, Tile, TileFooter, useConfirm, useTask } from "@/components/ui";
+import { dayIn, money, plural } from "@/lib/format";
 import { act, useData } from "@/lib/mock";
 
 /** A3 Managers: status, load, delivery and quality. Invite, train, pay. */
@@ -20,7 +21,7 @@ export default function ManagersPage() {
     <div className="flex flex-col gap-6">
       <PageHeader title="Managers" description="Invite, train, assign and support your managers." action={<Button onClick={() => setInviting(true)}>Invite a manager</Button>} />
 
-      <Card title="Your team">
+      <Card title="Your team" action={<Pill>{plural(db.managers.length, "manager")}</Pill>}>
         <Table label="Your team" head={["Manager", "Status", "Clients", "On time", "Approved first time", "Missed", "Complaints"]}>
           {db.managers.map((m) => {
             const s = managerStatus[m.status];
@@ -51,31 +52,25 @@ export default function ManagersPage() {
       </Card>
 
       {db.managers.some((m) => m.status === "invited") && (
-        <Card title="Invites waiting">
-          <ul className="flex flex-col">
+        <Card title="Invites waiting" action={<Pill>{plural(db.managers.filter((m) => m.status === "invited").length, "invite")}</Pill>}>
+          <ul className="flex flex-col gap-3">
             {db.managers
               .filter((m) => m.status === "invited")
               .map((m) => {
                 const u = db.users.find((x) => x.id === m.userId);
                 return (
-                  <li key={m.id} className="flex flex-wrap items-center justify-between gap-3 border-b border-border py-3 first:pt-0 last:border-b-0 last:pb-0">
-                    <span className="flex min-w-0 flex-col">
+                  <li key={m.id}>
+                    <Tile>
+                    <span className="flex min-w-0 flex-col gap-1">
                       <span className="text-body font-medium text-primary">{managerName(db, m.id)}</span>
-                      <span className="truncate text-caption text-secondary">
-                        {u?.email}
-                        {m.inviteExpiresAt ? `, link works until ${dayIn(m.inviteExpiresAt)}` : ""}
-                      </span>
+                      <span className="truncate text-body-sm text-secondary">{u?.email}</span>
                     </span>
-                    <span className="flex items-center gap-4">
+                    <TileFooter>
+                    <Meta icon={CalendarBlank}>{m.inviteExpiresAt ? `Link works until ${dayIn(m.inviteExpiresAt)}` : "Link sent"}</Meta>
+                    <span className="flex items-center gap-2">
                       <Button
-                        variant="secondary"
-                        loading={pending(`resend-${m.id}`)}
-                        onClick={() => run(`resend-${m.id}`, () => act.resendInvite(m.id), `New link sent to ${u?.email}. It works for 7 days.`)}
-                      >
-                        Resend
-                      </Button>
-                      <button
-                        type="button"
+                        variant="remove"
+                        size="sm"
                         onClick={() =>
                           confirm({
                             title: `Withdraw the invite for ${managerName(db, m.id)}?`,
@@ -86,11 +81,20 @@ export default function ManagersPage() {
                             success: "Invite withdrawn.",
                           })
                         }
-                        className="rounded-sm text-body-sm font-medium text-danger hover:underline focus-visible:focus-ring"
                       >
                         Withdraw
-                      </button>
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        loading={pending(`resend-${m.id}`)}
+                        onClick={() => run(`resend-${m.id}`, () => act.resendInvite(m.id), `New link sent to ${u?.email}. It works for 7 days.`)}
+                      >
+                        Resend
+                      </Button>
                     </span>
+                    </TileFooter>
+                    </Tile>
                   </li>
                 );
               })}
@@ -98,7 +102,7 @@ export default function ManagersPage() {
         </Card>
       )}
 
-      <Card title="Payouts">
+      <Card title="Payouts" action={<Pill>{db.payouts.filter((p) => p.status === "to-approve").length} to approve</Pill>}>
         <Table label="Payouts" head={["Manager", "Period", "Active clients", "Amount", ""]}>
           {db.payouts.map((p) => (
             <tr key={p.id}>
@@ -110,6 +114,7 @@ export default function ManagersPage() {
                 {p.status === "to-approve" ? (
                   <Button
                     variant="secondary"
+                    size="sm"
                     onClick={() =>
                       confirm({
                         title: `Approve ${money(p.amountCents)} for ${managerName(db, p.managerId)}?`,
@@ -133,7 +138,7 @@ export default function ManagersPage() {
       </Card>
 
       <Dialog open={inviting} onClose={() => setInviting(false)} title="Invite a manager">
-        <p className="text-body-sm text-secondary">They get a link that works once, for 7 days, and set up their account. Then you book their 60-minute training call.</p>
+        <Banner tone="info">They get a link that works once, for 7 days, and set up their account. Then you book their 60-minute training call.</Banner>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <Input label="First name" value={form.first} onChange={(e) => setForm({ ...form, first: e.target.value })} />
           <Input label="Last name" value={form.last} onChange={(e) => setForm({ ...form, last: e.target.value })} />
@@ -149,7 +154,7 @@ export default function ManagersPage() {
           error={error}
         />
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => setInviting(false)}>
+          <Button variant="cancel" onClick={() => setInviting(false)}>
             Cancel
           </Button>
           <Button

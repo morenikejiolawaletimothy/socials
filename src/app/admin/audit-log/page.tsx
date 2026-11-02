@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { Table, td } from "@/components/admin/parts";
-import { Button, Card, PageHeader, Select, useTask } from "@/components/ui";
-import { dayTime } from "@/lib/format";
+import { Button, Card, PageHeader, Pill, Select, useTask } from "@/components/ui";
+import { dayTime, plural } from "@/lib/format";
 import { delay, useData, type AuditEntry } from "@/lib/mock";
 
 const kinds: { value: AuditEntry["kind"] | "all"; label: string }[] = [
@@ -58,6 +58,8 @@ export default function AuditPage() {
       <Card
         title="Actions"
         action={
+          <span className="flex items-center gap-3">
+          <Pill>{plural(list.length, "action")}</Pill>
           <Select size="sm" aria-label="Filter" value={kind} onChange={(e) => setKind(e.target.value as AuditEntry["kind"] | "all")}>
             {kinds.map((k) => (
               <option key={k.value} value={k.value}>
@@ -65,6 +67,7 @@ export default function AuditPage() {
               </option>
             ))}
           </Select>
+          </span>
         }
       >
         <Table label="Audit log" head={["When", "Who", "What", "On"]}>

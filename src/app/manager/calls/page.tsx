@@ -1,12 +1,11 @@
 "use client";
 
-import { VideoCamera } from "@phosphor-icons/react";
-import Link from "next/link";
+import { Clock, VideoCamera } from "@phosphor-icons/react";
 import { useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Avatar, Button, Card, useConfirm, useTask } from "@/components/ui";
-import { day, fullName, time } from "@/lib/format";
+import { Avatar, Banner, Button, buttonClass, Card, EmptyState, Meta, Pill, TextButton, TextLink, Tile, TileFooter, useConfirm, useTask } from "@/components/ui";
+import { day, fullName, plural, time } from "@/lib/format";
 import { act, useMyManager, type Call } from "@/lib/mock";
 
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
@@ -33,50 +32,51 @@ export default function CallsPage() {
 
   return (
     <Columns {...rails.managerSettings}>
-      <Card title="Booked calls">
+      <Card title="Booked calls" action={calls.length > 0 && <Pill>{plural(calls.length, "call")}</Pill>}>
         {calls.length ? (
           <div className="flex flex-col gap-6">
             {Object.entries(byDay).map(([d, list]) => (
               <section key={d} className="flex flex-col gap-3">
-                <h3 className="text-body-sm font-medium text-secondary">{d}</h3>
+                <h3 className="text-body font-medium text-primary">{d}</h3>
                 <ul className="flex flex-col gap-3">
                   {list.map((c) => (
-                    <li key={c.id} className="flex flex-col gap-3 rounded-md border border-border p-4 sm:flex-row sm:items-center">
-                      <div className="flex min-w-0 flex-1 items-start gap-3">
-                        <Avatar name={clientName(c)} size="md" />
-                        <span className="flex flex-1 flex-col">
-                          <span className="text-body font-medium text-primary">
-                            {time(c.at)}, {clientName(c)}
-                          </span>
-                          <span className="text-body-sm text-secondary">
-                            {kind[c.kind]}, 30 minutes. {c.recording ? "Recorded." : "Not recorded: take notes."}
+                    <li key={c.id}>
+                      <Tile>
+                        <span className="flex items-start gap-3">
+                          <Avatar name={clientName(c)} size="md" />
+                          <span className="flex min-w-0 flex-1 flex-col gap-1">
+                            <span className="text-body font-medium text-primary">
+                              {clientName(c)}, {kind[c.kind].toLowerCase()}
+                            </span>
+                            <span className="text-body-sm text-secondary">{c.recording ? "Recorded with consent." : "Not recorded: take notes."}</span>
                           </span>
                         </span>
-                      </div>
-                      <span className="flex flex-wrap gap-4 pl-13 sm:pl-0">
-                        <Link href={`/manager/clients/${c.clientId}/onboard`} className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
-                          Prep
-                        </Link>
-                        <a href={c.meetUrl} className="inline-flex items-center gap-1 rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
-                          <VideoCamera className="size-4" aria-hidden /> Join
-                        </a>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            confirm({
-                              title: "Reschedule this call?",
-                              body: `${clientName(c)} is told at once and picks a new time from your open slots.`,
-                              warning: "Only reschedule when you really have to. Clients plan around these calls, and it counts on your record.",
-                              confirmLabel: "Ask client to pick a new time",
-                              action: () => act.rescheduleCall(c.id),
-                              success: `${clientName(c)} has been asked to pick a new time.`,
-                            })
-                          }
-                          className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring"
-                        >
-                          Reschedule
-                        </button>
-                      </span>
+                        <TileFooter>
+                          <Meta icon={Clock}>{time(c.at)} · 30 min</Meta>
+                          <span className="flex flex-wrap items-center gap-4">
+                            <TextLink href={`/manager/clients/${c.clientId}/onboard`} className="text-body-sm">
+                              Prep notes
+                            </TextLink>
+                            <TextButton
+                              onClick={() =>
+                                confirm({
+                                  title: "Reschedule this call?",
+                                  body: `${clientName(c)} is told at once and picks a new time from your open slots.`,
+                                  warning: "Only reschedule when you really have to. Clients plan around these calls, and it counts on your record.",
+                                  confirmLabel: "Ask client to pick a new time",
+                                  action: () => act.rescheduleCall(c.id),
+                                  success: `${clientName(c)} has been asked to pick a new time.`,
+                                })
+                              }
+                            >
+                              Reschedule
+                            </TextButton>
+                            <a href={c.meetUrl} className={buttonClass("secondary", "sm")}>
+                              <VideoCamera className="size-4" aria-hidden /> Join
+                            </a>
+                          </span>
+                        </TileFooter>
+                      </Tile>
                     </li>
                   ))}
                 </ul>
@@ -84,15 +84,15 @@ export default function CallsPage() {
             ))}
           </div>
         ) : (
-          <p className="text-body-sm text-secondary">No calls booked.</p>
+          <EmptyState title="No calls booked">Clients book inside your open slots. New bookings appear here.</EmptyState>
         )}
       </Card>
 
       <Card title="Open call slots">
         <div className="flex flex-col gap-4">
-          <p className="text-body-sm text-secondary">
+          <Banner tone="info" closeKey="manager-slots-note">
             Clients can only book inside these times, in your time zone ({user?.timeZone.replace("_", " ")}). Once a client books, you attend or reschedule from your side.
-          </p>
+          </Banner>
           <div className="flex flex-col gap-2">
             {days.map((d) => (
               <div key={d} className="flex items-center gap-3">
@@ -126,7 +126,7 @@ export default function CallsPage() {
           >
             {pending("slots") ? "Saving" : "Save slots"}
           </Button>
-          {!slots.length && <p className="text-body-sm text-danger">Open at least one slot, so clients can book their calls.</p>}
+          {!slots.length && <Banner tone="danger">Open at least one slot, so clients can book their calls.</Banner>}
         </div>
       </Card>
     </Columns>

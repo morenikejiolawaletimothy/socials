@@ -1,7 +1,8 @@
 "use client";
 
-import { Avatar, Badge, Card } from "@/components/ui";
+import { Avatar, Badge, Card, Pill } from "@/components/ui";
 import { useDb, useSession } from "@/lib/mock";
+import { plural } from "@/lib/format";
 import { statusBadge } from "@/lib/status";
 
 /** Left-column card with the signed-in person, like LinkedIn's profile card. */
@@ -25,7 +26,7 @@ export function ProfileCard() {
           {badge ? (
             <Badge status={badge.tone} live={client?.status === "active"}>{client?.status === "free" ? "Free" : badge.label}</Badge>
           ) : (
-            <span className="text-body-sm text-secondary">{clientCount} clients</span>
+            <Pill>{plural(clientCount, "client")}</Pill>
           )}
         </div>
       </div>

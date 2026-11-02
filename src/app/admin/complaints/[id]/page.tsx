@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { use, useState } from "react";
 import { ClientCell, complaintKind, managerName } from "@/components/admin/parts";
-import { Badge, Banner, Button, Card, EmptyState, PageHeader, Textarea, useConfirm, buttonClass } from "@/components/ui";
-import { dayTime } from "@/lib/format";
+import { Badge, Banner, Button, Card, EmptyState, PageHeader, Pill, Textarea, buttonClass, useConfirm } from "@/components/ui";
+import { dayTime, plural } from "@/lib/format";
 import { act, useData } from "@/lib/mock";
 
 const outcomes = ["No action", "Credit", "Partial refund", "Warning to the manager", "Change of manager"];
@@ -37,7 +37,7 @@ export default function ComplaintPage({ params }: { params: Promise<{ id: string
     <div className="flex flex-col gap-6">
       <PageHeader title={complaintKind[c.kind]} description={c.text} crumbs={[{ label: "Complaints", href: "/admin/complaints" }, { label: complaintKind[c.kind] }]} />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <Card title="Timeline" className="lg:col-span-2">
+        <Card title="Timeline" className="lg:col-span-2" action={<Pill>{plural(c.timeline.length, "step")}</Pill>}>
           <div className="flex flex-col gap-4">
             <Banner tone="info" title={managerDelay ? "The delay was on the manager" : "No delay on the manager's side"}>
               {managerDelay ? "Work reached the client late." : "Work reached the client on time. The client approved before it went live."}
@@ -59,16 +59,12 @@ export default function ComplaintPage({ params }: { params: Promise<{ id: string
           </div>
         </Card>
         <div className="flex flex-col gap-4">
-          <Card title="Client">
-            <div className="flex flex-col gap-3">
-              <ClientCell db={db} clientId={c.clientId} />
-              <span className="text-body-sm text-secondary">Manager: {managerName(db, client?.managerId)}</span>
-              <Badge status={c.status === "resolved" ? "success" : "warning"}>{c.status === "resolved" ? "Resolved" : "Open"}</Badge>
-            </div>
+          <Card title="Client" action={<Badge status={c.status === "resolved" ? "success" : "warning"}>{c.status === "resolved" ? "Resolved" : "Open"}</Badge>}>
+            <ClientCell db={db} clientId={c.clientId} sub={`Manager: ${managerName(db, client?.managerId) || "none"}`} />
           </Card>
           <Card title="Outcome">
             {c.status === "resolved" ? (
-              <p className="text-body-sm text-primary">{c.outcome}</p>
+              <Banner tone="success">{c.outcome}</Banner>
             ) : (
               <div className="flex flex-col gap-4">
                 <fieldset className="flex flex-col gap-2">

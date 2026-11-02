@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CheckCircle, Clock, Sparkle, Trash, WarningCircle } from "@phosphor-icons/react";
+import { Clock, Sparkle, Trash } from "@phosphor-icons/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, use, useState } from "react";
 import { PostAgainDialog } from "@/components/content/PostAgainDialog";
@@ -11,7 +11,7 @@ import { Columns } from "@/components/layout/Columns";
 import { PostMediaEditor, mediaChecks } from "@/components/manager/PostMediaEditor";
 import { OffLimitsBox } from "@/components/manager/ClientTabs";
 import { rails } from "@/components/rails";
-import { Badge, Banner, Breadcrumbs, Button, Dialog, EmptyState, Card, Input, Menu, Tabs, Textarea, useConfirm, useTask, useToast, buttonClass } from "@/components/ui";
+import { Badge, Banner, Breadcrumbs, Button, buttonClass, Card, Dialog, EmptyState, Input, Menu, Pill, Tabs, Textarea, Tile, TileFooter, useConfirm, useTask, useToast } from "@/components/ui";
 import { ago, agoIn, dayTime, dayTimeIn, fullName, time } from "@/lib/format";
 import { act, clientBundle, useMyManager, type ClientBundle, type Post } from "@/lib/mock";
 
@@ -125,40 +125,41 @@ function DraftEditor({ post, b }: { post: Post; b: ClientBundle }) {
       {(post.checks ?? []).length > 0 && (
         <ul className="flex flex-col gap-2">
           {post.checks!.map((k) => (
-            <li
-              key={k.id}
-              className={`flex flex-col gap-2 rounded-md border p-3 sm:flex-row sm:items-center ${k.state === "open" ? (k.kind === "off-limits" ? "border-danger bg-danger-bg" : "border-warning bg-warning-bg") : "border-border"}`}
-            >
-              <span className="flex flex-1 items-center gap-2 text-body-sm text-primary">
-                {k.state === "open" ? <WarningCircle className="size-5 shrink-0 text-danger" aria-hidden /> : <CheckCircle className="size-5 shrink-0 text-success" aria-hidden />}
-                <span>
-                  <span className="font-medium">{checkKind[k.kind]}: </span>
-                  {k.label}
-                  {k.state === "dismissed" && <span className="text-secondary"> (dismissed)</span>}
-                </span>
-              </span>
-              {k.state === "open" && (
-                <span className="flex gap-2">
-                  <Button variant="secondary" loading={pending(`fix-${k.id}`)} onClick={() => run(`fix-${k.id}`, () => act.setCheck(post.id, k.id, "fixed"), "Check cleared.")}>
-                    Fixed
-                  </Button>
-                  {k.kind !== "off-limits" && (
-                    <Button variant="ghost" onClick={() => setDismissing(k.id)}>
-                      Dismiss
-                    </Button>
-                  )}
-                </span>
-              )}
+            <li key={k.id}>
+              <Banner
+                tone={k.state !== "open" ? "success" : k.kind === "off-limits" ? "danger" : "warning"}
+                title={`${checkKind[k.kind]}${k.state === "dismissed" ? " (dismissed)" : k.state === "fixed" ? " (fixed)" : ""}`}
+                action={
+                  k.state === "open" && (
+                    <>
+                      {k.kind !== "off-limits" && (
+                        <Button variant="cancel" size="sm" onClick={() => setDismissing(k.id)}>
+                          Dismiss
+                        </Button>
+                      )}
+                      <Button variant="secondary" size="sm" loading={pending(`fix-${k.id}`)} onClick={() => run(`fix-${k.id}`, () => act.setCheck(post.id, k.id, "fixed"), "Check cleared.")}>
+                        Fixed
+                      </Button>
+                    </>
+                  )
+                }
+              >
+                {k.label}
+              </Banner>
             </li>
           ))}
-          {open.some((k) => k.kind === "off-limits") && <li className="text-caption text-secondary">Off-limits flags cannot be dismissed. Change the draft, then mark it fixed.</li>}
+          {open.some((k) => k.kind === "off-limits") && (
+            <li>
+              <Banner tone="neutral">Off-limits flags cannot be dismissed. Change the draft, then mark it fixed.</Banner>
+            </li>
+          )}
         </ul>
       )}
       <Dialog open={!!dismissing} onClose={() => setDismissing(null)} title="Dismiss this check?">
         <p className="text-body-sm text-secondary">Say why it does not apply. The reason is kept with the post and the owner can see it.</p>
         <Textarea label="Reason" rows={2} value={dismissReason} onChange={(e) => setDismissReason(e.target.value)} />
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => setDismissing(null)}>
+          <Button variant="cancel" onClick={() => setDismissing(null)}>
             Cancel
           </Button>
           <Button
@@ -260,7 +261,7 @@ function TimeDialog({ open, onClose, initial, onSave, busy }: { open: boolean; o
         help="In the client's time zone."
       />
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button variant="ghost" onClick={onClose}>
+        <Button variant="cancel" onClick={onClose}>
           Cancel
         </Button>
         <Button
@@ -295,10 +296,10 @@ function Scheduler({ post, b }: { post: Post; b: ClientBundle }) {
         {time(suggested)} for {b.user?.firstName} ({b.user?.timeZone.replace("_", " ")}), {time(suggested)} for you. Weekday mornings do best for this audience.
       </span>
       <div className="flex gap-2">
-        <Button loading={pending("schedule") && !choosing} onClick={() => schedule(suggested)}>
+        <Button size="sm" loading={pending("schedule") && !choosing} onClick={() => schedule(suggested)}>
           Schedule
         </Button>
-        <Button variant="ghost" onClick={() => setChoosing(true)}>
+        <Button size="sm" variant="secondary" onClick={() => setChoosing(true)}>
           Change time
         </Button>
       </div>
@@ -316,10 +317,10 @@ function ScheduledActions({ post, b }: { post: Post; b: ClientBundle }) {
   const first = b.user?.firstName;
   return (
     <div className="flex flex-wrap gap-2">
-      <Button variant="secondary" onClick={() => setEditing(true)}>
+      <Button size="sm" variant="secondary" onClick={() => setEditing(true)}>
         Edit
       </Button>
-      <Button variant="ghost" onClick={() => setChoosing(true)}>
+      <Button size="sm" variant="secondary" onClick={() => setChoosing(true)}>
         Change time
       </Button>
       {editing && (
@@ -343,8 +344,8 @@ function ScheduledActions({ post, b }: { post: Post; b: ClientBundle }) {
           }}
         />
       )}
-      <Button
-        variant="ghost"
+      <Button size="sm"
+        variant="remove"
         onClick={() =>
           confirm({
             title: "Take this post off the schedule?",
@@ -415,7 +416,7 @@ function EditTextDialog({
         </label>
       )}
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button variant="ghost" onClick={onClose}>
+        <Button variant="cancel" onClick={onClose}>
           Cancel
         </Button>
         <Button
@@ -452,7 +453,7 @@ function LiveActions({ post, b, onDraft }: { post: Post; b: ClientBundle; onDraf
         tone="danger"
         title="Did not post"
         action={
-          <Button
+          <Button size="sm"
             variant="secondary"
             loading={pending("retry")}
             onClick={() =>
@@ -534,10 +535,10 @@ function LiveActions({ post, b, onDraft }: { post: Post; b: ClientBundle; onDraf
         <p className="text-body-sm text-secondary">For when you have agreed something else with {first}, for example in Messages. They see your note.</p>
         <Textarea label={`Note to ${first}`} rows={2} value={closeNote} onChange={(e) => setCloseNote(e.target.value)} placeholder="As agreed on our call, we will leave the post as it is." />
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => setClosing(false)}>
+          <Button variant="cancel" onClick={() => setClosing(false)}>
             Cancel
           </Button>
-          <Button
+          <Button size="sm"
             disabled={!closeNote.trim()}
             loading={pending("close")}
             onClick={async () => {
@@ -560,7 +561,7 @@ function LiveActions({ post, b, onDraft }: { post: Post; b: ClientBundle; onDraf
             {req.text}
           </Banner>
         )}
-        <Button variant="secondary" className="self-start" onClick={() => setAgain(true)}>
+        <Button size="sm" variant="secondary" className="self-start" onClick={() => setAgain(true)}>
           Post it again
         </Button>
         {dialogs}
@@ -576,20 +577,20 @@ function LiveActions({ post, b, onDraft }: { post: Post; b: ClientBundle; onDraf
       )}
       <div className="flex flex-wrap items-center gap-2">
         {req?.kind === "repost" ? (
-          <Button variant="secondary" onClick={() => setAgain(true)}>
+          <Button size="sm" variant="secondary" onClick={() => setAgain(true)}>
             Prepare the repost
           </Button>
         ) : (
-          <Button variant="secondary" onClick={() => setEditing(true)}>
+          <Button size="sm" variant="secondary" onClick={() => setEditing(true)}>
             Edit text
           </Button>
         )}
         {req?.kind === "repost" ? (
-          <Button variant="ghost" onClick={() => setEditing(true)}>
+          <Button size="sm" variant="secondary" onClick={() => setEditing(true)}>
             Edit text
           </Button>
         ) : (
-          <Button variant="ghost" onClick={() => setAgain(true)}>
+          <Button size="sm" variant="secondary" onClick={() => setAgain(true)}>
             Post again
           </Button>
         )}
@@ -638,7 +639,7 @@ function ContentWorkspace({ id }: { id: string }) {
       <Card
         title="Content"
         eyebrow={<Breadcrumbs items={[{ label: "Clients", href: "/manager/clients" }, { label: fullName(b.user), href: `/manager/clients/${id}` }, { label: "Content" }]} />}
-        action={<span className="text-caption text-secondary">Reviews {b.client.review.frequency.replace("-", " ")}</span>}
+        action={<Pill>Reviews {b.client.review.frequency.replace("-", " ")}</Pill>}
         padding="none"
       >
         <div className="flex flex-col gap-4 px-6 pt-4">
@@ -661,20 +662,36 @@ function ContentWorkspace({ id }: { id: string }) {
 
         {tab === "ideas" ? (
           <div className="flex flex-col gap-4 p-6">
-            <p className="flex items-center gap-1 text-body-sm text-secondary">
-              <Sparkle className="size-4 text-primary-600" aria-hidden /> Proposed for next week. Nothing here touches the off-limits list. Pick, skip or ask for more.
-            </p>
+            <Banner tone="info" closeKey="manager-ideas-note">
+              Proposed for next week. Nothing here touches the off-limits list. Pick, skip or ask for more.
+            </Banner>
             <ul className="flex flex-col gap-3">
               {ideas.map((i) => (
-                <li key={i.title} className="flex flex-col gap-2 rounded-md border border-border p-4">
+                <li key={i.title}>
+                  <Tile>
                   <span className="flex items-start justify-between gap-3">
                     <span className="text-body font-medium text-primary">{i.title}</span>
-                    <span className="shrink-0 text-caption capitalize text-secondary">{i.format}</span>
+                    <Pill className="capitalize">{i.format}</Pill>
                   </span>
-                  <span className="text-body-sm text-secondary">{i.reason}</span>
+                  <Banner tone="info">Why: {i.reason}</Banner>
+                  <TileFooter>
+                  <span className="flex items-center gap-1 text-caption text-secondary">
+                    <Sparkle className="size-4 text-primary-600" aria-hidden /> Suggested
+                  </span>
                   <span className="flex gap-2">
                     <Button
+                      variant="cancel"
+                      size="sm"
+                      onClick={() => {
+                        setIdeas((list) => list.filter((x) => x.title !== i.title));
+                        toast("Skipped. The next ideas will avoid this.", "success", { action: { label: "Undo", onClick: () => setIdeas((list) => [...list, i]) } });
+                      }}
+                    >
+                      Skip
+                    </Button>
+                    <Button
                       variant="secondary"
+                      size="sm"
                       loading={pending(i.title)}
                       onClick={async () => {
                         const ok = await run(i.title, () => act.pickIdea(id, i.title, i.format, i.reason), {
@@ -686,16 +703,9 @@ function ContentWorkspace({ id }: { id: string }) {
                     >
                       {pending(i.title) ? "Drafting" : "Pick"}
                     </Button>
-                    <Button
-                      variant="ghost"
-                      onClick={() => {
-                        setIdeas((list) => list.filter((x) => x.title !== i.title));
-                        toast("Skipped. The next ideas will avoid this.", "success", { action: { label: "Undo", onClick: () => setIdeas((list) => [...list, i]) } });
-                      }}
-                    >
-                      Skip
-                    </Button>
                   </span>
+                  </TileFooter>
+                  </Tile>
                 </li>
               ))}
               {!ideas.length && <li className="text-body-sm text-secondary">No ideas left. Ask for more.</li>}
@@ -712,14 +722,14 @@ function ContentWorkspace({ id }: { id: string }) {
             </Button>
           </div>
         ) : (
-          <ul className="flex flex-col">
+          <ul className="flex flex-col gap-3 p-6">
             {groups[tab].length === 0 && (
-              <li className="p-6">
+              <li>
                 <EmptyState title="Nothing here">Posts move here as they reach this stage.</EmptyState>
               </li>
             )}
             {groups[tab].map((p) => (
-              <li key={p.id} className="flex flex-col gap-4 border-t border-border p-6">
+              <li key={p.id} className="flex flex-col gap-4 rounded-md border border-border bg-card p-4">
                 {tab === "drafts" && <DraftEditor post={p} b={b} />}
                 {tab === "changes" && <ChangesEditor post={p} b={b} />}
                 {tab !== "drafts" && tab !== "changes" && (

@@ -1,13 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { Columns } from "@/components/layout/Columns";
-import { Conversation } from "@/components/messages/Conversation";
+import { ClientChat } from "@/components/messages/ClientChat";
 import { rails } from "@/components/rails";
-import { Avatar, Button, Card, Dialog, Input, Textarea, useConfirm, useTask } from "@/components/ui";
-import { ago, fullName } from "@/lib/format";
+import { Banner, Button, Card, Dialog, EmptyState, Input, Select, Textarea, TextButton, useConfirm, useTask } from "@/components/ui";
+import { fullName } from "@/lib/format";
 import { act, useMyManager } from "@/lib/mock";
 
 /** M9 Messages: one conversation per client. Phone: the list, then the open conversation. */
@@ -22,98 +21,81 @@ function ManagerMessages() {
   const [why, setWhy] = useState("");
   const [error, setError] = useState<string>();
 
-  const threads = clients
-    .map((c) => {
-      const msgs = db.messages.filter((m) => m.clientId === c.id).sort((a, b) => a.at.localeCompare(b.at));
-      return { c, u: db.users.find((u) => u.id === c.userId), msgs, last: msgs[msgs.length - 1] };
-    })
-    .sort((a, b) => (b.last?.at ?? "").localeCompare(a.last?.at ?? ""));
-  const active = threads.find((t) => t.c.id === selected) ?? (selected ? undefined : threads[0]);
+  // Clients, most recent conversation first.
+  const list = clients
+    .map((c) => ({ c, u: db.users.find((u) => u.id === c.userId), last: db.messages.filter((m) => m.clientId === c.id).reduce((a, m) => (m.at > a ? m.at : a), "") }))
+    .sort((a, b) => b.last.localeCompare(a.last));
+  const active = list.find((t) => t.c.id === selected) ?? list[0];
+  const messages = active ? db.messages.filter((m) => m.clientId === active.c.id).sort((a, b) => a.at.localeCompare(b.at)) : [];
+  const threads = active ? db.threads.filter((t) => t.clientId === active.c.id) : [];
+  const requests = active ? db.requests.filter((r) => r.clientId === active.c.id && r.status === "pending") : [];
 
   return (
     <Columns {...rails.managerMain}>
-      <Card title="Messages" padding="none">
-        <div className="grid grid-cols-1 md:grid-cols-3">
-          <ul className={`flex-col border-border md:flex md:border-r ${selected ? "hidden" : "flex"}`}>
-            {threads.map((t) => {
-              const on = active?.c.id === t.c.id;
-              return (
-                <li key={t.c.id}>
-                  <Link
-                    href={`/manager/messages?client=${t.c.id}`}
-                    scroll={false}
-                    aria-current={on ? "true" : undefined}
-                    className={`flex items-center gap-3 border-b border-border px-4 py-3 focus-visible:focus-ring ${on ? "bg-primary-50" : "hover:bg-neutral-25"}`}
+      <Card
+        title="Messages"
+        padding="none"
+        className="overflow-visible!"
+        action={
+          <span className="flex items-center gap-3">
+            <TextButton onClick={() => setAsking(true)} disabled={!active}>
+              Ask for a permission
+            </TextButton>
+            <Select size="sm" aria-label="Client" value={active?.c.id ?? ""} onChange={(e) => router.push(`/manager/messages?client=${e.target.value}`, { scroll: false })}>
+              {list.map((t) => (
+                <option key={t.c.id} value={t.c.id}>
+                  {fullName(t.u)}
+                </option>
+              ))}
+            </Select>
+          </span>
+        }
+      >
+        {requests.length > 0 && (
+          <div className="flex flex-col gap-2 border-b border-border px-6 py-4">
+            {requests.map((r) => (
+              <Banner
+                key={r.id}
+                tone="info"
+                title="Waiting for an answer"
+                action={
+                  <Button
+                    variant="remove"
+                    size="sm"
+                    onClick={() =>
+                      confirm({
+                        title: "Withdraw this request?",
+                        body: `${active?.u?.firstName} will no longer see it in Control.`,
+                        confirmLabel: "Withdraw",
+                        action: () => act.cancelRequest(r.id),
+                        success: "Request withdrawn.",
+                      })
+                    }
                   >
-                    <Avatar name={fullName(t.u)} size="md" />
-                    <span className="flex min-w-0 flex-1 flex-col">
-                      <span className="flex items-center justify-between gap-2">
-                        <span className="truncate text-body font-medium text-primary">{fullName(t.u)}</span>
-                        {t.last && <span className="shrink-0 text-caption text-secondary">{ago(t.last.at)}</span>}
-                      </span>
-                      <span className="truncate text-caption text-secondary">{t.last?.text ?? (t.last?.voice ? "Voice note" : t.last?.file ? t.last.file.name : "No messages yet")}</span>
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-          <div className={`md:col-span-2 ${selected ? "block" : "hidden md:block"}`}>
-            {active && user ? (
-              <>
-                <div className="flex items-center justify-between gap-3 border-b border-border px-6 py-3">
-                  <span className="flex items-center gap-3">
-                    <button type="button" onClick={() => router.push("/manager/messages")} className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring md:hidden">
-                      All
-                    </button>
-                    <Link href={`/manager/clients/${active.c.id}`} className="rounded-sm text-body font-medium text-primary hover:text-primary-700 focus-visible:focus-ring">
-                      {fullName(active.u)}
-                    </Link>
-                  </span>
-                  <button type="button" onClick={() => setAsking(true)} className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
-                    Ask for a permission
-                  </button>
-                </div>
-                {db.requests
-                  .filter((r) => r.clientId === active.c.id && r.status === "pending")
-                  .map((r) => (
-                    <div key={r.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-info-bg px-6 py-3">
-                      <span className="text-body-sm text-primary">
-                        <span className="font-medium">Waiting for an answer: </span>
-                        {r.text}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          confirm({
-                            title: "Withdraw this request?",
-                            body: `${active.u?.firstName} will no longer see it in Control.`,
-                            confirmLabel: "Withdraw",
-                            action: () => act.cancelRequest(r.id),
-                            success: "Request withdrawn.",
-                          })
-                        }
-                        className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring"
-                      >
-                        Withdraw
-                      </button>
-                    </div>
-                  ))}
-                <Conversation clientId={active.c.id} messages={active.msgs} me={user} users={db.users} saveLabel="Save to their Brand" asTeam={covering} />
-              </>
-            ) : (
-              <p className="p-6 text-body-sm text-secondary">Choose a client.</p>
-            )}
+                    Withdraw
+                  </Button>
+                }
+              >
+                {r.text}
+              </Banner>
+            ))}
           </div>
-        </div>
+        )}
+        {active?.u && user ? (
+          <ClientChat key={active.c.id} clientId={active.c.id} me={user} manager={active.u} messages={messages} threads={threads} side="team" asTeam={covering} profileHref={`/manager/clients/${active.c.id}`} />
+        ) : (
+          <div className="p-6">
+            <EmptyState title="No clients yet">When a client is assigned to you, your messages with them appear here.</EmptyState>
+          </div>
+        )}
       </Card>
 
       <Dialog open={asking} onClose={() => setAsking(false)} title="Ask for a one-off permission">
-        <p className="text-body-sm text-secondary">For something outside what {active?.u?.firstName ?? "the client"} lets you do. They approve or decline in Control.</p>
+        <Banner tone="info">For something outside what {active?.u?.firstName ?? "the client"} lets you do. They approve or decline in Control.</Banner>
         <Input label="What do you want to do?" placeholder="Post the Q3 update to the company Page" value={what} onChange={(e) => { setWhat(e.target.value); setError(undefined); }} error={error} />
         <Textarea label="Why" rows={2} value={why} onChange={(e) => setWhy(e.target.value)} />
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => setAsking(false)}>
+          <Button variant="cancel" onClick={() => setAsking(false)}>
             Cancel
           </Button>
           <Button

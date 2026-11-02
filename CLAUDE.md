@@ -16,6 +16,9 @@ The Bluecut Socials design system is the only source of visual decisions.
   - `Tile` (+ `TileFooter`, `TileAction`, `TileIcon`): an item inside a card. Linked tiles turn light blue on hover; the footer sits under a divider with `Meta` left and the action right.
   - `Button size="sm"` for actions inside a tile or row (Mark as sent). `variant="cancel"` for Cancel next to Save in inline editors (red on hover).
   - A note inside a tile ("Why: …", "Where: …") is a `Banner` without a title.
+  - `Rows` (+ `Row`, `RowText`): a compact list in one bordered group (settings, invoices, a team, versions, alert feeds). `flush` fills a `padding="none"` card edge to edge (activity, messages). Owner tables sit in the same bordered frame (`Table` in `components/admin/parts`).
+  - `IconButton`: icon-only action in a row or tile (download, remove), with a required `label`. `tone="danger"` for remove.
+- One arrangement for all three views (client, manager, owner), taken from the client view: card header action is a `Pill`, `Meta` or text link; explanations are a `Banner` at the top of the card; items are `Tile`s 12px apart with a `TileFooter` (Meta left, action right); compact records are `Rows`; buttons in tiles and rows are `size="sm"`; Delete or Withdraw is `variant="remove"`; Cancel beside Save is `variant="cancel"`; text actions are `TextLink`/`TextButton`, never local class strings. Manager and owner screens follow it exactly.
 - `/design-system` renders every component. Update it when a component changes.
 
 Rules:

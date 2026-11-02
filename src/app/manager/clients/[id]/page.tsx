@@ -16,7 +16,7 @@ import {
   PlanTab,
   UpdatesTab,
 } from "@/components/manager/ClientTabs";
-import { Avatar, Badge, Breadcrumbs, Card, EmptyState, ProgressBar, Tabs, buttonClass } from "@/components/ui";
+import { Avatar, Badge, Breadcrumbs, buttonClass, Card, EmptyState, Pill, ProgressBar, Tabs, TextLink } from "@/components/ui";
 import { fullName } from "@/lib/format";
 import { clientBundle, useMyManager } from "@/lib/mock";
 import { statusBadge } from "@/lib/status";
@@ -53,36 +53,37 @@ function ClientPage({ id }: { id: string }) {
 
   return (
     <Columns {...rails.managerMain}>
+      <Breadcrumbs items={[{ label: "Clients", href: "/manager/clients" }, { label: fullName(b.user) }]} />
       <Card padding="none" className="overflow-hidden">
         <div aria-hidden className="h-16 bg-primary-100" />
         <div className="-mt-10 flex flex-col gap-4 px-6 pb-2">
-          <Avatar name={fullName(b.user)} size="xl" className="ring-4 ring-neutral-0" />
-          <Breadcrumbs items={[{ label: "Clients", href: "/manager/clients" }, { label: fullName(b.user) }]} />
+          <Avatar name={fullName(b.user)} src={b.user.photo} size="xl" className="ring-4 ring-neutral-0" />
           <div className="flex flex-col gap-1">
             <span className="flex flex-wrap items-center gap-2">
               <h1 className="font-display text-display-xl text-primary">{fullName(b.user)}</h1>
               <Badge status={badge.tone}>{badge.label}</Badge>
+              {b.contract?.videoAddon && <Pill>Video add-on</Pill>}
             </span>
             <span className="text-body-sm text-secondary">
               {b.user.title}. {b.client.industry}, {b.client.country}.
             </span>
           </div>
           {b.client.status === "setting-up" && (
-            <div className="flex flex-col gap-2">
-              <span className="text-caption text-secondary">Setup {b.client.setupProgress}% done</span>
+            <div className="flex max-w-xs flex-col gap-2">
+              <span className="text-body-sm text-secondary">Setup {b.client.setupProgress}% done</span>
               <ProgressBar value={b.client.setupProgress} />
             </div>
           )}
-          <div className="flex flex-wrap gap-4">
-            <Link href={`/manager/clients/${id}/content`} className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
-              Content
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            <Link href={`/manager/clients/${id}/content`} className={buttonClass("primary", "sm")}>
+              Open content
             </Link>
-            <Link href={`/manager/clients/${id}/onboard`} className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
+            <Link href={`/manager/messages?client=${id}`} className={buttonClass("secondary", "sm")}>
+              Message {b.user.firstName}
+            </Link>
+            <TextLink href={`/manager/clients/${id}/onboard`} className="text-body-sm">
               Onboarding and strategy
-            </Link>
-            <Link href={`/manager/messages?client=${id}`} className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
-              Message
-            </Link>
+            </TextLink>
           </div>
         </div>
         <div className="px-6">

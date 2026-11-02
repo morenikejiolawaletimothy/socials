@@ -1,12 +1,12 @@
 "use client";
 
-import { CheckCircle, Sparkle } from "@phosphor-icons/react";
+import { CheckCircle, Clock, Sparkle } from "@phosphor-icons/react";
 import Link from "next/link";
 import { use, useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { OffLimitsBox } from "@/components/manager/ClientTabs";
 import { rails } from "@/components/rails";
-import { Badge, Banner, Breadcrumbs, Button, Card, EmptyState, Input, Stepper, Textarea, useConfirm, useTask, buttonClass } from "@/components/ui";
+import { Badge, Banner, Breadcrumbs, Button, buttonClass, Card, EmptyState, Input, Meta, Pill, Row, Rows, RowText, Stepper, Textarea, TextLink, Tile, useConfirm, useTask } from "@/components/ui";
 import { dayTime, fullName } from "@/lib/format";
 import { act, clientBundle, useMyManager, type ClientBundle } from "@/lib/mock";
 
@@ -61,13 +61,13 @@ function Onboard({ id }: { id: string }) {
 
           {step === 0 && (
             <div className="flex flex-col gap-4">
-              <h3 className="font-display text-display-lg text-primary">Prep sheet for the goals call</h3>
-              {goals && <p className="text-body-sm text-secondary">{dayTime(goals.at)}. {goals.recording ? "Recorded with consent." : "Not recorded: you write the notes."}</p>}
-              <div className="flex flex-col gap-2 rounded-md bg-neutral-25 p-4">
+              <h3 className="text-body font-semibold text-primary">Prep sheet for the goals call</h3>
+              {goals && <Meta icon={Clock}>{dayTime(goals.at)} · {goals.recording ? "Recorded with consent" : "Not recorded: you write the notes"}</Meta>}
+              <Tile>
                 <span className="text-body font-semibold text-primary">Their LinkedIn today</span>
                 <p className="text-body-sm text-primary">Headline: &ldquo;Founder&rdquo;. 1,240 followers. Last post 8 months ago (a product launch, 40 reactions). About section is two lines. No featured posts.</p>
-              </div>
-              <div className="flex flex-col gap-2">
+              </Tile>
+              <Tile>
                 <span className="flex items-center gap-1 text-body font-semibold text-primary">
                   <Sparkle className="size-4 text-primary-600" aria-hidden /> Questions to ask
                 </span>
@@ -77,7 +77,7 @@ function Onboard({ id }: { id: string }) {
                   ))}
                   <li>Which 3 people would you most like to see your posts?</li>
                 </ul>
-              </div>
+              </Tile>
               <Button className="self-start" onClick={() => setStep(1)}>
                 The call is done
               </Button>
@@ -86,7 +86,7 @@ function Onboard({ id }: { id: string }) {
 
           {step === 1 && (
             <div className="flex flex-col gap-4">
-              <h3 className="font-display text-display-lg text-primary">After the goals call</h3>
+              <h3 className="text-body font-semibold text-primary">After the goals call</h3>
               <Banner tone="info" title={goals?.recording ? "The transcript has arrived" : "Not recorded: write up your notes"}>
                 {goals?.recording ? "The summary below is drafted from it. Correct anything, then confirm." : "Write what you heard. The summary below fills in from your notes."}
               </Banner>
@@ -130,20 +130,20 @@ function Onboard({ id }: { id: string }) {
 
           {step === 2 && (
             <div className="flex flex-col gap-4">
-              <h3 className="font-display text-display-lg text-primary">Set up listening</h3>
+              <h3 className="text-body font-semibold text-primary">Set up listening</h3>
               <Banner tone="info">Create a Google Alert for each suggested topic, then paste each alert&apos;s feed link here.</Banner>
               <ul className="flex flex-wrap gap-2">
                 {(s?.topics.map((t) => t.name) ?? ["Local sourcing", "Food distribution Nigeria", "Lagos food startups", "Agriculture policy"]).map((t) => (
-                  <li key={t} className="rounded-full bg-primary-50 px-3 py-1 text-body-sm text-primary-700">
-                    {t}
+                  <li key={t}>
+                    <Pill>{t}</Pill>
                   </li>
                 ))}
               </ul>
               <p className="text-body-sm text-primary">
                 {b.alerts.length ? `${b.alerts.filter((a) => a.working).length} of ${b.alerts.length} feeds working.` : "No feeds yet."}{" "}
-                <Link href={`/manager/clients/${id}?tab=listening`} className="rounded-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
+                <TextLink href={`/manager/clients/${id}?tab=listening`}>
                   Add feeds in Listening
-                </Link>
+                </TextLink>
               </p>
               <div className="flex gap-2">
                 <Button variant="ghost" onClick={() => setStep(1)}>
@@ -156,46 +156,49 @@ function Onboard({ id }: { id: string }) {
 
           {step === 3 && (
             <div className="flex flex-col gap-4">
-              <h3 className="font-display text-display-lg text-primary">Research, audit and strategy</h3>
+              <h3 className="text-body font-semibold text-primary">Research, audit and strategy</h3>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {[
                   ["Research", "12 sources on their field, with links"],
                   ["Profile audit", "Headline, About, featured, activity"],
                   ["Strategy draft", `Version ${s?.version ?? 1}, framework v3`],
                 ].map(([t, d]) => (
-                  <div key={t} className="flex flex-col gap-1 rounded-md border border-border p-3">
-                    <span className="flex items-center gap-1 text-body font-semibold text-primary">
-                      <CheckCircle className="size-4 text-success" aria-hidden /> {t}
+                  <Tile key={t} className="gap-1">
+                    <span className="flex items-center gap-2 text-body font-medium text-primary">
+                      <CheckCircle className="size-5 text-success" aria-hidden /> {t}
                     </span>
-                    <span className="text-caption text-secondary">{d}</span>
-                  </div>
+                    <span className="text-body-sm text-secondary">{d}</span>
+                  </Tile>
                 ))}
               </div>
               {s && (
-                <div className="flex flex-col gap-3 rounded-md bg-neutral-25 p-4">
+                <Tile>
                   <p className="text-body font-medium text-primary">{s.goal}</p>
-                  <ol className="flex flex-col gap-1 text-body-sm text-primary">
+                  <Rows>
                     {s.topics.map((t, i) => (
-                      <li key={t.name}>
-                        {i + 1}. {t.name}: <span className="text-secondary">{t.why}</span>
-                      </li>
+                      <Row key={t.name}>
+                        <RowText title={`${i + 1}. ${t.name}`} sub={t.why} />
+                      </Row>
                     ))}
-                  </ol>
-                  {s.targets.map((t) => (
-                    <p key={t.period} className="text-body-sm text-primary">
-                      {t.period}: {t.posts} posts, {t.comments} comments, {t.connections} connection requests a week.
-                    </p>
-                  ))}
-                </div>
+                    {s.targets.map((t) => (
+                      <Row key={t.period}>
+                        <RowText title={t.period} />
+                        <span className="text-body-sm text-primary">
+                          {t.posts} posts · {t.comments} comments · {t.connections} connections a week
+                        </span>
+                      </Row>
+                    ))}
+                  </Rows>
+                </Tile>
               )}
               {directions.length > 0 && (
-                <ul className="flex flex-col gap-1 text-body-sm text-secondary">
+                <Rows>
                   {directions.map((d, i) => (
-                    <li key={i}>
-                      Version {(s?.version ?? 1) + i + 1}: &ldquo;{d}&rdquo; applied.
-                    </li>
+                    <Row key={i}>
+                      <RowText title={`Version ${(s?.version ?? 1) + i + 1}`} sub={`“${d}” applied`} />
+                    </Row>
                   ))}
-                </ul>
+                </Rows>
               )}
               <form
                 className="flex flex-col gap-2 sm:flex-row sm:items-end"
@@ -241,9 +244,9 @@ function Onboard({ id }: { id: string }) {
 
           {step === 4 && (
             <div className="flex flex-col gap-4">
-              <h3 className="font-display text-display-lg text-primary">After the strategy call</h3>
-              {stratCall && <p className="text-body-sm text-secondary">Strategy call: {dayTime(stratCall.at)}.</p>}
-              {stratCall?.summary && <p className="rounded-md bg-neutral-25 p-4 text-body-sm text-primary">{stratCall.summary}</p>}
+              <h3 className="text-body font-semibold text-primary">After the strategy call</h3>
+              {stratCall && <Meta icon={Clock}>Strategy call · {dayTime(stratCall.at)}</Meta>}
+              {stratCall?.summary && <Banner tone="neutral">{stratCall.summary}</Banner>}
               <Banner tone="info">Adjust the strategy with anything changed on the call, then send it as &ldquo;What we agreed&rdquo;. Nothing starts until {first} approves.</Banner>
               <span className="self-start">
                 <Badge status={s?.status === "agreed-sent" ? "info" : s?.status === "change-asked" ? "warning" : "neutral"}>
@@ -279,8 +282,8 @@ function Onboard({ id }: { id: string }) {
                 <CheckCircle className="size-8 text-success" aria-hidden />
                 <p className="font-display text-display-lg text-primary">Approved. Work has started.</p>
               </div>
-              <p className="text-body-sm text-secondary">The approved strategy set the content plan and weekly targets. They drive your Home, engagement and the weekly update.</p>
-              <Link href={`/manager/clients/${id}/content?tab=ideas`} className="self-start rounded-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
+              <Banner tone="info">The approved strategy set the content plan and weekly targets. They drive your Home, engagement and the weekly update.</Banner>
+              <Link href={`/manager/clients/${id}/content?tab=ideas`} className={`${buttonClass("primary")} self-start`}>
                 Plan the first posts
               </Link>
             </div>

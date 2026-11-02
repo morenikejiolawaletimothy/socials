@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
 import { PhotoField } from "@/components/account/PhotoField";
-import { Badge, Button, Card, Input, Select, Switch, Textarea, useConfirm, useTask } from "@/components/ui";
+import { Badge, Banner, Button, Card, Input, Row, Rows, RowText, Select, Switch, Textarea, Tile, TileIcon, useConfirm, useTask } from "@/components/ui";
 import { timeZones, zoneLabel } from "@/lib/timezones";
 import { fullName } from "@/lib/format";
 import { act, useMyManager } from "@/lib/mock";
@@ -58,28 +58,31 @@ export default function ManagerProfile() {
       </Card>
 
       <Card title="Sign-in and security">
-        <div className="flex flex-col gap-4">
-          <p className="text-body text-primary">{user.email}</p>
-          <div className="flex items-center justify-between gap-3">
-            <span className="flex flex-col">
-              <span className="text-body font-medium text-primary">Two-step sign-in</span>
-              <span className="text-body-sm text-secondary">Required for everyone who works on client accounts.</span>
-            </span>
+        <Rows>
+          <Row>
+            <RowText title="Email" sub={user.email} />
+          </Row>
+          <Row>
+            <RowText title="Two-step sign-in" sub="Required for everyone who works on client accounts." />
             <Badge status="success">On</Badge>
-          </div>
-        </div>
+          </Row>
+        </Rows>
       </Card>
 
-      <Card title="Google Calendar">
+      <Card title="Google Calendar" action={<Badge status={calendar ? "success" : "neutral"}>{calendar ? "Connected" : "Not connected"}</Badge>}>
+        <Tile>
         <div className="flex items-center gap-3">
-          <CalendarBlank className="size-8 text-primary-600" aria-hidden />
-          <span className="flex flex-1 flex-col">
-            <span className="text-body font-medium text-primary">{calendar ? "Connected" : "Not connected"}</span>
+          <TileIcon round>
+            <CalendarBlank className="size-6" aria-hidden />
+          </TileIcon>
+          <span className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="text-body font-medium text-primary">{calendar ? "Your calendar is connected" : "Connect your calendar"}</span>
             <span className="text-body-sm text-secondary">Booked calls appear in your calendar, and busy times close your slots.</span>
           </span>
           {calendar ? (
-            <button
-              type="button"
+            <Button
+              variant="remove"
+              size="sm"
               onClick={() =>
                 confirm({
                   title: "Disconnect Google Calendar?",
@@ -91,16 +94,16 @@ export default function ManagerProfile() {
                   success: "Google Calendar disconnected.",
                 })
               }
-              className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring"
             >
               Disconnect
-            </button>
+            </Button>
           ) : (
-            <Button variant="secondary" loading={pending("cal")} onClick={() => run("cal", () => act.setCalendar(manager.id, true), "Google Calendar connected.")}>
+            <Button variant="secondary" size="sm" loading={pending("cal")} onClick={() => run("cal", () => act.setCalendar(manager.id, true), "Google Calendar connected.")}>
               Connect
             </Button>
           )}
         </div>
+        </Tile>
       </Card>
 
       <Card title="Notifications">
@@ -116,6 +119,7 @@ export default function ManagerProfile() {
             </li>
           ))}
         </ul>
+        <Banner tone="info" className="mt-4">Urgent alerts are always on, by email and in the app.</Banner>
       </Card>
     </Columns>
   );

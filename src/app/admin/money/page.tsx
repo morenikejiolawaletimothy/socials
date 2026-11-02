@@ -1,9 +1,10 @@
 "use client";
 
+import { CalendarBlank } from "@phosphor-icons/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { ClientCell, Stats, Table, linkClass, td } from "@/components/admin/parts";
-import { Badge, Button, Card, Dialog, Input, PageHeader, ProgressBar, Tabs, Textarea, useConfirm, useTask } from "@/components/ui";
+import { ClientCell, Stats, Table, td } from "@/components/admin/parts";
+import { Badge, Banner, Button, Card, Dialog, Input, Meta, PageHeader, Pill, ProgressBar, Row, Rows, Tabs, Textarea, Tile, TileFooter, textActionClass, useConfirm, useTask } from "@/components/ui";
 import { date, money } from "@/lib/format";
 import { act, useData, type Contract, type Refund } from "@/lib/mock";
 
@@ -106,7 +107,7 @@ function MoneyPage() {
                   </td>
                   <td className={td}>{k.paid ? "Yes" : "No"}</td>
                   <td className={`${td} text-right`}>
-                    <button type="button" onClick={() => setExtending(k)} className={linkClass}>
+                    <button type="button" onClick={() => setExtending(k)} className={textActionClass}>
                       Extend or credit
                     </button>
                   </td>
@@ -155,20 +156,24 @@ function MoneyPage() {
           )}
 
           {tab === "refunds" && (
-            <ul className="flex flex-col">
+            <ul className="flex flex-col gap-3">
               {db.refunds.map((r) => (
-                <li key={r.id} className="flex flex-col gap-3 border-b border-border py-4 first:pt-0 last:border-b-0 last:pb-0">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
+                <li key={r.id}>
+                  <Tile done={r.status !== "waiting"}>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
                     <ClientCell db={db} clientId={r.clientId} sub={`Reason: ${r.reason}`} />
-                    <span className="flex items-center gap-3">
-                      <span className="font-display text-display-lg text-primary">{money(r.amountCents)}</span>
-                      <Badge status={refundTone[r.status].tone}>{refundTone[r.status].label}</Badge>
-                    </span>
+                    <Badge status={refundTone[r.status].tone}>{refundTone[r.status].label}</Badge>
                   </div>
-                  <p className="rounded-md bg-neutral-25 p-3 text-body-sm text-primary">{r.calc}</p>
+                  <Banner tone="neutral">{r.calc}</Banner>
+                  <TileFooter>
+                    <span className="text-body font-medium text-primary">{money(r.amountCents)}</span>
                   {r.status === "waiting" && (
                     <div className="flex gap-2">
+                      <Button variant="remove" size="sm" onClick={() => setDeclining(r)}>
+                        Decline
+                      </Button>
                       <Button
+                        size="sm"
                         onClick={() =>
                           confirm({
                             title: `Approve a refund of ${money(r.amountCents)}?`,
@@ -182,11 +187,10 @@ function MoneyPage() {
                       >
                         Approve refund
                       </Button>
-                      <Button variant="ghost" onClick={() => setDeclining(r)}>
-                        Decline
-                      </Button>
                     </div>
                   )}
+                  </TileFooter>
+                  </Tile>
                 </li>
               ))}
             </ul>
@@ -194,27 +198,36 @@ function MoneyPage() {
 
           {tab === "reasons" && (
             <div className="flex flex-col gap-6">
-              <ul className="flex flex-col gap-3">
+              <Rows label="Reasons">
                 {Object.entries(reasons)
                   .sort((a, b) => b[1] - a[1])
                   .map(([r, n]) => (
-                    <li key={r} className="flex flex-col gap-1">
-                      <span className="flex justify-between text-body-sm">
-                        <span className="text-primary">{r}</span>
-                        <span className="text-secondary">{n}</span>
+                    <Row key={r} className="flex-col items-stretch gap-2">
+                      <span className="flex justify-between gap-3 text-body-sm">
+                        <span className="font-medium text-primary">{r}</span>
+                        <Pill>{n}</Pill>
                       </span>
                       <ProgressBar value={n} max={max} />
+                    </Row>
+                  ))}
+              </Rows>
+              <section className="flex flex-col gap-2">
+                <h3 className="text-body font-medium text-primary">Who pulled out</h3>
+                <ul className="flex flex-col gap-3">
+                  {db.cancellations.map((c) => (
+                    <li key={c.id}>
+                      <Tile done={!!c.withdrawnAt}>
+                        <ClientCell db={db} clientId={c.clientId} sub={c.reason} />
+                        {c.note && <Banner tone="neutral">&ldquo;{c.note}&rdquo;</Banner>}
+                        <TileFooter>
+                          <Meta icon={CalendarBlank}>{date(c.at)}</Meta>
+                          {c.withdrawnAt && <Badge status="success">Stayed after all</Badge>}
+                        </TileFooter>
+                      </Tile>
                     </li>
                   ))}
-              </ul>
-              <ul className="flex flex-col">
-                {db.cancellations.map((c) => (
-                  <li key={c.id} className="flex flex-col gap-2 border-t border-border py-3">
-                    <ClientCell db={db} clientId={c.clientId} sub={`${c.reason}, ${date(c.at)}`} />
-                    {c.note && <p className="text-body-sm text-secondary">&ldquo;{c.note}&rdquo;</p>}
-                  </li>
-                ))}
-              </ul>
+                </ul>
+              </section>
             </div>
           )}
         </div>
@@ -223,7 +236,7 @@ function MoneyPage() {
       <Dialog open={!!declining} onClose={() => setDeclining(null)} title="Decline this refund?">
         <Textarea label="Reason (sent to the client)" value={reason} onChange={(e) => setReason(e.target.value)} />
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => setDeclining(null)}>
+          <Button variant="cancel" onClick={() => setDeclining(null)}>
             Cancel
           </Button>
           <Button
@@ -264,7 +277,7 @@ function MoneyPage() {
           help="Kept in the audit log. The client is told."
         />
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => setExtending(null)}>
+          <Button variant="cancel" onClick={() => setExtending(null)}>
             Cancel
           </Button>
           <Button

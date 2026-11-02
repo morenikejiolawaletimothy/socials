@@ -1,18 +1,15 @@
 "use client";
 
-import { CheckCircle, LinkSimple, Plus, Sparkle, Trash, WarningCircle, XCircle } from "@phosphor-icons/react";
+import { CalendarBlank, Clock, LinkSimple, Plus, Sparkle, Trash } from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { Badge, Banner, Button, Card, Dialog, Input, ProgressBar, Textarea, useConfirm, useTask, useToast } from "@/components/ui";
-import { ago, agoIn, dayTime, fullName, plural } from "@/lib/format";
+import { Badge, Banner, Button, buttonClass, Card, Dialog, IconButton, Input, Meta, Pill, ProgressBar, Row, Rows, RowText, Textarea, TextButton, TextLink, Tile, TileFooter, useConfirm, useTask, useToast } from "@/components/ui";
+import { ago, agoIn, dayIn, dayTime, fullName, plural } from "@/lib/format";
 import { MediaThumb } from "@/components/content/MediaThumb";
 import { duration } from "@/lib/linkedin";
 import { act, type ClientBundle, type Lead, type Update } from "@/lib/mock";
 
-const linkClass = "rounded-sm text-body-sm font-medium text-primary-600 hover:text-primary-700 hover:underline focus-visible:focus-ring";
-const primaryLink =
-  "inline-flex min-h-11 items-center justify-center self-start rounded-md border border-transparent bg-primary-600 px-5 py-3 text-body font-medium leading-none text-inverse transition-colors hover:bg-primary-700 focus-visible:focus-ring";
 
 function Targets({ b }: { b: ClientBundle }) {
   if (!b.week) return <p className="text-body-sm text-secondary">Targets start once the strategy is approved.</p>;
@@ -40,19 +37,15 @@ function Targets({ b }: { b: ClientBundle }) {
 export function OffLimitsBox({ b }: { b: ClientBundle }) {
   if (!b.brand?.offLimits.length) return null;
   return (
-    <div className="flex flex-col gap-2 rounded-md border border-danger bg-danger-bg p-4">
-      <span className="flex items-center gap-2 text-body font-medium text-primary">
-        <WarningCircle className="size-5 text-danger" aria-hidden /> Off limits
-      </span>
-      <ul className="flex flex-col gap-1 text-body-sm text-primary">
+    <Banner tone="danger" title="Off limits">
+      <ul className="flex flex-col gap-1">
         {b.brand.offLimits.map((o) => (
           <li key={o.id}>
-            <span className="text-secondary">{o.kind}: </span>
-            {o.text}
+            <span className="capitalize">{o.kind}</span>: {o.text}
           </li>
         ))}
       </ul>
-    </div>
+    </Banner>
   );
 }
 
@@ -69,40 +62,51 @@ export function OverviewTab({ b }: { b: ClientBundle }) {
           <OffLimitsBox b={b} />
         </div>
       </Card>
-      <Card title="This week">
+      <Card
+        title="This week"
+        action={
+          b.week && (
+            <Pill>
+              {b.week.posts.done + b.week.comments.done + b.week.connections.done} of {b.week.posts.target + b.week.comments.target + b.week.connections.target} done
+            </Pill>
+          )
+        }
+      >
         <Targets b={b} />
       </Card>
       <Card title="What they let us do">
-        <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {[
-            ["Post for them", p.post],
-            ["Like and comment", p.engage],
-            ["Company Page", p.companyPage],
-            ["Draft connection requests", p.connectionDrafts],
-            ["Draft profile updates", p.profileDrafts],
-          ].map(([label, on]) => (
-            <li key={label as string} className="flex items-center gap-2 text-body-sm text-primary">
-              {on ? <CheckCircle className="size-5 text-success" aria-label="On" /> : <XCircle className="size-5 text-neutral-300" aria-label="Off" />}
-              {label as string}
-            </li>
+        <Rows>
+          {(
+            [
+              ["Post for them", p.post],
+              ["Like and comment", p.engage],
+              ["Company Page", p.companyPage],
+              ["Draft connection requests", p.connectionDrafts],
+              ["Draft profile updates", p.profileDrafts],
+            ] as const
+          ).map(([label, on]) => (
+            <Row key={label}>
+              <RowText title={label} />
+              <Badge status={on ? "success" : "neutral"}>{on ? "Allowed" : "Not allowed"}</Badge>
+            </Row>
           ))}
-        </ul>
+        </Rows>
       </Card>
       <Card title="How they review">
-        <dl className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="flex flex-col gap-1">
-            <dt className="text-caption text-secondary">How often</dt>
-            <dd className="text-body text-primary">{{ weekly: "Once a week", "twice-weekly": "Twice a week", "every-post": "Every post" }[r.frequency]}</dd>
-          </div>
-          <div className="flex flex-col gap-1">
-            <dt className="text-caption text-secondary">If no reply</dt>
-            <dd className="text-body text-primary">{r.ifNoReply === "wait" ? "Wait for them" : "Go ahead after 24 hours"}</dd>
-          </div>
-          <div className="flex flex-col gap-1">
-            <dt className="text-caption text-secondary">Likes and comments</dt>
-            <dd className="text-body text-primary">{r.approval.comments === "go" ? "Go ahead" : "Ask first"}</dd>
-          </div>
-        </dl>
+        <Rows>
+          <Row>
+            <RowText title="How often" />
+            <span className="text-body-sm text-primary">{{ weekly: "Once a week", "twice-weekly": "Twice a week", "every-post": "Every post" }[r.frequency]}</span>
+          </Row>
+          <Row>
+            <RowText title="If no reply" />
+            <span className="text-body-sm text-primary">{r.ifNoReply === "wait" ? "Wait for them" : "Go ahead after 24 hours"}</span>
+          </Row>
+          <Row>
+            <RowText title="Likes and comments" />
+            <span className="text-body-sm text-primary">{r.approval.comments === "go" ? "Go ahead" : "Ask first"}</span>
+          </Row>
+        </Rows>
       </Card>
       <Card title="In their field this week">
         <SignalList b={b} limit={3} />
@@ -119,8 +123,8 @@ export function PlanTab({ b, id }: { b: ClientBundle; id: string }) {
     return (
       <Card title="Plan">
         <div className="flex flex-col gap-4">
-          <p className="text-body-sm text-secondary">No strategy yet. It is drafted after the goals call.</p>
-          <Link href={`/manager/clients/${id}/onboard`} className={primaryLink}>
+          <Banner tone="info">No strategy yet. It is drafted after the goals call.</Banner>
+          <Link href={`/manager/clients/${id}/onboard`} className={`${buttonClass("primary")} self-start`}>
             Open onboarding
           </Link>
         </div>
@@ -131,28 +135,33 @@ export function PlanTab({ b, id }: { b: ClientBundle; id: string }) {
     <Card title="Strategy and plan" action={<Badge status={s.status === "approved" ? "success" : "info"}>{s.status === "approved" ? `Approved, version ${s.version}` : "Not approved yet"}</Badge>}>
       <div className="flex flex-col gap-6">
         <p className="text-body text-primary">{s.goal}</p>
-        <div className="flex flex-col gap-2">
-          <span className="text-caption text-secondary">Topics</span>
-          <ol className="flex flex-col gap-2">
+        <section className="flex flex-col gap-2">
+          <h3 className="text-body font-medium text-primary">Topics</h3>
+          <Rows>
             {s.topics.map((t, i) => (
-              <li key={t.name} className="text-body-sm text-primary">
-                {i + 1}. <span className="font-medium">{t.name}</span>. <span className="text-secondary">{t.why}</span>
-              </li>
+              <Row key={t.name}>
+                <RowText title={`${i + 1}. ${t.name}`} sub={t.why} />
+              </Row>
             ))}
-          </ol>
-        </div>
-        <div className="flex flex-col gap-2">
-          <span className="text-caption text-secondary">Weekly targets</span>
-          {s.targets.map((t) => (
-            <p key={t.period} className="text-body-sm text-primary">
-              <span className="font-medium">{t.period}:</span> {t.posts} posts{t.videos ? ` (${t.videos} video)` : ""}, {t.comments} comments, {t.connections} connection requests. {t.extra}
-            </p>
-          ))}
-        </div>
-        <p className="text-caption text-secondary">Built on framework {s.frameworkVersion}.</p>
-        <Link href={`/manager/clients/${id}/onboard`} className={linkClass}>
+          </Rows>
+        </section>
+        <section className="flex flex-col gap-2">
+          <h3 className="text-body font-medium text-primary">Weekly targets</h3>
+          <Rows>
+            {s.targets.map((t) => (
+              <Row key={t.period}>
+                <RowText title={t.period} sub={t.extra} />
+                <span className="text-body-sm text-primary">
+                  {t.posts} posts{t.videos ? ` (${t.videos} video)` : ""} · {t.comments} comments · {t.connections} connections
+                </span>
+              </Row>
+            ))}
+          </Rows>
+        </section>
+        <Banner tone="neutral">Built on framework {s.frameworkVersion}.</Banner>
+        <TextLink href={`/manager/clients/${id}/onboard`} className="self-start text-body-sm">
           Open onboarding and strategy
-        </Link>
+        </TextLink>
       </div>
     </Card>
   );
@@ -172,17 +181,19 @@ export function ContentTab({ b, id }: { b: ClientBundle; id: string }) {
     ["Needs fixing", b.posts.filter((p) => p.status === "failed" || p.request?.kind === "fix").length],
   ];
   return (
-    <Card title="Content">
+    <Card title="Content" action={<Pill>{plural(b.posts.length, "post")}</Pill>}>
       <div className="flex flex-col gap-6">
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {groups.map(([label, n]) => (
-            <li key={label} className="flex flex-col gap-1 rounded-md bg-neutral-25 p-3">
-              <span className="font-display text-display-xl text-primary">{n}</span>
-              <span className="text-caption text-secondary">{label}</span>
+            <li key={label}>
+              <Tile className="gap-1">
+                <span className="font-display text-display-xl text-primary">{n}</span>
+                <span className="text-body-sm text-secondary">{label}</span>
+              </Tile>
             </li>
           ))}
         </ul>
-        <Link href={`/manager/clients/${id}/content`} className={primaryLink}>
+        <Link href={`/manager/clients/${id}/content`} className={`${buttonClass("primary")} self-start`}>
           Open content
         </Link>
       </div>
@@ -197,49 +208,50 @@ const fitTone = { strong: "success", good: "info", weak: "neutral" } as const;
 function LeadRow({ l }: { l: Lead }) {
   const { run, pending } = useTask();
   return (
-    <li className={`flex flex-col gap-3 border-b border-border py-4 first:pt-0 last:border-b-0 last:pb-0 ${l.status === "dropped" ? "opacity-50" : ""}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex flex-col gap-1">
-          <a href={l.url} target="_blank" rel="noreferrer" className="text-body font-medium text-primary hover:text-primary-700 hover:underline focus-visible:focus-ring">
-            {l.name}
-          </a>
-          <span className="text-caption text-secondary">{l.detail}</span>
-        </div>
-        <Badge status={fitTone[l.fit]}>{l.fit[0].toUpperCase() + l.fit.slice(1)} fit</Badge>
-      </div>
-      <p className="text-body-sm text-secondary">{l.why}</p>
-      {l.warning && (
-        <p className="flex items-center gap-2 rounded-md bg-danger-bg px-3 py-2 text-body-sm text-primary">
-          <WarningCircle className="size-4 shrink-0 text-danger" aria-hidden /> {l.warning}
-        </p>
-      )}
-      {l.draft && <blockquote className="rounded-md bg-neutral-25 px-4 py-3 text-body-sm text-primary">{l.draft}</blockquote>}
-      {l.status === "done" ? (
-        <span className="text-caption text-success">Done</span>
-      ) : l.status === "dropped" ? (
-        <button type="button" onClick={() => run("undo", () => act.setLead(l.id, "suggested"), "Back on the list.")} className={`${linkClass} self-start`}>
-          Bring back
-        </button>
-      ) : (
-        <div className="flex flex-wrap gap-2">
-          {!l.warning && (
-            <Button
-              variant="secondary"
-              loading={pending("keep")}
-              onClick={() => run("keep", () => act.setLead(l.id, l.status === "kept" ? "done" : "kept"), l.status === "kept" ? "Marked as done. It counts toward this week's target." : "Kept. The comment follows the client's review setting.")}
-            >
-              {l.status === "kept" ? "Mark as done" : "Keep"}
-            </Button>
+    <li>
+      <Tile done={l.status === "done" || l.status === "dropped"}>
+        <span className="flex items-start justify-between gap-3">
+          <span className="flex min-w-0 flex-col gap-1">
+            <a href={l.url} target="_blank" rel="noreferrer" className="rounded-sm text-body font-medium text-primary hover:text-primary-700 hover:underline focus-visible:focus-ring">
+              {l.name}
+            </a>
+            <span className="text-body-sm text-secondary">{l.detail}</span>
+          </span>
+          <Badge status={fitTone[l.fit]}>{l.fit[0].toUpperCase() + l.fit.slice(1)} fit</Badge>
+        </span>
+        <Banner tone="info">Why: {l.why}</Banner>
+        {l.warning && <Banner tone="danger">{l.warning}</Banner>}
+        {l.draft && <blockquote className="rounded-md bg-neutral-25 px-4 py-3 text-body-sm text-primary">{l.draft}</blockquote>}
+        <TileFooter>
+          <Badge status={l.status === "done" ? "success" : l.status === "dropped" ? "neutral" : l.status === "kept" ? "info" : "neutral"}>
+            {{ suggested: "Suggested", kept: "Kept", done: "Done", dropped: "Dropped" }[l.status]}
+          </Badge>
+          {l.status === "done" ? null : l.status === "dropped" ? (
+            <TextButton onClick={() => run("undo", () => act.setLead(l.id, "suggested"), "Back on the list.")}>Bring back</TextButton>
+          ) : (
+            <span className="flex flex-wrap gap-2">
+              <Button
+                variant="remove"
+                size="sm"
+                loading={pending("drop")}
+                onClick={() => run("drop", () => act.setLead(l.id, "dropped"), { text: "Dropped.", action: { label: "Undo", onClick: () => act.setLead(l.id, l.status) } })}
+              >
+                Drop
+              </Button>
+              {!l.warning && (
+                <Button
+                  size="sm"
+                  variant={l.status === "kept" ? "primary" : "secondary"}
+                  loading={pending("keep")}
+                  onClick={() => run("keep", () => act.setLead(l.id, l.status === "kept" ? "done" : "kept"), l.status === "kept" ? "Marked as done. It counts toward this week's target." : "Kept. The comment follows the client's review setting.")}
+                >
+                  {l.status === "kept" ? "Mark as done" : "Keep"}
+                </Button>
+              )}
+            </span>
           )}
-          <Button
-            variant="ghost"
-            loading={pending("drop")}
-            onClick={() => run("drop", () => act.setLead(l.id, "dropped"), { text: "Dropped.", action: { label: "Undo", onClick: () => act.setLead(l.id, l.status) } })}
-          >
-            Drop
-          </Button>
-        </div>
-      )}
+        </TileFooter>
+      </Tile>
     </li>
   );
 }
@@ -253,7 +265,7 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
   const firstName = b.user?.firstName ?? "the client";
   return (
     <>
-      <Card title="This week's brief">
+      <Card title="This week's brief" action={<Pill>Suggested</Pill>}>
         <p className="text-body text-primary">
           Look for investors and bank partners talking about cross-border payments and the new mobile money report. Join conversations where {firstName} can add data. Skip anything on the off-limits list.
         </p>
@@ -279,32 +291,36 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
           </Button>
         </form>
         {checked && (
-          <div className="mt-4 flex flex-col gap-2 rounded-md border border-border p-4">
-            <span className="flex items-center gap-2">
+          <Tile className="mt-4">
+            <span className="flex items-start justify-between gap-3">
+              <span className="min-w-0 truncate text-body-sm text-secondary">{checked}</span>
               <Badge status="success">Strong fit</Badge>
-              <span className="truncate text-caption text-secondary">{checked}</span>
             </span>
-            <p className="text-body-sm text-primary">A fintech investor in Lagos, posting about payments infrastructure twice a week. Matches topic 1 and the investor list. Nothing on the off-limits list.</p>
-            <div className="flex gap-2">
-              <Button
-                variant="secondary"
-                loading={pending("add")}
-                onClick={async () => {
-                  if (await run("add", () => act.addLead(b.client!.id, checked), "Kept. A comment is drafted in the client's voice.")) setChecked(null);
-                }}
-              >
-                Keep
-              </Button>
-              <Button variant="ghost" onClick={() => setChecked(null)}>
-                Drop
-              </Button>
-            </div>
-          </div>
+            <Banner tone="info">Why: A fintech investor in Lagos, posting about payments infrastructure twice a week. Matches topic 1 and the investor list. Nothing on the off-limits list.</Banner>
+            <TileFooter>
+              <span />
+              <span className="flex gap-2">
+                <Button variant="remove" size="sm" onClick={() => setChecked(null)}>
+                  Drop
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  loading={pending("add")}
+                  onClick={async () => {
+                    if (await run("add", () => act.addLead(b.client!.id, checked), "Kept. A comment is drafted in the client's voice.")) setChecked(null);
+                  }}
+                >
+                  Keep
+                </Button>
+              </span>
+            </TileFooter>
+          </Tile>
         )}
       </Card>
-      <Card title="Comments and connections" action={<span className="text-caption text-secondary">Drafted in {firstName}&apos;s voice</span>}>
+      <Card title="Comments and connections" action={b.leads.length > 0 && <Pill label={`${plural(b.leads.length, "lead")}, drafted in ${firstName}'s voice`}>{plural(b.leads.length, "lead")}</Pill>}>
         {b.leads.length ? (
-          <ul className="flex flex-col">
+          <ul className="flex flex-col gap-3">
             {b.leads.map((l) => (
               <LeadRow key={l.id} l={l} />
             ))}
@@ -313,7 +329,7 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
           <p className="text-body-sm text-secondary">Nothing yet this week.</p>
         )}
       </Card>
-      <Card title="Quick tasks for the client">
+      <Card title="Quick tasks for the client" action={b.tasks.length > 0 && <Pill>{b.tasks.filter((t) => t.done).length} of {b.tasks.length} done</Pill>}>
         <div className="flex flex-col gap-4">
           {b.tasks.length ? (
             <ul className="flex flex-col gap-3">
@@ -321,14 +337,22 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
                 const sent = t.people?.filter((p) => p.done).length ?? (t.done ? 1 : 0);
                 const total = t.people?.length ?? 1;
                 return (
-                  <li key={t.id} className="flex flex-col gap-2">
-                    <span className="flex justify-between text-body-sm">
-                      <span className="text-primary">{t.title}</span>
-                      <span className="text-secondary">
-                        {sent} of {total} done
+                  <li key={t.id}>
+                    <Tile done={t.done}>
+                      <span className="flex flex-col gap-1">
+                        <span className="text-body font-medium text-primary">{t.title}</span>
+                        <span className="text-body-sm text-secondary">
+                          {sent} of {total} done · Sent {agoIn(t.sentAt)}
+                        </span>
+                        <span className="max-w-xs pt-1">
+                          <ProgressBar value={sent} max={total} />
+                        </span>
                       </span>
-                    </span>
-                    <ProgressBar value={sent} max={total} />
+                      <TileFooter>
+                        <Meta icon={CalendarBlank}>Due {dayIn(t.dueAt)}</Meta>
+                        <Badge status={t.done ? "success" : "info"}>{t.done ? "Done" : "With the client"}</Badge>
+                      </TileFooter>
+                    </Tile>
                   </li>
                 );
               })}
@@ -367,21 +391,22 @@ function SignalList({ b, limit, removable }: { b: ClientBundle; limit?: number; 
   const list = [...b.signals].sort((x, y) => y.at.localeCompare(x.at)).slice(0, limit);
   if (!list.length) return <p className="text-body-sm text-secondary">No signals yet. Add Google Alerts in Listening.</p>;
   return (
-    <ul className="flex flex-col gap-3">
+    <Rows>
       {list.map((s) => (
-        <li key={s.id} className="flex items-start gap-3">
-          <span className="flex flex-1 flex-col gap-1">
-            <a href={s.url} target="_blank" rel="noreferrer" className="text-body font-medium text-primary hover:text-primary-700 hover:underline focus-visible:focus-ring">
+        <Row key={s.id} className="items-start">
+          <span className="flex min-w-0 flex-1 flex-col gap-1">
+            <a href={s.url} target="_blank" rel="noreferrer" className="rounded-sm text-body-sm font-medium text-primary hover:text-primary-700 hover:underline focus-visible:focus-ring">
               {s.title}
             </a>
             <span className="text-caption text-secondary">
-              {s.source}, {agoIn(s.at)}. Topic: {s.topic}
+              {s.source}, {agoIn(s.at)} · {s.topic}
             </span>
           </span>
           {removable && (
-            <button
-              type="button"
-              aria-label={`Remove ${s.title}`}
+            <IconButton
+              icon={Trash}
+              tone="danger"
+              label={`Remove ${s.title}`}
               onClick={async () => {
                 try {
                   await act.removeSignal(s.id);
@@ -390,14 +415,11 @@ function SignalList({ b, limit, removable }: { b: ClientBundle; limit?: number; 
                   toast("That did not go through. Check your connection and try again.", "danger");
                 }
               }}
-              className="flex size-9 shrink-0 items-center justify-center rounded-full text-secondary hover:bg-danger-bg hover:text-danger focus-visible:focus-ring"
-            >
-              <Trash className="size-4" aria-hidden />
-            </button>
+            />
           )}
-        </li>
+        </Row>
       ))}
-    </ul>
+    </Rows>
   );
 }
 
@@ -416,35 +438,40 @@ export function ListeningTab({ b }: { b: ClientBundle }) {
           The platform has nothing from this client&apos;s field yet. Create Google Alerts for the suggested topics and paste each feed link below.
         </Banner>
       )}
-      <Card title="Listening topics">
+      <Card title="Listening topics" action={<Pill>{plural(topics.length + (b.client?.country ? 1 : 0), "topic")}</Pill>}>
         <div className="flex flex-col gap-3">
           <ul className="flex flex-wrap gap-2">
             {topics.map((t) => (
-              <li key={t} className="rounded-full bg-primary-50 px-3 py-1 text-body-sm text-primary-700">
-                {t}
+              <li key={t}>
+                <Pill>{t}</Pill>
               </li>
             ))}
-            {b.client?.country && <li className="rounded-full bg-primary-50 px-3 py-1 text-body-sm text-primary-700">{b.client.industry} in {b.client.country}</li>}
+            {b.client?.country && (
+              <li>
+                <Pill>
+                  {b.client.industry} in {b.client.country}
+                </Pill>
+              </li>
+            )}
           </ul>
           <p className="flex items-center gap-1 text-caption text-secondary">
-            <Sparkle className="size-4" aria-hidden /> Suggested from the strategy, including location. Edit any time.
+            <Sparkle className="size-4 text-primary-600" aria-hidden /> Suggested from the strategy, including location. Edit any time.
           </p>
         </div>
       </Card>
-      <Card title="Google Alert feeds">
+      <Card title="Google Alert feeds" action={<Pill>{b.alerts.filter((a) => a.working).length} of {b.alerts.length} working</Pill>}>
         <div className="flex flex-col gap-4">
-          <ul className="flex flex-col">
+          {b.alerts.length > 0 && (
+          <Rows>
             {b.alerts.map((a) => (
-              <li key={a.id} className="flex items-center gap-3 border-b border-border py-3 last:border-b-0">
-                <LinkSimple className="size-5 shrink-0 text-secondary" aria-hidden />
-                <span className="flex min-w-0 flex-1 flex-col">
-                  <span className="text-body font-medium text-primary">{a.topic}</span>
-                  <span className="text-caption text-secondary">Last item {agoIn(a.lastItemAt)}</span>
-                </span>
+              <Row key={a.id}>
+                <LinkSimple className="size-5 shrink-0 text-primary-600" aria-hidden />
+                <RowText title={a.topic} sub={`Last item ${agoIn(a.lastItemAt)}`} />
                 <Badge status={a.working ? "success" : "danger"}>{a.working ? "Working" : "Not working"}</Badge>
-                <button
-                  type="button"
-                  aria-label={`Remove ${a.topic}`}
+                <IconButton
+                  icon={Trash}
+                  tone="danger"
+                  label={`Remove ${a.topic}`}
                   onClick={() =>
                     confirm({
                       title: `Remove the "${a.topic}" feed?`,
@@ -456,12 +483,11 @@ export function ListeningTab({ b }: { b: ClientBundle }) {
                       success: "Feed removed.",
                     })
                   }
-                  className="flex size-9 items-center justify-center rounded-full text-secondary hover:bg-danger-bg hover:text-danger focus-visible:focus-ring">
-                  <Trash className="size-4" aria-hidden />
-                </button>
-              </li>
+                />
+              </Row>
             ))}
-          </ul>
+          </Rows>
+          )}
           <form
             className="flex flex-col gap-3 rounded-md bg-neutral-25 p-4"
             onSubmit={async (e) => {
@@ -500,7 +526,7 @@ export function ListeningTab({ b }: { b: ClientBundle }) {
           </Button>
         </form>
       </Card>
-      <Card title="Latest signals">
+      <Card title="Latest signals" action={b.signals.length > 0 && <Pill>{plural(b.signals.length, "signal")}</Pill>}>
         <SignalList b={b} removable />
       </Card>
     </>
@@ -512,15 +538,12 @@ export function ListeningTab({ b }: { b: ClientBundle }) {
 export function BrandTab({ b }: { b: ClientBundle }) {
   return (
     <>
-      <Card title="Moments">
+      <Card title="Moments" action={b.moments.length > 0 && <Pill>{plural(b.moments.length, "Moment")}</Pill>}>
         {b.moments.length ? (
-          <ul className="flex flex-col gap-4">
+          <ul className="flex flex-col gap-3">
             {b.moments.map((m) => (
-              <li key={m.id} className={`flex flex-col gap-3 rounded-md border p-4 ${m.status === "new" ? "border-primary-600 bg-primary-50" : "border-border"}`}>
-                <span className="flex items-center justify-between gap-3">
-                  <span className="text-caption text-secondary">Added {agoIn(m.at)}</span>
-                  {m.status === "new" && <Badge status="info">New</Badge>}
-                </span>
+              <li key={m.id}>
+                <Tile>
                 <p className="text-body-sm text-primary">{m.note}</p>
                 {(m.photos.length > 0 || (m.videos?.length ?? 0) > 0) && (
                   <div className="flex flex-wrap gap-2">
@@ -537,6 +560,11 @@ export function BrandTab({ b }: { b: ClientBundle }) {
                     ))}
                   </div>
                 )}
+                <TileFooter>
+                  <Meta icon={CalendarBlank}>Added {agoIn(m.at)}</Meta>
+                  <Badge status={m.status === "new" ? "info" : m.status === "post-drafted" ? "success" : "neutral"}>{{ new: "New", seen: "Seen", "post-drafted": "Post drafted" }[m.status]}</Badge>
+                </TileFooter>
+                </Tile>
               </li>
             ))}
           </ul>
@@ -579,29 +607,35 @@ const callName = { goals: "Goals call", strategy: "Strategy call", "check-in": "
 
 export function CallsTab({ b }: { b: ClientBundle }) {
   return (
-    <Card title="Calls and notes">
-      <ul className="flex flex-col">
-        {b.calls.map((c) => (
-          <li key={c.id} className="flex flex-col gap-2 border-b border-border py-4 first:pt-0 last:border-b-0 last:pb-0">
-            <span className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-body font-medium text-primary">{callName[c.kind]}</span>
-              <Badge status={c.status === "done" ? "success" : "info"}>{c.status === "done" ? "Done" : "Booked"}</Badge>
-            </span>
-            <span className="text-body-sm text-secondary">
-              {dayTime(c.at)}. {c.recording ? "Recorded, transcript in the notetaker." : "Not recorded. Written notes."}
-            </span>
-            {c.summary && <p className="rounded-md bg-neutral-25 p-3 text-body-sm text-primary">{c.summary}</p>}
-            {c.prep && (
-              <ul className="flex list-disc flex-col gap-1 pl-5 text-body-sm text-primary">
-                {c.prep.map((p) => (
-                  <li key={p}>{p}</li>
-                ))}
-              </ul>
-            )}
-          </li>
-        ))}
-        {!b.calls.length && <li className="text-body-sm text-secondary">No calls booked yet.</li>}
-      </ul>
+    <Card title="Calls and notes" action={b.calls.length > 0 && <Pill>{plural(b.calls.length, "call")}</Pill>}>
+      {b.calls.length ? (
+        <ul className="flex flex-col gap-3">
+          {b.calls.map((c) => (
+            <li key={c.id}>
+              <Tile done={c.status === "cancelled"}>
+                <span className="flex flex-col gap-1">
+                  <span className="text-body font-medium text-primary">{callName[c.kind]}</span>
+                  <span className="text-body-sm text-secondary">{c.recording ? "Recorded, transcript in the notetaker." : "Not recorded. Written notes."}</span>
+                </span>
+                {c.summary && <Banner tone="neutral">{c.summary}</Banner>}
+                {c.prep && (
+                  <ul className="flex list-disc flex-col gap-1 pl-5 text-body-sm text-primary">
+                    {c.prep.map((p) => (
+                      <li key={p}>{p}</li>
+                    ))}
+                  </ul>
+                )}
+                <TileFooter>
+                  <Meta icon={Clock}>{dayTime(c.at)} · {c.minutes} min</Meta>
+                  <Badge status={c.status === "done" ? "success" : c.status === "cancelled" ? "neutral" : "info"}>{c.status === "done" ? "Done" : c.status === "cancelled" ? "Cancelled" : "Booked"}</Badge>
+                </TileFooter>
+              </Tile>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-body-sm text-secondary">No calls booked yet.</p>
+      )}
     </Card>
   );
 }
@@ -651,31 +685,32 @@ export function UpdatesTab({ b }: { b: ClientBundle }) {
               <Sparkle className="size-4" aria-hidden /> Drafted from this week&apos;s work. Check it, add your note, send.
             </p>
             <p className="font-display text-display-lg text-primary">{draft.headline}</p>
-            <ul className="flex flex-col gap-1 text-body-sm text-primary">
+            <Rows>
               {draft.did.map((d) => (
-                <li key={d.label}>
-                  {d.label}: {d.done} of {d.target}
-                </li>
+                <Row key={d.label}>
+                  <RowText title={d.label} />
+                  <span className="text-body-sm text-primary">
+                    {d.done} of {d.target}
+                  </span>
+                </Row>
               ))}
-            </ul>
-            <p className="text-body-sm text-primary">
-              <span className="font-medium">Progress: </span>
-              {draft.progress}
-            </p>
-            {draft.held.length > 0 && (
-              <p className="text-body-sm text-primary">
-                <span className="font-medium">Held back: </span>
-                {draft.held.join(". ")}
-              </p>
-            )}
-            <p className="text-body-sm text-primary">
-              <span className="font-medium">In their field: </span>
-              {draft.field}
-            </p>
-            <p className="text-body-sm text-primary">
-              <span className="font-medium">Next week: </span>
-              {draft.next}
-            </p>
+            </Rows>
+            <Rows>
+              <Row>
+                <RowText title="Progress" sub={draft.progress} />
+              </Row>
+              {draft.held.length > 0 && (
+                <Row>
+                  <RowText title="Held back" sub={draft.held.join(". ")} />
+                </Row>
+              )}
+              <Row>
+                <RowText title="In their field" sub={draft.field} />
+              </Row>
+              <Row>
+                <RowText title="Next week" sub={draft.next} />
+              </Row>
+            </Rows>
             <Textarea label="Your personal note" placeholder={`A line from you to ${b.user?.firstName ?? "the client"}.`} value={note} onChange={(e) => setNote(e.target.value)} />
             <Button
               className="self-start"
@@ -694,19 +729,28 @@ export function UpdatesTab({ b }: { b: ClientBundle }) {
           </div>
         </Card>
       )}
-      <Card title="Sent">
+      <Card title="Sent" action={sent.length > 0 && <Pill>{plural(sent.length, "update")}</Pill>}>
         {sent.length ? (
-          <ul className="flex flex-col">
+          <ul className="flex flex-col gap-3">
             {sent.map((u) => (
-              <li key={u.id} className="flex flex-col gap-1 border-b border-border py-3 first:pt-0 last:border-b-0 last:pb-0">
-                <span className="flex justify-between gap-3">
-                  <span className="text-body font-medium text-primary">{u.title}</span>
-                  <span className="text-caption text-secondary">{u.correctedAt ? `Corrected ${ago(u.correctedAt)}` : ago(u.sentAt!)}</span>
-                </span>
-                <span className="text-body-sm text-secondary">{u.headline}</span>
-                <button type="button" onClick={() => setCorrecting(u)} className={`${linkClass} self-start`}>
-                  Correct
-                </button>
+              <li key={u.id}>
+                <Tile>
+                  <span className="flex flex-col gap-1">
+                    <span className="text-body font-medium text-primary">{u.title}</span>
+                    <span className="text-body-sm text-secondary">{u.headline}</span>
+                  </span>
+                  <TileFooter>
+                    <Meta icon={CalendarBlank}>{u.correctedAt ? `Corrected ${agoIn(u.correctedAt)}` : `Sent ${agoIn(u.sentAt!)}`}</Meta>
+                    <span className="flex items-center gap-4">
+                      <TextLink href={`/progress/${u.id}`} className="text-body-sm">
+                        View
+                      </TextLink>
+                      <Button variant="secondary" size="sm" onClick={() => setCorrecting(u)}>
+                        Correct
+                      </Button>
+                    </span>
+                  </TileFooter>
+                </Tile>
               </li>
             ))}
           </ul>
@@ -724,19 +768,19 @@ export function ActivityTab({ b }: { b: ClientBundle }) {
   const team = fullName(b.managerUser) || "Account team";
   const who = { you: fullName(b.user), team, system: "Bluecut" };
   return (
-    <Card title="Activity" action={<span className="text-caption text-secondary">{plural(b.activity.length, "action")}</span>}>
-      <ul className="flex flex-col">
-        {b.activity.map((a) => (
-          <li key={a.id} className="flex items-start justify-between gap-4 border-b border-border py-3 first:pt-0 last:border-b-0 last:pb-0">
-            <span className="flex flex-col gap-1">
-              <span className="text-body-sm text-primary">{a.text}</span>
-              <span className="text-caption text-secondary">{who[a.who]}</span>
-            </span>
-            <span className="shrink-0 text-caption text-secondary">{ago(a.at)}</span>
-          </li>
-        ))}
-        {!b.activity.length && <li className="text-body-sm text-secondary">Nothing yet.</li>}
-      </ul>
+    <Card title="Activity" padding="none" action={<Pill>{plural(b.activity.length, "action")}</Pill>}>
+      {b.activity.length ? (
+        <Rows flush>
+          {b.activity.map((a) => (
+            <Row key={a.id} className="items-start justify-between">
+              <RowText title={a.text} sub={who[a.who]} />
+              <span className="shrink-0 text-caption text-secondary">{ago(a.at)}</span>
+            </Row>
+          ))}
+        </Rows>
+      ) : (
+        <p className="px-6 py-4 text-body-sm text-secondary">Nothing yet.</p>
+      )}
     </Card>
   );
 }

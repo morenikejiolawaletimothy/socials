@@ -1,11 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import { CalendarBlank } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { use } from "react";
 import { ClientCell, Stats, managerName, managerStatus } from "@/components/admin/parts";
-import { Badge, Banner, Button, Card, EmptyState, PageHeader, useConfirm, useToast, buttonClass } from "@/components/ui";
-import { dayIn, dayTime, fullName } from "@/lib/format";
+import { Badge, Banner, Button, Card, EmptyState, Meta, PageHeader, Pill, Row, Rows, Tile, TileAction, TileFooter, buttonClass, useConfirm, useToast } from "@/components/ui";
+import { dayIn, dayTime, fullName, plural } from "@/lib/format";
 import { act, useData, type Db } from "@/lib/mock";
 import { statusBadge } from "@/lib/status";
 
@@ -108,44 +109,51 @@ export default function ManagerPage({ params }: { params: Promise<{ id: string }
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card title="Clients">
+        <Card title="Clients" action={<Pill>{clients.length} of {m.maxClients}</Pill>}>
           {clients.length ? (
-            <ul className="flex flex-col">
+            <Rows>
               {clients.map((c) => (
-                <li key={c.id} className="flex items-center justify-between gap-3 border-b border-border py-3 first:pt-0 last:border-b-0 last:pb-0">
+                <Row key={c.id} className="justify-between">
                   <ClientCell db={db} clientId={c.id} />
                   <Badge status={statusBadge[c.status].tone}>{statusBadge[c.status].label}</Badge>
-                </li>
+                </Row>
               ))}
-            </ul>
+            </Rows>
           ) : (
             <p className="text-body-sm text-secondary">No clients yet.</p>
           )}
         </Card>
 
-        <Card title="Availability">
-          <ul className="flex flex-col gap-2">
+        <Card title="Availability" action={<Pill>{plural((m.slots ?? []).length, "slot")}</Pill>}>
+          <Rows>
             {days.map((d) => {
               const open = (m.slots ?? []).filter((x) => x.startsWith(d)).map((x) => x.split("-")[1]);
               return (
-                <li key={d} className="flex items-center gap-3 text-body-sm">
-                  <span className="w-10 font-medium capitalize text-primary">{d}</span>
-                  <span className="text-secondary">{open.length ? open.join(", ") : "Closed"}</span>
-                </li>
+                <Row key={d} className="justify-between">
+                  <span className="text-body-sm font-medium capitalize text-primary">{d}</span>
+                  <span className="text-body-sm capitalize text-secondary">{open.length ? open.join(", ") : "Closed"}</span>
+                </Row>
               );
             })}
-          </ul>
+          </Rows>
         </Card>
 
-        <Card title="Missed due times">
+        <Card title="Missed due times" action={<Pill>{m.stats.missed} this month</Pill>}>
           {missed.length ? (
-            <ul className="flex flex-col">
+            <ul className="flex flex-col gap-3">
               {missed.map((t) => (
-                <li key={t.id} className="flex flex-col gap-1 border-b border-border py-3 first:pt-0 last:border-b-0 last:pb-0">
-                  <span className="text-body font-medium text-primary">{t.missed!.reason ? `“${t.missed!.reason}”` : "No reason given"}</span>
-                  <span className="text-body-sm text-secondary">
-                    {t.title}, {clientNameOf(db, t.clientId)}. Due {dayIn(t.dueAt)}.
-                  </span>
+                <li key={t.id}>
+                  <Tile>
+                    <span className="flex flex-col gap-1">
+                      <span className="text-body font-medium text-primary">{t.missed!.reason ? `“${t.missed!.reason}”` : "No reason given"}</span>
+                      <span className="text-body-sm text-secondary">
+                        {t.title}, {clientNameOf(db, t.clientId)}
+                      </span>
+                    </span>
+                    <TileFooter>
+                      <Meta icon={CalendarBlank}>Was due {dayIn(t.dueAt)}</Meta>
+                    </TileFooter>
+                  </Tile>
                 </li>
               ))}
             </ul>
@@ -160,9 +168,14 @@ export default function ManagerPage({ params }: { params: Promise<{ id: string }
               {db.complaints
                 .filter((c) => clients.some((x) => x.id === c.clientId))
                 .map((c) => (
-                  <li key={c.id} className="flex flex-col gap-1">
-                    <span className="text-body-sm text-primary">{c.text}</span>
-                    <span className="text-caption text-secondary">{c.status === "resolved" ? `Resolved: ${c.outcome}` : "Open"}</span>
+                  <li key={c.id}>
+                    <Tile href={`/admin/complaints/${c.id}`}>
+                      <span className="text-body-sm text-primary">{c.text}</span>
+                      <TileFooter>
+                        <Badge status={c.status === "resolved" ? "success" : "warning"}>{c.status === "resolved" ? "Resolved" : "Open"}</Badge>
+                        <TileAction>Open</TileAction>
+                      </TileFooter>
+                    </Tile>
                   </li>
                 ))}
             </ul>
@@ -177,7 +190,7 @@ export default function ManagerPage({ params }: { params: Promise<{ id: string }
           <div className="flex flex-col gap-3">
             <Banner tone="warning">Access ends at once. Their clients are listed for reassignment, with suggestions and a handover summary for each new manager.</Banner>
             <Button
-              variant="ghost"
+              variant="remove"
               className="self-start"
               onClick={() =>
                 confirm({

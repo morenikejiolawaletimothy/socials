@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import { use, useState } from "react";
 import { managerName } from "@/components/admin/parts";
 import { ActivityTab, BrandTab, CallsTab, ContentTab, EngagementTab, OverviewTab, PlanTab, UpdatesTab } from "@/components/manager/ClientTabs";
-import { Avatar, Badge, Button, Card, EmptyState, PageHeader, Tabs, useConfirm, useToast, buttonClass } from "@/components/ui";
-import { date, fullName, money } from "@/lib/format";
+import { Avatar, Badge, Button, Card, EmptyState, PageHeader, Pill, Row, Rows, RowText, Tabs, TextLink, buttonClass, useConfirm, useToast } from "@/components/ui";
+import { ago, date, fullName, money, plural } from "@/lib/format";
 import { act, clientBundle, useData } from "@/lib/mock";
 import { statusBadge } from "@/lib/status";
 
@@ -79,63 +79,60 @@ export default function OwnerClientPage({ params }: { params: Promise<{ id: stri
           {tab === "updates" && <UpdatesTab b={b} />}
           {tab === "activity" && <ActivityTab b={b} />}
           {tab === "messages" && (
-            <Card title="Messages">
-              <ul className="flex flex-col gap-3">
-                {b.messages.map((m) => (
-                  <li key={m.id} className="flex flex-col gap-1">
-                    <span className="text-caption text-secondary">{fullName(db.users.find((u) => u.id === m.fromUserId))}</span>
-                    <span className="text-body-sm text-primary">{m.text ?? (m.voice ? `Voice note: "${m.voice.transcript}"` : m.file?.name)}</span>
-                  </li>
-                ))}
-                {!b.messages.length && <li className="text-body-sm text-secondary">No messages yet.</li>}
-              </ul>
+            <Card title="Messages" padding="none" action={<Pill>{plural(b.messages.length, "message")}</Pill>}>
+              {b.messages.length ? (
+                <Rows flush>
+                  {b.messages.map((m) => (
+                    <Row key={m.id} className="items-start justify-between">
+                      <RowText title={m.text ?? (m.voice ? `Voice note: “${m.voice.transcript}”` : m.file?.name)} sub={m.asTeam ? "Account team" : fullName(db.users.find((u) => u.id === m.fromUserId))} />
+                      <span className="shrink-0 text-caption text-secondary">{ago(m.at)}</span>
+                    </Row>
+                  ))}
+                </Rows>
+              ) : (
+                <p className="px-6 py-4 text-body-sm text-secondary">No messages yet.</p>
+              )}
             </Card>
           )}
         </div>
         <div className="flex flex-col gap-4">
-          <Card title="Account">
+          <Card title="Account" action={<Badge status={badge.tone}>{badge.label}</Badge>}>
             <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-3">
-                <Avatar name={fullName(b.user)} size="md" />
-                <Badge status={badge.tone}>{badge.label}</Badge>
-              </div>
-              <dl className="flex flex-col gap-3 text-body-sm">
-                <div>
-                  <dt className="text-caption text-secondary">Manager</dt>
-                  <dd className="text-primary">{mName || "Not assigned"}</dd>
-                </div>
+              <span className="flex items-center gap-3">
+                <Avatar name={fullName(b.user)} src={b.user.photo} size="md" />
+                <span className="flex min-w-0 flex-col">
+                  <span className="truncate text-body font-medium text-primary">{fullName(b.user)}</span>
+                  <span className="truncate text-body-sm text-secondary">{b.user.email}</span>
+                </span>
+              </span>
+              <Rows>
+                <Row>
+                  <RowText title="Manager" sub={mName || "Not assigned"} />
+                </Row>
                 {b.contract && (
                   <>
-                    <div>
-                      <dt className="text-caption text-secondary">Contract</dt>
-                      <dd className="text-primary">
-                        {b.contract.months} months, {money(b.contract.monthlyCents)} a month, {b.contract.paid ? "paid" : "not paid"}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-caption text-secondary">Video add-on</dt>
-                      <dd className="text-primary">
-                        {b.contract.videoAddon
-                          ? { client: `On, ${money(db.settings.videoAddonCents)} a month. Client supplies the videos`, bluecut: "On. Bluecut makes the videos: production quoted separately", both: `On, ${money(db.settings.videoAddonCents)} a month, plus production quoted separately` }[b.contract.videoAddon.maker]
-                          : "Off"}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-caption text-secondary">Dates</dt>
-                      <dd className="text-primary">
-                        {date(b.contract.startsAt)} to {date(b.contract.endsAt)}
-                      </dd>
-                    </div>
+                    <Row>
+                      <RowText title="Contract" sub={`${b.contract.months} months, ${money(b.contract.monthlyCents)} a month, ${b.contract.paid ? "paid" : "not paid"}`} />
+                    </Row>
+                    <Row>
+                      <RowText
+                        title="Video add-on"
+                        sub={
+                          b.contract.videoAddon
+                            ? { client: `On, ${money(db.settings.videoAddonCents)} a month. Client supplies the videos`, bluecut: "On. Bluecut makes the videos: production quoted separately", both: `On, ${money(db.settings.videoAddonCents)} a month, plus production quoted separately` }[b.contract.videoAddon.maker]
+                            : "Off"
+                        }
+                      />
+                    </Row>
+                    <Row>
+                      <RowText title="Dates" sub={`${date(b.contract.startsAt)} to ${date(b.contract.endsAt)}`} />
+                    </Row>
                   </>
                 )}
-                <div>
-                  <dt className="text-caption text-secondary">Email</dt>
-                  <dd className="text-primary">{b.user.email}</dd>
-                </div>
-              </dl>
-              <Link href="/admin/money" className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
+              </Rows>
+              <TextLink href="/admin/money" className="self-start text-body-sm">
                 Contract and payments
-              </Link>
+              </TextLink>
             </div>
           </Card>
         </div>

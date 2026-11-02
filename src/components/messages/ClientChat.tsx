@@ -177,7 +177,29 @@ const SAMPLE_DICTATION = "Can we move Thursday's post to next week? I want to ad
  * composer at the bottom: write, attach a file or photo, paste a link, or speak and it types for you.
  * Calls are booked, not started from here.
  */
-export function ClientChat({ clientId, me, manager, messages, threads }: { clientId: string; me: User; manager: User; messages: Message[]; threads: Thread[] }) {
+export function ClientChat({
+  clientId,
+  me,
+  manager,
+  messages,
+  threads,
+  side = "client",
+  asTeam = false,
+  profileHref = "/account-manager",
+}: {
+  clientId: string;
+  me: User;
+  /** The person on the other side: the account manager for a client, the client for the team. */
+  manager: User;
+  messages: Message[];
+  threads: Thread[];
+  /** Who is reading: the client, or the team (manager, or the owner covering). */
+  side?: "client" | "team";
+  /** The owner covering for a manager: messages go out as the account team. */
+  asTeam?: boolean;
+  /** Where the name at the top of the conversation links to. */
+  profileHref?: string;
+}) {
   const toast = useToast();
   const confirm = useConfirm();
   const { run, pending } = useTask();
@@ -258,7 +280,7 @@ export function ClientChat({ clientId, me, manager, messages, threads }: { clien
         threadId = await act.startThread(clientId, body || attach?.name || "");
         setActiveId(threadId);
       }
-      await act.sendMessage(clientId, me.id, { text: body || undefined, file: attach ?? undefined, threadId });
+      await act.sendMessage(clientId, me.id, { text: body || undefined, file: attach ?? undefined, threadId }, asTeam);
     });
     // On failure what they wrote comes back.
     if (!ok) {
@@ -407,7 +429,7 @@ export function ClientChat({ clientId, me, manager, messages, threads }: { clien
       {/* The open conversation */}
       <section aria-label={current ? current.title : "New conversation"} className={`flex min-w-0 flex-col md:col-span-8 md:min-h-0 ${showList ? "hidden md:flex" : "flex"}`}>
         <header className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 sm:px-6">
-          <Link href="/account-manager" className="group flex min-w-0 items-center gap-3 rounded-md focus-visible:focus-ring">
+          <Link href={profileHref} className="group flex min-w-0 items-center gap-3 rounded-md focus-visible:focus-ring">
             <Avatar name={managerName} src={manager.photo} size="md" />
             <span className="flex min-w-0 flex-col">
               <span className="truncate text-body font-medium text-primary group-hover:underline">{managerName}</span>
@@ -427,9 +449,13 @@ export function ClientChat({ clientId, me, manager, messages, threads }: { clien
             <li className="flex flex-col items-center gap-3 py-8 text-center">
               <Avatar name={managerName} src={manager.photo} size="lg" />
               <p className="font-display text-display-lg text-primary">Message {manager.firstName}</p>
-              <p className="max-w-sm text-body-sm text-secondary">Ask about a post, share photos or files, or paste a link. Start a new conversation for each topic so things are easy to find later.</p>
+              <p className="max-w-sm text-body-sm text-secondary">
+                {side === "team"
+                  ? "Share drafts, ask for photos or files, or check in. Start a new conversation for each topic so things are easy to find later."
+                  : "Ask about a post, share photos or files, or paste a link. Start a new conversation for each topic so things are easy to find later."}
+              </p>
               <div className="mt-2 flex flex-wrap justify-center gap-2">
-                {["Can we change a post?", "Here are some photos", "I have an idea for a post"].map((s) => (
+                {(side === "team" ? ["Your posts for this week are ready", "Could you send a photo from the event?", "A quick question about your goals"] : ["Can we change a post?", "Here are some photos", "I have an idea for a post"]).map((s) => (
                   <button
                     key={s}
                     type="button"
@@ -468,12 +494,12 @@ export function ClientChat({ clientId, me, manager, messages, threads }: { clien
                       m={m}
                       mine={mine}
                       divided={!showDay}
-                      author={m.asTeam ? "Your account team" : managerName}
+                      author={m.asTeam ? (side === "team" ? "Bluecut team" : "Your account team") : managerName}
                       authorPhoto={m.asTeam ? undefined : manager.photo}
                       meId={me.id}
-                      nameOf={(id) => (id === manager.id ? manager.firstName : "Your account team")}
+                      nameOf={(id) => (id === manager.id ? manager.firstName : side === "team" ? "Bluecut team" : "Your account team")}
                       savingFile={pending(`save-${m.id}`)}
-                      onSaveFile={() => run(`save-${m.id}`, () => act.saveFileToBrand(m.id), "Saved to Your brand.")}
+                      onSaveFile={() => run(`save-${m.id}`, () => act.saveFileToBrand(m.id), side === "team" ? `Saved to ${manager.firstName}'s Brand.` : "Saved to Your brand.")}
                       onReact={(kind) => run(`react-${m.id}`, () => act.reactToMessage(m.id, me.id, kind))}
                       onPin={() => run(`pin-${m.id}`, () => act.togglePinMessage(m.id), m.pinned ? "Unpinned." : "Pinned to the top of this conversation.")}
                       onEdit={(t) => run(`edit-${m.id}`, () => act.editMessage(m.id, t), "Message updated.")}
@@ -593,9 +619,11 @@ export function ClientChat({ clientId, me, manager, messages, threads }: { clien
           </div>
           <p className="flex flex-wrap items-center justify-between gap-2 text-caption text-secondary">
             <span>Enter to send. Shift and Enter for a new line.</span>
-            <span>
-              Need to talk? <TextLink href="/calls">Book a call</TextLink>
-            </span>
+            {side === "client" && (
+              <span>
+                Need to talk? <TextLink href="/calls" className="underline">Book a call</TextLink>
+              </span>
+            )}
           </p>
         </form>
       </section>

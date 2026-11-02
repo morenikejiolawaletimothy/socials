@@ -27,3 +27,5 @@ export { Tabs } from "./Tabs";
 export { Textarea } from "./Textarea";
 export { Tooltip } from "./Tooltip";
 export { Select, type SelectProps } from "./Select";
+export { Row, Rows, RowText } from "./Rows";
+export { IconButton } from "./IconButton";

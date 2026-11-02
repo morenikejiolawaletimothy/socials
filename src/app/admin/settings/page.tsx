@@ -25,7 +25,7 @@ export default function SettingsPage() {
             {plans.map((p) => (
               <Input key={p.id} label={`${p.label}, a month (USD)`} defaultValue={String(p.monthlyUsdCents / 100)} inputMode="numeric" />
             ))}
-            <p className="text-caption text-secondary">Prices are in US dollars. Stripe shows each client their local currency.</p>
+            <Banner tone="info">Prices are in US dollars. Stripe shows each client their local currency.</Banner>
           </div>
         </Card>
         <Card title="Money">
@@ -95,7 +95,7 @@ export default function SettingsPage() {
         >
           Save settings
         </Button>
-        <Button variant="ghost" disabled={JSON.stringify(s) === JSON.stringify(db.settings)} onClick={() => setS(db.settings)}>
+        <Button variant="cancel" disabled={JSON.stringify(s) === JSON.stringify(db.settings)} onClick={() => setS(db.settings)}>
           Discard changes
         </Button>
       </div>

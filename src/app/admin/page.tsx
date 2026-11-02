@@ -1,9 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { ClientCell, Stats, linkClass, managerName } from "@/components/admin/parts";
-import { Badge, Card, PageHeader } from "@/components/ui";
-import { daysFrom, fullName, money } from "@/lib/format";
+import { ClientCell, Stats, managerName } from "@/components/admin/parts";
+import { Banner, Card, PageHeader, Pill, Tile, TileAction, TileFooter } from "@/components/ui";
+import { daysFrom, fullName, money, plural } from "@/lib/format";
 import { useData } from "@/lib/mock";
 
 /** A1 Overview: in one look, what needs the owner today and which accounts are at risk. */
@@ -41,28 +40,36 @@ export default function Overview() {
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card title="Needs you today" action={<Badge status={needs.length ? "warning" : "success"}>{needs.length}</Badge>}>
-          <ul className="flex flex-col">
-            {needs.map((n) => (
-              <li key={n.text} className="flex items-center justify-between gap-4 border-b border-border py-3 first:pt-0 last:border-b-0 last:pb-0">
-                <span className="text-body-sm text-primary">{n.text}</span>
-                <Link href={n.href} className={`${linkClass} shrink-0`}>
-                  {n.action}
-                </Link>
-              </li>
-            ))}
-            {!needs.length && <li className="text-body-sm text-secondary">Nothing needs you right now.</li>}
-          </ul>
+        <Card title="Needs you today" action={<Pill>{plural(needs.length, "thing")}</Pill>}>
+          {needs.length ? (
+            <ul className="flex flex-col gap-3">
+              {needs.map((n) => (
+                <li key={n.text}>
+                  <Tile href={n.href}>
+                    <span className="text-body font-medium text-primary">{n.text}</span>
+                    <TileFooter>
+                      <span />
+                      <TileAction>{n.action}</TileAction>
+                    </TileFooter>
+                  </Tile>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <Banner tone="success">Nothing needs you right now.</Banner>
+          )}
         </Card>
 
-        <Card title="At risk">
-          <ul className="flex flex-col">
+        <Card title="At risk" action={<Pill>{plural(db.clients.filter((c) => c.atRisk).length, "client")}</Pill>}>
+          <ul className="flex flex-col gap-3">
             {db.clients
               .filter((c) => c.atRisk)
               .map((c) => (
-                <li key={c.id} className="flex flex-col gap-2 border-b border-border py-3 first:pt-0 last:border-b-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
-                  <ClientCell db={db} clientId={c.id} sub={`Manager: ${managerName(db, c.managerId) || "none"}`} />
-                  <span className="text-body-sm text-danger">{c.atRisk}</span>
+                <li key={c.id}>
+                  <Tile>
+                    <ClientCell db={db} clientId={c.id} sub={`Manager: ${managerName(db, c.managerId) || "none"}`} />
+                    <Banner tone="warning">{c.atRisk}</Banner>
+                  </Tile>
                 </li>
               ))}
           </ul>
