@@ -566,6 +566,48 @@ Once approved, these will be written into `docs/prd.md`.
 
 ---
 
+## 9a. Media: images, carousels and video (proposed, awaiting approval)
+
+**Principle.** Bluecut never makes video on the platform. Video is shot by the client (we guide them on what to shoot), filmed by us in person, or made with AI tools, all off the platform. Carousels are designed off the platform too (Canva, Figma, the client's templates) or supplied by the client. The platform's job is to get the finished file in, check it against LinkedIn's rules, attach it to a post, and publish it.
+
+**Who can use what.**
+- **Client-supplied media, every plan:** any client can upload their own videos and carousels, and the manager can use them in posts.
+- **Bluecut-made video, higher plan only:** video we produce for the client (studio visit or AI-made) is not in the standard plans. Clients without it never see a "make me a video" option; they see "Add your own video". Carousels and images the manager designs stay in every plan.
+
+**How media gets in (two routes, same library).**
+1. **The client uploads** to Your brand (C15), which gains a **Videos** section and a **Carousels** section next to Photos, Logos and Documents. Moments (C15) take photos and videos. A video sent in Messages (C10) can be saved to their Brand.
+2. **The manager uploads** while drafting (M4), and the file is saved to the client's Brand as well, so the client can see it.
+
+**C15 Your brand (changes).**
+- **Videos:** upload MP4 or MOV. Each shows its cover frame, length and shape (landscape, portrait, square). Remove with a warning. An "On what to shoot" note links to the guide the manager shares (tips and a shot list, set per client).
+- **Carousels:** upload a PDF (each page is a slide) or several images in order. Each shows its first page, title and page count. Remove with a warning.
+- **Moments:** photos and videos.
+
+**M4 Draft (changes).**
+- **Post format** gains Video and Newsletter, matching the PRD list (text, image, carousel, video, article, newsletter).
+- **"Add media"** replaces "Add a visual", with three choices: **Image**, **Carousel**, **Video**. Each picks from the client's Brand or uploads a new file. One per post: image, carousel or video.
+- **Video:** choose or upload the cover frame; add captions (.srt, English) or mark "No speech". Length, shape and size are shown.
+- **Carousel:** a title (shown on LinkedIn as "Title · 7 pages"); reorder or remove pages before sending.
+- **New checks:** video is MP4 or MOV, 3 seconds to 30 minutes, within the size limit; captions present (or "No speech"); cover frame set; carousel is a PDF within the page and size limits; every image and carousel page has a description. Checks that fail LinkedIn's rules cannot be dismissed.
+- **Ideas** can suggest "Ask {client} for a short video on this", which sends the client a quick task (C17) with what to shoot, and the post waits for the clip.
+
+**C17 Quick tasks (new kind).** "Record a short video": what to say, a shot list, length and shape, and an upload button. The clip lands in their Brand and on the waiting post.
+
+**C7 Review and C8 Live.** Video and carousel posts preview the way LinkedIn shows them (already built). Once live, a video or carousel cannot be swapped: "Replace post (new image, carousel or video)" takes it down and puts a copy in Drafts.
+
+**C10 and M9 Messages.** Attach videos (played in the chat) with a higher size limit than other files. "Save to their Brand" files videos under Videos.
+
+**C6, M6 and C9 Targets.** Weekly targets can count posts by format (for example "1 video a week"), as the PRD says. Progress and updates show them.
+
+**States (Phase 2).** Video posts add **Processing** (LinkedIn is processing the upload; scheduled posts wait for it) and use **Did not post** with LinkedIn's reason if it rejects the file.
+
+**LinkedIn limits to design for.** Video: MP4, 3 seconds to 30 minutes; Microsoft's documentation gives two size limits (500 MB and 5 GB), to be confirmed against the API version used in Phase 2; one English caption file; optional thumbnail. Carousels are posted as documents (PDF).
+
+**Open for Fola.**
+1. **"Higher plan":** plans today are contract lengths (3, 6, 12 months). Is Bluecut-made video an add-on to any plan (recommended: price per video or per month), or a separate tier?
+2. **Carousels we design:** in every plan (assumed above), or also higher plan only?
+3. **Video guide:** one shared guide for all clients to start, or written per client by the manager?
+
 ## 10. Open questions
 
 Client and public flows approved. Manager questions are in section 5.
