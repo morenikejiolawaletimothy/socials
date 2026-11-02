@@ -1,5 +1,6 @@
 import { CaretDown } from "@phosphor-icons/react/dist/ssr";
 import { useId, type SelectHTMLAttributes } from "react";
+import { Banner } from "./Banner";
 
 /*
  * The caret sits on the same inset as the text (16px on md, 12px on sm), and the text stops a full
@@ -52,9 +53,9 @@ export function Select({ label, help, size = "md", tone = "light", id, wrapperCl
       </label>
       {field}
       {help && (
-        <span id={`${selectId}-help`} className="text-body-sm text-secondary">
-          {help}
-        </span>
+        <div id={`${selectId}-help`}>
+          <Banner tone="info">{help}</Banner>
+        </div>
       )}
     </div>
   );

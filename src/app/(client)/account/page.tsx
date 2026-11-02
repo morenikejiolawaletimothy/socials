@@ -170,12 +170,12 @@ export default function AccountPage() {
             </li>
           ))}
         </ul>
-        <p className="pt-4 text-caption text-secondary">Payment reminders and account notices are always sent.</p>
+        <Banner tone="info" className="mt-4">Payment reminders and account notices are always sent.</Banner>
       </Card>
 
       <Card title="Your data">
-        <div className="flex flex-col gap-3">
-          <p className="text-body-sm text-secondary">Download everything we hold about you: your strategy, posts, brand files, messages and activity.</p>
+        <div className="flex flex-col gap-4">
+          <Banner tone="info">Download everything we hold about you: your strategy, posts, brand files, messages and activity.</Banner>
           <Button variant="secondary" className="self-start" loading={pending("data")} onClick={() => run("data", () => act.requestDataExport(user.id), "Your download is ready. We emailed you a link.")}>
             {pending("data") ? "Preparing" : "Download my data"}
           </Button>

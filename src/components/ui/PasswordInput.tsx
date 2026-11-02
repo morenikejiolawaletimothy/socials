@@ -2,7 +2,7 @@
 
 import { Eye, EyeSlash } from "@phosphor-icons/react";
 import { useId, useState, type InputHTMLAttributes } from "react";
-import { fieldClass } from "./Input";
+import { FieldMessage, fieldClass } from "./Input";
 
 /** Password field with a visible label and a show/hide button. */
 export function PasswordInput({
@@ -38,11 +38,7 @@ export function PasswordInput({
           {shown ? <EyeSlash className="size-5" aria-hidden /> : <Eye className="size-5" aria-hidden />}
         </button>
       </div>
-      {message && (
-        <span id={`${id}-message`} className={`text-body-sm ${error ? "text-danger" : "text-secondary"}`}>
-          {message}
-        </span>
-      )}
+      {message && <FieldMessage id={`${id}-message`} error={error} help={help} />}
     </div>
   );
 }
