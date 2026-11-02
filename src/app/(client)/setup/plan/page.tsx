@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, CheckCircle } from "@phosphor-icons/react";
+import { CalendarBlank, Check, CheckCircle, Circle, CreditCard, Receipt, ShieldCheck } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PayDialog } from "@/components/client/PayDialog";
@@ -44,29 +44,35 @@ export default function PlanPage() {
             {plans.map((p) => (
               <label
                 key={p.id}
-                className={`flex cursor-pointer flex-col gap-2 rounded-lg border p-4 transition-colors ${planId === p.id ? "border-primary-600 bg-primary-50" : "border-border hover:border-primary-300"}`}
+                className={`flex cursor-pointer flex-col rounded-lg border transition-colors has-focus-visible:focus-ring ${planId === p.id ? "border-primary-600 bg-primary-50" : "border-border bg-card hover:border-primary-300"}`}
               >
                 <input type="radio" name="plan" className="sr-only" checked={planId === p.id} onChange={() => setPlanId(p.id)} />
-                <span className="flex items-center justify-between">
-                  <span className="text-body font-medium text-primary">{p.label}</span>
-                  {planId === p.id && <CheckCircle className="size-5 text-primary-600" aria-hidden />}
+                <span className="flex flex-col gap-2 p-4">
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="text-body font-medium text-primary">{p.label}</span>
+                    {planId === p.id ? <CheckCircle className="size-5 shrink-0 text-primary-600" aria-hidden /> : <Circle className="size-5 shrink-0 text-neutral-300" aria-hidden />}
+                  </span>
+                  <span className="font-display text-display-xl text-primary">
+                    {money(p.monthlyUsdCents)}
+                    <span className="text-body-sm font-normal text-secondary"> a month</span>
+                  </span>
                 </span>
-                <span className="font-display text-display-xl text-primary">
-                  {money(p.monthlyUsdCents)}
-                  <span className="text-body-sm font-normal text-secondary"> a month</span>
-                </span>
-                <span className="text-body-sm text-secondary">{p.summary}</span>
+                <span className={`border-t p-4 text-body-sm text-secondary ${planId === p.id ? "border-primary-200" : "border-border"}`}>{p.summary}</span>
               </label>
             ))}
           </div>
           <VideoAddonPicker value={video} priceCents={videoPrice} onChange={setVideo} />
-          <ul className="flex flex-col gap-2">
-            {included.map((i) => (
-              <li key={i} className="flex items-center gap-2 text-body-sm text-primary">
-                <Check className="size-4 text-success" aria-hidden /> {i}
-              </li>
-            ))}
-          </ul>
+          <section className="flex flex-col rounded-md border border-border">
+            <h3 className="border-b border-border px-4 py-3 text-body font-medium text-primary">Every plan includes</h3>
+            <ul className="flex flex-col divide-y divide-border">
+              {included.map((i) => (
+                <li key={i} className="flex items-center gap-3 px-4 py-3 text-body-sm text-primary">
+                  <Check className="size-4 shrink-0 text-primary-600" aria-hidden />
+                  {i}
+                </li>
+              ))}
+            </ul>
+          </section>
           {videoError && !addonReady(video) && <p className="text-body-sm text-danger">Tick that you understand video production is quoted separately, or choose &ldquo;I will supply the videos&rdquo;.</p>}
           <Button className="self-start" onClick={() => (addonReady(video) ? setStep(1) : setVideoError(true))}>
             Continue
@@ -92,30 +98,36 @@ export default function PlanPage() {
             if (ok) setStep(2);
           }}
         >
-          <dl className="grid grid-cols-1 gap-4 rounded-md border border-border p-4 sm:grid-cols-2">
-            {[
-              ["Plan", `${plan.label}, ${money(plan.monthlyUsdCents)} a month`],
-              [
-                "Video add-on",
-                !video.on
-                  ? "Not added"
-                  : video.maker === "bluecut"
-                    ? `${makerLabel.bluecut}. Production quoted after your onboarding call`
-                    : `${money(videoPrice)} a month. ${makerLabel[video.maker]}${video.maker === "both" ? ". Production quoted after your onboarding call" : ""}`,
-              ],
-              ["Free 2 weeks", `Today to ${date(freeEnds)}, with the full service`],
-              ["Contract", `${date(freeEnds)} to ${date(ends)}`],
-              ["Total", `${money((plan.monthlyUsdCents + videoMonthly) * plan.months)}${video.on && needsQuote(video.maker) ? ", plus video production once you agree a quote" : ""}`],
-            ].map(([k, v]) => (
-              <div key={k} className="flex flex-col gap-1">
-                <dt className="text-caption text-secondary">{k}</dt>
-                <dd className="text-body text-primary">{v}</dd>
-              </div>
-            ))}
-          </dl>
           <Banner tone="info" title="You can pull out any time">
             We refund every paid month that has not started. If we have not received payment by {date(freeEnds)}, your account pauses until you pay, and picks up again as soon as you do.
           </Banner>
+          <dl className="flex flex-col divide-y divide-border overflow-hidden rounded-md border border-border">
+            {[
+              { label: "Plan", value: `${plan.label}, ${money(plan.monthlyUsdCents)} a month` },
+              {
+                label: "Video add-on",
+                value: !video.on ? "Not added" : video.maker === "bluecut" ? "Quoted after your onboarding call" : `${money(videoPrice)} a month`,
+                note: video.on ? `${makerLabel[video.maker]}${video.maker === "both" ? ". Production quoted after your onboarding call" : ""}` : undefined,
+              },
+              { label: "Free 2 weeks", value: `Today to ${date(freeEnds)}`, note: "With the full service" },
+              { label: "Contract", value: `${date(freeEnds)} to ${date(ends)}` },
+            ].map((row) => (
+              <div key={row.label} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+                <dt className="text-body-sm text-secondary">{row.label}</dt>
+                <dd className="flex flex-col gap-1 sm:items-end sm:text-right">
+                  <span className="text-body-sm font-medium text-primary">{row.value}</span>
+                  {row.note && <span className="text-caption text-primary-600">{row.note}</span>}
+                </dd>
+              </div>
+            ))}
+            <div className="flex flex-col gap-1 bg-neutral-25 px-4 py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+              <dt className="text-body font-medium text-primary">Total</dt>
+              <dd className="flex flex-col gap-1 sm:items-end sm:text-right">
+                <span className="text-body-lg font-medium text-primary">{money((plan.monthlyUsdCents + videoMonthly) * plan.months)}</span>
+                {video.on && needsQuote(video.maker) && <span className="text-caption text-secondary">Plus video production once you agree a quote</span>}
+              </dd>
+            </div>
+          </dl>
           <Input
             label="Sign with your full name"
             placeholder={fullName(user)}
@@ -159,10 +171,19 @@ export default function PlanPage() {
             <CheckCircle className="size-8 text-success" aria-hidden />
             <p className="font-display text-display-lg text-primary">{paid ? "Signed and paid" : "Signed"}</p>
           </div>
-          <ul className="flex list-disc flex-col gap-1 pl-5 text-body-sm text-primary">
-            <li>Your free 2 weeks run to {date(contract?.freeEndsAt ?? freeEnds)}.</li>
-            <li>{paid ? "Your receipt is in Contract, and we emailed it to you." : "Pay any time from Contract. We will remind you."}</li>
-            <li>You can pull out any time from Contract.</li>
+          <ul className="flex flex-col divide-y divide-border rounded-md border border-border">
+            {[
+              { icon: CalendarBlank, text: `Your free 2 weeks run to ${date(contract?.freeEndsAt ?? freeEnds)}.` },
+              { icon: paid ? Receipt : CreditCard, text: paid ? "Your receipt is in Contract, and we emailed it to you." : "Pay any time from Contract. We will remind you." },
+              { icon: ShieldCheck, text: "You can pull out any time from Contract." },
+            ].map((row) => (
+              <li key={row.text} className="flex items-center gap-3 px-4 py-3">
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700">
+                  <row.icon className="size-4" aria-hidden />
+                </span>
+                <span className="text-body-sm text-primary">{row.text}</span>
+              </li>
+            ))}
           </ul>
           <Button className="self-start" onClick={() => router.push("/home")}>
             Continue setup

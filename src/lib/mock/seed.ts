@@ -72,7 +72,7 @@ export function seed(): Db {
     ],
     targets: [
       { period: "Weeks 1 to 2", posts: 2, comments: 10, connections: 15, extra: "1 story post and 1 opinion post a week" },
-      { period: "Week 3 onward", posts: 3, comments: 15, connections: 15, videos: 1, extra: "Plus 1 article a month. 1 of the posts is a short video" },
+      { period: "Week 3 onward", posts: 3, comments: 15, connections: 15, extra: "Plus 1 article a month" },
     ],
     approvedAt: status === "approved" ? at(-50) : undefined,
     frameworkVersion: "v3",
@@ -88,7 +88,7 @@ export function seed(): Db {
   });
 
   return {
-    version: 18,
+    version: 17,
     session: {
       role: "client",
       userIds: { client: "u-chidi", manager: "u-ada", owner: "u-fola" },
@@ -172,7 +172,7 @@ export function seed(): Db {
         text: "Spoke at @[Lagos Fintech Week] on Thursday, on a panel with @[Amaka Nwosu] of @[Lagos Angel Network]. The question I keep thinking about came from a student in the second row:\n\n\"If payments get instant, what happens to trust?\"\n\nMy answer: trust moves from the speed to the receipt. People stop asking \"when\" and start asking \"what if it goes wrong\". That is the next thing we have to design for.\n\n#Fintech #Payments #LFW2026",
         why: "From the Moment you added. Event posts within a week of the event do best.",
         // Demo clip: a public sample video, with our stage photo as the frame shown before it plays.
-        video: { src: "/media/sample-talk.mp4", poster: "/media/sample-talk.jpg", alt: "Chidi speaking on stage at Lagos Fintech Week", seconds: 5, shape: "landscape" } },
+        video: { src: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4", poster: IMG.talk, alt: "Chidi speaking on stage at Lagos Fintech Week", seconds: 5, shape: "landscape" } },
       // Chidi: scheduled
       { id: "p-c4", clientId: "c-chidi", status: "scheduled", scheduledAt: hoursAgo(6), scheduledFor: at(3, 9), topic: "Cross-border payments", format: "how-to",
         text: "How to pick a payments partner for West Africa, in 5 questions. A short guide for founders who are about to choose.", why: "A practical post for founders on your target list." },
@@ -201,8 +201,6 @@ export function seed(): Db {
       // Chidi: held and staff-side drafts
       { id: "p-c10", clientId: "c-chidi", status: "on-hold", dueAt: at(-6, 17), sentAt: at(-8, 10), topic: "Leadership", format: "opinion", heldReason: "Not reviewed by the due time. You chose to review every post first.",
         text: "Board meetings should be shorter. Ours are now 45 minutes, and better for it.", why: "" },
-      { id: "p-c-video-1", clientId: "c-chidi", status: "draft", topic: "Lagos Fintech Week", format: "video", version: 1, waitingForVideo: "t-chidi-video",
-        text: "A student at Lagos Fintech Week asked me the question I get most from investors.\n\nHere is what I told her.", why: "Video from the event: your goal is investor conversations, and this shows how you think.", checks: [] },
       { id: "p-c11", clientId: "c-chidi", status: "manager-review", topic: "Cross-border payments", format: "opinion", version: 2,
         text: "Mobile money is not competition for banks. It is the on-ramp. Here is what our data shows from 2 million transfers.",
         why: "Ties your payments topic to this week's central bank report on mobile money.",
@@ -239,16 +237,6 @@ export function seed(): Db {
           { id: "pp5", name: "Ruth Mensah", role: "COO, Volta Logistics", profileUrl: "https://www.linkedin.com/in/example-ruth", photo: "/landing/leaders/07.jpg", why: "A customer type you want to reach: traders across borders.", note: "Hi Ruth, we help logistics firms get paid across West Africa faster. I would like to connect.", done: false },
           { id: "pp6", name: "Tolu Bamidele", role: "Policy lead, Central Bank fintech office", profileUrl: "https://www.linkedin.com/in/example-tolu", photo: "/landing/leaders/08.jpg", why: "Shapes the rules you write about.", note: "Hi Tolu, I write about payments policy and would value your perspective. Glad to connect.", done: false },
         ] },
-      { id: "t-chidi-video", clientId: "c-chidi", kind: "video", title: "Record a short video", dueAt: at(6, 17), done: false, sentAt: hoursAgo(3),
-        video: {
-          idea: "60 seconds on the question the student asked you at Lagos Fintech Week",
-          why: "Your goal is investor and partner conversations. A short video of you answering a real question shows how you think, and video gets more reach than text for founders in your field.",
-          shots: ["Say the question you were asked, in one line", "Your answer, as you would tell a friend", "One thing you want founders to take from it", "Close with: \u201cWhat would you have said?\u201d"],
-          length: "45 to 90 seconds",
-          shape: "portrait",
-          tips: ["Hold your phone upright, at eye level", "Face a window for soft light", "Record somewhere quiet, close to the phone", "One take is fine. Small mistakes feel real"],
-          postId: "p-c-video-1",
-        } },
       { id: "t-chidi-headline", clientId: "c-chidi", kind: "profile", title: "Update your headline", dueAt: at(4, 17), done: false, sentAt: hoursAgo(5),
         text: "CEO at Paystream | Making payments across West Africa as fast as a text message", where: "On LinkedIn, open your profile, press the pencil next to your name, then paste this into Headline." },
       { id: "t-chidi-summit", clientId: "c-chidi", kind: "event", title: "Register for Africa Fintech Summit", dueAt: at(5, 17), done: false, sentAt: hoursAgo(26),
@@ -415,8 +403,6 @@ export function seed(): Db {
       { id: "b1", clientId: "c-chidi", section: "photos", name: "Headshot-2024.jpg", src: IMG.portrait, size: "1.8 MB", at: at(-58) },
       { id: "b2", clientId: "c-chidi", section: "photos", name: "Office-team.jpg", src: IMG.team, size: "3.1 MB", at: at(-40) },
       { id: "b3", clientId: "c-chidi", section: "photos", name: "Fintech-week-stage.jpg", src: IMG.talk, size: "2.4 MB", at: hoursAgo(6) },
-      { id: "bv1", clientId: "c-chidi", section: "videos", name: "Office-walkthrough.mp4", src: "/media/sample-talk.mp4", size: "0.1 MB", at: at(-12), video: { poster: "/media/sample-talk.jpg", seconds: 10, shape: "landscape" }, addedBy: "client" },
-      { id: "bc1", clientId: "c-chidi", section: "carousels", name: "Payments-myths.pdf", size: "2.2 MB", at: at(-20), carousel: { pages: 4, slides: [{ src: IMG.desk, alt: "Cover: 4 myths about cross-border payments" }, { src: IMG.laptop, alt: "1. It is slow because of technology" }, { src: IMG.meeting, alt: "2. Only banks can do it" }, { src: IMG.pair, alt: "3 and 4. Costs and rules" }] }, addedBy: "team" },
       { id: "b4", clientId: "c-chidi", section: "photos", name: "Board-meeting.jpg", src: IMG.meeting, size: "2.0 MB", at: at(-20) },
       { id: "b5", clientId: "c-chidi", section: "logos", name: "Paystream-logo.svg", size: "24 KB", at: at(-58) },
       { id: "b6", clientId: "c-chidi", section: "documents", name: "Paystream brand guide.pdf", size: "4.2 MB", at: at(-58) },
@@ -429,7 +415,7 @@ export function seed(): Db {
     ],
 
     contracts: [
-      { id: "k-chidi", clientId: "c-chidi", months: 6, videoAddon: { maker: "both", since: at(-49) }, monthlyCents: 80000, signedAt: at(-63), signedName: "Chidi Okeke", freeEndsAt: at(-49), startsAt: at(-49), endsAt: at(133), status: "active", paid: true, card: { brand: "Visa", last4: "4242" } },
+      { id: "k-chidi", clientId: "c-chidi", months: 6, monthlyCents: 80000, signedAt: at(-63), signedName: "Chidi Okeke", freeEndsAt: at(-49), startsAt: at(-49), endsAt: at(133), status: "active", paid: true, card: { brand: "Visa", last4: "4242" } },
       { id: "k-sarah", clientId: "c-sarah", months: 3, monthlyCents: 90000, signedAt: at(-10), signedName: "Sarah Mensah", freeEndsAt: at(4), startsAt: at(4), endsAt: at(95), status: "free", paid: false },
       { id: "k-ngozi", clientId: "c-ngozi", months: 3, monthlyCents: 90000, signedAt: at(-2), signedName: "Ngozi Eze", freeEndsAt: at(12), startsAt: at(12), endsAt: at(103), status: "free", paid: false },
       { id: "k-femi", clientId: "c-femi", months: 12, monthlyCents: 70000, signedAt: at(-6), signedName: "Femi Lawal", freeEndsAt: at(8), startsAt: at(8), endsAt: at(373), status: "free", paid: true, card: { brand: "Mastercard", last4: "8810" } },
@@ -542,7 +528,7 @@ export function seed(): Db {
       { id: "po3", managerId: "m-ada", period: "Last month", clients: 4, amountCents: 100000, status: "paid" },
       { id: "po4", managerId: "m-tunde", period: "Last month", clients: 3, amountCents: 75000, status: "paid" },
     ],
-    settings: { freeDays: 14, autoRefundLimitCents: 100000, reminderDays: [5, 3, 0], pauseWarningDays: 15, removalDays: 30, goAheadHours: 24, maxClientsPerManager: 10, daysBetweenCalls: 3, sessionTimeoutMinutes: 60, videoAddonCents: 30000 },
+    settings: { freeDays: 14, autoRefundLimitCents: 100000, reminderDays: [5, 3, 0], pauseWarningDays: 15, removalDays: 30, goAheadHours: 24, maxClientsPerManager: 10, daysBetweenCalls: 3, sessionTimeoutMinutes: 60 },
     changeRequests: [{ id: "cr1", clientId: "c-zainab", reason: "I would like a manager with a health background.", at: at(-1, 16), status: "open" }],
   };
 }

@@ -7,10 +7,7 @@ import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
 import { Badge, Banner, Button, Card, Dialog, fieldClass, Input, Select, Textarea, Tile, TileFooter, useConfirm, useTask, useToast } from "@/components/ui";
 import { agoIn, date } from "@/lib/format";
-import { duration } from "@/lib/linkedin";
-import { prepareUpload, sectionRules } from "@/lib/upload";
-import { MediaThumb } from "@/components/content/MediaThumb";
-import { VideoPlayer } from "@/components/content/PostMedia";
+import { fileSize, photoProblem, toImage } from "@/lib/image";
 import { act, useMyClient, type BrandFile, type OffLimit } from "@/lib/mock";
 
 const iconButton = "flex size-9 shrink-0 items-center justify-center rounded-full text-secondary hover:bg-danger-bg hover:text-danger focus-visible:focus-ring";
@@ -21,44 +18,37 @@ const offKinds: { value: OffLimit["kind"]; label: string }[] = [
   { value: "interaction", label: "Interaction" },
 ];
 const momentStatus = { new: { label: "Sent to your manager", tone: "info" as const }, seen: { label: "Seen", tone: "neutral" as const }, "post-drafted": { label: "Post drafted", tone: "success" as const } };
+const limits = { photos: { types: "image/png,image/jpeg,image/webp", label: "JPG, PNG or WebP, up to 10 MB" }, logos: { types: "image/png,image/svg+xml", label: "PNG or SVG, up to 10 MB" }, documents: { types: ".pdf,.doc,.docx,.ppt,.pptx", label: "PDF, Word or PowerPoint, up to 25 MB" } };
 
-/** Upload button: checks the file (LinkedIn's rules for videos and carousels), a spinner while it uploads, a toast when done. */
-function Upload({ clientId, section, label = "Upload" }: { clientId: string; section: BrandFile["section"]; label?: string }) {
+/** Upload button: inline message for the wrong type or size, a spinner while it uploads, a toast when done. */
+function Upload({ clientId, section }: { clientId: string; section: BrandFile["section"] }) {
   const ref = useRef<HTMLInputElement>(null);
   const { run, pending } = useTask();
   const [error, setError] = useState<string>();
+  const max = section === "documents" ? 25 : 10;
+  const accepted = limits[section].types.split(",");
   return (
     <div className="flex flex-col items-end gap-1">
       <input
         ref={ref}
         type="file"
         aria-label={`Choose a file for ${section}`}
-        accept={sectionRules[section].accept}
+        accept={limits[section].types}
         className="sr-only"
         tabIndex={-1}
         onChange={async (e) => {
           const f = e.target.files?.[0];
           e.target.value = "";
           if (!f) return;
+          const ext = `.${f.name.split(".").pop()?.toLowerCase()}`;
+          if (!accepted.includes(f.type) && !accepted.includes(ext)) return setError(`That type of file is not allowed here. Use ${limits[section].label}.`);
+          if (f.size > max * 1024 * 1024) return setError(`That file is over ${max} MB. Use ${limits[section].label}.`);
           setError(undefined);
-          await run(
-            "upload",
-            async () => {
-              let ready;
-              try {
-                ready = await prepareUpload(f, section);
-              } catch (err) {
-                setError((err as Error).message);
-                throw err;
-              }
-              await act.addBrandFile(clientId, section, ready.name, ready.size, ready.src, { video: ready.video, carousel: ready.carousel, addedBy: "client" });
-            },
-            `${f.name} uploaded.`,
-          );
+          await run("upload", async () => act.addBrandFile(clientId, section, f.name, fileSize(f.size), section === "documents" ? undefined : await toImage(f, section === "logos" ? 600 : 1200)), `${f.name} uploaded.`);
         }}
       />
       <Button variant="secondary" size="sm" loading={pending("upload")} onClick={() => ref.current?.click()}>
-        {!pending("upload") && <UploadSimple className="size-4" aria-hidden />} {pending("upload") ? "Uploading" : label}
+        {!pending("upload") && <UploadSimple className="size-4" aria-hidden />} {pending("upload") ? "Uploading" : "Upload"}
       </Button>
       {error && <span className="max-w-60 text-right text-caption text-danger">{error}</span>}
     </div>
@@ -138,8 +128,6 @@ export default function BrandPage() {
   const [momentNote, setMomentNote] = useState("");
   const [momentError, setMomentError] = useState<string>();
   const [momentPhotos, setMomentPhotos] = useState<string[]>([]);
-  const [momentVideos, setMomentVideos] = useState<{ src: string; poster: string; seconds: number }[]>([]);
-  const [playing, setPlaying] = useState<BrandFile | null>(null);
   const [offKind, setOffKind] = useState<OffLimit["kind"]>("topic");
   const [offText, setOffText] = useState("");
   const [offError, setOffError] = useState<string>();
@@ -155,8 +143,6 @@ export default function BrandPage() {
   const photos = files.filter((f) => f.section === "photos");
   const logos = files.filter((f) => f.section === "logos");
   const docs = files.filter((f) => f.section === "documents");
-  const videos = files.filter((f) => f.section === "videos");
-  const carousels = files.filter((f) => f.section === "carousels");
   const split = (s: string) => s.split(",").map((x) => x.trim()).filter(Boolean);
   const removeFile = (f: BrandFile) =>
     confirm({
@@ -181,23 +167,17 @@ export default function BrandPage() {
       >
         <div className="flex flex-col gap-4">
           <Banner tone="info" closeKey="brand-moments">
-            Something you want a post about, like an event you spoke at or a milestone. Add a note with photos or videos. Your manager is told at once.
+            Something you want a post about, like an event you spoke at or a milestone. Add a note and photos. Your manager is told at once.
           </Banner>
           <ul className="flex flex-col gap-4">
             {moments.map((m) => (
               <li key={m.id}>
                 <Tile>
-                  {(m.photos.length > 0 || (m.videos?.length ?? 0) > 0) && (
+                  {m.photos.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {m.photos.map((p) => (
                         <span key={p} className="relative size-16 overflow-hidden rounded-sm">
                           <Image src={p} alt="" fill sizes="64px" className="object-cover" />
-                        </span>
-                      ))}
-                      {m.videos?.map((v) => (
-                        <span key={v.src} className="relative size-16 overflow-hidden rounded-sm">
-                          <Image src={v.poster} alt="Video" fill sizes="64px" className="object-cover" />
-                          <span className="absolute bottom-1 left-1 rounded-sm bg-neutral-900/70 px-1 text-caption text-inverse">{duration(v.seconds)}</span>
                         </span>
                       ))}
                     </div>
@@ -356,62 +336,8 @@ export default function BrandPage() {
         ) : (
           <p className="text-body-sm text-secondary">Add headshots and photos of you at work. Your manager uses them in posts.</p>
         )}
-        <p className="pt-3 text-caption text-secondary">{sectionRules.photos.label}.</p>
+        <p className="pt-3 text-caption text-secondary">{limits.photos.label}.</p>
       </Card>
-
-      <Card title="Videos" action={<Upload clientId={client.id} section="videos" />}>
-        {videos.length ? (
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {videos.map((f) => (
-              <li key={f.id} className="group relative">
-                <button type="button" onClick={() => setPlaying(f)} aria-label={`Play ${f.name}`} className="block w-full rounded-md focus-visible:focus-ring">
-                  <MediaThumb file={f} />
-                </button>
-                <span className="mt-1 block truncate text-caption text-secondary">{f.name}</span>
-                <button
-                  type="button"
-                  aria-label={`Remove ${f.name}`}
-                  onClick={() => removeFile(f)}
-                  className="absolute right-2 top-2 flex size-9 items-center justify-center rounded-full bg-card text-secondary shadow-sm transition-opacity hover:text-danger focus-visible:opacity-100 focus-visible:focus-ring sm:opacity-0 sm:group-hover:opacity-100"
-                >
-                  <Trash className="size-4" aria-hidden />
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-body-sm text-secondary">Clips of you talking, at events or at work. Your manager can use them in video posts.</p>
-        )}
-        <p className="pt-3 text-caption text-secondary">{sectionRules.videos.label}. LinkedIn&apos;s standard.</p>
-      </Card>
-
-      <Card title="Carousels" action={<Upload clientId={client.id} section="carousels" />}>
-        {carousels.length ? (
-          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {carousels.map((f) => (
-              <li key={f.id} className="group relative">
-                <MediaThumb file={f} />
-                <span className="mt-1 block truncate text-caption text-secondary">{f.name}</span>
-                <button
-                  type="button"
-                  aria-label={`Remove ${f.name}`}
-                  onClick={() => removeFile(f)}
-                  className="absolute right-2 top-2 flex size-9 items-center justify-center rounded-full bg-card text-secondary shadow-sm transition-opacity hover:text-danger focus-visible:opacity-100 focus-visible:focus-ring sm:opacity-0 sm:group-hover:opacity-100"
-                >
-                  <Trash className="size-4" aria-hidden />
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-body-sm text-secondary">Slides you already have, as a PDF, PowerPoint or Word file. LinkedIn shows them as pages people swipe.</p>
-        )}
-        <p className="pt-3 text-caption text-secondary">{sectionRules.carousels.label}.</p>
-      </Card>
-
-      <Dialog open={!!playing} onClose={() => setPlaying(null)} title={playing?.name ?? "Video"}>
-        {playing?.video && <VideoPlayer video={{ src: playing.src ?? "", poster: playing.video.poster, alt: playing.name, seconds: playing.video.seconds, shape: playing.video.shape }} />}
-      </Dialog>
 
       <Card title="Logos and colours" action={<Upload clientId={client.id} section="logos" />}>
         <div className="flex flex-col gap-4">
@@ -515,54 +441,31 @@ export default function BrandPage() {
           error={momentError}
         />
         <div className="flex flex-col items-start gap-2">
-          <span className="text-body-sm leading-5 font-medium text-primary">Photos or videos (optional, up to 4)</span>
+          <span className="text-body-sm leading-5 font-medium text-primary">Photos (optional, up to 4)</span>
           <input
             ref={momentFileRef}
             id="moment-photos"
             type="file"
             multiple
-            aria-label="Choose photos or videos"
-            accept={`${sectionRules.photos.accept},${sectionRules.videos.accept}`}
+            aria-label="Choose photos"
+            accept={limits.photos.types}
             className="sr-only"
             tabIndex={-1}
             onChange={async (e) => {
               const picked = Array.from(e.target.files ?? []);
               e.target.value = "";
-              if (momentPhotos.length + momentVideos.length + picked.length > 4) return setMomentError("Add up to 4 photos or videos. Remove one to add another.");
+              const bad = picked.map(photoProblem).find(Boolean);
+              if (bad) return setMomentError(bad);
+              if (momentPhotos.length + picked.length > 4) return setMomentError("Add up to 4 photos. Remove one to add another.");
               setMomentError(undefined);
-              try {
-                for (const f of picked) {
-                  const ready = await prepareUpload(f, f.type.startsWith("video/") ? "videos" : "photos");
-                  if (ready.video) setMomentVideos((list) => [...list, { src: ready.src!, poster: ready.video!.poster, seconds: ready.video!.seconds }]);
-                  else setMomentPhotos((list) => [...list, ready.src!]);
-                }
-              } catch (err) {
-                setMomentError((err as Error).message);
-              }
+              const added = await Promise.all(picked.map((f) => toImage(f, 1200)));
+              setMomentPhotos((list) => [...list, ...added]);
             }}
           />
-          <Button variant="secondary" size="sm" disabled={momentPhotos.length + momentVideos.length >= 4} onClick={() => momentFileRef.current?.click()}>
-            <UploadSimple className="size-4" aria-hidden /> Add photos or videos
+          <Button variant="secondary" size="sm" disabled={momentPhotos.length >= 4} onClick={() => momentFileRef.current?.click()}>
+            <UploadSimple className="size-4" aria-hidden /> Add photos
           </Button>
-          <span className="text-caption text-secondary">Photos: {sectionRules.photos.label}. Videos: {sectionRules.videos.label}.</span>
-          {momentVideos.length > 0 && (
-            <ul className="flex flex-wrap gap-2">
-              {momentVideos.map((v, i) => (
-                <li key={v.src} className="relative size-16 overflow-hidden rounded-sm">
-                  <Image src={v.poster} alt={`Video ${i + 1}`} fill sizes="64px" className="object-cover" />
-                  <span className="absolute bottom-1 left-1 rounded-sm bg-neutral-900/70 px-1 text-caption text-inverse">{duration(v.seconds)}</span>
-                  <button
-                    type="button"
-                    aria-label={`Remove video ${i + 1}`}
-                    onClick={() => setMomentVideos((list) => list.filter((_, j) => j !== i))}
-                    className="absolute right-1 top-1 flex size-6 items-center justify-center rounded-full bg-card text-secondary shadow-sm hover:text-danger focus-visible:focus-ring"
-                  >
-                    <X className="size-3" aria-hidden />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+          <span className="text-caption text-secondary">{limits.photos.label}.</span>
           {momentPhotos.length > 0 && (
             <ul className="flex flex-wrap gap-2">
               {momentPhotos.map((src, i) => (
@@ -589,10 +492,9 @@ export default function BrandPage() {
             loading={pending("moment")}
             onClick={async () => {
               if (!momentNote.trim()) return setMomentError("Write a short note, so your manager knows what you want.");
-              if (await run("moment", () => act.addMoment(client.id, momentNote.trim(), momentPhotos, momentVideos), "Sent to your manager. They will reply in Messages.")) {
+              if (await run("moment", () => act.addMoment(client.id, momentNote.trim(), momentPhotos), "Sent to your manager. They will reply in Messages.")) {
                 setMomentNote("");
                 setMomentPhotos([]);
-                setMomentVideos([]);
                 setMomentOpen(false);
               }
             }}

@@ -119,10 +119,9 @@ export default function StrategyPage() {
                     <span className="text-body font-medium text-primary">{t.period}</span>
                     {t.extra && <span className="text-caption text-secondary">{t.extra}</span>}
                   </span>
-                  <dl className={`grid shrink-0 gap-6 ${t.videos ? "grid-cols-4" : "grid-cols-3"}`}>
+                  <dl className="grid shrink-0 grid-cols-3 gap-6">
                     {[
                       { label: "Posts", value: t.posts },
-                      ...(t.videos ? [{ label: "Videos", value: t.videos }] : []),
                       { label: "Comments", value: t.comments },
                       { label: "Connections", value: t.connections },
                     ].map((n) => (

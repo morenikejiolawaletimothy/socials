@@ -1,9 +1,8 @@
 "use client";
 
-import { CaretLeft, CaretRight, CornersOut, FilePpt, Pause, Play, SkipBack, SpeakerHigh, SpeakerSlash, Stack, TextAlignLeft, X } from "@phosphor-icons/react";
+import { CaretLeft, CaretRight, CornersOut, Pause, Play, SkipBack, SpeakerHigh, SpeakerSlash, Stack, TextAlignLeft, X } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { useMediaSrc } from "@/lib/media";
 import type { Post } from "@/lib/mock";
 
 /** "0:09", "2:05". */
@@ -18,7 +17,7 @@ const barButton = "flex size-8 shrink-0 items-center justify-center rounded-sm t
 /** A post's media, full width, the way LinkedIn shows it: an image, a video, or a document carousel. Nothing for text posts. */
 export function PostMedia({ post }: { post: Post }) {
   if (post.video) return <VideoPlayer video={post.video} />;
-  if (post.carousel) return post.carousel.slides.length ? <DocumentCarousel carousel={post.carousel} /> : <DocumentFile carousel={post.carousel} />;
+  if (post.carousel) return <DocumentCarousel carousel={post.carousel} />;
   if (post.image) {
     return (
       <div className="relative aspect-video w-full overflow-hidden rounded-md bg-neutral-100">
@@ -27,24 +26,6 @@ export function PostMedia({ post }: { post: Post }) {
     );
   }
   return null;
-}
-
-/** A PowerPoint or Word carousel: no page preview here, LinkedIn turns it into pages when it posts. */
-function DocumentFile({ carousel }: { carousel: NonNullable<Post["carousel"]> }) {
-  return (
-    <div className="flex items-center gap-4 rounded-md border border-border bg-neutral-25 p-4">
-      <span className="flex size-12 shrink-0 items-center justify-center rounded-md bg-primary-50">
-        <FilePpt className="size-6 text-primary-600" aria-hidden />
-      </span>
-      <span className="flex min-w-0 flex-col gap-1">
-        <span className="truncate text-body font-medium text-primary">{carousel.title}</span>
-        <span className="text-body-sm text-secondary">
-          {carousel.file?.name}
-          {carousel.file?.pages ? `, ${carousel.file.pages} pages` : ""}. LinkedIn shows the pages once it is posted.
-        </span>
-      </span>
-    </div>
-  );
 }
 
 /* ---------- Video ---------- */
@@ -56,9 +37,7 @@ const shapes = { landscape: "aspect-video", portrait: "aspect-4/5", square: "asp
  * (not with reduced motion). Click the video to play or pause. The bar has play, back to start,
  * progress, time, sound and full screen.
  */
-export function VideoPlayer({ video }: { video: NonNullable<Post["video"]> }) {
-  // Uploaded clips live in the browser in Phase 1 ("idb:" sources); public files pass straight through.
-  const src = useMediaSrc(video.src);
+function VideoPlayer({ video }: { video: NonNullable<Post["video"]> }) {
   const box = useRef<HTMLDivElement>(null);
   const ref = useRef<HTMLVideoElement>(null);
   const [playing, setPlaying] = useState(false);
@@ -92,7 +71,6 @@ export function VideoPlayer({ video }: { video: NonNullable<Post["video"]> }) {
   return (
     <div ref={box} className={`group/video relative w-full overflow-hidden rounded-md bg-dark ${shapes[video.shape ?? "landscape"]}`}>
       <video
-        key={src}
         ref={ref}
         muted={muted}
         playsInline
@@ -107,7 +85,7 @@ export function VideoPlayer({ video }: { video: NonNullable<Post["video"]> }) {
         onLoadedMetadata={(e) => Number.isFinite(e.currentTarget.duration) && setLength(e.currentTarget.duration)}
         className="size-full cursor-pointer object-contain"
       >
-        {src && <source src={src} type="video/mp4" />}
+        <source src={video.src} type="video/mp4" />
       </video>
 
       {!playing && now === 0 && (
@@ -153,7 +131,7 @@ export function VideoPlayer({ video }: { video: NonNullable<Post["video"]> }) {
  * first page, round buttons to step through, and a button to open the pages full screen.
  * People can also swipe or scroll the row.
  */
-export function DocumentCarousel({ carousel }: { carousel: NonNullable<Post["carousel"]> }) {
+function DocumentCarousel({ carousel }: { carousel: NonNullable<Post["carousel"]> }) {
   const track = useRef<HTMLUListElement>(null);
   const [page, setPage] = useState(0);
   const [viewing, setViewing] = useState(false);

@@ -6,7 +6,6 @@ import { use, useState, type ReactNode } from "react";
 import { eventLength } from "@/components/client/HomeCards";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { VideoTask } from "@/components/client/VideoTask";
 import { Avatar, Badge, Banner, Breadcrumbs, Button, Card, Dialog, EmptyState, Input, Meta, ProgressBar, Textarea, TextButton, textActionClass, useTask, useToast } from "@/components/ui";
 import { agoIn, day, dayIn, time } from "@/lib/format";
 import { act, useMyClient, type Person, type QuickTask } from "@/lib/mock";
@@ -74,13 +73,7 @@ function PersonRow({ task, person }: { task: QuickTask; person: Person }) {
             >
               Save note
             </Button>
-            <Button
-              variant="cancel"
-              onClick={() => {
-                setNote(person.note);
-                setEditing(false);
-              }}
-            >
+            <Button variant="cancel" onClick={() => { setNote(person.note); setEditing(false); }}>
               Cancel
             </Button>
           </div>
@@ -98,7 +91,7 @@ function PersonRow({ task, person }: { task: QuickTask; person: Person }) {
           <TextButton
             onClick={async () => {
               await copy(person.note);
-              toast('Note copied. Paste it into LinkedIn\'s "Add a note".');
+              toast("Note copied. Paste it into LinkedIn's \"Add a note\".");
             }}
           >
             <Copy className="size-4" aria-hidden /> Copy note
@@ -209,30 +202,24 @@ export default function TaskPage({ params }: { params: Promise<{ id: string }> }
       >
         <div className="flex flex-col gap-4">
           <Banner tone="info" closeKey={`task-note-${task.kind}`}>
-            {task.kind === "video"
-              ? `${managerUser?.firstName ?? "Your manager"} would like a short video from you. Record it on your phone using the guide below, then upload it here. It goes to your manager and into Your brand.`
-              : task.kind === "event"
-                ? `${managerUser?.firstName ?? "Your manager"} picked this for you. Open the ${task.event?.type === "program" ? "program" : "event"} page, register, then mark it as registered here so we can plan posts around it.`
-                : `LinkedIn only lets you do this yourself, so ${managerUser?.firstName ?? "your manager"} has prepared everything. `}
+            {task.kind === "event"
+              ? `${managerUser?.firstName ?? "Your manager"} picked this for you. Open the ${task.event?.type === "program" ? "program" : "event"} page, register, then mark it as registered here so we can plan posts around it.`
+              : `LinkedIn only lets you do this yourself, so ${managerUser?.firstName ?? "your manager"} has prepared everything. `}
             {task.kind === "connect" && "Open each profile, press Connect, then \u201cAdd a note\u201d, paste the note and send. Then mark it as sent here. About 30 seconds a person."}
             {task.kind === "profile" && "Copy the text, paste it where shown, then mark it as done. About a minute."}
           </Banner>
 
           <div className="flex flex-col gap-2">
             <span className="text-body-sm text-secondary">
-              {task.kind === "video"
-                ? task.done
-                  ? "Video sent"
-                  : "Not recorded yet"
-                : task.kind === "connect"
-                  ? `${sent} of ${total} sent`
-                  : task.kind === "event"
-                    ? task.done
-                      ? "Registered"
-                      : "Not registered yet"
-                    : task.done
-                      ? "Done"
-                      : "Copy and paste in a minute"}{" "}
+              {task.kind === "connect"
+                ? `${sent} of ${total} sent`
+                : task.kind === "event"
+                  ? task.done
+                    ? "Registered"
+                    : "Not registered yet"
+                  : task.done
+                    ? "Done"
+                    : "Copy and paste in a minute"}{" "}
               · Assigned {agoIn(task.sentAt)}
             </span>
             {task.kind === "connect" && (
@@ -241,8 +228,6 @@ export default function TaskPage({ params }: { params: Promise<{ id: string }> }
               </span>
             )}
           </div>
-
-          {task.kind === "video" && task.video && <VideoTask task={task} />}
 
           {task.kind === "connect" && (
             <ul className="flex flex-col gap-3">
@@ -330,34 +315,20 @@ export default function TaskPage({ params }: { params: Promise<{ id: string }> }
         </div>
       </Card>
 
-      {task.kind !== "video" && (
-        <Card title="Someone does this for you?">
-          <div className="flex flex-col gap-4">
-            <p className="text-body-sm text-secondary">
-              {task.kind === "event"
-                ? "Send the details to your assistant so they can register you. They do not need an account."
-                : "Send the list and notes to your assistant. They do not need an account."}
-            </p>
-            <Button className="self-start" onClick={() => setAssistant(true)}>
-              Send to my assistant
-            </Button>
-          </div>
-        </Card>
-      )}
+      <Card title="Someone does this for you?">
+        <div className="flex flex-col gap-4">
+          <p className="text-body-sm text-secondary">
+            {task.kind === "event" ? "Send the details to your assistant so they can register you. They do not need an account." : "Send the list and notes to your assistant. They do not need an account."}
+          </p>
+          <Button className="self-start" onClick={() => setAssistant(true)}>
+            Send to my assistant
+          </Button>
+        </div>
+      </Card>
 
       <Dialog open={assistant} onClose={() => setAssistant(false)} title="Send to your assistant">
         <Banner tone="info">We email them the list, the notes and how to send each one. You still mark them as sent here, or they reply to us.</Banner>
-        <Input
-          label="Their email"
-          type="email"
-          value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            setEmailError(undefined);
-          }}
-          error={emailError}
-          placeholder="name@company.com"
-        />
+        <Input label="Their email" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setEmailError(undefined); }} error={emailError} placeholder="name@company.com" />
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Button variant="ghost" onClick={() => setAssistant(false)}>
             Cancel
