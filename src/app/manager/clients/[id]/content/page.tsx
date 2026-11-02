@@ -1,17 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { CheckCircle, Clock, Sparkle, Trash, WarningCircle } from "@phosphor-icons/react";
+import { CheckCircle, Clock, Image as ImageIcon, Sparkle, Trash, WarningCircle } from "@phosphor-icons/react";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, use, useState } from "react";
+import { Suspense, use, useRef, useState } from "react";
 import { PostAgainDialog } from "@/components/content/PostAgainDialog";
 import { PostPreview, RepostNote } from "@/components/content/PostPreview";
 import { plainText } from "@/components/content/PostText";
 import { Columns } from "@/components/layout/Columns";
-import { PostMediaEditor, mediaChecks } from "@/components/manager/PostMediaEditor";
 import { OffLimitsBox } from "@/components/manager/ClientTabs";
 import { rails } from "@/components/rails";
 import { Badge, Banner, Breadcrumbs, Button, Dialog, EmptyState, Card, Input, Menu, Tabs, Textarea, useConfirm, useTask, useToast, buttonClass } from "@/components/ui";
+import { fileSize, photoProblem, toImage } from "@/lib/image";
 import { ago, agoIn, dayTime, dayTimeIn, fullName, time } from "@/lib/format";
 import { act, clientBundle, useMyManager, type ClientBundle, type Post } from "@/lib/mock";
 
@@ -21,7 +22,6 @@ type Tab = "ideas" | "drafts" | "changes" | "client" | "schedule" | "scheduled" 
 const firstIdeas: { title: string; reason: string; format: Post["format"] }[] = [
   { title: "What the mobile money report gets wrong about settlement", reason: "Signal: the central bank report, and 3 investors on the list wrote about it. Fits topic 1.", format: "opinion" },
   { title: "The question from the student at Lagos Fintech Week", reason: "Moment the client added, with photos. Event posts do best within a week.", format: "story" },
-  { title: "60 seconds on the question the student asked at Lagos Fintech Week", reason: "Strategy: 1 short video a week. Video from a recent event does well, and they have the video add-on.", format: "video" },
   { title: "5 questions to ask a payments partner before you sign", reason: "Goal: investor and partner conversations. How-to posts got saves last month.", format: "how-to" },
   { title: "Our first Ghana merchants, one year on", reason: "Past preference: the client approved every customer story so far.", format: "story" },
 ];
@@ -37,6 +37,53 @@ const nextWeekday9 = (days: number) => {
   return d.toISOString();
 };
 
+/** Pick a visual from the client's Brand photos. */
+function VisualPicker({ b, open, onClose, onPick }: { b: ClientBundle; open: boolean; onClose: () => void; onPick: (src: string, alt: string) => void }) {
+  const photos = b.files.filter((f) => f.section === "photos" && f.src);
+  const upload = useRef<HTMLInputElement>(null);
+  const toast = useToast();
+  const { run, pending } = useTask();
+  return (
+    <Dialog open={open} onClose={onClose} title="Choose a visual">
+      <p className="text-body-sm text-secondary">From {b.user?.firstName}&apos;s Brand. A photo you upload is saved there too, so they can see it.</p>
+      <input
+        ref={upload}
+        type="file"
+        aria-label="Choose a photo to upload"
+        accept="image/png,image/jpeg,image/webp"
+        className="sr-only"
+        tabIndex={-1}
+        onChange={async (e) => {
+          const f = e.target.files?.[0];
+          e.target.value = "";
+          if (!f) return;
+          const problem = photoProblem(f);
+          if (problem) return toast(problem, "danger");
+          let src = "";
+          if (await run("upload", async () => act.addBrandFile(b.client!.id, "photos", f.name, fileSize(f.size), (src = await toImage(f))), "Photo saved to their Brand.")) onPick(src, f.name.replace(/[-_]/g, " ").replace(/\.\w+$/, ""));
+        }}
+      />
+      <Button variant="secondary" className="self-start" loading={pending("upload")} onClick={() => upload.current?.click()}>
+        {pending("upload") ? "Uploading" : "Upload a photo"}
+      </Button>
+      <ul className="grid grid-cols-3 gap-2">
+        {photos.map((f) => (
+          <li key={f.id}>
+            <button
+              type="button"
+              onClick={() => onPick(f.src!, f.name.replace(/[-_]/g, " ").replace(/\.\w+$/, ""))}
+              className="relative block aspect-square w-full overflow-hidden rounded-md focus-visible:focus-ring"
+            >
+              <Image src={f.src!} alt={f.name} fill sizes="120px" className="object-cover transition-transform hover:scale-105" />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </Dialog>
+  );
+}
+
+/** M4 one draft: direct it, edit it, see versions and checks, then send to the client with a why-note and due time. */
 function DraftEditor({ post, b }: { post: Post; b: ClientBundle }) {
   const toast = useToast();
   const confirm = useConfirm();
@@ -45,10 +92,11 @@ function DraftEditor({ post, b }: { post: Post; b: ClientBundle }) {
   const [direction, setDirection] = useState("");
   const [why, setWhy] = useState(post.why);
   const [version, setVersion] = useState(post.version ?? 1);
+  const [picking, setPicking] = useState(false);
   const [dismissing, setDismissing] = useState<string | null>(null);
   const [dismissReason, setDismissReason] = useState("");
   const open = (post.checks ?? []).filter((k) => k.state === "open");
-  const blocked = open.length > 0 || mediaChecks(post).length > 0;
+  const blocked = open.length > 0;
   const dirty = text !== post.text || why !== post.why;
   const first = b.user?.firstName ?? "the client";
 
@@ -120,7 +168,58 @@ function DraftEditor({ post, b }: { post: Post; b: ClientBundle }) {
         </Button>
       </form>
 
-      <PostMediaEditor post={post} b={b} />
+      {post.repostOf?.reshare ? (
+        <p className="text-caption text-secondary">A reshare carries the original post, so it takes no visual of its own.</p>
+      ) : (
+        <div className="flex items-start gap-3 rounded-md bg-neutral-25 p-4">
+          {post.image ? (
+            <span className="relative size-16 shrink-0 overflow-hidden rounded-sm">
+              <Image src={post.image.src} alt={post.image.alt} fill sizes="64px" className="object-cover" />
+            </span>
+          ) : (
+            <ImageIcon className="mt-0.5 size-5 shrink-0 text-primary-600" aria-hidden />
+          )}
+          <div className="flex flex-1 flex-col gap-1">
+            <span className="text-body font-semibold text-primary">Visual</span>
+            <span className="text-body-sm text-secondary">
+              {post.image
+                ? `Attached: ${post.image.alt}.`
+                : "Suggested: the stage photo from the client's Brand, or text on a brand-coloured card. A quote card from the template library would also work."}
+            </span>
+            <span className="flex gap-4">
+              <button type="button" onClick={() => setPicking(true)} className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring">
+                {post.image ? "Change visual" : "Add a visual"}
+              </button>
+              {post.image && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    confirm({
+                      title: "Remove the visual?",
+                      body: "The post goes out as text only, unless you add another.",
+                      confirmLabel: "Remove",
+                      action: () => act.setPostStatus(post.id, post.status, { image: undefined }),
+                      success: "Visual removed.",
+                    })
+                  }
+                  className="rounded-sm text-body-sm font-medium text-primary-600 hover:underline focus-visible:focus-ring"
+                >
+                  Remove
+                </button>
+              )}
+            </span>
+          </div>
+        </div>
+      )}
+      <VisualPicker
+        b={b}
+        open={picking}
+        onClose={() => setPicking(false)}
+        onPick={async (src, alt) => {
+          setPicking(false);
+          await run("visual", () => act.setPostStatus(post.id, post.status, { image: { src, alt } }), "Visual attached.");
+        }}
+      />
 
       {(post.checks ?? []).length > 0 && (
         <ul className="flex flex-col gap-2">
@@ -474,7 +573,7 @@ function LiveActions({ post, b, onDraft }: { post: Post; b: ClientBundle; onDraf
   const replace = () =>
     confirm({
       title: "Take it down and replace it?",
-      body: `Use this when more than the text must change, such as the image, carousel or video. The post comes off LinkedIn now and an editable copy goes to Drafts. ${first} reviews the new version before it goes out.`,
+      body: `Use this when more than the text must change, such as the image. The post comes off LinkedIn now and an editable copy goes to Drafts. ${first} reviews the new version before it goes out.`,
       warning: "The reactions and comments on the live post are lost. This cannot be undone.",
       confirmLabel: "Take down and replace",
       tone: "danger",
@@ -599,7 +698,7 @@ function LiveActions({ post, b, onDraft }: { post: Post; b: ClientBundle; onDraf
           trigger={<span className="px-4 text-body-sm font-medium text-primary-700">More</span>}
           triggerClassName="flex min-h-11 items-center rounded-md hover:bg-primary-50 focus-visible:focus-ring"
           items={[
-            { label: "Replace post (new image, carousel or video)", onSelect: replace },
+            { label: "Replace post (new image)", onSelect: replace },
             { label: "Take it down", onSelect: takeDown },
             ...(req ? [{ label: "Close request without changes", onSelect: () => setClosing(true) }] : []),
           ]}

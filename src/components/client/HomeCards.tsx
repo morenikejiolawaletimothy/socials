@@ -11,10 +11,9 @@ import { callTitle, upcomingCalls } from "@/components/rails/NextCallCard";
 import { Avatar, Badge, Banner, Button, buttonClass, Card, Meta, Pill, ProgressBar, Select, TextButton, textActionClass, Tile, TileAction, TileFooter, TileIcon, useToast } from "@/components/ui";
 import { isOverdue } from "@/lib/status";
 import { ago, agoIn, date, day, dayIn, dayTime, dayTimeIn, daysFrom, fullName, money, plural, time } from "@/lib/format";
-import { useData, type ClientBundle, type Post, type QuickTask, type TaskEvent } from "@/lib/mock";
+import type { ClientBundle, Post, QuickTask, TaskEvent } from "@/lib/mock";
 import { LivePostActions } from "./LivePostActions";
 import { PayDialog } from "./PayDialog";
-import { monthlyTotal } from "./VideoAddon";
 import { reportActivity } from "./reportActivity";
 import { nextSetupStep, setupSteps } from "./setup";
 
@@ -27,7 +26,6 @@ const buttonLink = (primary: boolean) => `self-start ${buttonClass(primary ? "pr
 export function PausedCard({ b }: { b: ClientBundle }) {
   const toast = useToast();
   const [paying, setPaying] = useState(false);
-  const addonCents = useData().settings.videoAddonCents;
   const { client, contract, posts } = b;
   if (client?.status !== "paused") return null;
   const daysPaused = client.pausedAt ? -daysFrom(client.pausedAt) : 0;
@@ -43,7 +41,7 @@ export function PausedCard({ b }: { b: ClientBundle }) {
         <ul className="flex flex-col gap-2 text-body-sm text-secondary">
           <li>Paused for {plural(daysPaused, "day")}.</li>
           <li>{waiting ? `Waiting for you: ${plural(waiting, "post")}, your strategy and your settings.` : "Your strategy, brand and settings are kept."} Nothing is lost.</li>
-          {contract && <li>Amount due: {money(monthlyTotal(contract, addonCents))} for month 1.</li>}
+          {contract && <li>Amount due: {money(contract.monthlyCents)} for month 1.</li>}
         </ul>
         {daysPaused >= 15 && (
           <Banner tone="warning" title="Your account will be removed in 30 days">
@@ -60,7 +58,7 @@ export function PausedCard({ b }: { b: ClientBundle }) {
           onClose={() => setPaying(false)}
           onPaid={() => toast("Your account is active again. Scheduled posts are back on.")}
           clientId={client.id}
-          amountCents={monthlyTotal(contract, addonCents)}
+          amountCents={contract.monthlyCents}
         />
       )}
     </Card>
@@ -89,12 +87,19 @@ export function StateBanners({ b }: { b: ClientBundle }) {
           If we have not received payment by {date(contract.freeEndsAt)}, your account pauses until you pay. You can pull out any time.
         </Banner>
       )}
-      {client.status === "free" && contract && (contract.paid || daysLeft > 5) && (
-        <Banner tone="info" title={`Your first 2 weeks are free, until ${date(contract.freeEndsAt)}`}>
-          {contract.paid ? "You have paid already, so nothing changes when they end." : "You get the full service. We will remind you before they end."}
-        </Banner>
-      )}
+      {client.status === "free" && contract && (contract.paid || daysLeft > 5) && !showsCallsCard(client) && <FreeWeeksNote b={b} />}
     </>
+  );
+}
+
+/** The free 2 weeks note. Sits at the top of Your two calls while that card shows, otherwise with the state banners. */
+function FreeWeeksNote({ b }: { b: ClientBundle }) {
+  const { client, contract } = b;
+  if (client?.status !== "free" || !contract || (!contract.paid && daysFrom(contract.freeEndsAt) <= 5)) return null;
+  return (
+    <Banner tone="info" title={`Your first 2 weeks are free, until ${date(contract.freeEndsAt)}`}>
+      {contract.paid ? "You have paid already, so nothing changes when they end." : "You get the full service. We will remind you before they end."}
+    </Banner>
   );
 }
 
@@ -108,6 +113,7 @@ export function SetupCard({ b }: { b: ClientBundle }) {
   return (
     <Card title="Account setup">
       <div className="flex flex-col gap-6">
+        <Banner tone="info">Do it now or come back later. We save your progress and remind you by email.</Banner>
         <div className="flex flex-col gap-2">
           <span className="flex items-center justify-between text-body-sm">
             <span className="text-primary">{client.setupProgress}% done</span>
@@ -133,7 +139,6 @@ export function SetupCard({ b }: { b: ClientBundle }) {
             Continue setup
           </Link>
         )}
-        <p className="text-body-sm text-secondary">Do it now or come back later. We save your progress and remind you by email.</p>
       </div>
     </Card>
   );
@@ -147,14 +152,18 @@ const callInfo = {
   "check-in": { name: "Check-in call", covers: "How things are going, and what to change." },
 };
 
+/** Your two calls shows after setup, until the account is running. */
+const showsCallsCard = (client: NonNullable<ClientBundle["client"]>) => client.stage !== "running" && client.status !== "setting-up" && client.status !== "paused";
+
 /** C1 after setup: the two booked calls with the manager. */
 export function CallsCard({ b }: { b: ClientBundle }) {
   const { client, calls, managerUser } = b;
-  if (!client || client.stage === "running" || client.status === "setting-up" || client.status === "paused") return null;
+  if (!client || !showsCallsCard(client)) return null;
   const intro = calls.filter((c) => c.kind !== "check-in");
   return (
     <Card title="Your two calls">
       <div className="flex flex-col gap-4">
+        <FreeWeeksNote b={b} />
         {managerUser && (
           <div className="flex items-start gap-3">
             <Avatar name={fullName(managerUser)} src={managerUser?.photo} size="md" />
@@ -167,34 +176,35 @@ export function CallsCard({ b }: { b: ClientBundle }) {
           {intro.map((c) => {
             const soon = c.status === "booked" && Math.abs(new Date(c.at).getTime() - Date.now()) < 3_600_000 * 6 && day(c.at) === "Today";
             return (
-              <li key={c.id} className="flex flex-col gap-3 rounded-md border border-border p-4 sm:flex-row sm:items-start">
-                <div className="flex size-12 shrink-0 flex-col items-center justify-center rounded-md bg-primary-50 text-primary-700">
-                  <CalendarBlank className="size-5" aria-hidden />
-                </div>
-                <div className="flex flex-1 flex-col gap-1">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="text-body font-medium text-primary">{callInfo[c.kind].name}</span>
-                    {c.status === "done" && <span className="text-caption text-success">Done</span>}
-                  </span>
-                  <span className="text-body-sm text-primary">{dayTime(c.at)}</span>
-                  <span className="text-body-sm text-secondary">{c.status === "done" ? c.summary : callInfo[c.kind].covers}</span>
-                  {c.status === "booked" && (
-                    <span className="mt-1 flex flex-wrap gap-4">
-                      {soon ? (
+              <li key={c.id}>
+                <Tile done={c.status === "done"}>
+                  <div className="flex items-start gap-4">
+                    <span className="flex size-12 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700">
+                      <VideoCamera className="size-5" aria-hidden />
+                    </span>
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      <span className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-body font-medium text-primary">{callInfo[c.kind].name}</span>
+                        {c.status === "done" && <Badge status="success">Done</Badge>}
+                      </span>
+                      <span className="text-body-sm text-secondary">{c.status === "done" ? c.summary : callInfo[c.kind].covers}</span>
+                      {c.status === "booked" && <span className="text-caption text-secondary">{c.recording ? "Recorded with your consent" : "Not recorded. Your manager takes notes."}</span>}
+                    </div>
+                  </div>
+                  <TileFooter>
+                    <Meta icon={CalendarBlank}>{dayTime(c.at)}</Meta>
+                    {c.status === "booked" &&
+                      (soon ? (
                         <a href={c.meetUrl} className={linkClass}>
-                          <span className="inline-flex items-center gap-1">
-                            <VideoCamera className="size-4" aria-hidden /> Join the call
-                          </span>
+                          Join the call
                         </a>
                       ) : (
                         <Link href="/setup/calls" className={linkClass}>
                           Reschedule
                         </Link>
-                      )}
-                      <span className="text-caption text-secondary">{c.recording ? "Recorded with your consent" : "Not recorded. Your manager takes notes."}</span>
-                    </span>
-                  )}
-                </div>
+                      ))}
+                  </TileFooter>
+                </Tile>
               </li>
             );
           })}
@@ -244,7 +254,6 @@ export function eventLength(e: TaskEvent) {
 function TaskIcon({ t, className }: { t: QuickTask; className: string }) {
   if (t.kind === "connect") return <UserPlus className={className} aria-hidden />;
   if (t.kind === "event") return t.event?.type === "program" ? <GraduationCap className={className} aria-hidden /> : <CalendarStar className={className} aria-hidden />;
-  if (t.kind === "video") return <VideoCamera className={className} aria-hidden />;
   return <LinkedinLogo className={className} aria-hidden />;
 }
 
@@ -272,7 +281,6 @@ function TaskVisual({ t }: { t: QuickTask }) {
 function taskStatus(t: QuickTask) {
   if (t.kind === "connect") return `${t.people?.filter((p) => p.done).length ?? 0} of ${t.people?.length ?? 0} sent`;
   if (t.kind === "event" && t.event) return `${t.event.type === "program" ? "Program" : "Event"} ${dayIn(t.event.startsAt)} · ${t.event.place}`;
-  if (t.kind === "video" && t.video) return `${t.video.idea}. ${t.video.length}`;
   return "Copy and paste in a minute";
 }
 
@@ -312,7 +320,7 @@ export function TasksCard({ b }: { b: ClientBundle }) {
                   <Meta icon={CalendarBlank}>
                     {t.kind === "event" ? "Closing by" : "Due"} {dayIn(t.dueAt)}
                   </Meta>
-                  <TileAction>{t.kind === "event" ? (t.event?.type === "program" ? "Apply" : "Register") : t.kind === "video" ? "See what to record" : sent > 0 ? "Continue" : "Start"}</TileAction>
+                  <TileAction>{t.kind === "event" ? (t.event?.type === "program" ? "Apply" : "Register") : sent > 0 ? "Continue" : "Start"}</TileAction>
                 </TileFooter>
               </Tile>
             </li>

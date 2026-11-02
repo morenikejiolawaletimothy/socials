@@ -453,13 +453,11 @@ export async function saveFileToBrand(messageId: string) {
   update((db) => {
     const m = db.messages.find((x) => x.id === messageId);
     if (!m?.file) return db;
-    const f = m.file;
-    const section = f.kind === "image" ? "photos" : f.kind === "video" ? "videos" : "documents";
-    const video = f.kind === "video" && f.poster ? { poster: f.poster, seconds: f.seconds ?? 0, shape: "landscape" as const } : undefined;
+    const section = m.file.kind === "image" ? "photos" : "documents";
     return {
       ...db,
       messages: db.messages.map((x) => (x.id === messageId ? { ...x, savedToBrand: true } : x)),
-      brandFiles: [{ id: id("b"), clientId: m.clientId, section, name: f.name, src: f.src, size: f.size, at: nowIso(), video }, ...db.brandFiles],
+      brandFiles: [{ id: id("b"), clientId: m.clientId, section, name: m.file.name, src: m.file.src, size: m.file.size, at: nowIso() }, ...db.brandFiles],
     };
   });
 }
@@ -595,10 +593,10 @@ export async function setColours(clientId: string, colours: string[]) {
   update((db) => ({ ...db, brands: withBrand(db, clientId).map((b) => (b.clientId === clientId ? { ...b, colours } : b)) }));
 }
 
-export async function addMoment(clientId: string, note: string, photos: string[], videos: NonNullable<Db["moments"][number]["videos"]> = []) {
+export async function addMoment(clientId: string, note: string, photos: string[]) {
   await delay(600);
   update((db) => {
-    const next: Db = { ...db, moments: [{ id: id("mo"), clientId, note, photos, videos, at: nowIso(), status: "new" }, ...db.moments] };
+    const next: Db = { ...db, moments: [{ id: id("mo"), clientId, note, photos, at: nowIso(), status: "new" }, ...db.moments] };
     return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} added a new Moment.`, `/manager/clients/${clientId}?tab=brand`);
   });
 }
@@ -608,101 +606,14 @@ export async function deleteMoment(momentId: string) {
   update((db) => ({ ...db, moments: db.moments.filter((m) => m.id !== momentId) }));
 }
 
-type BrandFileExtra = Pick<Db["brandFiles"][number], "video" | "carousel" | "addedBy">;
-
-/** Adds a file to the client's Brand. Returns its id, so a draft or a quick task can point to it. */
-export async function addBrandFile(clientId: string, section: Db["brandFiles"][number]["section"], name: string, size: string, src?: string, extra: BrandFileExtra = {}) {
+export async function addBrandFile(clientId: string, section: "photos" | "logos" | "documents", name: string, size: string, src?: string) {
   await delay(900);
-  const fileId = id("b");
-  update((db) => {
-    const next: Db = { ...db, brandFiles: [{ id: fileId, clientId, section, name, size, src, at: nowIso(), ...extra }, ...db.brandFiles] };
-    // The manager hears about new videos and carousels from the client: they are content to plan around.
-    if (extra.addedBy === "client" && (section === "videos" || section === "carousels"))
-      return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} added a ${section === "videos" ? "video" : "carousel"} to their Brand: ${name}.`, `/manager/clients/${clientId}?tab=brand`);
-    return next;
-  });
-  return fileId;
+  update((db) => ({ ...db, brandFiles: [{ id: id("b"), clientId, section, name, size, src, at: nowIso() }, ...db.brandFiles] }));
 }
 
 export async function removeBrandFile(fileId: string) {
   await delay();
   update((db) => ({ ...db, brandFiles: db.brandFiles.filter((f) => f.id !== fileId) }));
-}
-
-/* ---------- Media: posts, video requests, video add-on ---------- */
-
-type PostMedia = Pick<Db["posts"][number], "image" | "video" | "carousel">;
-
-/** Sets a post's media. A post has one of image, video or carousel; null removes it. */
-export async function setPostMedia(postId: string, media: PostMedia | null) {
-  await delay();
-  update((db) => setPost(db, postId, { image: media?.image, video: media?.video, carousel: media?.carousel, waitingForVideo: media?.video ? undefined : db.posts.find((p) => p.id === postId)?.waitingForVideo }));
-}
-
-/**
- * M4: asks the client to record a short video (quick task C17), with a brief the system suggested and the
- * manager edited. Optionally linked to a draft that waits for the clip.
- */
-export async function requestVideo(clientId: string, brief: Db["tasks"][number]["video"] & object, dueAt: string) {
-  await delay(700);
-  const taskId = id("t");
-  update((db) => {
-    let next: Db = { ...db, tasks: [{ id: taskId, clientId, kind: "video", title: "Record a short video", dueAt, done: false, sentAt: nowIso(), video: brief }, ...db.tasks] };
-    if (brief.postId) next = setPost(next, brief.postId, { waitingForVideo: taskId, format: "video" });
-    next = log(next, clientId, "team", "post", `Asked you for a short video: ${brief.idea}`);
-    return notify(next, clientUser(db, clientId)?.id, `${managerUserOf(db, clientId)?.firstName ?? "Your manager"} asked you for a short video: ${brief.idea}.`, `/tasks/${taskId}`, { email: true });
-  });
-  return taskId;
-}
-
-export async function updateVideoBrief(taskId: string, brief: NonNullable<Db["tasks"][number]["video"]>) {
-  await delay();
-  update((db) => {
-    const t = db.tasks.find((x) => x.id === taskId);
-    const next = { ...db, tasks: db.tasks.map((x) => (x.id === taskId ? { ...x, video: brief } : x)) };
-    return t ? notify(next, clientUser(db, t.clientId)?.id, "Your manager updated what to record for your video.", `/tasks/${taskId}`) : next;
-  });
-}
-
-export async function withdrawVideoRequest(taskId: string) {
-  await delay();
-  update((db) => {
-    const t = db.tasks.find((x) => x.id === taskId);
-    let next: Db = { ...db, tasks: db.tasks.filter((x) => x.id !== taskId) };
-    if (t?.video?.postId) next = setPost(next, t.video.postId, { waitingForVideo: undefined });
-    return t ? notify(next, clientUser(db, t.clientId)?.id, "Your manager withdrew a video request. Nothing to record.", "/home") : next;
-  });
-}
-
-/** C17: the client's clip arrives. It goes to their Brand, onto the waiting draft, and the manager is told. */
-export async function submitVideo(taskId: string, fileId: string) {
-  await delay(600);
-  update((db) => {
-    const t = db.tasks.find((x) => x.id === taskId);
-    const f = db.brandFiles.find((x) => x.id === fileId);
-    if (!t || !f?.video) return db;
-    let next: Db = { ...db, tasks: db.tasks.map((x) => (x.id === taskId ? { ...x, done: true, video: x.video && { ...x.video, fileId } } : x)) };
-    if (t.video?.postId)
-      next = setPost(next, t.video.postId, { waitingForVideo: undefined, video: { src: f.src!, poster: f.video.poster, alt: t.video.idea, seconds: f.video.seconds, shape: f.video.shape, fileId } });
-    next = log(next, t.clientId, "you", "post", `Sent your video: ${t.video?.idea ?? f.name}`);
-    return notify(next, managerUserOf(db, t.clientId)?.id, `${clientUser(db, t.clientId)?.firstName} sent their video: ${t.video?.idea ?? f.name}.`, `/manager/clients/${t.clientId}/content?tab=drafts`, { urgent: true });
-  });
-}
-
-/** C4 and C13: turns the video add-on on (with who makes the videos) or off. Billed with the plan. */
-export async function setVideoAddon(clientId: string, maker: "client" | "bluecut" | "both" | null) {
-  await delay(700);
-  update((db) => {
-    let next: Db = { ...db, contracts: db.contracts.map((k) => (k.clientId === clientId ? { ...k, videoAddon: maker ? { maker, since: k.videoAddon?.since ?? nowIso() } : undefined } : k)) };
-    const who = nameOf(clientUser(db, clientId));
-    const what = maker
-      ? `added the video add-on (${maker === "client" ? "they supply the videos" : maker === "bluecut" ? "Bluecut makes the videos: agree the production and send a quote" : "both: agree the production and send a quote"})`
-      : "removed the video add-on";
-    next = notify(next, managerUserOf(db, clientId)?.id, `${who} ${what}.`, `/manager/clients/${clientId}`, { email: true });
-    next = notify(next, OWNER, `${who} ${what}.`, `/admin/clients/${clientId}`);
-    next = log(next, clientId, "you", "account", maker ? "Added the video add-on" : "Removed the video add-on");
-    return audit(next, maker ? "Added the video add-on" : "Removed the video add-on", who, "account", who);
-  });
 }
 
 /* ---------- Client: setup (C2 to C6) ---------- */
@@ -739,7 +650,7 @@ export async function bookCall(clientId: string, kind: "goals" | "strategy", at:
   await completeSetupStep(clientId, kind === "goals" ? "goals-call" : "strategy-call");
 }
 
-export async function signContract(clientId: string, months: 3 | 6 | 12, monthlyCents: number, signedName: string, videoAddon?: NonNullable<Db["contracts"][number]["videoAddon"]>["maker"]) {
+export async function signContract(clientId: string, months: 3 | 6 | 12, monthlyCents: number, signedName: string) {
   await delay(700);
   const DAY = 86_400_000;
   const now = Date.now();
@@ -760,13 +671,10 @@ export async function signContract(clientId: string, months: 3 | 6 | 12, monthly
           endsAt: new Date(now + 14 * DAY + months * 30 * DAY).toISOString(),
           status: "free",
           paid: false,
-          videoAddon: videoAddon ? { maker: videoAddon, since: nowIso() } : undefined,
         },
       ],
     };
-    const signed = notify(next, clientUser(db, clientId)?.id, `Your contract is signed. Your free 2 weeks have started.`, "/contract");
-    // The manager plans the video conversation for the goals call.
-    return videoAddon ? notify(signed, managerUserOf(db, clientId)?.id, `${nameOf(clientUser(db, clientId))} added the video add-on${videoAddon === "client" ? "" : " with Bluecut-made video"}. Talk about video on the goals call${videoAddon === "client" ? "" : ", then send a quote for production"}.`, `/manager/clients/${clientId}`) : signed;
+    return notify(next, clientUser(db, clientId)?.id, `Your contract is signed. Your free 2 weeks have started.`, "/contract");
   });
 }
 

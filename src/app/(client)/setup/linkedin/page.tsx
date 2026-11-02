@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle, LinkedinLogo, LockSimple, ShieldCheck } from "@phosphor-icons/react";
+import { Check, CheckCircle, LinkedinLogo, LockSimple, ShieldCheck } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
@@ -11,9 +11,9 @@ import { fullName } from "@/lib/format";
 import { act, useMyClient } from "@/lib/mock";
 
 const why = [
-  { icon: CheckCircle, text: "We publish the posts you approve, and engage with the right people for you." },
-  { icon: ShieldCheck, text: "Nothing happens without your say. You choose what we do, and you can pause or disconnect any time." },
-  { icon: LockSimple, text: "You sign in on LinkedIn itself. We never see or store your password." },
+  { icon: CheckCircle, title: "We post and engage for you", text: "We publish the posts you approve, and engage with the right people for you." },
+  { icon: ShieldCheck, title: "You stay in control", text: "Nothing happens without your say. You choose what we do, and you can pause or disconnect any time." },
+  { icon: LockSimple, title: "Your password stays private", text: "You sign in on LinkedIn itself. We never see or store your password." },
 ];
 
 /** C2 Connect LinkedIn, then choose what we do. The LinkedIn consent screen is mocked in Phase 1. */
@@ -30,11 +30,16 @@ function ConnectLinkedIn() {
     <SetupFrame title="Connect LinkedIn" step="Connect LinkedIn" steps={["Why we connect", "Sign in to LinkedIn", "What we do"]} current={step}>
       {step === 0 && (
         <div className="flex flex-col gap-6">
-          <ul className="flex flex-col gap-4">
+          <ul className="flex flex-col divide-y divide-border rounded-md border border-border">
             {why.map((w) => (
-              <li key={w.text} className="flex items-start gap-3">
-                <w.icon className="mt-0.5 size-6 shrink-0 text-primary-600" aria-hidden />
-                <span className="text-body text-primary">{w.text}</span>
+              <li key={w.title} className="flex items-start gap-4 p-4">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700">
+                  <w.icon className="size-5" aria-hidden />
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="text-body font-medium text-primary">{w.title}</span>
+                  <span className="text-body-sm text-secondary">{w.text}</span>
+                </span>
               </li>
             ))}
           </ul>
@@ -52,24 +57,28 @@ function ConnectLinkedIn() {
 
       {step === 1 && (
         <div className="flex flex-col gap-4">
-          <Card className="flex flex-col gap-6">
-            <div className="flex items-center justify-center gap-4">
-              <LinkedinLogo className="size-12 text-primary-600" aria-hidden />
-              <span className="text-display-lg text-secondary" aria-hidden>
-                +
-              </span>
-              <Image src="/brand/bluecut-mark.png" alt="" width={48} height={48} className="rounded-full" />
+          <Card padding="none" className="flex flex-col divide-y divide-border">
+            <div className="flex flex-col gap-4 p-6">
+              <div className="flex items-center gap-4">
+                <LinkedinLogo className="size-12 text-primary-600" aria-hidden />
+                <span className="text-display-lg text-secondary" aria-hidden>
+                  +
+                </span>
+                <Image src="/brand/bluecut-mark.png" alt="" width={48} height={48} className="rounded-full" />
+              </div>
+              <p className="text-body text-primary">
+                <span className="font-medium">Bluecut Socials</span> would like to access your LinkedIn account, {fullName(user)}.
+              </p>
             </div>
-            <p className="text-center text-body text-primary">
-              <span className="font-medium">Bluecut Socials</span> would like to access your LinkedIn account, {fullName(user)}.
-            </p>
-            <ul className="flex flex-col gap-2 text-body-sm text-primary">
-              <li>Use your name and photo</li>
-              <li>Create, change and delete posts for you</li>
-              <li>Comment and react on your behalf</li>
-              <li>See how your posts perform</li>
+            <ul className="flex flex-col gap-3 p-6 text-body-sm text-primary">
+              {["Use your name and photo", "Create, change and delete posts for you", "Comment and react on your behalf", "See how your posts perform"].map((item) => (
+                <li key={item} className="flex items-center gap-3">
+                  <Check className="size-5 shrink-0 text-primary-600" aria-hidden />
+                  {item}
+                </li>
+              ))}
             </ul>
-            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <div className="flex flex-col-reverse gap-3 px-6 py-4 sm:flex-row sm:justify-end">
               <Button
                 variant="cancel"
                 onClick={() => {

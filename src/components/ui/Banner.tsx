@@ -21,6 +21,7 @@ const closedThisVisit = new Set<string>();
  * should act on or know before they act. With a title for page-level notices; without one for a short
  * note inside a card. The icon lines up with the first line of text.
  * Pass `closeKey` to let people close a note they have read; it stays closed until the page is reloaded.
+ * Info notes (tone "info") can always be closed: without a `closeKey` they remember being closed by their title or text.
  * Keep warnings and errors open: only notes that explain how something works should be closeable.
  */
 export function Banner({
@@ -40,14 +41,17 @@ export function Banner({
   className?: string;
 }) {
   const t = tones[tone];
-  const [closed, setClosed] = useState(() => (closeKey ? closedThisVisit.has(closeKey) : false));
+  // Info notes are always closeable. Their key falls back to the title or plain text, so a closed note stays closed on other pages.
+  const closable = !!closeKey || tone === "info";
+  const key = closeKey ?? (title || (typeof children === "string" ? children : undefined));
+  const [closed, setClosed] = useState(() => (key ? closedThisVisit.has(key) : false));
 
   if (closed) return null;
 
   // Closed notes stay closed while the person moves around the app (tabs, pages) and come back on a full reload,
   // so the reminder returns while there is still something to do.
   const close = () => {
-    if (closeKey) closedThisVisit.add(closeKey);
+    if (key) closedThisVisit.add(key);
     setClosed(true);
   };
 
@@ -61,7 +65,7 @@ export function Banner({
           {title && <p className="text-body font-semibold text-neutral-900">{title}</p>}
           {children && <div className="text-body-sm text-neutral-700">{children}</div>}
         </div>
-        {closeKey && !action && (
+        {closable && !action && (
           <button
             type="button"
             onClick={close}
@@ -75,7 +79,7 @@ export function Banner({
       {action && (
         <div className="flex shrink-0 flex-wrap items-center gap-2 pl-8 sm:pl-0">
           {action}
-          {closeKey && (
+          {closable && (
             <button
               type="button"
               onClick={close}
