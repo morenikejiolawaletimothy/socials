@@ -3,7 +3,8 @@
 import { CalendarBlank, PaperPlaneTilt } from "@phosphor-icons/react";
 import { useState } from "react";
 import { whatsappNumberOk } from "@/components/account/NotifySettings";
-import { Avatar, Badge, Banner, Button, Card, Dialog, Input, Meta, Select, Textarea, TextLink, Tile, TileFooter, useTask } from "@/components/ui";
+import Link from "next/link";
+import { Avatar, Badge, Banner, Breadcrumbs, Button, buttonClass, Card, Dialog, Input, Meta, Select, Textarea, TextLink, Tile, TileFooter, useTask } from "@/components/ui";
 import { taskProgress } from "@/lib/engage";
 import { agoIn, dayIn } from "@/lib/format";
 import { act, useData, type Assistant, type QuickTask } from "@/lib/mock";
@@ -22,8 +23,12 @@ export const kindLabels: Record<QuickTask["kind"], string> = {
   message: "Messages",
 };
 
-/** C19: add or edit an assistant. Email or WhatsApp is needed, so we can send them the link. */
-export function AssistantDialog({ clientId, assistant, onClose }: { clientId: string; assistant?: Assistant; onClose: () => void }) {
+/**
+ * C19: add or edit an assistant, on its own page (/assistants/new, /assistants/[id]). Email or WhatsApp is
+ * needed, so we can send them the link. `onDone` runs after Save or Cancel (usually going back).
+ */
+export function AssistantForm({ clientId, assistant, onDone }: { clientId: string; assistant?: Assistant; onDone: () => void }) {
+  const onClose = onDone;
   const { run, pending } = useTask();
   const [name, setName] = useState(assistant?.name ?? "");
   const [role, setRole] = useState<Assistant["role"]>(assistant?.role ?? "EA");
@@ -45,7 +50,7 @@ export function AssistantDialog({ clientId, assistant, onClose }: { clientId: st
   };
 
   return (
-    <Dialog open onClose={onClose} title={assistant ? `Edit ${assistant.name}` : "Add an assistant"}>
+    <Card title={assistant ? `Edit ${assistant.name}` : "Add an assistant"} eyebrow={<Breadcrumbs items={[{ label: "Assistants", href: "/assistants" }, { label: assistant ? "Edit" : "Add" }]} />}>
       <form
         noValidate
         className="flex flex-col gap-4"
@@ -77,16 +82,16 @@ export function AssistantDialog({ clientId, assistant, onClose }: { clientId: st
             </label>
           ))}
         </fieldset>
-        <div className="flex flex-wrap justify-end gap-3">
-          <Button variant="cancel" onClick={onClose}>
-            Cancel
-          </Button>
+        <div className="flex flex-wrap gap-3">
           <Button type="submit" loading={pending("save")}>
             {pending("save") ? "Saving" : assistant ? "Save" : "Add assistant"}
           </Button>
+          <Button variant="cancel" onClick={onClose}>
+            Cancel
+          </Button>
         </div>
       </form>
-    </Dialog>
+    </Card>
   );
 }
 
@@ -101,7 +106,6 @@ export function HandoffCard({ task, clientId }: { task: QuickTask; clientId: str
   const [open, setOpen] = useState(false);
   const [pick, setPick] = useState(assistants[0]?.id ?? "");
   const [note, setNote] = useState("");
-  const [adding, setAdding] = useState(false);
   const h = task.handoff;
   const active = h && !h.endedAt;
   const a = assistants.find((x) => x.id === h?.assistantId);
@@ -163,9 +167,9 @@ export function HandoffCard({ task, clientId }: { task: QuickTask; clientId: str
             <Banner tone="info">
               Add your executive or personal assistant and we send them a private link to this task by email or WhatsApp. They do not need an account, and they only see this task.
             </Banner>
-            <Button variant="secondary" className="self-start" onClick={() => setAdding(true)}>
+            <Link href={`/assistants/new?back=${encodeURIComponent(`/tasks/${task.id}`)}`} className={`self-start ${buttonClass("secondary")}`}>
               Add an assistant
-            </Button>
+            </Link>
           </>
         ) : (
           <>
@@ -220,7 +224,6 @@ export function HandoffCard({ task, clientId }: { task: QuickTask; clientId: str
           </div>
         </form>
       </Dialog>
-      {adding && <AssistantDialog clientId={clientId} onClose={() => setAdding(false)} />}
     </Card>
   );
 }

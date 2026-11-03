@@ -1,11 +1,11 @@
 "use client";
 
 import { ListChecks } from "@phosphor-icons/react";
-import { useState } from "react";
-import { AssistantDialog, kindLabels } from "@/components/client/Assistants";
+import Link from "next/link";
+import { kindLabels } from "@/components/client/Assistants";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Avatar, Banner, Button, Card, EmptyState, Meta, Pill, Tile, TileFooter, useConfirm } from "@/components/ui";
+import { Avatar, Banner, Button, buttonClass, Card, EmptyState, Meta, Pill, Tile, TileFooter, useConfirm } from "@/components/ui";
 import { plural } from "@/lib/format";
 import { act, useData, useMyClient, type Assistant } from "@/lib/mock";
 
@@ -14,7 +14,6 @@ export default function AssistantsPage() {
   const { client, tasks } = useMyClient();
   const db = useData();
   const confirm = useConfirm();
-  const [editing, setEditing] = useState<Assistant | "new" | null>(null);
   if (!client) return null;
   const assistants = (db.assistants ?? []).filter((a) => a.clientId === client.id);
   const withThem = (a: Assistant) => tasks.filter((t) => t.handoff?.assistantId === a.id && !t.handoff.endedAt && !t.done);
@@ -69,9 +68,9 @@ export default function AssistantsPage() {
                           >
                             Remove
                           </Button>
-                          <Button size="sm" variant="secondary" onClick={() => setEditing(a)}>
+                          <Link href={`/assistants/${a.id}`} className={buttonClass("secondary", "sm")}>
                             Edit
-                          </Button>
+                          </Link>
                         </span>
                       </TileFooter>
                     </Tile>
@@ -80,12 +79,11 @@ export default function AssistantsPage() {
               })}
             </ul>
           )}
-          <Button className="self-start" onClick={() => setEditing("new")}>
+          <Link href="/assistants/new" className={`self-start ${buttonClass("primary")}`}>
             Add an assistant
-          </Button>
+          </Link>
         </div>
       </Card>
-      {editing && <AssistantDialog clientId={client.id} assistant={editing === "new" ? undefined : editing} onClose={() => setEditing(null)} />}
     </Columns>
   );
 }

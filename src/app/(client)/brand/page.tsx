@@ -2,10 +2,11 @@
 
 import { CheckCircle, FileText, PencilSimple, Plus, Sparkle, Trash, UploadSimple, X, XCircle } from "@phosphor-icons/react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRef, useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Badge, Banner, Button, Card, Dialog, fieldClass, Input, Select, Textarea, Tile, TileFooter, useConfirm, useTask, useToast } from "@/components/ui";
+import { Badge, Banner, Button, buttonClass, Card, Dialog, fieldClass, Input, Select, Textarea, Tile, TileFooter, useConfirm, useTask, useToast } from "@/components/ui";
 import { agoIn, date } from "@/lib/format";
 import { duration } from "@/lib/linkedin";
 import { prepareUpload, sectionRules } from "@/lib/upload";
@@ -134,11 +135,6 @@ export default function BrandPage() {
   const brand = saved ?? { clientId: client?.id ?? "", colours: [], voice: "", wordsUse: [], wordsAvoid: [], examples: [], offLimits: [] };
   const confirm = useConfirm();
   const { run, pending } = useTask();
-  const [momentOpen, setMomentOpen] = useState(false);
-  const [momentNote, setMomentNote] = useState("");
-  const [momentError, setMomentError] = useState<string>();
-  const [momentPhotos, setMomentPhotos] = useState<string[]>([]);
-  const [momentVideos, setMomentVideos] = useState<{ src: string; poster: string; seconds: number }[]>([]);
   const [playing, setPlaying] = useState<BrandFile | null>(null);
   const [offKind, setOffKind] = useState<OffLimit["kind"]>("topic");
   const [offText, setOffText] = useState("");
@@ -149,7 +145,6 @@ export default function BrandPage() {
   const [avoid, setAvoid] = useState(brand?.wordsAvoid.join(", ") ?? "");
   const [colour, setColour] = useState("");
   const [colourError, setColourError] = useState<string>();
-  const momentFileRef = useRef<HTMLInputElement>(null);
   if (!client) return null;
 
   const photos = files.filter((f) => f.section === "photos");
@@ -174,9 +169,9 @@ export default function BrandPage() {
       <Card
         title="Moments"
         action={
-          <Button variant="secondary" size="sm" onClick={() => setMomentOpen(true)}>
+<Link href="/brand/moments/new" className={buttonClass("secondary", "sm")}>
             <Plus className="size-4" aria-hidden /> Add a Moment
-          </Button>
+          </Link>
         }
       >
         <div className="flex flex-col gap-4">
@@ -503,104 +498,6 @@ export default function BrandPage() {
         )}
       </Card>
 
-      <Dialog open={momentOpen} onClose={() => setMomentOpen(false)} title="Add a Moment">
-        <Textarea
-          label="What happened, and what do you want a post about?"
-          placeholder="For example: I spoke at this event and want a post about the question I was asked."
-          value={momentNote}
-          onChange={(e) => {
-            setMomentNote(e.target.value);
-            setMomentError(undefined);
-          }}
-          error={momentError}
-        />
-        <div className="flex flex-col items-start gap-2">
-          <span className="text-body-sm leading-5 font-medium text-primary">Photos or videos (optional, up to 4)</span>
-          <input
-            ref={momentFileRef}
-            id="moment-photos"
-            type="file"
-            multiple
-            aria-label="Choose photos or videos"
-            accept={`${sectionRules.photos.accept},${sectionRules.videos.accept}`}
-            className="sr-only"
-            tabIndex={-1}
-            onChange={async (e) => {
-              const picked = Array.from(e.target.files ?? []);
-              e.target.value = "";
-              if (momentPhotos.length + momentVideos.length + picked.length > 4) return setMomentError("Add up to 4 photos or videos. Remove one to add another.");
-              setMomentError(undefined);
-              try {
-                for (const f of picked) {
-                  const ready = await prepareUpload(f, f.type.startsWith("video/") ? "videos" : "photos");
-                  if (ready.video) setMomentVideos((list) => [...list, { src: ready.src!, poster: ready.video!.poster, seconds: ready.video!.seconds }]);
-                  else setMomentPhotos((list) => [...list, ready.src!]);
-                }
-              } catch (err) {
-                setMomentError((err as Error).message);
-              }
-            }}
-          />
-          <Button variant="secondary" size="sm" disabled={momentPhotos.length + momentVideos.length >= 4} onClick={() => momentFileRef.current?.click()}>
-            <UploadSimple className="size-4" aria-hidden /> Add photos or videos
-          </Button>
-          <span className="text-caption text-secondary">Photos: {sectionRules.photos.label}. Videos: {sectionRules.videos.label}.</span>
-          {momentVideos.length > 0 && (
-            <ul className="flex flex-wrap gap-2">
-              {momentVideos.map((v, i) => (
-                <li key={v.src} className="relative size-16 overflow-hidden rounded-sm">
-                  <Image src={v.poster} alt={`Video ${i + 1}`} fill sizes="64px" className="object-cover" />
-                  <span className="absolute bottom-1 left-1 rounded-sm bg-neutral-900/70 px-1 text-caption text-inverse">{duration(v.seconds)}</span>
-                  <button
-                    type="button"
-                    aria-label={`Remove video ${i + 1}`}
-                    onClick={() => setMomentVideos((list) => list.filter((_, j) => j !== i))}
-                    className="absolute right-1 top-1 flex size-6 items-center justify-center rounded-full bg-card text-secondary shadow-sm hover:text-danger focus-visible:focus-ring"
-                  >
-                    <X className="size-3" aria-hidden />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-          {momentPhotos.length > 0 && (
-            <ul className="flex flex-wrap gap-2">
-              {momentPhotos.map((src, i) => (
-                <li key={i} className="relative size-16 overflow-hidden rounded-sm">
-                  <Image src={src} alt={`Photo ${i + 1}`} fill sizes="64px" className="object-cover" />
-                  <button
-                    type="button"
-                    aria-label={`Remove photo ${i + 1}`}
-                    onClick={() => setMomentPhotos((list) => list.filter((_, j) => j !== i))}
-                    className="absolute right-1 top-1 flex size-6 items-center justify-center rounded-full bg-card text-secondary shadow-sm hover:text-danger focus-visible:focus-ring"
-                  >
-                    <X className="size-3" aria-hidden />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="cancel" onClick={() => setMomentOpen(false)}>
-            Cancel
-          </Button>
-          <Button
-            loading={pending("moment")}
-            onClick={async () => {
-              if (!momentNote.trim()) return setMomentError("Write a short note, so your manager knows what you want.");
-              if (await run("moment", () => act.addMoment(client.id, momentNote.trim(), momentPhotos, momentVideos), "Sent to your manager. They will reply in Messages.")) {
-                setMomentNote("");
-                setMomentPhotos([]);
-                setMomentVideos([]);
-                setMomentOpen(false);
-              }
-            }}
-          >
-            {pending("moment") ? "Sending" : "Send to my manager"}
-          </Button>
-        </div>
-      </Dialog>
     </Columns>
   );
 }

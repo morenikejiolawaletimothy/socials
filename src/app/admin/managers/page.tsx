@@ -2,9 +2,8 @@
 
 import { CalendarBlank } from "@phosphor-icons/react";
 import Link from "next/link";
-import { useState } from "react";
 import { Table, managerName, managerStatus, td } from "@/components/admin/parts";
-import { Avatar, Badge, Banner, Button, Card, Dialog, Input, Meta, PageHeader, Pill, Tile, TileFooter, useConfirm, useTask } from "@/components/ui";
+import { Avatar, Badge, Button, buttonClass, Card, Meta, PageHeader, Pill, Tile, TileFooter, useConfirm, useTask } from "@/components/ui";
 import { dayIn, money, plural } from "@/lib/format";
 import { act, useData } from "@/lib/mock";
 
@@ -13,13 +12,10 @@ export default function ManagersPage() {
   const db = useData();
   const confirm = useConfirm();
   const { run, pending } = useTask();
-  const [inviting, setInviting] = useState(false);
-  const [form, setForm] = useState({ first: "", last: "", email: "" });
-  const [error, setError] = useState<string>();
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Managers" description="Invite, train, assign and support your managers." action={<Button onClick={() => setInviting(true)}>Invite a manager</Button>} />
+      <PageHeader title="Managers" description="Invite, train, assign and support your managers." action={<Link href="/admin/managers/invite" className={buttonClass("primary")}>Invite a manager</Link>} />
 
       <Card title="Your team" action={<Pill>{plural(db.managers.length, "manager")}</Pill>}>
         <Table label="Your team" head={["Manager", "Status", "Clients", "On time", "Approved first time", "Missed", "Complaints"]}>
@@ -137,41 +133,6 @@ export default function ManagersPage() {
         </Table>
       </Card>
 
-      <Dialog open={inviting} onClose={() => setInviting(false)} title="Invite a manager">
-        <Banner tone="info">They get a link that works once, for 7 days, and set up their account. Then you book their 60-minute training call.</Banner>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Input label="First name" value={form.first} onChange={(e) => setForm({ ...form, first: e.target.value })} />
-          <Input label="Last name" value={form.last} onChange={(e) => setForm({ ...form, last: e.target.value })} />
-        </div>
-        <Input
-          label="Email"
-          type="email"
-          value={form.email}
-          onChange={(e) => {
-            setForm({ ...form, email: e.target.value });
-            setError(undefined);
-          }}
-          error={error}
-        />
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="cancel" onClick={() => setInviting(false)}>
-            Cancel
-          </Button>
-          <Button
-            loading={pending("invite")}
-            onClick={async () => {
-              if (!form.first.trim() || !/^\S+@\S+\.\S+$/.test(form.email.trim())) return setError("Add their first name and an email like name@company.com.");
-              if (db.users.some((u) => u.email.toLowerCase() === form.email.trim().toLowerCase())) return setError("Someone already uses this email. Check it, or find them in the list.");
-              if (await run("invite", () => act.inviteManager(form.first.trim(), form.last.trim(), form.email.trim()), `Invite sent to ${form.email.trim()}. The link works for 7 days.`)) {
-                setInviting(false);
-                setForm({ first: "", last: "", email: "" });
-              }
-            }}
-          >
-            {pending("invite") ? "Sending" : "Send invite"}
-          </Button>
-        </div>
-      </Dialog>
     </div>
   );
 }

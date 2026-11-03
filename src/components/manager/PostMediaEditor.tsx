@@ -4,7 +4,7 @@ import { Image as ImageIcon, FilePpt, Plus, Sparkle, Trash, UploadSimple, VideoC
 import Image from "next/image";
 import { useRef, useState } from "react";
 import { fileToMedia, MediaThumb } from "@/components/content/MediaThumb";
-import { Banner, Button, Dialog, Input, Select, Tabs, Textarea, TextButton, useConfirm, useTask } from "@/components/ui";
+import { Banner, Button, Card, Dialog, Input, Select, Tabs, Textarea, TextButton, TextLink, useConfirm, useTask } from "@/components/ui";
 import { dayIn } from "@/lib/format";
 import { CAPTIONS, duration, VIDEO } from "@/lib/linkedin";
 import { act, type BrandFile, type ClientBundle, type Post, type VideoBrief } from "@/lib/mock";
@@ -35,7 +35,7 @@ export function mediaChecks(post: Post): string[] {
 }
 
 /** The system's suggested brief for a client video, from the post and the strategy. The manager edits it before sending. */
-function suggestBrief(post: Post, b: ClientBundle): VideoBrief {
+export function suggestBrief(post: Post, b: ClientBundle): VideoBrief {
   const firstLine = post.text.split("\n")[0].replace(/\.$/, "");
   return {
     idea: `60 seconds on: ${firstLine}`,
@@ -119,8 +119,11 @@ function MediaPicker({ b, initial, onClose, onPick }: { b: ClientBundle; initial
   );
 }
 
-/** Ask the client to record a video: the suggested brief, editable, with a due date. Also used to edit a sent request. */
-function VideoRequestDialog({ b, brief, taskId, onClose }: { b: ClientBundle; brief: VideoBrief; taskId?: string; onClose: () => void }) {
+/**
+ * Ask the client to record a video, on its own page (/manager/clients/[id]/content/video?post=…): the suggested
+ * brief, editable, with a due date. Also used to edit a sent request. `onClose` runs after Send or Cancel.
+ */
+export function VideoRequestForm({ b, brief, taskId, onClose }: { b: ClientBundle; brief: VideoBrief; taskId?: string; onClose: () => void }) {
   const { run, pending } = useTask();
   const [v, setV] = useState(brief);
   const [shots, setShots] = useState(brief.shots.join("\n"));
@@ -131,7 +134,8 @@ function VideoRequestDialog({ b, brief, taskId, onClose }: { b: ClientBundle; br
   const lines = (s: string) => s.split("\n").map((x) => x.trim()).filter(Boolean);
 
   return (
-    <Dialog open onClose={onClose} title={taskId ? "Edit the video request" : `Ask ${first} for a video`}>
+    <Card title={taskId ? "Edit the video request" : `Ask ${first} for a video`}>
+      <div className="flex flex-col gap-4">
       <p className="flex items-center gap-1 text-caption text-secondary">
         <Sparkle className="size-4 text-primary-600" aria-hidden /> Suggested from their strategy. Change anything before you send it.
       </p>
@@ -156,10 +160,7 @@ function VideoRequestDialog({ b, brief, taskId, onClose }: { b: ClientBundle; br
           ))}
         </Select>
       )}
-      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button variant="cancel" onClick={onClose}>
-          Cancel
-        </Button>
+      <div className="flex flex-wrap gap-3">
         <Button
           loading={pending("send")}
           onClick={async () => {
@@ -175,8 +176,12 @@ function VideoRequestDialog({ b, brief, taskId, onClose }: { b: ClientBundle; br
         >
           {taskId ? "Save" : `Send to ${first}`}
         </Button>
+        <Button variant="cancel" onClick={onClose}>
+          Cancel
+        </Button>
       </div>
-    </Dialog>
+      </div>
+    </Card>
   );
 }
 
@@ -185,7 +190,6 @@ export function PostMediaEditor({ post, b }: { post: Post; b: ClientBundle }) {
   const confirm = useConfirm();
   const { run, pending } = useTask();
   const [picking, setPicking] = useState<Kind | null>(null);
-  const [asking, setAsking] = useState(false);
   const [title, setTitle] = useState(post.carousel?.title ?? "");
   const captionsRef = useRef<HTMLInputElement>(null);
   const first = b.user?.firstName ?? "the client";
@@ -228,8 +232,8 @@ export function PostMediaEditor({ post, b }: { post: Post; b: ClientBundle }) {
                 {kind ? "Change" : "Add media"}
               </TextButton>
             )}
-            {!kind && !request && <TextButton onClick={() => setAsking(true)}>Ask {first} for a video</TextButton>}
-            {request && <TextButton onClick={() => setAsking(true)}>Edit the request</TextButton>}
+            {!kind && !request && <TextLink href={`/manager/clients/${b.client?.id}/content/video?post=${post.id}`}>Ask {first} for a video</TextLink>}
+            {request && <TextLink href={`/manager/clients/${b.client?.id}/content/video?post=${post.id}`}>Edit the request</TextLink>}
             {request && (
               <TextButton
                 onClick={() =>
@@ -346,7 +350,6 @@ export function PostMediaEditor({ post, b }: { post: Post; b: ClientBundle }) {
           }}
         />
       )}
-      {asking && <VideoRequestDialog b={b} brief={request?.video ?? suggestBrief(post, b)} taskId={request?.id} onClose={() => setAsking(false)} />}
     </div>
   );
 }

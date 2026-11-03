@@ -68,6 +68,7 @@ Corrections Fola has already made. Check every new screen against them before sh
 - Anything the person should act on, or know before they act (held, failed, taken down, what happens if they do not reply), is a `Banner` (with or without a title), not grey text. Grey text is for descriptions only.
 - Cards are flat: hairline border, no shadow. Shadows only on things that float (menus, dialogs, toasts, the phone bottom bar).
 - Avatars: when the text beside them runs two or more lines, align to the top (`items-start`), as LinkedIn does; one line centres.
+- Modals (`Dialog`) are for quick actions only: a confirmation, one or two fields, a pick from a list, a media viewer. Any form that adds or edits a record (an assistant, a Moment, a video request, an invite) is its own page route with breadcrumbs, Save then Cancel, and goes back when done.
 - Dropdowns use `Select` (caret evenly inset). Popovers use `Menu`, which renders above the page and opens upwards near the bottom. Never put a dropdown inside a card with `absolute` positioning.
 - Toasts appear bottom right (bottom centre above the tab bar on phones).
 - Media follows LinkedIn's rules, kept in one place: `src/lib/linkedin.ts`. Every upload goes through `prepareUpload` / `prepareAttachment` in `src/lib/upload.ts` (checks, cover frames, PDF pages). Large files live in the browser via `src/lib/media.ts` in Phase 1; show them with `useMediaSrc`, never `next/image` on an `idb:` source.
