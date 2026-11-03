@@ -52,7 +52,7 @@ Source of truth: `docs/prd.md` (v2) for stories and rules, `docs/flow-map.md` fo
 
 | # | Item | Owner | Lead time |
 | --- | --- | --- | --- |
-| 0.1 | LinkedIn developer app and `w_member_social` | Fola | Weeks |
+| 0.1 | LinkedIn developer app and `w_member_social` — **not needed for launch.** Self-serve clients publish their own approved posts (copy caption, open LinkedIn, post); full-service managers publish manually. The member API is a later, optional convenience only. | Fola | Later / optional |
 | 0.2 | LinkedIn Community Management API (company Pages) | Fola | 1 to 4 weeks, may be denied |
 | 0.3 | Stripe account on the US entity; Naira card access request | Fola | Days to weeks |
 | 0.4 | Notetaker service account and Google Meet/Calendar access | Fola | Days |
@@ -147,8 +147,8 @@ Starts only after the Phase 1 gate and Fola's yes on the stack. The mock layer i
 | 2.6 AI engine | Framework, research with sources, audit, measurable strategy drafting with direction, ideas with reasons, drafts in voice, visual suggestions, checks including off limits, feedback to change list, weekly updates | Epics 4, 5, 7, 10 | 2.1, 2.3 |
 | 2.7 Niche listening | Per-client knowledge base: Google Alert feeds, manager findings, web and news search with location, client results, LinkedIn knowledge base, preferences; signals with sources | Epic 15 | 2.6 |
 | 2.8 Payments | Stripe checkout with local currency, pay later, reminders, pause on unpaid and contract end, automatic reactivation, renewals, refunds with threshold, cancellation reasons, invoices | Epics 2, 11 | 2.2, 2.4, 0.3 |
-| 2.9 LinkedIn | OAuth on the client's device, encrypted tokens, switches enforced, publish with retries, take down, pause and disconnect, expiry and reconnect, company Pages | Epics 8, 9 | 2.2, 0.1, 0.2 |
-| 2.10 Scheduling and accountability | Publish within 5 minutes, time zones, review deadlines, 24-hour go ahead, waiting-on attribution, missed-deadline questions, 15 and 30-day pause jobs with data deletion | Epics 7, 12, 2.5 | 2.8, 2.9 |
+| 2.9 LinkedIn | No API for publishing: approved posts are published by a human (client on self-serve, account manager on full-service), so no member-API auto-post, no publish-retry, no "did not post". Company Page handled by official Page admin (manual). Optional later: `w_member_social` auto-post for self-serve clients who want hands-off posting. | Epics 8, 9 | 2.2 |
+| 2.10 Scheduling and accountability | Recommended-time reminders to publish (no auto-post), time zones, review deadlines, 24-hour go ahead, waiting-on attribution (includes "not published yet"), missed-deadline questions, 15 and 30-day pause jobs with data deletion | Epics 7, 12, 2.5 | 2.8, 2.9 |
 | 2.11 Progress and owner views | Goal metrics, targets vs done, updates and PDF, overview and at-risk, manager performance and payouts, assignment suggestions | Epics 10, 13 | 2.9, 2.10 |
 | 2.12 Hardening and pilot | Security review, rate limits, encryption checks, deletion and retention checks, accessibility and performance, policies live, live keys, LinkedIn app approved | Non-functional | All |
 

@@ -46,3 +46,9 @@ These sign in to the dummy data on the preview site and on `npm run dev`. They s
 
 - Chidi has Comment on 3 posts, React to 3 posts and Follow 2 people and Pages on Home.
 - Manager view: Chidi > Engagement has 6 suggestions to check (one off limits), 1 ready to send.
+
+## No-API publishing (Flow 1)
+
+- Posts are no longer auto-posted. After approval and a recommended time, they appear in "Posts to publish" (`/content/publish`) and Home > Coming up.
+- Sarah has a ready-to-publish post past its best time (demonstrates the overdue flag). Chidi has ready-to-publish posts at future times.
+- "Mark as posted" moves a post to Live and counts it toward the week.

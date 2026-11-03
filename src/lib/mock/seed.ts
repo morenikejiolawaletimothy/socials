@@ -88,7 +88,7 @@ export function seed(): Db {
   });
 
   return {
-    version: 21,
+    version: 22,
     session: {
       role: "client",
       userIds: { client: "u-chidi", manager: "u-ada", owner: "u-fola" },
@@ -219,7 +219,7 @@ export function seed(): Db {
       { id: "p-s2", clientId: "c-sarah", status: "changes-requested", topic: "Hospital leaders", format: "opinion",
         text: "Hospitals do not need more dashboards.", why: "", feedback: [{ text: "Too strong. Can we say it more kindly? Some of our partners sell dashboards.", at: hoursAgo(9) }] },
       { id: "p-s3", clientId: "c-sarah", status: "approved", topic: "Patient safety", format: "how-to", text: "3 questions to ask before buying any ward software.", why: "" },
-      { id: "p-s4", clientId: "c-sarah", status: "failed", topic: "Team", format: "story", failedReason: "LinkedIn rejected the image size. Tried 3 times.", text: "Meet the team behind Lumen.", why: "", image: { src: IMG.pair, alt: "Two of the Lumen team" } },
+      { id: "p-s4", clientId: "c-sarah", status: "scheduled", scheduledFor: hoursAgo(3), scheduledAt: hoursAgo(28), topic: "Team", format: "story", text: "Meet the team behind Lumen.", why: "A people post builds trust before the launch.", image: { src: IMG.pair, alt: "Two of the Lumen team" } },
       // Zainab
       { id: "p-z1", clientId: "c-zainab", status: "on-hold", topic: "Maternal health", format: "story", heldReason: "Waiting for Zainab's review, 2 days late.", text: "The first 42 days after birth.", why: "" },
       { id: "p-z2", clientId: "c-zainab", status: "on-hold", topic: "Maternal health", format: "opinion", heldReason: "Waiting for Zainab's review, 2 days late.", text: "We count births. We should count recoveries.", why: "" },

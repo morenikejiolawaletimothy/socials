@@ -599,16 +599,19 @@ export function UpcomingCard({ b }: { b: ClientBundle }) {
   const events = upcomingEvents(b.tasks);
   const calls = upcomingCalls(b.calls);
   const items: UpcomingItem[] = [
-    ...posts.map((p) => ({
-      id: p.id,
-      at: p.scheduledFor ?? "",
-      when: "Goes live",
-      href: "/content?tab=upcoming",
-      action: "Review",
-      thumb: <PostThumb post={p} size="lg" />,
-      title: plainText(p.text).split("\n")[0],
-      meta: `${p.topic}${p.scheduledAt ? ` · Scheduled ${agoIn(p.scheduledAt)}` : ""}`,
-    })),
+    ...posts.map((p) => {
+      const overdue = p.scheduledFor ? new Date(p.scheduledFor).getTime() < Date.now() : false;
+      return {
+        id: p.id,
+        at: p.scheduledFor ?? "",
+        when: overdue ? "Publish now" : "Publish by",
+        href: "/content/publish",
+        action: "Publish",
+        thumb: <PostThumb post={p} size="lg" />,
+        title: plainText(p.text).split("\n")[0],
+        meta: `${p.topic}${overdue ? " · past the best time" : ""}`,
+      };
+    }),
     ...calls.map((c) => ({
       id: c.id,
       at: c.at,

@@ -221,7 +221,8 @@ These rules apply to every flow below.
   1. The posts for this review, each shown as it will look on LinkedIn. Each can show a short note from your manager on why this post (the goal it serves, what is happening in your field). Never mentions AI. Due time shown at the top, with what happens if you do not reply (from your C5 choice).
   2. For each: Approve or Ask for changes. Changes or preferences by typing or a voice note (transcript shown and editable). Preferences are remembered for future posts.
   3. Approve all remaining, with one confirmation.
-- **States:** due soon (reminder), not reviewed in time (held if you chose "Wait for me", or posted if you chose "Go ahead"), items your manager handled without asking (shown for information).
+  4. **Publish (self-serve, no API):** once approved and given a recommended time, the post appears in "Posts to publish" (`/content/publish`) and in Home > Coming up. At the recommended time a reminder arrives. The client copies the caption, opens LinkedIn, adds any media themselves, posts it, and taps Mark as posted. A post past its best time is flagged but still publishes. Full-service clients skip this: their account manager publishes for them.
+- **States:** due soon (reminder), not reviewed in time (held if you chose "Wait for me", or posted if you chose "Go ahead"), ready to publish, past the best time, items your manager handled without asking (shown for information).
 - **Questions:**
   1. On mobile, one post at a time (like stories), or a scrolling list? I suggest one at a time on mobile, list on desktop.
 
@@ -550,11 +551,11 @@ From the PRD, with today's additions marked **new**.
 | Manager review | Manager directs, edits and checks | Awaiting client, or Approved if it is a "Go ahead without asking" type |
 | Awaiting client | Sent for the client's review | Approved, Changes requested, or Approved automatically if the client chose "Go ahead if I have not replied" and 24 hours passed (**new**) |
 | Changes requested | Client asked for changes | Manager review |
-| Approved | Ready to schedule | Scheduled |
-| Scheduled | Will go out at a set time | Published, Failed (after 3 tries), On hold |
+| Approved | Ready for a recommended time | Ready to publish |
+| Ready to publish (was Scheduled) | Approved, with a recommended time; the client (self-serve) or the account manager (full-service) publishes it. No API. | Published, On hold |
 | On hold | Client paused posting, removed a needed permission, or the account is paused (**new**: unpaid or contract ended) | Scheduled when restored, or Manager review if the date has passed |
-| Published | Live on LinkedIn | Taken down (**new**) |
-| Failed | LinkedIn rejected it 3 times | Manager review |
+| Published | Published by the client or the account manager; live on LinkedIn | Taken down (**new**) |
+
 | Taken down (**new**) | Client removed it from LinkedIn | End |
 
 Editing approved content sends it back to Awaiting client. Content Awaiting client past its due time under "Wait for me" is held and reported as waiting on the client. The contract keeps running while content is held.
@@ -629,7 +630,7 @@ Once approved, these will be written into `docs/prd.md`.
 
 **C6, M6 and C9 Targets.** Weekly targets can count posts by format (for example "1 video a week"), as the PRD says. Progress and updates show them.
 
-**States (Phase 2).** Video posts add **Processing** (LinkedIn is processing the upload; scheduled posts wait for it) and use **Did not post** with LinkedIn's reason if it rejects the file.
+**No-API publishing.** A post is never pushed by the platform. The client (self-serve) or the account manager (full-service) copies the caption, opens LinkedIn, attaches any media, posts it, and marks it posted. A post past its recommended time is flagged "past the best time" but still publishes; there is no "did not post" failure state, because no automated post is attempted.
 
 **LinkedIn limits to design for.** Video: MP4, 3 seconds to 30 minutes; Microsoft's documentation gives two size limits (500 MB and 5 GB), to be confirmed against the API version used in Phase 2; one English caption file; optional thumbnail. Carousels are posted as documents (PDF).
 

@@ -5,7 +5,7 @@ import { Banner, Switch, useConfirm, useTask } from "@/components/ui";
 import { act, type Client, type Permissions } from "@/lib/mock";
 
 const items: { key: keyof Permissions; label: string; description: string; offWarning?: string; group: "do" | "prepare" }[] = [
-  { key: "post", group: "do", label: "Post for me", description: "We publish the posts you approve, at the best times.", offWarning: "Scheduled posts are held, and nothing new goes out until you turn this back on." },
+  { key: "post", group: "do", label: "Prepare posts for me to publish", description: "We write and schedule your posts in your voice. You publish each with one tap at the best time.", offWarning: "We stop preparing posts for you until you turn this back on." },
   { key: "companyPage", group: "do", label: "Post to my company Page", description: "Connect your company Page on LinkedIn to turn this on." },
   {
     key: "engage",

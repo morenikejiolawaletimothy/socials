@@ -272,7 +272,7 @@ function TimeDialog({ open, onClose, initial, onSave, busy }: { open: boolean; o
             onSave(iso);
           }}
         >
-          Schedule
+          Set time
         </Button>
       </div>
     </Dialog>
@@ -285,7 +285,7 @@ function Scheduler({ post, b }: { post: Post; b: ClientBundle }) {
   const [choosing, setChoosing] = useState(false);
   const [suggested] = useState(() => nextWeekday9(2));
   const schedule = async (iso: string) => {
-    if (await run("schedule", () => act.setPostStatus(post.id, "scheduled", { scheduledFor: iso }), `Scheduled for ${dayTimeIn(iso)}.`)) setChoosing(false);
+    if (await run("schedule", () => act.setPostStatus(post.id, "scheduled", { scheduledFor: iso }), `Sent to ${b.user?.firstName ?? "the client"} to publish. Best time ${dayTimeIn(iso)}.`)) setChoosing(false);
   };
   return (
     <div className="flex flex-col gap-3 rounded-md bg-neutral-25 p-4">
@@ -297,7 +297,7 @@ function Scheduler({ post, b }: { post: Post; b: ClientBundle }) {
       </span>
       <div className="flex gap-2">
         <Button size="sm" loading={pending("schedule") && !choosing} onClick={() => schedule(suggested)}>
-          Schedule
+          Send to publish
         </Button>
         <Button size="sm" variant="secondary" onClick={() => setChoosing(true)}>
           Change time
@@ -308,7 +308,7 @@ function Scheduler({ post, b }: { post: Post; b: ClientBundle }) {
   );
 }
 
-/** M5 scheduled: move the time, or take it off the schedule. */
+/** M5 ready to publish: move the recommended time, or take it off the publish list. */
 function ScheduledActions({ post, b }: { post: Post; b: ClientBundle }) {
   const confirm = useConfirm();
   const { run, pending } = useTask();
@@ -327,8 +327,8 @@ function ScheduledActions({ post, b }: { post: Post; b: ClientBundle }) {
         <EditTextDialog
           open
           onClose={() => setEditing(false)}
-          title="Edit a scheduled post"
-          intro={`${first} approved the earlier wording, so a change goes back to them for approval and comes off the schedule until they answer.`}
+          title="Edit a post that is ready to publish"
+          intro={`${first} approved the earlier wording, so a change goes back to them for approval and is not ready to publish until they answer.`}
           smallFixOption={`Small fix only (spelling or punctuation): keep the time and tell ${first}.`}
           initial={post.text}
           busy={pending("edit")}
@@ -337,7 +337,7 @@ function ScheduledActions({ post, b }: { post: Post; b: ClientBundle }) {
               await run(
                 "edit",
                 () => act.editScheduledPost(post.id, text, smallFix),
-                smallFix ? `Saved. It still goes out ${dayTimeIn(post.scheduledFor!)}. ${first} is told.` : `Sent back to ${first} for approval.`,
+                smallFix ? `Saved. Still ready to publish, best time ${dayTimeIn(post.scheduledFor!)}. ${first} is told.` : `Sent back to ${first} for approval.`,
               )
             )
               setEditing(false);
@@ -348,15 +348,15 @@ function ScheduledActions({ post, b }: { post: Post; b: ClientBundle }) {
         variant="remove"
         onClick={() =>
           confirm({
-            title: "Take this post off the schedule?",
+            title: "Take this post off the publish list?",
             body: "It goes back to To schedule. It will not go out until you schedule it again.",
-            confirmLabel: "Unschedule",
+            confirmLabel: "Remove",
             action: () => act.setPostStatus(post.id, "approved", { scheduledFor: undefined }),
-            success: "Post taken off the schedule.",
+            success: "Taken off the publish list. It is back in Set time.",
           })
         }
       >
-        Unschedule
+        Remove
       </Button>
       {choosing && (
         <TimeDialog
@@ -446,31 +446,6 @@ function LiveActions({ post, b, onDraft }: { post: Post; b: ClientBundle; onDraf
   const [closeNote, setCloseNote] = useState("");
   const first = b.user?.firstName;
   const req = post.request;
-
-  if (post.status === "failed")
-    return (
-      <Banner
-        tone="danger"
-        title="Did not post"
-        action={
-          <Button size="sm"
-            variant="secondary"
-            loading={pending("retry")}
-            onClick={() =>
-              run(
-                "retry",
-                () => act.setPostStatus(post.id, "scheduled", { failedReason: undefined, scheduledFor: new Date(Date.now() + 3_600_000).toISOString() }),
-                "Fixed and scheduled for an hour from now.",
-              )
-            }
-          >
-            Fix and retry
-          </Button>
-        }
-      >
-        {post.failedReason}
-      </Banner>
-    );
 
   const replace = () =>
     confirm({
@@ -653,9 +628,9 @@ function ContentWorkspace({ id }: { id: string }) {
               { value: "drafts", label: "Drafts", count: groups.drafts.length },
               { value: "changes", label: "Changes asked", count: groups.changes.length },
               { value: "client", label: "With client", count: groups.client.length },
-              { value: "schedule", label: "To schedule", count: groups.schedule.length },
-              { value: "scheduled", label: "Scheduled" },
-              { value: "live", label: "Live", count: groups.live.filter((p) => p.status === "failed" || p.request).length },
+              { value: "schedule", label: "Set time", count: groups.schedule.length },
+              { value: "scheduled", label: "To publish" },
+              { value: "live", label: "Live", count: groups.live.filter((p) => p.request).length },
             ]}
           />
         </div>

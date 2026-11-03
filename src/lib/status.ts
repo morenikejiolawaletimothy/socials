@@ -32,9 +32,9 @@ export const postBadge: Record<PostStatus, { label: string; tone: Tone; staff?: 
   "awaiting-client": { label: "Waiting for you", tone: "info", staff: "With the client" },
   "changes-requested": { label: "Changes asked", tone: "warning", staff: "Changes asked" },
   approved: { label: "Approved", tone: "success" },
-  scheduled: { label: "Scheduled", tone: "success" },
+  scheduled: { label: "To publish", tone: "info", staff: "Ready to publish" },
   "on-hold": { label: "Held", tone: "warning" },
   published: { label: "Live", tone: "success" },
-  failed: { label: "Did not post", tone: "danger", staff: "Failed" },
+  failed: { label: "Not posted", tone: "warning", staff: "Not posted" },
   "taken-down": { label: "Taken down", tone: "neutral" },
 };

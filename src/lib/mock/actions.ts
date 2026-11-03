@@ -1,7 +1,7 @@
 "use client";
 
 import { engageKinds, isEngage } from "../engage";
-import { plural } from "../format";
+import { dayTimeIn, plural } from "../format";
 import { delay, getDb, update } from "./store";
 import type { Activity, Assistant, Channels, Client, Db, EngageAction, Handoff, Message, Permissions, PostStatus, Reaction, ReviewSettings, SetupStep, User } from "./types";
 
@@ -103,7 +103,7 @@ export async function approvePost(postId: string) {
     const p = db.posts.find((x) => x.id === postId);
     if (!p) return db;
     const next = log(setPost(db, postId, { status: "approved" }), p.clientId, "you", "post", `Approved ${short(p.text)}`);
-    return notify(next, managerUserOf(db, p.clientId)?.id, `${clientUser(db, p.clientId)?.firstName} approved ${short(p.text)}. Schedule it.`, `/manager/clients/${p.clientId}/content?tab=schedule`, { email: false });
+    return notify(next, managerUserOf(db, p.clientId)?.id, `${clientUser(db, p.clientId)?.firstName} approved ${short(p.text)}. Set a time and send it back to publish.`, `/manager/clients/${p.clientId}/content?tab=schedule`, { email: false });
   });
 }
 
@@ -117,7 +117,24 @@ export async function approveAll(postIds: string[]) {
       next = log(setPost(next, pid, { status: "approved" }), p.clientId, "you", "post", `Approved ${short(p.text)}`);
     }
     const first = db.posts.find((x) => x.id === postIds[0]);
-    return first ? notify(next, managerUserOf(db, first.clientId)?.id, `${clientUser(db, first.clientId)?.firstName} approved ${postIds.length} posts. Schedule them.`, `/manager/clients/${first.clientId}/content?tab=schedule`, { email: false }) : next;
+    return first ? notify(next, managerUserOf(db, first.clientId)?.id, `${clientUser(db, first.clientId)?.firstName} approved ${postIds.length} posts. Set times and send them back to publish.`, `/manager/clients/${first.clientId}/content?tab=schedule`, { email: false }) : next;
+  });
+}
+
+/**
+ * A1: a person publishes an approved post to LinkedIn. No API: self-serve clients publish it themselves; on
+ * full-service the account manager does it. `by` is the account manager's name when they publish for the client.
+ */
+export async function markPosted(postId: string, by?: string) {
+  await delay(400);
+  update((db) => {
+    const p = db.posts.find((x) => x.id === postId);
+    if (!p) return db;
+    let next = setPost(db, postId, { status: "published", publishedAt: nowIso(), heldReason: undefined });
+    next = log(next, p.clientId, by ? "team" : "you", "post", `Published ${short(p.text)}${by ? ` (by ${by})` : ""}`);
+    next = { ...next, progress: next.progress.map((w) => (w.clientId === p.clientId ? { ...w, posts: { ...w.posts, done: w.posts.done + 1 } } : w)) };
+    if (!by) next = notify(next, managerUserOf(db, p.clientId)?.id, `${clientUser(db, p.clientId)?.firstName} published ${short(p.text)}.`, `/manager/clients/${p.clientId}/content?tab=live`, { email: false });
+    return next;
   });
 }
 
@@ -327,7 +344,7 @@ export async function resumePost(postId: string) {
     if (!p) return db;
     const future = p.scheduledFor && new Date(p.scheduledFor).getTime() > Date.now();
     const next = setPost(db, postId, future ? { status: "scheduled", heldReason: undefined } : { status: "approved", heldReason: undefined, scheduledFor: undefined });
-    return notify(next, managerUserOf(db, p.clientId)?.id, future ? `${clientUser(db, p.clientId)?.firstName} put a post back on the schedule.` : `${clientUser(db, p.clientId)?.firstName} wants a stopped post to go out. Pick a new time.`, `/manager/clients/${p.clientId}/content?tab=${future ? "scheduled" : "schedule"}`);
+    return notify(next, managerUserOf(db, p.clientId)?.id, future ? `${clientUser(db, p.clientId)?.firstName} put a post back, ready to publish.` : `${clientUser(db, p.clientId)?.firstName} wants a held post ready again. Set a time.`, `/manager/clients/${p.clientId}/content?tab=${future ? "scheduled" : "schedule"}`);
   });
 }
 
@@ -682,7 +699,7 @@ export async function saveFileToBrand(messageId: string) {
 /* ---------- Client: control ---------- */
 
 const permissionLabels: Record<keyof Permissions, string> = {
-  post: "Post for me",
+  post: "Prepare posts for me to publish",
   engage: "Prepare reactions, comments, reposts and follows",
   companyPage: "Post to my company Page",
   connectionDrafts: "Prepare connection requests and messages",
@@ -1224,7 +1241,10 @@ export async function setPostStatus(postId: string, status: PostStatus, patch: P
     const stamp = status === "awaiting-client" ? { sentAt: when } : status === "scheduled" ? { scheduledAt: when } : {};
     let next = setPost(db, postId, { status, ...stamp, ...patch });
     if (p && status === "awaiting-client") next = notify(next, clientUser(db, p.clientId)?.id, "A post is ready for your review.", "/content/review");
-    if (p && status === "scheduled") next = log(next, p.clientId, "team", "post", `Scheduled ${short(p.text)}`);
+    if (p && status === "scheduled") {
+      next = log(next, p.clientId, "team", "post", `Readied ${short(p.text)} for you to publish`);
+      next = notify(next, clientUser(db, p.clientId)?.id, `A post is ready for you to publish${patch.scheduledFor ? ` (best time ${dayTimeIn(patch.scheduledFor)})` : ""}.`, "/content/publish");
+    }
     return next;
   });
 }

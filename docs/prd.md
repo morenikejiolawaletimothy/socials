@@ -330,15 +330,19 @@ Bluecut Socials is a LinkedIn account management service for busy senior profess
 
 ## Epic 9. Publishing and live posts
 
-**US-9.1 (P0)** As a manager, I want to schedule approved content at the best time. (M5)
-- Platform suggests a time; manager confirms. Client and manager time zones shown. Personal profile or company Page.
-- Schedule disabled for anything not approved.
+**No LinkedIn API for publishing (changed).** We do not post to a member's personal profile through the LinkedIn API. An approved post is handed to the person who publishes it: the client taps Publish on self-serve, or the account manager publishes it on full-service. The platform prepares the post (text and media) and recommends the best time; a human posts it. This removes the LinkedIn member API as a launch dependency.
 
-**US-9.2 (P0)** As a manager, I want to reschedule or cancel. Rescheduling keeps approval; editing content needs review again.
+**US-9.1 (P0, changed)** As a manager, I want to ready approved content at the best time, so that the client can publish it. (M5)
+- Platform suggests a time; manager confirms and sends it to the client to publish ("Set time" → "To publish"). Client and manager time zones shown.
+- Only approved content can be readied to publish.
 
-**US-9.3 (P0)** As a manager, I want failed posts retried 3 times, then marked Failed with the reason and flagged to me.
+**US-9.2 (P0, changed)** As a client, I want to publish an approved post myself in about a minute, so that it goes out without giving anyone my login. (C7)
+- Copy the caption, open LinkedIn, add any image/video/carousel myself, post it, then Mark as posted. A reminder arrives at the recommended time; a post past its best time is flagged but still publishable.
+- Full-service clients never see this: their account manager publishes for them.
 
-**US-9.4 (P0)** As a client, I want confirmation when a post goes live, with a link.
+**US-9.3 (P0, changed)** As a manager, I want to move the recommended time or take a post off the publish list; editing content needs review again.
+
+**US-9.4 (P0)** As a client, I want confirmation when a post is live, with a link.
 
 **US-9.5 (P0, new)** As a client, I want to take a live post down at once, or ask for a fix. (C8)
 - "Take it down now": removed from LinkedIn after one confirmation; logged.
