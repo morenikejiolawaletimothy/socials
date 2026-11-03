@@ -246,7 +246,7 @@ export default function BrandPage() {
           </ul>
           <form
             noValidate
-            className="flex flex-col gap-3 rounded-md bg-neutral-25 p-4 sm:flex-row sm:items-start"
+            className="flex flex-col gap-3 sm:flex-row sm:items-start"
             onSubmit={async (e) => {
               e.preventDefault();
               if (!offText.trim()) return setOffError("Write what to avoid.");

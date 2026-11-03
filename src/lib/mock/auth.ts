@@ -43,7 +43,7 @@ function newClient(firstName: string, lastName: string, email: string) {
         goal: "",
         linkedin: "not-connected",
         postingPaused: false,
-        permissions: { post: true, engage: true, companyPage: false, connectionDrafts: false, profileDrafts: false },
+        permissions: { post: true, engage: true, companyPage: false, connectionDrafts: true, profileDrafts: true },
         review: { frequency: "weekly", channels: { email: true, app: true }, approval: { posts: "ask", comments: "go", connectionNotes: "ask" }, ifNoReply: "wait" },
         joinedAt: new Date().toISOString(),
       },

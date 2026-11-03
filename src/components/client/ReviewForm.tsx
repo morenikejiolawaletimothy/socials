@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { WhatsAppDialog } from "@/components/account/NotifySettings";
-import { Banner, Button, Switch, useTask } from "@/components/ui";
+import { Banner, Button, Switch, TextButton, useTask } from "@/components/ui";
 import { useMyClient, type ReviewSettings } from "@/lib/mock";
 
 const freq: { value: ReviewSettings["frequency"]; label: string; help: string }[] = [
@@ -62,12 +62,6 @@ export function ReviewForm({
   const [addingWa, setAddingWa] = useState(false);
   const waReady = !!user?.whatsapp?.confirmed;
 
-  const summary = [
-    freq.find((f) => f.value === r.frequency)?.label,
-    `by ${[r.channels.email && "email", r.channels.whatsapp && waReady && "WhatsApp", r.channels.app && "in the app"].filter(Boolean).join(" and ")}`,
-    r.ifNoReply === "wait" ? "nothing goes out until you approve" : "your manager posts after 24 hours without a reply",
-  ].join(", ");
-
   return (
     <div className="flex flex-col gap-8">
       <Question n={1} title="How often do you want to review?">
@@ -80,7 +74,13 @@ export function ReviewForm({
         <div className="flex flex-col gap-4 rounded-md border border-border p-4">
           <Switch label="Email" checked={r.channels.email} onChange={(v) => { setR({ ...r, channels: { ...r.channels, email: v } }); setError(undefined); }} />
           {waReady ? (
-            <Switch label="WhatsApp" description={user?.whatsapp?.number} checked={!!r.channels.whatsapp} onChange={(v) => { setR({ ...r, channels: { ...r.channels, whatsapp: v } }); setError(undefined); }} />
+            <div className="flex flex-col gap-2">
+            <Switch label="WhatsApp" checked={!!r.channels.whatsapp} onChange={(v) => { setR({ ...r, channels: { ...r.channels, whatsapp: v } }); setError(undefined); }} />
+              <span className="flex flex-wrap items-center gap-3 text-body-sm text-secondary">
+                {user?.whatsapp?.number}
+                <TextButton onClick={() => setAddingWa(true)}>Change</TextButton>
+              </span>
+            </div>
           ) : (
             <span className="flex flex-wrap items-center justify-between gap-3">
               <span className="flex flex-col gap-1">
@@ -140,13 +140,6 @@ export function ReviewForm({
           help="Your manager posts the reviewed drafts. You can still take any post down."
         />
       </Question>
-
-      <Banner tone="info" title="Your choice">
-        <span className="flex flex-col gap-1">
-          <span className="text-primary">{summary.charAt(0).toUpperCase() + summary.slice(1)}.</span>
-          <span>Changes apply to new posts. Posts already sent to you keep their path. Change this any time in Control.</span>
-        </span>
-      </Banner>
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row">
         {onCancel && (
