@@ -307,6 +307,7 @@ These rules apply to every flow below.
   - **Connect with these people:** a short list. Each person has their name, role, a link to their profile, why they matter to your goal, and a ready-written connection note. Buttons: Open profile, Copy note, Mark as sent. Notes can be edited before copying.
   - **Update your profile:** the new headline or About text, ready to copy, with where to paste it on LinkedIn. Mark as done.
   - Other one-off steps the strategy calls for, written the same way.
+- **Pictures:** task tiles show the task type's icon; people show their initials. LinkedIn does not share other members' photos through the API and its pages may not be scraped, so tasks never depend on them.
 - **Hand it to your assistant:** "Send to my assistant" emails the task list and notes to an address you choose. They do not need an account.
 - **States:** due this week, partly done (for example 9 of 15 sent), done. Tasks not done count as waiting on you in the weekly update, the same as held posts.
 

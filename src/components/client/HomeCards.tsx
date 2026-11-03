@@ -265,18 +265,11 @@ function TaskIcon({ t, className }: { t: QuickTask; className: string }) {
   return <LinkedinLogo className={className} aria-hidden />;
 }
 
-/** The picture on a Quick tasks tile: the people's photos overlapping, LinkedIn for profile tasks, the event's own picture. */
+/**
+ * The picture on a Quick tasks tile: the task type's icon, LinkedIn for profile tasks, the event's own picture.
+ * No photos of people: LinkedIn does not share other members' photos, so tasks never depend on them.
+ */
 function TaskVisual({ t }: { t: QuickTask }) {
-  const faces = (t.people ?? t.items ?? []).filter((p) => p.photo);
-  if ((t.kind === "connect" || isEngage(t.kind)) && faces.length) {
-    return (
-      <span className="flex shrink-0 -space-x-4">
-        {faces.slice(0, 3).map((p) => (
-          <Avatar key={p.id} name={p.name} src={p.photo} size="lg" className="ring-2 ring-card" />
-        ))}
-      </span>
-    );
-  }
   if (t.kind === "event" && t.event?.image) return <Avatar name={t.event.name} src={t.event.image} size="lg" />;
   if (t.kind === "profile") return <Image src="/brand/linkedin.svg" alt="" width={56} height={56} unoptimized className="size-14 shrink-0" />;
   return (
