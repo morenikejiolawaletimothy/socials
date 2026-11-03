@@ -88,7 +88,7 @@ export function seed(): Db {
   });
 
   return {
-    version: 18,
+    version: 19,
     session: {
       role: "client",
       userIds: { client: "u-chidi", manager: "u-ada", owner: "u-fola" },
@@ -100,7 +100,7 @@ export function seed(): Db {
       { id: "u-tunde", role: "manager", firstName: "Tunde", lastName: "Bakare", email: "tunde@bluecut.example", title: "Account manager", timeZone: "Europe/London", twoStep: true },
       { id: "u-bisi", role: "manager", firstName: "Bisi", lastName: "Adebayo", email: "bisi@bluecut.example", title: "Account manager", timeZone: "Africa/Lagos", twoStep: false },
       { id: "u-kola", role: "manager", firstName: "Kola", lastName: "Daniels", email: "kola@bluecut.example", title: "Account manager", timeZone: "Africa/Lagos", twoStep: true },
-      { id: "u-chidi", role: "client", firstName: "Chidi", lastName: "Okeke", email: "chidi@paystream.example", title: "CEO, Paystream", timeZone: "Africa/Lagos", twoStep: false },
+      { id: "u-chidi", role: "client", firstName: "Chidi", lastName: "Okeke", email: "chidi@paystream.example", title: "CEO, Paystream", timeZone: "Africa/Lagos", twoStep: false , whatsapp: { number: "+234 802 555 0187", confirmed: true }, channels: { email: true, whatsapp: true, timing: "now", quietNights: true } },
       { id: "u-sarah", role: "client", firstName: "Sarah", lastName: "Mensah", email: "sarah@lumenhealth.example", title: "Co-founder, Lumen Health", timeZone: "Africa/Accra", twoStep: false },
       { id: "u-david", role: "client", firstName: "David", lastName: "Adeyemi", email: "david@adeyemilaw.example", title: "Managing partner, Adeyemi & Co", timeZone: "Africa/Lagos", twoStep: false },
       { id: "u-kemi", role: "client", firstName: "Kemi", lastName: "Ola", email: "kemi@northwind.example", title: "Head of product, Northwind", timeZone: "America/Toronto", twoStep: false },
@@ -111,7 +111,7 @@ export function seed(): Db {
       { id: "u-musa", role: "client", firstName: "Musa", lastName: "Ibrahim", email: "musa@sahelventures.example", title: "Partner, Sahel Ventures", timeZone: "Africa/Lagos", twoStep: false },
     ],
     clients: [
-      client({ id: "c-chidi", userId: "u-chidi", managerId: "m-ada", company: "Paystream", role: "CEO", country: "Nigeria", industry: "Fintech", status: "active", goal: "Be known as a leading voice on payments in West Africa and start conversations with investors.", joinedAt: at(-64) }),
+      client({ review: { ...review, channels: { email: true, app: true, whatsapp: true } }, id: "c-chidi", userId: "u-chidi", managerId: "m-ada", company: "Paystream", role: "CEO", country: "Nigeria", industry: "Fintech", status: "active", goal: "Be known as a leading voice on payments in West Africa and start conversations with investors.", joinedAt: at(-64) }),
       client({ id: "c-sarah", userId: "u-sarah", managerId: "m-ada", company: "Lumen Health", role: "Co-founder", country: "Ghana", industry: "Health", status: "free", goal: "Build trust with hospital leaders ahead of a regional launch.", joinedAt: at(-10) }),
       client({ id: "c-ngozi", userId: "u-ngozi", managerId: "m-ada", company: "Harvest Foods", role: "Founder", country: "Nigeria", industry: "Food and agriculture", status: "free", stage: "calls", goal: "Find distribution partners and become known for local sourcing.", joinedAt: at(-2) }),
       client({ id: "c-femi", userId: "u-femi", managerId: "m-ada", company: "BrightGrid Energy", role: "CEO", country: "Nigeria", industry: "Energy", status: "free", stage: "strategy", goal: "Raise a Series A and be seen as the expert on off-grid solar.", joinedAt: at(-6) }),
@@ -544,5 +544,7 @@ export function seed(): Db {
     ],
     settings: { freeDays: 14, autoRefundLimitCents: 100000, reminderDays: [5, 3, 0], pauseWarningDays: 15, removalDays: 30, goAheadHours: 24, maxClientsPerManager: 10, daysBetweenCalls: 3, sessionTimeoutMinutes: 60, videoAddonCents: 30000 },
     changeRequests: [{ id: "cr1", clientId: "c-zainab", reason: "I would like a manager with a health background.", at: at(-1, 16), status: "open" }],
+    assistants: [{ id: "as-amaka", clientId: "c-chidi", name: "Amaka Obi", role: "EA", email: "amaka@paystream.example", whatsapp: "+234 803 555 0142", auto: [] }],
+    outbox: [],
   };
 }

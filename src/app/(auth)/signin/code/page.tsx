@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button, CodeInput, TextLink } from "@/components/ui";
 import { auth } from "@/lib/mock";
+import { afterSignIn } from "../../step";
 import { AuthScreen } from "../../AuthScreen";
 
 export default function SignInCodePage() {
@@ -20,7 +21,7 @@ export default function SignInCodePage() {
     const res = await auth.verifySignInCode(code);
     setBusy(false);
     if (!res.ok) return setError(res.message);
-    router.push(auth.homeFor(res.role));
+    router.push(afterSignIn(auth.homeFor(res.role)));
   }
 
   return (

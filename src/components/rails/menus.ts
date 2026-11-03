@@ -4,6 +4,7 @@ export const clientAccountMenu = {
     { label: "Your brand", href: "/brand" },
     { label: "Control", href: "/control" },
     { label: "Contract", href: "/contract" },
+    { label: "Assistants", href: "/assistants" },
     { label: "Account", href: "/account" },
   ],
 };

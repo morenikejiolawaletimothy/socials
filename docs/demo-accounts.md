@@ -34,3 +34,10 @@ These sign in to the dummy data on the preview site and on `npm run dev`. They s
 ## Reset password
 
 - `/reset`, enter any email, then follow "Demo: open the link from the email".
+
+## Notifications and assistants (C18, C19)
+
+- Chidi has WhatsApp confirmed (+234 802 555 0187) and one assistant, Amaka Obi (EA).
+- WhatsApp code: 482913 (pre-filled; any 6 digits work).
+- "Sent messages" in the demo bar lists every email and WhatsApp message the live app would send. "Open link" on a message to an assistant opens their task page (`/a/...`).
+- Sign-in with `?next=/tasks/t-chidi-headline` lands on that task.

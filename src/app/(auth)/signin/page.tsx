@@ -7,7 +7,7 @@ import { Button, Divider, Input, PasswordInput, TextLink } from "@/components/ui
 import { auth } from "@/lib/mock";
 import { AuthFooter, AuthScreen, EmailRow } from "../AuthScreen";
 import { GoogleButton } from "../GoogleButton";
-import { step } from "../step";
+import { afterSignIn, keepNext, step } from "../step";
 
 /** Email first, then password, like Lovable. Staff with two-step sign-in go on to /signin/code. */
 export default function SignInPage() {
@@ -35,7 +35,7 @@ export default function SignInPage() {
       if (res.field === "email") setStage("email");
       return setErrors({ [res.field ?? "password"]: res.message });
     }
-    router.push(res.needsCode ? "/signin/code" : auth.homeFor(res.role));
+    router.push(res.needsCode ? keepNext("/signin/code") : afterSignIn(auth.homeFor(res.role)));
   }
 
   return (
@@ -48,7 +48,7 @@ export default function SignInPage() {
               onClick={async () => {
                 setBusy("google");
                 await auth.continueWithGoogle();
-                router.push("/home");
+                router.push(afterSignIn("/home"));
               }}
             />
             <Divider label="or" />

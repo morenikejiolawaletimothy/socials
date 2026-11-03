@@ -1,7 +1,7 @@
 "use client";
 
 import { delay, getDb, update } from "./store";
-import type { Activity, Client, Db, Message, Permissions, PostStatus, Reaction, ReviewSettings, SetupStep } from "./types";
+import type { Activity, Assistant, Channels, Client, Db, Handoff, Message, Permissions, PostStatus, Reaction, ReviewSettings, SetupStep, User } from "./types";
 
 /*
  * Every change a screen can make. Phase 2 swaps each body for an API call; screens keep calling the same names.
@@ -31,10 +31,31 @@ function setPost(db: Db, postId: string, patch: Partial<Db["posts"][number]>): D
   return { ...db, posts: db.posts.map((p) => (p.id === postId ? { ...p, ...patch } : p)) };
 }
 
-/** Adds a notification for one person. `email` marks the ones the real app also emails. */
+/** C18: how a person is told. Clients without a saved choice follow How you review; everyone else gets email. */
+export function channelsOf(user: User | undefined, client?: Client): Channels {
+  return user?.channels ?? { email: client?.review.channels.email ?? true, whatsapp: false, timing: "now", quietNights: true };
+}
+
+/** Phase 1 only: records the email and WhatsApp messages the real app would send, for the demo bar. */
+function send(db: Db, to: string, address: string | undefined, channel: "email" | "whatsapp", text: string, href: string): Db {
+  if (!address) return db;
+  return { ...db, outbox: [{ id: id("o"), to, address, channel, text, href, at: nowIso() }, ...(db.outbox ?? [])].slice(0, 40) };
+}
+
+/**
+ * Adds a notification for one person, with the link to the exact page that needs them. `email` marks the ones
+ * that also go out by email and WhatsApp (C18), following the person's channels; urgent ones always go.
+ */
 function notify(db: Db, userId: string | undefined, text: string, href: string, opts: { email?: boolean; urgent?: boolean } = {}): Db {
   if (!userId) return db;
-  return { ...db, notifications: [{ id: id("n"), userId, text, href, createdAt: nowIso(), read: false, email: opts.email ?? true, urgent: opts.urgent }, ...db.notifications] };
+  let next: Db = { ...db, notifications: [{ id: id("n"), userId, text, href, createdAt: nowIso(), read: false, email: opts.email ?? true, urgent: opts.urgent }, ...db.notifications] };
+  if (opts.email === false && !opts.urgent) return next;
+  const user = db.users.find((u) => u.id === userId);
+  const ch = channelsOf(user, db.clients.find((c) => c.userId === userId));
+  const name = nameOf(user);
+  if (ch.email || opts.urgent) next = send(next, name, user?.email, "email", text, href);
+  if (ch.whatsapp && user?.whatsapp?.confirmed) next = send(next, name, user.whatsapp.number, "whatsapp", text, href);
+  return next;
 }
 
 function audit(db: Db, action: string, target: string, kind: Db["audit"][number]["kind"], who = "Fola Morenikeji"): Db {
@@ -310,7 +331,8 @@ export async function resumePost(postId: string) {
 
 /* ---------- Client: quick tasks ---------- */
 
-export async function togglePersonSent(taskId: string, personId: string) {
+/** `by`: the assistant's name, when they did it from their link (C19). */
+export async function togglePersonSent(taskId: string, personId: string, by?: string) {
   await delay(250);
   update((db) => {
     const t = db.tasks.find((x) => x.id === taskId);
@@ -320,12 +342,13 @@ export async function togglePersonSent(taskId: string, personId: string) {
       tasks: db.tasks.map((x) => (x.id !== taskId ? x : { ...x, people: x.people?.map((p) => (p.id === personId ? { ...p, done: !p.done } : p)) })),
     };
     // Recorded in the activity log, so it shows in the report for this period. Undo removes the record.
-    if (t && person) next = person.done ? unlog(next, t.clientId, connectionText(person.name)) : log(next, t.clientId, "you", "connection", connectionText(person.name));
+    if (t && person) next = person.done ? unlog(unlog(next, t.clientId, connectionText(person.name)), t.clientId, connectionText(person.name, person.doneBy)) : log(next, t.clientId, "you", "connection", connectionText(person.name, by));
+    if (by) next = { ...next, tasks: next.tasks.map((x) => (x.id !== taskId ? x : { ...x, people: x.people?.map((p) => (p.id === personId ? { ...p, doneBy: p.done ? by : undefined } : p)) })) };
     return next;
   });
 }
 
-const connectionText = (name: string) => `Sent a connection request to ${name}`;
+const connectionText = (name: string, by?: string) => `Sent a connection request to ${name}${by ? ` (by ${by})` : ""}`;
 
 /** What a finished quick task says in the activity log and the report. */
 function taskDoneText(t: Db["tasks"][number]) {
@@ -348,20 +371,160 @@ export async function editPersonNote(taskId: string, personId: string, note: str
   }));
 }
 
-export async function markTaskDone(taskId: string, done = true) {
+/** `by`: the assistant's name, when they did it from their link (C19). Done ends their link. */
+export async function markTaskDone(taskId: string, done = true, by?: string) {
   await delay(300);
   update((db) => {
     const t = db.tasks.find((x) => x.id === taskId);
-    let next: Db = { ...db, tasks: db.tasks.map((x) => (x.id === taskId ? { ...x, done } : x)) };
-    if (t && t.done !== done) next = done ? log(next, t.clientId, "you", taskLogKind(t), taskDoneText(t)) : unlog(next, t.clientId, taskDoneText(t));
+    if (!t) return db;
+    const text = `${taskDoneText(t)}${by ? ` (by ${by})` : ""}`;
+    const handoff = t.handoff && (done ? { ...t.handoff, endedAt: t.handoff.endedAt ?? nowIso(), endedReason: t.handoff.endedReason ?? ("done" as const) } : t.handoff.endedReason === "done" ? { ...t.handoff, endedAt: undefined, endedReason: undefined } : t.handoff);
+    let next: Db = { ...db, tasks: db.tasks.map((x) => (x.id === taskId ? { ...x, done, doneBy: done ? by : undefined, handoff } : x)) };
+    if (t.done !== done) next = done ? log(next, t.clientId, "you", taskLogKind(t), text) : unlog(unlog(next, t.clientId, taskDoneText(t)), t.clientId, `${taskDoneText(t)} (by ${t.doneBy})`);
+    if (by && done) next = notify(next, clientUser(db, t.clientId)?.id, `${by} finished "${t.title}".`, `/tasks/${t.id}`, { email: false });
     return next;
   });
 }
 
-/** C17: email the task list to an assistant. Phase 2 sends it with Resend. */
-export async function sendToAssistant(taskId: string, email: string) {
+/* ---------- Assistants (C19) ---------- */
+
+const assistantLabel = (a: Assistant) => `${a.name} (${a.role})`;
+const token = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(36).padStart(2, "0")).join("").slice(0, 24);
+
+export async function saveAssistant(clientId: string, a: Omit<Assistant, "id" | "clientId"> & { id?: string }) {
+  await delay();
+  update((db) => {
+    const list = db.assistants ?? [];
+    const assistants = a.id ? list.map((x) => (x.id === a.id ? { ...x, ...a, id: x.id } : x)) : [...list, { ...a, id: id("as"), clientId }];
+    return log({ ...db, assistants }, clientId, "you", "setting", `${a.id ? "Updated" : "Added"} your assistant ${a.name}`);
+  });
+}
+
+/** Removing an assistant takes back every task they have, so their links stop working. */
+export async function removeAssistant(assistantId: string) {
+  await delay();
+  update((db) => {
+    const a = db.assistants.find((x) => x.id === assistantId);
+    if (!a) return db;
+    const tasks = db.tasks.map((t) => (t.handoff?.assistantId === assistantId && !t.handoff.endedAt ? { ...t, handoff: { ...t.handoff, endedAt: nowIso(), endedReason: "taken-back" as const } } : t));
+    return log({ ...db, tasks, assistants: db.assistants.filter((x) => x.id !== assistantId) }, a.clientId, "you", "setting", `Removed your assistant ${a.name}`);
+  });
+}
+
+function handOver(db: Db, taskId: string, assistantId: string, note?: string): Db {
+  const t = db.tasks.find((x) => x.id === taskId);
+  const a = db.assistants.find((x) => x.id === assistantId);
+  if (!t || !a) return db;
+  const handoff: Handoff = { assistantId, token: token(), note: note || undefined, sentAt: nowIso(), expiresAt: new Date(Date.now() + 14 * 86_400_000).toISOString() };
+  const owner = clientUser(db, t.clientId);
+  const text = `${owner?.firstName ?? "Your client"} asked you to do this: ${t.title}.${note ? ` "${note}"` : ""}`;
+  let next: Db = { ...db, tasks: db.tasks.map((x) => (x.id === taskId ? { ...x, handoff } : x)) };
+  next = send(next, assistantLabel(a), a.email, "email", text, `/a/${handoff.token}`);
+  next = send(next, assistantLabel(a), a.whatsapp, "whatsapp", text, `/a/${handoff.token}`);
+  return log(next, t.clientId, "you", "setting", `Handed "${t.title}" to ${a.name}`);
+}
+
+export async function handToAssistant(taskId: string, assistantId: string, note?: string) {
+  await delay(600);
+  update((db) => handOver(db, taskId, assistantId, note));
+}
+
+/** Sends the same task again with a fresh link (the old one stops working) and 14 more days. */
+export async function resendHandoff(taskId: string) {
+  await delay(500);
+  update((db) => {
+    const h = db.tasks.find((x) => x.id === taskId)?.handoff;
+    return h ? handOver(db, taskId, h.assistantId, h.note) : db;
+  });
+}
+
+export async function takeBackTask(taskId: string) {
+  await delay(300);
+  update((db) => ({ ...db, tasks: db.tasks.map((t) => (t.id === taskId && t.handoff ? { ...t, handoff: { ...t.handoff, endedAt: nowIso(), endedReason: "taken-back" as const } } : t)) }));
+}
+
+/** Undo for Take back: the same link works again. */
+export async function restoreHandoff(taskId: string) {
+  await delay(200);
+  update((db) => ({ ...db, tasks: db.tasks.map((t) => (t.id === taskId && t.handoff ? { ...t, handoff: { ...t.handoff, endedAt: undefined, endedReason: undefined } } : t)) }));
+}
+
+/** The assistant opened their link. Recorded once, so the client sees "Opened". */
+export function openHandoff(tok: string) {
+  update((db) => {
+    const t = db.tasks.find((x) => x.handoff?.token === tok);
+    if (!t?.handoff || t.handoff.openedAt) return db;
+    return { ...db, tasks: db.tasks.map((x) => (x.id === t.id ? { ...x, handoff: { ...x.handoff!, openedAt: nowIso() } } : x)) };
+  });
+}
+
+/** From an expired or taken-back link: tells the client the assistant needs a new one. */
+export async function askForNewLink(tok: string) {
+  await delay(500);
+  update((db) => {
+    const t = db.tasks.find((x) => x.handoff?.token === tok);
+    const a = db.assistants.find((x) => x.id === t?.handoff?.assistantId);
+    if (!t || !a) return db;
+    return notify(db, clientUser(db, t.clientId)?.id, `${a.name} asked for a new link to "${t.title}".`, `/tasks/${t.id}`, { urgent: true });
+  });
+}
+
+/** Sends a new task straight to the assistant the client chose for that kind of task, if any. */
+function autoHandOver(db: Db, taskId: string): Db {
+  const t = db.tasks.find((x) => x.id === taskId);
+  const a = (db.assistants ?? []).find((x) => x.clientId === t?.clientId && x.auto.includes(t.kind));
+  return t && a ? handOver(db, taskId, a.id) : db;
+}
+
+/* ---------- Notification channels (C18) ---------- */
+
+/** Saves how a person is told. For clients, email and WhatsApp also update How you review. */
+export async function setChannels(userId: string, patch: Partial<Channels>) {
+  await delay(300);
+  update((db) => {
+    const user = db.users.find((u) => u.id === userId);
+    const client = db.clients.find((c) => c.userId === userId);
+    const channels = { ...channelsOf(user, client), ...patch };
+    let next: Db = { ...db, users: db.users.map((u) => (u.id === userId ? { ...u, channels } : u)) };
+    if (client) next = patchClient(next, client.id, (c) => ({ review: { ...c.review, channels: { ...c.review.channels, email: channels.email, whatsapp: channels.whatsapp } } }));
+    return next;
+  });
+}
+
+/** Sends a 6-digit code on WhatsApp to the number. Nothing is turned on until it is confirmed. */
+export async function startWhatsApp(userId: string, number: string) {
   await delay(700);
-  return { taskId, email };
+  update((db) => {
+    const user = db.users.find((u) => u.id === userId);
+    const next: Db = { ...db, users: db.users.map((u) => (u.id === userId ? { ...u, whatsapp: { number, confirmed: false } } : u)) };
+    return send(next, nameOf(user), number, "whatsapp", "Your Bluecut code is 482913. It works for 10 minutes.", "/account");
+  });
+}
+
+export async function confirmWhatsApp(userId: string, code: string) {
+  await delay(500);
+  if (!/^\d{6}$/.test(code)) throw new Error("That code is not right. Check the latest WhatsApp message from Bluecut and enter its 6 digits.");
+  update((db) => {
+    const user = db.users.find((u) => u.id === userId);
+    if (!user?.whatsapp) return db;
+    const channels = { ...channelsOf(user, db.clients.find((c) => c.userId === userId)), whatsapp: true };
+    let next: Db = { ...db, users: db.users.map((u) => (u.id === userId ? { ...u, whatsapp: { ...u.whatsapp!, confirmed: true }, channels } : u)) };
+    const client = db.clients.find((c) => c.userId === userId);
+    if (client) next = patchClient(next, client.id, (c) => ({ review: { ...c.review, channels: { ...c.review.channels, whatsapp: true } } }));
+    return next;
+  });
+}
+
+export async function removeWhatsApp(userId: string) {
+  await delay(400);
+  update((db) => {
+    const user = db.users.find((u) => u.id === userId);
+    const client = db.clients.find((c) => c.userId === userId);
+    const channels = { ...channelsOf(user, client), whatsapp: false, email: true };
+    let next: Db = { ...db, users: db.users.map((u) => (u.id === userId ? { ...u, whatsapp: undefined, channels } : u)) };
+    if (client) next = patchClient(next, client.id, (c) => ({ review: { ...c.review, channels: { ...c.review.channels, whatsapp: false, email: true } } }));
+    return next;
+  });
 }
 
 /* ---------- Client: progress ---------- */
@@ -488,7 +651,9 @@ export async function setPermission(clientId: string, key: keyof Permissions, va
 export async function saveReview(clientId: string, review: ReviewSettings) {
   await delay();
   update((db) => {
-    const next = log(patchClient(db, clientId, () => ({ review })), clientId, "you", "setting", "Changed how you review");
+    let next = log(patchClient(db, clientId, () => ({ review })), clientId, "you", "setting", "Changed how you review");
+    const u = clientUser(db, clientId);
+    if (u) next = { ...next, users: next.users.map((x) => (x.id === u.id ? { ...x, channels: { ...channelsOf(u, clientOf(db, clientId)), email: review.channels.email, whatsapp: !!review.channels.whatsapp && !!u.whatsapp?.confirmed } } : x)) };
     return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} changed how they review.`, `/manager/clients/${clientId}`, { email: false });
   });
 }
@@ -649,6 +814,7 @@ export async function requestVideo(clientId: string, brief: Db["tasks"][number][
   update((db) => {
     let next: Db = { ...db, tasks: [{ id: taskId, clientId, kind: "video", title: "Record a short video", dueAt, done: false, sentAt: nowIso(), video: brief }, ...db.tasks] };
     if (brief.postId) next = setPost(next, brief.postId, { waitingForVideo: taskId, format: "video" });
+    next = autoHandOver(next, taskId);
     next = log(next, clientId, "team", "post", `Asked you for a short video: ${brief.idea}`);
     return notify(next, clientUser(db, clientId)?.id, `${managerUserOf(db, clientId)?.firstName ?? "Your manager"} asked you for a short video: ${brief.idea}.`, `/tasks/${taskId}`, { email: true });
   });
@@ -1048,11 +1214,12 @@ export async function addLead(clientId: string, url: string) {
 export async function prepareConnections(clientId: string) {
   await delay(900);
   update((db) => {
-    const next: Db = {
+    const taskId = id("t");
+    let next: Db = {
       ...db,
       tasks: [
         {
-          id: id("t"),
+          id: taskId,
           clientId,
           kind: "connect",
           title: "Connect with 3 people this week",
@@ -1068,7 +1235,8 @@ export async function prepareConnections(clientId: string) {
         ...db.tasks,
       ],
     };
-    return notify(next, clientUser(db, clientId)?.id, "3 people to connect with this week. About 2 minutes.", "/home");
+    next = autoHandOver(next, taskId);
+    return notify(next, clientUser(db, clientId)?.id, "3 people to connect with this week. About 2 minutes.", `/tasks/${taskId}`);
   });
 }
 

@@ -115,7 +115,7 @@ Flows: A1 to A8.
 - Overview, clients with assignment suggestions and step in, managers with training status and payouts, framework with versions and "What works on LinkedIn", money with automatic refund threshold and cancellation reasons, complaints, settings, audit log.
 **Exit:** the owner can see every state and take every action on dummy data, including stepping in for a manager. Signed off.
 
-### Batch 1.8. Notifications and assistants (after C18 and C19 are approved)
+### Batch 1.8. Notifications and assistants (built, awaiting Fola's review)
 - Account > Notifications: channels (email, WhatsApp with code), straight away or daily, quiet hours, locked items.
 - Account > Assistants: add, edit, remove.
 - Quick task: Hand to my assistant, automatic handover per task type, With Ada status, resend, take back.

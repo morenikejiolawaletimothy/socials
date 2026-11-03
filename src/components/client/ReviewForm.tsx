@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { WhatsAppDialog } from "@/components/account/NotifySettings";
 import { Banner, Button, Switch, useTask } from "@/components/ui";
-import type { ReviewSettings } from "@/lib/mock";
+import { useMyClient, type ReviewSettings } from "@/lib/mock";
 
 const freq: { value: ReviewSettings["frequency"]; label: string; help: string }[] = [
   { value: "weekly", label: "Once a week", help: "All of next week's posts in one go. Most people choose this." },
@@ -59,10 +60,13 @@ export function ReviewForm({
   const [r, setR] = useState(initial);
   const { run, pending } = useTask();
   const [error, setError] = useState<string>();
+  const { user } = useMyClient();
+  const [addingWa, setAddingWa] = useState(false);
+  const waReady = !!user?.whatsapp?.confirmed;
 
   const summary = [
     freq.find((f) => f.value === r.frequency)?.label,
-    `by ${[r.channels.email && "email", r.channels.app && "in the app"].filter(Boolean).join(" and ")}`,
+    `by ${[r.channels.email && "email", r.channels.whatsapp && waReady && "WhatsApp", r.channels.app && "in the app"].filter(Boolean).join(" and ")}`,
     r.ifNoReply === "wait" ? "nothing goes out until you approve" : "your manager posts after 24 hours without a reply",
   ].join(", ");
 
@@ -77,8 +81,22 @@ export function ReviewForm({
       <Question n={2} title="Where should we tell you?">
         <div className="flex flex-col gap-4 rounded-md border border-border p-4">
           <Switch label="Email" checked={r.channels.email} onChange={(v) => { setR({ ...r, channels: { ...r.channels, email: v } }); setError(undefined); }} />
+          {waReady ? (
+            <Switch label="WhatsApp" description={user?.whatsapp?.number} checked={!!r.channels.whatsapp} onChange={(v) => { setR({ ...r, channels: { ...r.channels, whatsapp: v } }); setError(undefined); }} />
+          ) : (
+            <span className="flex flex-wrap items-center justify-between gap-3">
+              <span className="flex flex-col gap-1">
+                <span className="text-body font-medium text-primary">WhatsApp</span>
+                <span className="text-body-sm text-secondary">Add your number to get a message with a link to each review.</span>
+              </span>
+              <Button size="sm" variant="secondary" onClick={() => setAddingWa(true)}>
+                Add number
+              </Button>
+            </span>
+          )}
           <Switch label="In the app" checked={r.channels.app} onChange={(v) => { setR({ ...r, channels: { ...r.channels, app: v } }); setError(undefined); }} />
         </div>
+        {user && <WhatsAppDialog key={String(addingWa)} user={user} open={addingWa} onClose={() => { setAddingWa(false); setR((x) => ({ ...x, channels: { ...x.channels, whatsapp: true } })); }} />}
         {error && <p className="text-body-sm text-danger">{error}</p>}
       </Question>
 
@@ -140,7 +158,7 @@ export function ReviewForm({
         <Button
           loading={pending("save")}
           onClick={async () => {
-            if (!r.channels.email && !r.channels.app) return setError("Choose at least one, so you know when posts are ready.");
+            if (!r.channels.email && !r.channels.app && !(r.channels.whatsapp && waReady)) return setError("Choose at least one, so you know when posts are ready.");
             if (await run("save", () => onSave(r), success)) onSaved?.();
           }}
         >
@@ -154,7 +172,7 @@ export function ReviewForm({
 export function reviewSummary(r: ReviewSettings) {
   return {
     frequency: freq.find((f) => f.value === r.frequency)?.label ?? "",
-    channels: [r.channels.email && "Email", r.channels.app && "In the app"].filter(Boolean).join(" and "),
+    channels: [r.channels.email && "Email", r.channels.whatsapp && "WhatsApp", r.channels.app && "In the app"].filter(Boolean).join(", ").replace(/, ([^,]*)$/, " and $1"),
     approval: kinds.map((k) => ({ label: k.label, ask: r.approval[k.key] === "ask" })),
     noReply: r.ifNoReply === "wait" ? "Wait for me" : "Go ahead after 24 hours",
   };

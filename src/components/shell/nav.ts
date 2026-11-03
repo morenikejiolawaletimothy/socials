@@ -38,6 +38,7 @@ export const profileNav: Record<Exclude<Role, "owner">, { label: string; href: s
     { label: "Your brand", href: "/brand", description: "Photos, voice, Moments and what is off limits" },
     { label: "Control", href: "/control", description: "What we do for you, how you review, activity" },
     { label: "Contract", href: "/contract", description: "Your plan, payments and invoices" },
+    { label: "Assistants", href: "/assistants", description: "Hand quick tasks to your EA or PA" },
     { label: "Account", href: "/account", description: "Profile, sign-in and notifications" },
   ],
   manager: [

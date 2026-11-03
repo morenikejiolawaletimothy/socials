@@ -6,8 +6,9 @@ import { use, useState, type ReactNode } from "react";
 import { eventLength } from "@/components/client/HomeCards";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
+import { HandoffCard } from "@/components/client/Assistants";
 import { VideoTask } from "@/components/client/VideoTask";
-import { Avatar, Badge, Banner, Breadcrumbs, Button, Card, Dialog, EmptyState, Input, Meta, ProgressBar, Textarea, TextButton, textActionClass, useTask, useToast } from "@/components/ui";
+import { Avatar, Badge, Banner, Breadcrumbs, Button, Card, EmptyState, Meta, ProgressBar, Textarea, TextButton, textActionClass, useTask, useToast } from "@/components/ui";
 import { agoIn, day, dayIn, time } from "@/lib/format";
 import { act, useMyClient, type Person, type QuickTask } from "@/lib/mock";
 
@@ -46,7 +47,7 @@ function PersonRow({ task, person }: { task: QuickTask; person: Person }) {
         </div>
         {person.done ? (
           <span className="shrink-0">
-            <Badge status="success">Sent</Badge>
+            <Badge status="success">{person.doneBy ? `Sent by ${person.doneBy.split(" ")[0]}` : "Sent"}</Badge>
           </span>
         ) : (
           <Button size="sm" variant="secondary" className="shrink-0" loading={pending("sent")} onClick={toggleSent}>
@@ -177,13 +178,10 @@ function TaskTile({
 /** C17 Quick tasks: things LinkedIn only lets the client do, prepared so each takes 1 to 3 minutes. */
 export default function TaskPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { tasks, managerUser } = useMyClient();
+  const { tasks, managerUser, client } = useMyClient();
   const toast = useToast();
   const { run, pending } = useTask();
   const task = tasks.find((t) => t.id === id);
-  const [assistant, setAssistant] = useState(false);
-  const [email, setEmail] = useState("");
-  const [emailError, setEmailError] = useState<string>();
 
   if (!task) {
     return (
@@ -330,49 +328,7 @@ export default function TaskPage({ params }: { params: Promise<{ id: string }> }
         </div>
       </Card>
 
-      {task.kind !== "video" && (
-        <Card title="Someone does this for you?">
-          <div className="flex flex-col gap-4">
-            <p className="text-body-sm text-secondary">
-              {task.kind === "event"
-                ? "Send the details to your assistant so they can register you. They do not need an account."
-                : "Send the list and notes to your assistant. They do not need an account."}
-            </p>
-            <Button className="self-start" onClick={() => setAssistant(true)}>
-              Send to my assistant
-            </Button>
-          </div>
-        </Card>
-      )}
-
-      <Dialog open={assistant} onClose={() => setAssistant(false)} title="Send to your assistant">
-        <Banner tone="info">We email them the list, the notes and how to send each one. You still mark them as sent here, or they reply to us.</Banner>
-        <Input
-          label="Their email"
-          type="email"
-          value={email}
-          onChange={(e) => {
-            setEmail(e.target.value);
-            setEmailError(undefined);
-          }}
-          error={emailError}
-          placeholder="name@company.com"
-        />
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={() => setAssistant(false)}>
-            Cancel
-          </Button>
-          <Button
-            loading={pending("assistant")}
-            onClick={async () => {
-              if (!/^\S+@\S+\.\S+$/.test(email.trim())) return setEmailError("Enter an email address like name@company.com.");
-              if (await run("assistant", () => act.sendToAssistant(task.id, email.trim()), `Sent to ${email.trim()}. They will get it in a minute.`)) setAssistant(false);
-            }}
-          >
-            {pending("assistant") ? "Sending" : "Send"}
-          </Button>
-        </div>
-      </Dialog>
+      {client && <HandoffCard task={task} clientId={client.id} />}
     </Columns>
   );
 }

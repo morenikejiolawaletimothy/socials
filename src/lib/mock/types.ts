@@ -22,6 +22,20 @@ export type User = {
   signedOut?: string[];
   /** Set when a client deletes their account. */
   deletedAt?: string;
+  /** C18: WhatsApp number for notifications, confirmed with a code sent on WhatsApp. */
+  whatsapp?: { number: string; confirmed: boolean };
+  /** C18: how this person is told. Clients set it in How you review (C5) and Account; staff in Profile. */
+  channels?: Channels;
+};
+
+/** C18: where notifications go. In the app is always on. */
+export type Channels = {
+  email: boolean;
+  whatsapp: boolean;
+  /** "now": as they happen. "daily": together once a day at 9am. Urgent items always go at once. */
+  timing: "now" | "daily";
+  /** No messages 9pm to 7am in the person's time zone, except urgent ones. */
+  quietNights: boolean;
 };
 
 /** C2: what the client lets us do on LinkedIn. */
@@ -36,7 +50,7 @@ export type Permissions = {
 /** C5: how the client reviews. */
 export type ReviewSettings = {
   frequency: "weekly" | "twice-weekly" | "every-post";
-  channels: { email: boolean; app: boolean };
+  channels: { email: boolean; app: boolean; whatsapp?: boolean };
   /** For each kind of work: ask first, or go ahead without asking. */
   approval: { posts: "ask" | "go"; comments: "ask" | "go"; connectionNotes: "ask" | "go" };
   ifNoReply: "wait" | "go";
@@ -193,7 +207,7 @@ export type Post = {
 
 /* ---------- Quick tasks (C17, M6) ---------- */
 
-export type Person = { id: string; name: string; role: string; profileUrl: string; why: string; note: string; done: boolean; /** Their LinkedIn photo, when we have it. */ photo?: string };
+export type Person = { id: string; name: string; role: string; profileUrl: string; why: string; note: string; done: boolean; /** The assistant who sent it, when they did. */ doneBy?: string; /** Their LinkedIn photo, when we have it. */ photo?: string };
 
 export type TaskEvent = {
   type: "event" | "program";
@@ -229,6 +243,47 @@ export type QuickTask = {
   video?: VideoBrief;
   done: boolean;
   sentAt: string;
+  /** C19: handed to the client's assistant, who works on it from a private link. */
+  handoff?: Handoff;
+  /** Name of the assistant who finished it, when they did. */
+  doneBy?: string;
+};
+
+/** C19: the client's executive or personal assistant. They never get an account. */
+export type Assistant = {
+  id: string;
+  clientId: string;
+  name: string;
+  role: "EA" | "PA";
+  email?: string;
+  whatsapp?: string;
+  /** Task kinds sent to this assistant automatically when they arrive. */
+  auto: QuickTask["kind"][];
+};
+
+/** C19: a task handed to an assistant. The token opens that one task only (Phase 2 stores it hashed). */
+export type Handoff = {
+  assistantId: string;
+  token: string;
+  note?: string;
+  sentAt: string;
+  openedAt?: string;
+  expiresAt: string;
+  /** Set when the link stops working: the task was done, the client took it back. */
+  endedAt?: string;
+  endedReason?: "done" | "taken-back";
+};
+
+/** Phase 1 only: each email and WhatsApp message the real app would send, shown in the demo bar so links can be tried. */
+export type OutboxItem = {
+  id: string;
+  /** Who it went to, as a name ("Chidi Okafor", "Amaka Obi (EA)"). */
+  to: string;
+  channel: "email" | "whatsapp";
+  address: string;
+  text: string;
+  href: string;
+  at: string;
 };
 
 /* ---------- Calls (C3, M10) ---------- */
@@ -582,4 +637,6 @@ export type Db = {
   payouts: Payout[];
   settings: Settings;
   changeRequests: ManagerChangeRequest[];
+  assistants: Assistant[];
+  outbox: OutboxItem[];
 };

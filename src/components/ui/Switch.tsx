@@ -1,22 +1,25 @@
 "use client";
 
-/** On/off switch with a visible label. */
+/** On/off switch with a visible label (or `hideLabel` inside a row that names it). */
 export function Switch({
   checked,
   onChange,
   label,
   description,
   disabled = false,
+  hideLabel = false,
 }: {
   checked: boolean;
   onChange: (next: boolean) => void;
   label: string;
   description?: string;
   disabled?: boolean;
+  /** The label is said by screen readers only, when the row beside it already names the setting. */
+  hideLabel?: boolean;
 }) {
   return (
     <label className={`flex items-start justify-between gap-4 ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
-      <span className="flex flex-col gap-1">
+      <span className={hideLabel ? "sr-only" : "flex flex-col gap-1"}>
         <span className={`text-body font-medium ${disabled ? "text-secondary" : "text-primary"}`}>{label}</span>
         {description && <span className="text-body-sm text-secondary">{description}</span>}
       </span>

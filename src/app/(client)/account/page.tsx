@@ -4,6 +4,7 @@ import { Desktop, DeviceMobile } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { NotifySettings } from "@/components/account/NotifySettings";
 import { PhotoField } from "@/components/account/PhotoField";
 import { pullOutTerms } from "@/components/client/contract";
 import { Columns } from "@/components/layout/Columns";
@@ -26,7 +27,7 @@ const emailItems = [
   { key: "tips", label: "News from Bluecut", description: "Once a month at most.", default: false },
 ];
 
-/** C14 Account: profile, time zone, sign-in and two-step, sessions, email notifications, your data, delete. */
+/** C14 Account: profile, time zone, sign-in and two-step, sessions, notifications (C18), your data, delete. */
 export default function AccountPage() {
   const { user, client, contract, invoices } = useMyClient();
   const confirm = useConfirm();
@@ -156,7 +157,7 @@ export default function AccountPage() {
         </div>
       </Card>
 
-      <Card title="Email notifications">
+      <NotifySettings user={user} client={client}>
         <ul className="flex flex-col">
           {emailItems.map((i) => (
             <li key={i.key} className="border-b border-border py-4 first:pt-0 last:border-b-0 last:pb-0">
@@ -165,13 +166,12 @@ export default function AccountPage() {
                 description={pending(i.key) ? "Saving" : i.description}
                 checked={emailOn(i.key, i.default)}
                 disabled={pending(i.key)}
-                onChange={(v) => run(i.key, () => act.setPref(user.id, `email.${i.key}`, v), `${v ? "You will get" : "You will no longer get"} emails for ${i.label.toLowerCase()}.`)}
+                onChange={(v) => run(i.key, () => act.setPref(user.id, `email.${i.key}`, v), `${v ? "We will tell you about" : "We will no longer message you about"} ${i.label.toLowerCase()}.`)}
               />
             </li>
           ))}
         </ul>
-        <Banner tone="info" className="mt-4">Payment reminders and account notices are always sent.</Banner>
-      </Card>
+      </NotifySettings>
 
       <Card title="Your data">
         <div className="flex flex-col gap-4">

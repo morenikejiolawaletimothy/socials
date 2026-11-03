@@ -99,6 +99,12 @@ export function OverviewTab({ b }: { b: ClientBundle }) {
             <span className="text-body-sm text-primary">{{ weekly: "Once a week", "twice-weekly": "Twice a week", "every-post": "Every post" }[r.frequency]}</span>
           </Row>
           <Row>
+            <RowText title="How they are told" />
+            <span className="text-body-sm text-primary">
+              {[r.channels.email && "Email", r.channels.whatsapp && b.user?.whatsapp?.confirmed && "WhatsApp", r.channels.app && "In the app"].filter(Boolean).join(", ")}
+            </span>
+          </Row>
+          <Row>
             <RowText title="If no reply" />
             <span className="text-body-sm text-primary">{r.ifNoReply === "wait" ? "Wait for them" : "Go ahead after 24 hours"}</span>
           </Row>
@@ -336,6 +342,7 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
               {b.tasks.map((t) => {
                 const sent = t.people?.filter((p) => p.done).length ?? (t.done ? 1 : 0);
                 const total = t.people?.length ?? 1;
+                const helper = t.handoff && !t.handoff.endedAt ? b.assistants.find((a) => a.id === t.handoff?.assistantId) : undefined;
                 return (
                   <li key={t.id}>
                     <Tile done={t.done}>
@@ -350,7 +357,7 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
                       </span>
                       <TileFooter>
                         <Meta icon={CalendarBlank}>Due {dayIn(t.dueAt)}</Meta>
-                        <Badge status={t.done ? "success" : "info"}>{t.done ? "Done" : "With the client"}</Badge>
+                        <Badge status={t.done ? "success" : "info"}>{t.done ? (t.doneBy ? `Done by ${t.doneBy.split(" ")[0]}` : "Done") : helper ? `With ${helper.name.split(" ")[0]} (${helper.role})` : "With the client"}</Badge>
                       </TileFooter>
                     </Tile>
                   </li>

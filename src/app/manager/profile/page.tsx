@@ -4,8 +4,9 @@ import { CalendarBlank } from "@phosphor-icons/react";
 import { useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
+import { NotifySettings } from "@/components/account/NotifySettings";
 import { PhotoField } from "@/components/account/PhotoField";
-import { Badge, Banner, Button, Card, Input, Row, Rows, RowText, Select, Switch, Textarea, Tile, TileIcon, useConfirm, useTask } from "@/components/ui";
+import { Badge, Button, Card, Input, Row, Rows, RowText, Select, Switch, Textarea, Tile, TileIcon, useConfirm, useTask } from "@/components/ui";
 import { timeZones, zoneLabel } from "@/lib/timezones";
 import { fullName } from "@/lib/format";
 import { act, useMyManager } from "@/lib/mock";
@@ -106,21 +107,19 @@ export default function ManagerProfile() {
         </Tile>
       </Card>
 
-      <Card title="Notifications">
+      <NotifySettings user={user}>
         <ul className="flex flex-col">
           {[
-            { key: "urgent", label: "Urgent: fix requests, take-downs, failed posts", description: "Email and in the app, always on.", default: true },
+            { key: "urgent", label: "Urgent: fix requests, take-downs, failed posts", description: "Always on, at any hour.", default: true },
             { key: "reviews", label: "Client reviews and changes", default: true },
             { key: "moments", label: "New Moments from clients", default: true },
-            { key: "digest", label: "Morning summary by email", default: false },
           ].map((i) => (
             <li key={i.key} className="border-b border-border py-4 first:pt-0 last:border-b-0 last:pb-0">
               <Switch label={i.label} description={i.description} checked={alertOn(i.key, i.default)} disabled={i.key === "urgent" || pending(i.key)} onChange={(v) => run(i.key, () => act.setPref(user.id, `alert.${i.key}`, v), `${i.label.split(":")[0]}: ${v ? "on" : "off"}.`)} />
             </li>
           ))}
         </ul>
-        <Banner tone="info" className="mt-4">Urgent alerts are always on, by email and in the app.</Banner>
-      </Card>
+      </NotifySettings>
     </Columns>
   );
 }

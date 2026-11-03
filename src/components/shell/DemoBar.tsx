@@ -1,9 +1,12 @@
 "use client";
 
+import { EnvelopeSimple, WhatsappLogo } from "@phosphor-icons/react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { act, resetDemo, setDemoRole, setFailMode, useData, useFailMode, useSession, type Role } from "@/lib/mock";
-import { Select, useToast } from "@/components/ui";
+import { Dialog, EmptyState, Row, Rows, RowText, Select, textActionClass, useToast } from "@/components/ui";
+import { agoIn } from "@/lib/format";
 
 const homes: Record<Role, string> = { client: "/home", manager: "/manager", owner: "/admin" };
 const labels: Record<Role, string> = { client: "Client", manager: "Manager", owner: "Owner" };
@@ -25,6 +28,8 @@ export function DemoBar() {
   const toast = useToast();
   const clientUserId = useData().session.userIds.client;
   const failing = useFailMode();
+  const outbox = useData().outbox ?? [];
+  const [showOutbox, setShowOutbox] = useState(false);
 
   useEffect(() => {
     const full = () => toast("This browser is out of room for demo data, so your latest change will not survive a reload. Reset demo to clear space.", "danger");
@@ -69,6 +74,13 @@ export function DemoBar() {
         </label>
         <button
           type="button"
+          onClick={() => setShowOutbox(true)}
+          className="rounded-sm px-2 py-1 text-caption text-neutral-300 hover:text-inverse focus-visible:focus-ring sm:order-4"
+        >
+          Sent messages{outbox.length ? ` (${outbox.length})` : ""}
+        </button>
+        <button
+          type="button"
           onClick={() => {
             resetDemo();
             toast("Demo data reset.");
@@ -97,6 +109,24 @@ export function DemoBar() {
           </Select>
         )}
       </div>
+      <Dialog open={showOutbox} onClose={() => setShowOutbox(false)} title="Sent messages">
+        <p className="text-body-sm text-secondary">The emails and WhatsApp messages the live app would send. Open a link to land where it takes the person.</p>
+        {outbox.length === 0 ? (
+          <EmptyState title="Nothing sent yet">Hand a task to an assistant, or do something that tells someone.</EmptyState>
+        ) : (
+          <Rows label="Sent messages">
+            {outbox.map((o) => (
+              <Row key={o.id}>
+                {o.channel === "email" ? <EnvelopeSimple className="size-5 shrink-0 text-primary-600" aria-hidden /> : <WhatsappLogo className="size-5 shrink-0 text-primary-600" aria-hidden />}
+                <RowText title={o.text} sub={`${o.channel === "email" ? "Email" : "WhatsApp"} to ${o.to}, ${o.address} · ${agoIn(o.at)}`} />
+                <Link href={o.href} onClick={() => setShowOutbox(false)} className={`text-body-sm ${textActionClass}`}>
+                  Open link
+                </Link>
+              </Row>
+            ))}
+          </Rows>
+        )}
+      </Dialog>
     </aside>
   );
 }

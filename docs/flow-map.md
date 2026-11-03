@@ -75,8 +75,8 @@ These rules apply to every flow below.
 | C15 | Your brand | Client | 3.2, 5.4 | Built |
 | C16 | Paused account and reactivation | Client | 2.4, 2.5, 11.6, 11.7 | Built |
 | C17 | Quick tasks for you | Client | 6.3, 8.3, 5.8 | Built |
-| C18 | Notifications by email and WhatsApp, with links to the exact page | Client, Manager | 14.1, 14.2, 14.6, 14.7 | Draft |
-| C19 | Hand a task to my assistant (EA or PA) | Client, Assistant | 6.5, 14.8 to 14.10 | Draft |
+| C18 | Notifications by email and WhatsApp, with links to the exact page | Client, Manager | 14.1, 14.2, 14.6, 14.7 | Built (frontend), awaiting review |
+| C19 | Hand a task to my assistant (EA or PA) | Client, Assistant | 6.5, 14.8 to 14.10 | Built (frontend), awaiting review |
 | M1 | Home: what to do next | Manager | 13.4, 12.1, 12.5 | Built |
 | M2 | Clients and the client page | Manager | 3.8, 8.2 | Built |
 | M3 | Onboard a client | Manager | 3.4 to 3.7, 4.2 to 4.5 | Built |
@@ -313,7 +313,7 @@ These rules apply to every flow below.
 - **Hand it to your assistant:** "Send to my assistant" emails the task list and notes to an address you choose. They do not need an account.
 - **States:** due this week, partly done (for example 9 of 15 sent), done. Tasks not done count as waiting on you in the weekly update, the same as held posts.
 
-### C18. Notifications by email and WhatsApp (Draft)
+### C18. Notifications by email and WhatsApp (built in Phase 1, awaiting review)
 
 - **Why:** clients are busy. Anything that needs them reaches them where they already are, and one tap takes them to the exact place to act.
 - **Channels:** in the app (always), email (default) and WhatsApp (opt in). The client picks Email, WhatsApp or both in Account > Notifications and during setup (C5 "Where to tell me" gains WhatsApp).
@@ -326,7 +326,7 @@ These rules apply to every flow below.
 - **Messages:** a new message from the manager is sent as "Ada sent you a message" with the first line and a link to the thread. Replies are made in the app (replying on WhatsApp is Phase 3).
 - **States:** sent, delivered, read (WhatsApp), failed. If WhatsApp fails, the same note goes by email.
 
-### C19. Hand a task to my assistant (Draft)
+### C19. Hand a task to my assistant (built in Phase 1, awaiting review)
 
 Replaces "Send to my assistant" in C17.
 
@@ -340,6 +340,7 @@ Replaces "Send to my assistant" in C17.
 - **The client stays in the loop:** the task shows "With Ada (EA)", opened, and progress ("9 of 15 sent by Ada"). The client can resend the link, take the task back, or do it themselves. Work done by the assistant is labelled "by Ada" in activity and the weekly update.
 - **Manager:** sees "With Ada (EA)" on the task. Waiting on the assistant counts as waiting on the client.
 - **Reminders:** if the task is not done 1 day before it is due, the assistant gets a reminder; if it is overdue, the client is told.
+- **Phase 1 build:** Account > Notifications (also in the manager's Profile), WhatsApp in How you review, Account > Assistants, "Hand to my assistant" on every quick task, the assistant page at `/a/[token]`, sign-in returning to `?next=`, and "Sent messages" in the demo bar listing every email and WhatsApp message with its link. Reminders and the 14-day expiry run in Phase 2 (2.4, 2.4b).
 
 ---
 
