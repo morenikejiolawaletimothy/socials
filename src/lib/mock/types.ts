@@ -52,7 +52,8 @@ export type ReviewSettings = {
   frequency: "weekly" | "twice-weekly" | "every-post";
   channels: { email: boolean; app: boolean; whatsapp?: boolean };
   /** For each kind of work: ask first, or go ahead without asking. */
-  approval: { posts: "ask" | "go"; comments: "ask" | "go"; connectionNotes: "ask" | "go" };
+  /** Engagement and connection notes are done by the client themselves (quick tasks), so only posts need a setting. */
+  approval: { posts: "ask" | "go" };
   ifNoReply: "wait" | "go";
 };
 
@@ -207,6 +208,38 @@ export type Post = {
 
 /* ---------- Quick tasks (C17, M6) ---------- */
 
+/**
+ * Engagement LinkedIn only lets the member do themselves (the API allows posting only). The manager finds the
+ * right posts and people with their own account, and the client (or their assistant) does each in seconds.
+ */
+export type EngageAction = "comment" | "react" | "reshare" | "save" | "follow" | "message";
+
+/** LinkedIn's reactions. */
+export type LinkedInReaction = "like" | "celebrate" | "support" | "love" | "insightful" | "funny";
+
+/** One post or person in an engagement task. */
+export type EngageItem = {
+  id: string;
+  /** The post's author, or the person or Page to follow or message. */
+  name: string;
+  /** Their headline ("Partner, Lagos Angel Network"). */
+  role: string;
+  photo?: string;
+  /** The post, or the profile for follow and message. */
+  url: string;
+  /** The opening of the post, so the client knows they opened the right one. */
+  post?: string;
+  why: string;
+  /** Ready to paste: the comment, the thoughts on a reshare, or the message. */
+  text?: string;
+  reaction?: LinkedInReaction;
+  done: boolean;
+  /** The assistant who did it, when they did. */
+  doneBy?: string;
+  /** The suggestion it came from (M6), marked done with it. */
+  leadId?: string;
+};
+
 export type Person = { id: string; name: string; role: string; profileUrl: string; why: string; note: string; done: boolean; /** The assistant who sent it, when they did. */ doneBy?: string; /** Their LinkedIn photo, when we have it. */ photo?: string };
 
 export type TaskEvent = {
@@ -228,10 +261,12 @@ export type TaskEvent = {
 export type QuickTask = {
   id: string;
   clientId: string;
-  kind: "connect" | "profile" | "event" | "video";
+  kind: "connect" | "profile" | "event" | "video" | EngageAction;
   title: string;
   /** For "event" tasks: register by this date. */
   dueAt: string;
+  /** Engagement tasks (comment, react, reshare, save, follow, message): the posts or people, one action each. */
+  items?: EngageItem[];
   /** "connect" tasks: the people to connect with. */
   people?: Person[];
   /** "profile" tasks: the text to paste, and where. */
@@ -544,18 +579,32 @@ export type ManagerTask = {
   missed?: { reason: string; at: string };
 };
 
+/**
+ * M6: something worth doing on LinkedIn for the client, suggested by the system or added by the manager.
+ * The manager checks it with their own account, then it goes to the client as part of a quick task.
+ * suggested → kept (checked, ready to send) → sent (in a task) → done (the client did it); or dropped.
+ */
 export type Lead = {
   id: string;
   clientId: string;
   kind: "post" | "person";
+  /** What the client should do. */
+  action: EngageAction | "connect";
   name: string;
   detail: string;
   url: string;
+  /** Post leads: the opening of the post. */
+  post?: string;
+  photo?: string;
   fit: "strong" | "good" | "weak";
   why: string;
   warning?: string;
+  /** The comment, thoughts, note or message, in the client's voice. */
   draft?: string;
-  status: "suggested" | "kept" | "dropped" | "done";
+  reaction?: LinkedInReaction;
+  status: "suggested" | "kept" | "sent" | "dropped" | "done";
+  /** The quick task it went out in. */
+  taskId?: string;
 };
 
 export type Signal = { id: string; clientId: string; title: string; source: string; url: string; at: string; topic: string };

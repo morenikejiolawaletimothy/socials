@@ -4,6 +4,7 @@ import { CalendarBlank, PaperPlaneTilt } from "@phosphor-icons/react";
 import { useState } from "react";
 import { whatsappNumberOk } from "@/components/account/NotifySettings";
 import { Avatar, Badge, Banner, Button, Card, Dialog, Input, Meta, Select, Textarea, TextLink, Tile, TileFooter, useTask } from "@/components/ui";
+import { taskProgress } from "@/lib/engage";
 import { agoIn, dayIn } from "@/lib/format";
 import { act, useData, type Assistant, type QuickTask } from "@/lib/mock";
 
@@ -13,6 +14,12 @@ export const kindLabels: Record<QuickTask["kind"], string> = {
   profile: "Profile updates",
   event: "Event and program sign-ups",
   video: "Sending videos",
+  comment: "Comments",
+  react: "Reactions",
+  reshare: "Reposts",
+  save: "Saving posts",
+  follow: "Follows",
+  message: "Messages",
 };
 
 /** C19: add or edit an assistant. Email or WhatsApp is needed, so we can send them the link. */
@@ -100,7 +107,6 @@ export function HandoffCard({ task, clientId }: { task: QuickTask; clientId: str
   const a = assistants.find((x) => x.id === h?.assistantId);
   const first = a?.name.split(" ")[0] ?? "your assistant";
   const via = (x?: Assistant) => [x?.email && "email", x?.whatsapp && "WhatsApp"].filter(Boolean).join(" and ");
-  const sent = task.people?.filter((p) => p.done) ?? [];
 
   if (task.done && !h) return null;
 
@@ -118,7 +124,7 @@ export function HandoffCard({ task, clientId }: { task: QuickTask; clientId: str
                 <span className="text-body-sm text-secondary">
                   Sent by {via(a)} {agoIn(h.sentAt)}
                   {h.openedAt ? `, opened ${agoIn(h.openedAt)}` : ""}.
-                  {task.kind === "connect" && ` ${sent.filter((p) => p.doneBy).length} of ${task.people?.length ?? 0} sent by ${first}.`}
+                  {(task.people || task.items) && ` ${[...(task.people ?? []), ...(task.items ?? [])].filter((p) => p.doneBy).length} of ${taskProgress(task).total} done by ${first}.`}
                 </span>
                 {h.note && <span className="text-body-sm text-primary">Your note: &ldquo;{h.note}&rdquo;</span>}
               </span>

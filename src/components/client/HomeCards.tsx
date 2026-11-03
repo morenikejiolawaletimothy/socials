@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarBlank, CalendarStar, CheckCircle, Circle, GraduationCap, LinkedinLogo, MagnifyingGlass, UserPlus, VideoCamera, X } from "@phosphor-icons/react";
+import { BookmarkSimple, CalendarBlank, CalendarStar, ChatCircleText, CheckCircle, Circle, GraduationCap, LinkedinLogo, MagnifyingGlass, PaperPlaneTilt, Repeat, ThumbsUp, UserCirclePlus, UserPlus, VideoCamera, X } from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
@@ -10,6 +10,7 @@ import { PostPreview } from "@/components/content/PostPreview";
 import { callTitle, upcomingCalls } from "@/components/rails/NextCallCard";
 import { Avatar, Badge, Banner, Button, buttonClass, Card, Meta, Pill, ProgressBar, Select, TextButton, textActionClass, Tile, TileAction, TileFooter, TileIcon, useToast } from "@/components/ui";
 import { isOverdue } from "@/lib/status";
+import { isEngage, progressWord, taskProgress } from "@/lib/engage";
 import { ago, agoIn, date, day, dayIn, dayTime, dayTimeIn, daysFrom, fullName, money, plural, time } from "@/lib/format";
 import { useData, type ClientBundle, type Post, type QuickTask, type TaskEvent } from "@/lib/mock";
 import { LivePostActions } from "./LivePostActions";
@@ -255,6 +256,10 @@ export function eventLength(e: TaskEvent) {
 /** The icon for a quick task. */
 function TaskIcon({ t, className }: { t: QuickTask; className: string }) {
   if (t.kind === "connect") return <UserPlus className={className} aria-hidden />;
+  if (isEngage(t.kind)) {
+    const I = { comment: ChatCircleText, react: ThumbsUp, reshare: Repeat, save: BookmarkSimple, follow: UserCirclePlus, message: PaperPlaneTilt }[t.kind];
+    return <I className={className} aria-hidden />;
+  }
   if (t.kind === "event") return t.event?.type === "program" ? <GraduationCap className={className} aria-hidden /> : <CalendarStar className={className} aria-hidden />;
   if (t.kind === "video") return <VideoCamera className={className} aria-hidden />;
   return <LinkedinLogo className={className} aria-hidden />;
@@ -262,10 +267,11 @@ function TaskIcon({ t, className }: { t: QuickTask; className: string }) {
 
 /** The picture on a Quick tasks tile: the people's photos overlapping, LinkedIn for profile tasks, the event's own picture. */
 function TaskVisual({ t }: { t: QuickTask }) {
-  if (t.kind === "connect" && t.people?.length) {
+  const faces = (t.people ?? t.items ?? []).filter((p) => p.photo);
+  if ((t.kind === "connect" || isEngage(t.kind)) && faces.length) {
     return (
       <span className="flex shrink-0 -space-x-4">
-        {t.people.slice(0, 3).map((p) => (
+        {faces.slice(0, 3).map((p) => (
           <Avatar key={p.id} name={p.name} src={p.photo} size="lg" className="ring-2 ring-card" />
         ))}
       </span>
@@ -282,7 +288,7 @@ function TaskVisual({ t }: { t: QuickTask }) {
 
 /** The grey line under a task's title. */
 function taskStatus(t: QuickTask) {
-  if (t.kind === "connect") return `${t.people?.filter((p) => p.done).length ?? 0} of ${t.people?.length ?? 0} sent`;
+  if (t.kind === "connect" || isEngage(t.kind)) return `${taskProgress(t).done} of ${taskProgress(t).total} ${progressWord(t)}`;
   if (t.kind === "event" && t.event) return `${t.event.type === "program" ? "Program" : "Event"} ${dayIn(t.event.startsAt)} · ${t.event.place}`;
   if (t.kind === "video" && t.video) return `${t.video.idea}. ${t.video.length}`;
   return "Copy and paste in a minute";
@@ -295,14 +301,14 @@ export function TasksCard({ b }: { b: ClientBundle }) {
   const doneCount = b.tasks.length - open.length;
   return (
     <Card
+      id="tasks"
       title="Quick tasks"
       action={<Pill label={`${doneCount} of ${b.tasks.length} tasks done`}>{doneCount} of {b.tasks.length} done</Pill>}
     >
-      <Banner tone="info" closeKey="home-tasks-note" className="mb-4">Things only you can do: on LinkedIn, or events and programs to sign up for. We prepare everything, so each one takes a minute or two.</Banner>
+      <Banner tone="info" closeKey="home-tasks-note" className="mb-4">Things LinkedIn only lets you do: reactions, comments, reposts, follows, messages and connection requests, plus events to sign up for. We prepare everything, so each takes seconds. Done tasks leave this list.</Banner>
       <ul className="flex flex-col gap-3">
         {open.map((t) => {
-          const sent = t.people?.filter((p) => p.done).length ?? 0;
-          const total = t.people?.length ?? 1;
+          const { done: sent, total } = taskProgress(t);
           return (
             <li key={t.id}>
               <Tile href={`/tasks/${t.id}`}>
@@ -313,7 +319,7 @@ export function TasksCard({ b }: { b: ClientBundle }) {
                     <span className="text-body-sm text-secondary">
                       {taskStatus(t)} · Assigned {agoIn(t.sentAt)}
                     </span>
-                    {t.kind === "connect" && (
+                    {(t.kind === "connect" || isEngage(t.kind)) && (
                       <span className="max-w-xs">
                         <ProgressBar value={sent} max={total} />
                       </span>

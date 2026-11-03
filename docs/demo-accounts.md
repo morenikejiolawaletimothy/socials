@@ -41,3 +41,8 @@ These sign in to the dummy data on the preview site and on `npm run dev`. They s
 - WhatsApp code: 482913 (pre-filled; any 6 digits work).
 - "Sent messages" in the demo bar lists every email and WhatsApp message the live app would send. "Open link" on a message to an assistant opens their task page (`/a/...`).
 - Sign-in with `?next=/tasks/t-chidi-headline` lands on that task.
+
+## Engagement quick tasks (C17, M6)
+
+- Chidi has Comment on 3 posts, React to 3 posts and Follow 2 people and Pages on Home.
+- Manager view: Chidi > Engagement has 6 suggestions to check (one off limits), 1 ready to send.

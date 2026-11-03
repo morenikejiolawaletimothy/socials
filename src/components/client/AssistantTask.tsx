@@ -2,7 +2,9 @@
 
 import { CalendarBlank, Circle, Copy, LinkedinLogo, LinkSimple } from "@phosphor-icons/react";
 import { useEffect } from "react";
+import { EngageItemTile } from "@/components/client/EngageItemTile";
 import { VideoTask } from "@/components/client/VideoTask";
+import { engageKinds, isEngage, progressWord, taskProgress } from "@/lib/engage";
 import { Avatar, Badge, Banner, Button, Card, EmptyState, Logo, Meta, ProgressBar, TextButton, textActionClass, Tile, TileFooter, useTask, useToast } from "@/components/ui";
 import { dayIn } from "@/lib/format";
 import { act, useData, type Assistant, type QuickTask } from "@/lib/mock";
@@ -135,6 +137,7 @@ export function AssistantTask({ token }: { token: string }) {
     );
   }
 
+  const engage = isEngage(task.kind) ? engageKinds[task.kind] : undefined;
   const sent = task.people?.filter((p) => p.done).length ?? 0;
   const total = task.people?.length ?? 0;
 
@@ -148,6 +151,7 @@ export function AssistantTask({ token }: { token: string }) {
             {task.kind === "profile" && `On ${owner.firstName}'s LinkedIn, paste the text where shown, then mark it as done here.`}
             {task.kind === "event" && `Register ${owner.firstName} on the ${task.event?.type === "program" ? "program" : "event"} page, then mark it as done here.`}
             {task.kind === "video" && `Help ${owner.firstName} record a short video using the guide below, then upload it here.`}
+            {engage && `Sign in to ${owner.firstName}'s LinkedIn. ${engage.steps}`}
           </Banner>
           <Banner tone="neutral">{owner.firstName} and their Bluecut manager see what you mark here. This link only opens this task.</Banner>
 
@@ -166,15 +170,6 @@ export function AssistantTask({ token }: { token: string }) {
                   <Person key={p.id} task={task} p={p} by={by} />
                 ))}
               </ul>
-              {sent === total && !task.done && (
-                <Button
-                  className="self-start"
-                  loading={pending("done")}
-                  onClick={() => run("done", () => act.markTaskDone(task.id, true, by), `Done. We told ${owner.firstName}.`)}
-                >
-                  {pending("done") ? "Finishing" : "Finish task"}
-                </Button>
-              )}
             </>
           )}
 
@@ -218,6 +213,24 @@ export function AssistantTask({ token }: { token: string }) {
           )}
 
           {task.kind === "video" && task.video && <VideoTask task={task} />}
+
+          {engage && (
+            <>
+              <span className="flex flex-col gap-2">
+                <span className="text-body-sm text-secondary">
+                  {taskProgress(task).done} of {taskProgress(task).total} {progressWord(task)}
+                </span>
+                <span className="max-w-xs">
+                  <ProgressBar value={taskProgress(task).done} max={taskProgress(task).total} />
+                </span>
+              </span>
+              <ul className="flex flex-col gap-3">
+                {task.items?.map((i) => (
+                  <EngageItemTile key={i.id} task={task} item={i} by={by} showWhy={false} />
+                ))}
+              </ul>
+            </>
+          )}
         </div>
       </Card>
     </Frame>

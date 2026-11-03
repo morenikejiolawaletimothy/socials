@@ -13,8 +13,6 @@ const freq: { value: ReviewSettings["frequency"]; label: string; help: string }[
 
 const kinds: { key: keyof ReviewSettings["approval"]; label: string }[] = [
   { key: "posts", label: "Posts" },
-  { key: "comments", label: "Routine likes and comments" },
-  { key: "connectionNotes", label: "Connection notes" },
 ];
 
 function Choice({ name, checked, onChange, label, help }: { name: string; checked: boolean; onChange: () => void; label: string; help?: string }) {
@@ -123,6 +121,7 @@ export function ReviewForm({
           ))}
           <li className="p-4 text-body-sm text-secondary">Profile changes and sensitive topics always ask you first.</li>
         </ul>
+        <Banner tone="neutral">Reactions, comments, follows and connection requests come to you as quick tasks, ready to do in seconds. LinkedIn only lets you send them, so nothing goes out without you.</Banner>
       </Question>
 
       <Question n={4} title="If you do not reply by the due time">

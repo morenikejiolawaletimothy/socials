@@ -7,6 +7,8 @@ import { eventLength } from "@/components/client/HomeCards";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
 import { HandoffCard } from "@/components/client/Assistants";
+import { EngageItemTile } from "@/components/client/EngageItemTile";
+import { engageKinds, isEngage, progressWord, taskProgress } from "@/lib/engage";
 import { VideoTask } from "@/components/client/VideoTask";
 import { Avatar, Badge, Banner, Breadcrumbs, Button, Card, EmptyState, Meta, ProgressBar, Textarea, TextButton, textActionClass, useTask, useToast } from "@/components/ui";
 import { agoIn, day, dayIn, time } from "@/lib/format";
@@ -191,8 +193,8 @@ export default function TaskPage({ params }: { params: Promise<{ id: string }> }
     );
   }
 
-  const sent = task.people?.filter((p) => p.done).length ?? 0;
-  const total = task.people?.length ?? 0;
+  const { done: sent, total } = taskProgress(task);
+  const engage = isEngage(task.kind) ? engageKinds[task.kind] : undefined;
 
   return (
     <Columns {...rails.clientMain}>
@@ -214,6 +216,8 @@ export default function TaskPage({ params }: { params: Promise<{ id: string }> }
                 : `LinkedIn only lets you do this yourself, so ${managerUser?.firstName ?? "your manager"} has prepared everything. `}
             {task.kind === "connect" && "Open each profile, press Connect, then \u201cAdd a note\u201d, paste the note and send. Then mark it as sent here. About 30 seconds a person."}
             {task.kind === "profile" && "Copy the text, paste it where shown, then mark it as done. About a minute."}
+            {engage?.steps}
+            {(engage || task.kind === "connect") && " When all are done, the task leaves your list."}
           </Banner>
 
           <div className="flex flex-col gap-2">
@@ -222,8 +226,8 @@ export default function TaskPage({ params }: { params: Promise<{ id: string }> }
                 ? task.done
                   ? "Video sent"
                   : "Not recorded yet"
-                : task.kind === "connect"
-                  ? `${sent} of ${total} sent`
+                : task.kind === "connect" || engage
+                  ? `${sent} of ${total} ${progressWord(task)}`
                   : task.kind === "event"
                     ? task.done
                       ? "Registered"
@@ -233,7 +237,7 @@ export default function TaskPage({ params }: { params: Promise<{ id: string }> }
                       : "Copy and paste in a minute"}{" "}
               · Assigned {agoIn(task.sentAt)}
             </span>
-            {task.kind === "connect" && (
+            {(task.kind === "connect" || engage) && (
               <span className="max-w-xs">
                 <ProgressBar value={sent} max={total} />
               </span>
@@ -241,6 +245,14 @@ export default function TaskPage({ params }: { params: Promise<{ id: string }> }
           </div>
 
           {task.kind === "video" && task.video && <VideoTask task={task} />}
+
+          {engage && (
+            <ul className="flex flex-col gap-3">
+              {task.items?.map((i) => (
+                <EngageItemTile key={i.id} task={task} item={i} />
+              ))}
+            </ul>
+          )}
 
           {task.kind === "connect" && (
             <ul className="flex flex-col gap-3">

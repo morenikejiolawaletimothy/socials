@@ -11,7 +11,7 @@ import { fullName } from "@/lib/format";
 import { act, useMyClient } from "@/lib/mock";
 
 const why = [
-  { icon: CheckCircle, title: "We post and engage for you", text: "We publish the posts you approve, and engage with the right people for you." },
+  { icon: CheckCircle, title: "We post for you, and prepare the rest", text: "We publish the posts you approve. Comments, reactions and follows we find and write for you, so you do each in seconds." },
   { icon: ShieldCheck, title: "You stay in control", text: "Nothing happens without your say. You choose what we do, and you can pause or disconnect any time." },
   { icon: LockSimple, title: "Your password stays private", text: "You sign in on LinkedIn itself. We never see or store your password." },
 ];
@@ -71,7 +71,7 @@ function ConnectLinkedIn() {
               </p>
             </div>
             <ul className="flex flex-col gap-3 p-6 text-body-sm text-primary">
-              {["Use your name and photo", "Create, change and delete posts for you", "Comment and react on your behalf", "See how your posts perform"].map((item) => (
+              {["Use your name and photo", "Create, change and delete posts for you", "See how your posts perform"].map((item) => (
                 <li key={item} className="flex items-center gap-3">
                   <Check className="size-5 shrink-0 text-primary-600" aria-hidden />
                   {item}

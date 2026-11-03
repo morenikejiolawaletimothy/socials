@@ -1,14 +1,16 @@
 "use client";
 
-import { CalendarBlank, Clock, LinkSimple, Plus, Sparkle, Trash } from "@phosphor-icons/react";
+import { CalendarBlank, Clock, LinkSimple, Sparkle, Trash } from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { Badge, Banner, Button, buttonClass, Card, Dialog, IconButton, Input, Meta, Pill, ProgressBar, Row, Rows, RowText, Textarea, TextButton, TextLink, Tile, TileFooter, useConfirm, useTask, useToast } from "@/components/ui";
+import { Avatar, Badge, Banner, Button, buttonClass, Card, Dialog, EmptyState, IconButton, Input, Meta, Pill, ProgressBar, Row, Rows, RowText, Select, Textarea, TextButton, textActionClass, TextLink, Tile, TileFooter, useConfirm, useTask, useToast } from "@/components/ui";
 import { ago, agoIn, dayIn, dayTime, fullName, plural } from "@/lib/format";
 import { MediaThumb } from "@/components/content/MediaThumb";
 import { duration } from "@/lib/linkedin";
-import { act, type ClientBundle, type Lead, type Update } from "@/lib/mock";
+import { act, type ClientBundle, type Lead, type LinkedInReaction, type Update } from "@/lib/mock";
+import { ReactionLabel } from "@/components/client/EngageItemTile";
+import { progressWord, reactions, taskProgress } from "@/lib/engage";
 
 
 function Targets({ b }: { b: ClientBundle }) {
@@ -79,7 +81,7 @@ export function OverviewTab({ b }: { b: ClientBundle }) {
           {(
             [
               ["Post for them", p.post],
-              ["Like and comment", p.engage],
+              ["Prepare engagement tasks", p.engage],
               ["Company Page", p.companyPage],
               ["Draft connection requests", p.connectionDrafts],
               ["Draft profile updates", p.profileDrafts],
@@ -109,8 +111,8 @@ export function OverviewTab({ b }: { b: ClientBundle }) {
             <span className="text-body-sm text-primary">{r.ifNoReply === "wait" ? "Wait for them" : "Go ahead after 24 hours"}</span>
           </Row>
           <Row>
-            <RowText title="Likes and comments" />
-            <span className="text-body-sm text-primary">{r.approval.comments === "go" ? "Go ahead" : "Ask first"}</span>
+            <RowText title="Posts" />
+            <span className="text-body-sm text-primary">{r.approval.posts === "go" ? "Go ahead" : "Ask first"}</span>
           </Row>
         </Rows>
       </Card>
@@ -210,180 +212,274 @@ export function ContentTab({ b, id }: { b: ClientBundle; id: string }) {
 /* ---------- Engagement (M6) ---------- */
 
 const fitTone = { strong: "success", good: "info", weak: "neutral" } as const;
+const actionLabels: Record<Lead["action"], string> = { comment: "Comment", react: "React", reshare: "Repost", save: "Save", follow: "Follow", message: "Message", connect: "Connect" };
+const hasText = (a: Lead["action"]) => ["comment", "reshare", "message", "connect"].includes(a);
 
-function LeadRow({ l }: { l: Lead }) {
+/**
+ * One suggestion. The manager opens it on LinkedIn with their own account to check it is right, adjusts the
+ * text or reaction, then marks it checked so it goes out in the next batch of quick tasks.
+ */
+function LeadTile({ l }: { l: Lead }) {
   const { run, pending } = useTask();
+  const toast = useToast();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(l.draft ?? "");
+  const [reaction, setReaction] = useState<LinkedInReaction>(l.reaction ?? "like");
+  const closed = l.status === "sent" || l.status === "done" || l.status === "dropped";
   return (
     <li>
-      <Tile done={l.status === "done" || l.status === "dropped"}>
-        <span className="flex items-start justify-between gap-3">
-          <span className="flex min-w-0 flex-col gap-1">
-            <a href={l.url} target="_blank" rel="noreferrer" className="rounded-sm text-body font-medium text-primary hover:text-primary-700 hover:underline focus-visible:focus-ring">
-              {l.name}
-            </a>
+      <Tile done={closed}>
+        <span className="flex items-start gap-4">
+          <Avatar name={l.name} src={l.photo} size="md" />
+          <span className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="text-body font-medium text-primary">{l.name}</span>
             <span className="text-body-sm text-secondary">{l.detail}</span>
           </span>
-          <Badge status={fitTone[l.fit]}>{l.fit[0].toUpperCase() + l.fit.slice(1)} fit</Badge>
+          <span className="flex shrink-0 flex-col items-end gap-2">
+            <Pill>{actionLabels[l.action]}</Pill>
+            <Badge status={fitTone[l.fit]}>{l.fit[0].toUpperCase() + l.fit.slice(1)} fit</Badge>
+          </span>
         </span>
+        {l.post && <blockquote className="rounded-md bg-neutral-25 px-4 py-3 text-body-sm text-secondary">&ldquo;{l.post}&rdquo;</blockquote>}
         <Banner tone="info">Why: {l.why}</Banner>
         {l.warning && <Banner tone="danger">{l.warning}</Banner>}
-        {l.draft && <blockquote className="rounded-md bg-neutral-25 px-4 py-3 text-body-sm text-primary">{l.draft}</blockquote>}
-        <TileFooter>
-          <Badge status={l.status === "done" ? "success" : l.status === "dropped" ? "neutral" : l.status === "kept" ? "info" : "neutral"}>
-            {{ suggested: "Suggested", kept: "Kept", done: "Done", dropped: "Dropped" }[l.status]}
-          </Badge>
-          {l.status === "done" ? null : l.status === "dropped" ? (
-            <TextButton onClick={() => run("undo", () => act.setLead(l.id, "suggested"), "Back on the list.")}>Bring back</TextButton>
-          ) : (
-            <span className="flex flex-wrap gap-2">
+        {editing ? (
+          <div className="flex flex-col gap-3">
+            {l.action === "react" ? (
+              <Select label="Reaction" value={reaction} onChange={(e) => setReaction(e.target.value as LinkedInReaction)}>
+                {Object.entries(reactions).map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v}
+                  </option>
+                ))}
+              </Select>
+            ) : (
+              <Textarea label={l.action === "comment" ? "Comment" : l.action === "reshare" ? "Thoughts on the repost" : l.action === "connect" ? "Connection note" : "Message"} value={draft} onChange={(e) => setDraft(e.target.value)} maxLength={l.action === "connect" ? 300 : 1250} help={l.action === "connect" ? `${draft.length} of 300 characters. LinkedIn allows 300.` : undefined} />
+            )}
+            <span className="flex gap-2">
               <Button
-                variant="remove"
                 size="sm"
-                loading={pending("drop")}
-                onClick={() => run("drop", () => act.setLead(l.id, "dropped"), { text: "Dropped.", action: { label: "Undo", onClick: () => act.setLead(l.id, l.status) } })}
+                loading={pending("save")}
+                onClick={async () => {
+                  if (hasText(l.action) && !draft.trim()) return toast("Write the text first, or cancel.", "danger");
+                  if (await run("save", () => act.editLead(l.id, l.action === "react" ? { reaction } : { draft: draft.trim() }), "Saved.")) setEditing(false);
+                }}
               >
-                Drop
+                Save
               </Button>
-              {!l.warning && (
-                <Button
-                  size="sm"
-                  variant={l.status === "kept" ? "primary" : "secondary"}
-                  loading={pending("keep")}
-                  onClick={() => run("keep", () => act.setLead(l.id, l.status === "kept" ? "done" : "kept"), l.status === "kept" ? "Marked as done. It counts toward this week's target." : "Kept. The comment follows the client's review setting.")}
-                >
-                  {l.status === "kept" ? "Mark as done" : "Keep"}
-                </Button>
-              )}
+              <Button size="sm" variant="cancel" onClick={() => setEditing(false)}>
+                Cancel
+              </Button>
             </span>
-          )}
-        </TileFooter>
+          </div>
+        ) : (
+          <>
+            {l.reaction && <ReactionLabel reaction={l.reaction} />}
+            {l.draft && <p className="text-body-sm text-primary">{l.draft}</p>}
+          </>
+        )}
+        {!editing && (
+          <TileFooter>
+            <span className="flex flex-wrap items-center gap-x-6 gap-y-2">
+              <a href={l.url} target="_blank" rel="noreferrer" className={textActionClass}>
+                <LinkSimple className="size-4" aria-hidden /> Open on LinkedIn
+              </a>
+              {!closed && (hasText(l.action) || l.action === "react") && <TextButton onClick={() => setEditing(true)}>Edit</TextButton>}
+            </span>
+            {l.status === "dropped" ? (
+              <TextButton onClick={() => run("undo", () => act.setLead(l.id, "suggested"), "Back on the list.")}>Bring back</TextButton>
+            ) : l.status === "sent" ? (
+              <Badge status="info">In a quick task</Badge>
+            ) : l.status === "done" ? (
+              <Badge status="success">Done by the client</Badge>
+            ) : (
+              <span className="flex flex-wrap gap-2">
+                <Button
+                  variant="remove"
+                  size="sm"
+                  loading={pending("drop")}
+                  onClick={() => run("drop", () => act.setLead(l.id, "dropped"), { text: "Dropped.", action: { label: "Undo", onClick: () => act.setLead(l.id, l.status) } })}
+                >
+                  Drop
+                </Button>
+                {l.status === "kept" ? (
+                  <Button size="sm" variant="cancel" loading={pending("keep")} onClick={() => run("keep", () => act.setLead(l.id, "suggested"), "Moved back to check.")}>
+                    Not checked
+                  </Button>
+                ) : (
+                  !l.warning && (
+                    <Button size="sm" variant="secondary" loading={pending("keep")} onClick={() => run("keep", () => act.setLead(l.id, "kept"), "Checked. It goes out with the next quick tasks.")}>
+                      Checked, add
+                    </Button>
+                  )
+                )}
+              </span>
+            )}
+          </TileFooter>
+        )}
       </Tile>
     </li>
   );
 }
 
+const dueOptions = () => {
+  const at = (days: number) => {
+    const d = new Date(Date.now() + days * 86_400_000);
+    d.setHours(17, 0, 0, 0);
+    return d.toISOString();
+  };
+  const toFriday = (5 - new Date().getDay() + 7) % 7 || 7;
+  return [
+    { label: "In 2 days", value: at(2) },
+    { label: "Friday", value: at(toFriday) },
+    { label: "In a week", value: at(7) },
+  ];
+};
+
 export function EngagementTab({ b }: { b: ClientBundle }) {
-  const confirm = useConfirm();
   const { run, pending } = useTask();
   const [url, setUrl] = useState("");
+  const [action, setAction] = useState<Lead["action"]>("comment");
   const [urlError, setUrlError] = useState<string>();
-  const [checked, setChecked] = useState<string | null>(null);
+  const [showClosed, setShowClosed] = useState(false);
+  const [due, setDue] = useState(() => dueOptions()[1].value);
   const firstName = b.user?.firstName ?? "the client";
+  const toCheck = b.leads.filter((l) => l.status === "suggested");
+  const ready = b.leads.filter((l) => l.status === "kept");
+  const closed = b.leads.filter((l) => l.status === "sent" || l.status === "done" || l.status === "dropped");
+  const kinds = new Set(ready.map((l) => l.action)).size;
   return (
     <>
-      <Card title="This week's brief" action={<Pill>Suggested</Pill>}>
-        <p className="text-body text-primary">
-          Look for investors and bank partners talking about cross-border payments and the new mobile money report. Join conversations where {firstName} can add data. Skip anything on the off-limits list.
-        </p>
+      <Card title="This week's brief" action={<Pill><Sparkle className="mr-1 size-3" aria-hidden /> Suggested</Pill>}>
+        <div className="flex flex-col gap-4">
+          <p className="text-body text-primary">
+            Look for investors and bank partners talking about cross-border payments and the new mobile money report. Join conversations where {firstName} can add data. Skip anything on the off-limits list.
+          </p>
+          <Banner tone="info" closeKey="engage-how">
+            LinkedIn lets us post for {firstName}, nothing else. Open each suggestion on LinkedIn with your own account to check it, adjust the text, then send them to {firstName} as quick tasks. Each one takes seconds to do.
+          </Banner>
+        </div>
       </Card>
-      <Card title="Add what you find">
-        <form
-          className="flex flex-col gap-3 sm:flex-row sm:items-end"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            if (!/^https?:\/\/(www\.)?linkedin\.com\//.test(url.trim())) return setUrlError("Paste a LinkedIn profile or post link, starting with https://www.linkedin.com/");
-            setUrlError(undefined);
-            if (await run("check", () => act.save())) {
-              setChecked(url.trim());
-              setUrl("");
-            }
-          }}
-        >
-          <div className="flex-1">
-            <Input label="Profile or post link" placeholder="https://www.linkedin.com/..." value={url} onChange={(e) => { setUrl(e.target.value); setUrlError(undefined); }} error={urlError} />
-          </div>
-          <Button type="submit" variant="secondary" loading={pending("check")} className="sm:mb-auto sm:mt-7">
-            {pending("check") ? "Checking" : "Check fit"}
-          </Button>
-        </form>
-        {checked && (
-          <Tile className="mt-4">
-            <span className="flex items-start justify-between gap-3">
-              <span className="min-w-0 truncate text-body-sm text-secondary">{checked}</span>
-              <Badge status="success">Strong fit</Badge>
-            </span>
-            <Banner tone="info">Why: A fintech investor in Lagos, posting about payments infrastructure twice a week. Matches topic 1 and the investor list. Nothing on the off-limits list.</Banner>
-            <TileFooter>
-              <span />
-              <span className="flex gap-2">
-                <Button variant="remove" size="sm" onClick={() => setChecked(null)}>
-                  Drop
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  loading={pending("add")}
-                  onClick={async () => {
-                    if (await run("add", () => act.addLead(b.client!.id, checked), "Kept. A comment is drafted in the client's voice.")) setChecked(null);
-                  }}
-                >
-                  Keep
-                </Button>
-              </span>
-            </TileFooter>
-          </Tile>
-        )}
-      </Card>
-      <Card title="Comments and connections" action={b.leads.length > 0 && <Pill label={`${plural(b.leads.length, "lead")}, drafted in ${firstName}'s voice`}>{plural(b.leads.length, "lead")}</Pill>}>
-        {b.leads.length ? (
+
+      <Card title="To check" action={toCheck.length > 0 && <Pill>{plural(toCheck.length, "suggestion")}</Pill>}>
+        {toCheck.length ? (
           <ul className="flex flex-col gap-3">
-            {b.leads.map((l) => (
-              <LeadRow key={l.id} l={l} />
+            {toCheck.map((l) => (
+              <LeadTile key={l.id} l={l} />
             ))}
           </ul>
         ) : (
-          <p className="text-body-sm text-secondary">Nothing yet this week.</p>
+          <EmptyState title="All checked">New suggestions arrive as the field moves. Add your own below.</EmptyState>
         )}
       </Card>
-      <Card title="Quick tasks for the client" action={b.tasks.length > 0 && <Pill>{b.tasks.filter((t) => t.done).length} of {b.tasks.length} done</Pill>}>
+
+      <Card title="Add what you find">
+        <form
+          noValidate
+          className="flex flex-col gap-4"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!/^https?:\/\/(www\.)?linkedin\.com\//.test(url.trim())) return setUrlError("Paste a LinkedIn profile or post link, starting with https://www.linkedin.com/");
+            const person = /\/(in|company)\//.test(url);
+            if (person && ["comment", "react", "reshare", "save"].includes(action)) return setUrlError(`To ${actionLabels[action].toLowerCase()}, paste a post link, not a profile.`);
+            if (!person && ["follow", "message", "connect"].includes(action)) return setUrlError(`To ${actionLabels[action].toLowerCase()}, paste a profile or Page link, not a post.`);
+            setUrlError(undefined);
+            if (await run("add", () => act.addLead(b.client!.id, url.trim(), action), "Added to Ready to send, with text in the client's voice. Adjust it if needed.")) setUrl("");
+          }}
+        >
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[10rem_1fr]">
+            <Select label="What to do" value={action} onChange={(e) => setAction(e.target.value as Lead["action"])}>
+              {Object.entries(actionLabels).map(([k, v]) => (
+                <option key={k} value={k}>
+                  {v}
+                </option>
+              ))}
+            </Select>
+            <Input label="Post or profile link" placeholder="https://www.linkedin.com/..." value={url} onChange={(e) => { setUrl(e.target.value); setUrlError(undefined); }} error={urlError} />
+          </div>
+          <Button type="submit" variant="secondary" className="self-start" loading={pending("add")}>
+            {pending("add") ? "Adding" : "Add"}
+          </Button>
+        </form>
+      </Card>
+
+      <Card title="Ready to send" action={ready.length > 0 && <Pill>{plural(ready.length, "item")}</Pill>}>
         <div className="flex flex-col gap-4">
-          {b.tasks.length ? (
+          {ready.length ? (
             <ul className="flex flex-col gap-3">
-              {b.tasks.map((t) => {
-                const sent = t.people?.filter((p) => p.done).length ?? (t.done ? 1 : 0);
-                const total = t.people?.length ?? 1;
-                const helper = t.handoff && !t.handoff.endedAt ? b.assistants.find((a) => a.id === t.handoff?.assistantId) : undefined;
-                return (
-                  <li key={t.id}>
-                    <Tile done={t.done}>
-                      <span className="flex flex-col gap-1">
-                        <span className="text-body font-medium text-primary">{t.title}</span>
-                        <span className="text-body-sm text-secondary">
-                          {sent} of {total} done · Sent {agoIn(t.sentAt)}
-                        </span>
-                        <span className="max-w-xs pt-1">
-                          <ProgressBar value={sent} max={total} />
-                        </span>
-                      </span>
-                      <TileFooter>
-                        <Meta icon={CalendarBlank}>Due {dayIn(t.dueAt)}</Meta>
-                        <Badge status={t.done ? "success" : "info"}>{t.done ? (t.doneBy ? `Done by ${t.doneBy.split(" ")[0]}` : "Done") : helper ? `With ${helper.name.split(" ")[0]} (${helper.role})` : "With the client"}</Badge>
-                      </TileFooter>
-                    </Tile>
-                  </li>
-                );
-              })}
+              {ready.map((l) => (
+                <LeadTile key={l.id} l={l} />
+              ))}
             </ul>
           ) : (
-            <p className="text-body-sm text-secondary">No quick tasks sent this week.</p>
+            <EmptyState title="Nothing ready yet">Check suggestions above, or add what you find. They wait here until you send them.</EmptyState>
           )}
-          <Button
-            variant="secondary"
-            className="self-start"
-            onClick={() =>
-              confirm({
-                title: `Send 3 connection requests to ${firstName}?`,
-                body: `Prepared from this week's brief, with a note for each person. ${firstName} is told and sends them from LinkedIn in about 2 minutes.`,
-                confirmLabel: "Prepare and send",
-                action: () => act.prepareConnections(b.client!.id),
-                success: `Sent to ${firstName} as a quick task.`,
-              })
-            }
-          >
-            <Plus className="size-4" aria-hidden /> Prepare connection requests
-          </Button>
+          {ready.length > 0 && (
+            <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-end sm:justify-between">
+              <Select label="Due" value={due} onChange={(e) => setDue(e.target.value)} wrapperClassName="sm:w-48">
+                {dueOptions().map((o) => (
+                  <option key={o.label} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </Select>
+              <Button
+                loading={pending("send")}
+                onClick={() => run("send", () => act.sendLeads(b.client!.id, due), `Sent to ${firstName} as ${plural(kinds, "quick task")}. ${firstName} is told by ${[b.user?.channels?.email !== false && "email", b.user?.channels?.whatsapp && "WhatsApp"].filter(Boolean).join(" and ") || "email"}.`)}
+              >
+                {pending("send") ? "Sending" : `Send ${plural(ready.length, "item")} to ${firstName}`}
+              </Button>
+            </div>
+          )}
         </div>
       </Card>
+
+      <Card title="Quick tasks for the client" action={b.tasks.length > 0 && <Pill>{b.tasks.filter((t) => t.done).length} of {b.tasks.length} done</Pill>}>
+        {b.tasks.length ? (
+          <ul className="flex flex-col gap-3">
+            {b.tasks.map((t) => {
+              const { done, total } = taskProgress(t);
+              const helper = t.handoff && !t.handoff.endedAt ? b.assistants.find((a) => a.id === t.handoff?.assistantId) : undefined;
+              return (
+                <li key={t.id}>
+                  <Tile done={t.done}>
+                    <span className="flex flex-col gap-1">
+                      <span className="text-body font-medium text-primary">{t.title}</span>
+                      <span className="text-body-sm text-secondary">
+                        {done} of {total} {progressWord(t)} · Sent {agoIn(t.sentAt)}
+                      </span>
+                      <span className="max-w-xs pt-1">
+                        <ProgressBar value={done} max={total} />
+                      </span>
+                    </span>
+                    <TileFooter>
+                      <Meta icon={CalendarBlank}>Due {dayIn(t.dueAt)}</Meta>
+                      <Badge status={t.done ? "success" : "info"}>{t.done ? (t.doneBy ? `Done by ${t.doneBy.split(" ")[0]}` : "Done") : helper ? `With ${helper.name.split(" ")[0]} (${helper.role})` : "With the client"}</Badge>
+                    </TileFooter>
+                  </Tile>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <EmptyState title="No quick tasks yet">Send checked suggestions above and they show here with the client&apos;s progress.</EmptyState>
+        )}
+      </Card>
+
+      {closed.length > 0 && (
+        <Card title="Sent, done and dropped" action={<TextButton onClick={() => setShowClosed(!showClosed)}>{showClosed ? "Hide" : `Show ${closed.length}`}</TextButton>}>
+          {showClosed ? (
+            <ul className="flex flex-col gap-3">
+              {closed.map((l) => (
+                <LeadTile key={l.id} l={l} />
+              ))}
+            </ul>
+          ) : (
+            <p className="text-body-sm text-secondary">Suggestions already in quick tasks, done by the client, or dropped.</p>
+          )}
+        </Card>
+      )}
+
       <Card title="Progress">
         <Targets b={b} />
       </Card>

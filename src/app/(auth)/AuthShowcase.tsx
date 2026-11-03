@@ -49,8 +49,8 @@ const story: { title: string; caption: string; body: React.ReactNode }[] = [
         <Row label="Post for you">
           <Pill tone="done">On</Pill>
         </Row>
-        <Row label="Comment for you" last>
-          <Pill tone="todo">Needs your OK</Pill>
+        <Row label="Comments prepared for you" last>
+          <Pill tone="todo">Quick task</Pill>
         </Row>
       </>
     ),

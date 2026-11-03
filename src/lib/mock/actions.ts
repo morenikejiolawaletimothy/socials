@@ -1,7 +1,9 @@
 "use client";
 
+import { engageKinds, isEngage } from "../engage";
+import { plural } from "../format";
 import { delay, getDb, update } from "./store";
-import type { Activity, Assistant, Channels, Client, Db, Handoff, Message, Permissions, PostStatus, Reaction, ReviewSettings, SetupStep, User } from "./types";
+import type { Activity, Assistant, Channels, Client, Db, EngageAction, Handoff, Message, Permissions, PostStatus, Reaction, ReviewSettings, SetupStep, User } from "./types";
 
 /*
  * Every change a screen can make. Phase 2 swaps each body for an API call; screens keep calling the same names.
@@ -331,24 +333,74 @@ export async function resumePost(postId: string) {
 
 /* ---------- Client: quick tasks ---------- */
 
+/**
+ * Engagement and connection tasks finish themselves when the last item is marked, so they leave the client's
+ * list; unmarking one brings the task back. The handover link ends with it.
+ */
+function settleTask(db: Db, taskId: string): Db {
+  const t = db.tasks.find((x) => x.id === taskId);
+  if (!t) return db;
+  const list: { done: boolean; doneBy?: string }[] = t.items ?? t.people ?? [];
+  const done = list.length > 0 && list.every((i) => i.done);
+  if (done === t.done) return db;
+  const by = done ? list.find((i) => i.doneBy)?.doneBy : undefined;
+  const handoff = t.handoff && (done ? { ...t.handoff, endedAt: t.handoff.endedAt ?? nowIso(), endedReason: t.handoff.endedReason ?? ("done" as const) } : t.handoff.endedReason === "done" ? { ...t.handoff, endedAt: undefined, endedReason: undefined } : t.handoff);
+  let next: Db = { ...db, tasks: db.tasks.map((x) => (x.id === taskId ? { ...x, done, doneBy: done && list.every((i) => i.doneBy) ? by : undefined, handoff } : x)) };
+  if (done) next = notify(next, managerUserOf(db, t.clientId)?.id, `${clientUser(db, t.clientId)?.firstName} finished "${t.title}".`, `/manager/clients/${t.clientId}?tab=engagement`, { email: false });
+  if (done && by) next = notify(next, clientUser(db, t.clientId)?.id, `${by} finished "${t.title}".`, `/tasks/${t.id}`, { email: false });
+  return next;
+}
+
+/** This week's numbers (C9) move with comments and connection requests as they are marked. */
+function countWeek(db: Db, clientId: string, key: "comments" | "connections", by: number): Db {
+  return { ...db, progress: db.progress.map((w) => (w.clientId === clientId ? { ...w, [key]: { ...w[key], done: Math.max(0, w[key].done + by) } } : w)) };
+}
+
 /** `by`: the assistant's name, when they did it from their link (C19). */
 export async function togglePersonSent(taskId: string, personId: string, by?: string) {
   await delay(250);
   update((db) => {
     const t = db.tasks.find((x) => x.id === taskId);
     const person = t?.people?.find((p) => p.id === personId);
+    if (!t || !person) return db;
     let next: Db = {
       ...db,
-      tasks: db.tasks.map((x) => (x.id !== taskId ? x : { ...x, people: x.people?.map((p) => (p.id === personId ? { ...p, done: !p.done } : p)) })),
+      tasks: db.tasks.map((x) => (x.id !== taskId ? x : { ...x, people: x.people?.map((p) => (p.id === personId ? { ...p, done: !p.done, doneBy: p.done ? undefined : by } : p)) })),
     };
     // Recorded in the activity log, so it shows in the report for this period. Undo removes the record.
-    if (t && person) next = person.done ? unlog(unlog(next, t.clientId, connectionText(person.name)), t.clientId, connectionText(person.name, person.doneBy)) : log(next, t.clientId, "you", "connection", connectionText(person.name, by));
-    if (by) next = { ...next, tasks: next.tasks.map((x) => (x.id !== taskId ? x : { ...x, people: x.people?.map((p) => (p.id === personId ? { ...p, doneBy: p.done ? by : undefined } : p)) })) };
-    return next;
+    next = person.done ? unlog(next, t.clientId, connectionText(person.name, person.doneBy)) : log(next, t.clientId, "you", "connection", connectionText(person.name, by));
+    next = countWeek(next, t.clientId, "connections", person.done ? -1 : 1);
+    return settleTask(next, taskId);
   });
 }
 
 const connectionText = (name: string, by?: string) => `Sent a connection request to ${name}${by ? ` (by ${by})` : ""}`;
+const itemText = (kind: EngageAction, name: string, by?: string) => `${engageKinds[kind].log(name)}${by ? ` (by ${by})` : ""}`;
+
+/** Marks one comment, reaction, repost, save, follow or message as done, or not. Recorded for the weekly report. */
+export async function toggleItemDone(taskId: string, itemId: string, by?: string) {
+  await delay(250);
+  update((db) => {
+    const t = db.tasks.find((x) => x.id === taskId);
+    const item = t?.items?.find((i) => i.id === itemId);
+    if (!t || !item || !isEngage(t.kind)) return db;
+    const kind = t.kind;
+    let next: Db = {
+      ...db,
+      tasks: db.tasks.map((x) => (x.id !== taskId ? x : { ...x, items: x.items?.map((i) => (i.id === itemId ? { ...i, done: !i.done, doneBy: i.done ? undefined : by } : i)) })),
+      leads: item.leadId ? db.leads.map((l) => (l.id === item.leadId ? { ...l, status: item.done ? ("sent" as const) : ("done" as const) } : l)) : db.leads,
+    };
+    next = item.done ? unlog(next, t.clientId, itemText(kind, item.name, item.doneBy)) : log(next, t.clientId, "you", kind === "message" ? "message" : "engagement", itemText(kind, item.name, by));
+    if (kind === "comment") next = countWeek(next, t.clientId, "comments", item.done ? -1 : 1);
+    return settleTask(next, taskId);
+  });
+}
+
+/** The client (or assistant) changes the ready text before copying it. */
+export async function editItemText(taskId: string, itemId: string, text: string) {
+  await delay();
+  update((db) => ({ ...db, tasks: db.tasks.map((t) => (t.id !== taskId ? t : { ...t, items: t.items?.map((i) => (i.id === itemId ? { ...i, text } : i)) })) }));
+}
 
 /** What a finished quick task says in the activity log and the report. */
 function taskDoneText(t: Db["tasks"][number]) {
@@ -631,10 +683,10 @@ export async function saveFileToBrand(messageId: string) {
 
 const permissionLabels: Record<keyof Permissions, string> = {
   post: "Post for me",
-  engage: "Like and comment for me",
+  engage: "Prepare reactions, comments, reposts and follows",
   companyPage: "Post to my company Page",
-  connectionDrafts: "Draft connection requests",
-  profileDrafts: "Draft profile updates",
+  connectionDrafts: "Prepare connection requests and messages",
+  profileDrafts: "Prepare profile updates",
 };
 
 export async function setPermission(clientId: string, key: keyof Permissions, value: boolean) {
@@ -1200,44 +1252,80 @@ export async function setLead(leadId: string, status: Db["leads"][number]["statu
   update((db) => ({ ...db, leads: db.leads.map((l) => (l.id === leadId ? { ...l, status } : l)) }));
 }
 
-export async function addLead(clientId: string, url: string) {
+/** M6 "Add what you find": the manager pastes a post or profile they checked with their own account. */
+export async function addLead(clientId: string, url: string, action: Db["leads"][number]["action"]) {
   await delay(900);
+  const person = url.includes("/in/") || url.includes("/company/");
+  const drafts: Partial<Record<Db["leads"][number]["action"], string>> = {
+    comment: "Great point on settlement times. Our data from cross-border transfers says the same.",
+    reshare: "Worth reading if you move money across West Africa. The part on settlement times matches what we see every day.",
+    message: "Thanks for connecting. I enjoyed your recent post on payments and would be glad to compare notes.",
+    connect: "Hi, I enjoyed your recent post on payments. I would be glad to connect.",
+  };
   update((db) => ({
     ...db,
     leads: [
-      { id: id("l"), clientId, kind: url.includes("/in/") ? "person" : "post", name: url.includes("/in/") ? "New contact" : "New post", detail: url, url, fit: "strong", why: "A fintech investor in Lagos, posting about payments infrastructure twice a week. Matches topic 1.", draft: "Great point on settlement times. Our data from cross-border transfers says the same.", status: "kept" },
+      {
+        id: id("l"),
+        clientId,
+        kind: person ? "person" : "post",
+        action,
+        name: person ? "New contact" : "New post",
+        detail: url,
+        url,
+        fit: "strong",
+        why: "A fintech investor in Lagos, posting about payments infrastructure twice a week. Matches topic 1.",
+        draft: drafts[action],
+        reaction: action === "react" ? "insightful" : undefined,
+        status: "kept",
+      },
       ...db.leads,
     ],
   }));
 }
 
-export async function prepareConnections(clientId: string) {
-  await delay(900);
+/** M6: the manager adjusts the suggestion before it goes out (the text, the reaction, who it is). */
+export async function editLead(leadId: string, patch: Partial<Pick<Db["leads"][number], "draft" | "reaction" | "name" | "why">>) {
+  await delay();
+  update((db) => ({ ...db, leads: db.leads.map((l) => (l.id === leadId ? { ...l, ...patch } : l)) }));
+}
+
+/**
+ * M6: sends every checked suggestion to the client as quick tasks, one task per kind of action ("Comment on
+ * 3 posts", "Follow 2 people"). Returns how many tasks were made.
+ */
+export async function sendLeads(clientId: string, dueAt: string) {
+  await delay(800);
+  let made = 0;
   update((db) => {
-    const taskId = id("t");
-    let next: Db = {
-      ...db,
-      tasks: [
-        {
-          id: taskId,
-          clientId,
-          kind: "connect",
-          title: "Connect with 3 people this week",
-          dueAt: new Date(Date.now() + 4 * 86_400_000).toISOString(),
-          done: false,
-          sentAt: nowIso(),
-          people: [
-            { id: id("pp"), name: "Bola Adeyemi", role: "Partner, Lagos Growth Capital", profileUrl: "https://www.linkedin.com/in/example-bola", why: "Invests in payments, active this week.", note: "Hi Bola, I enjoyed your post on payments. Would be glad to connect.", done: false },
-            { id: id("pp"), name: "Esi Owusu", role: "Head of partnerships, Accra Pay", profileUrl: "https://www.linkedin.com/in/example-esi", why: "Possible partner for the Ghana corridor.", note: "Hi Esi, we are building faster Lagos to Accra payments. Glad to connect.", done: false },
-            { id: id("pp"), name: "Ifeoma Nnaji", role: "Editor, Business Day", profileUrl: "https://www.linkedin.com/in/example-ifeoma", why: "Covers fintech policy.", note: "Hi Ifeoma, I read your fintech coverage closely. Happy to connect.", done: false },
-          ],
-        },
-        ...db.tasks,
-      ],
-    };
-    next = autoHandOver(next, taskId);
-    return notify(next, clientUser(db, clientId)?.id, "3 people to connect with this week. About 2 minutes.", `/tasks/${taskId}`);
+    const kept = db.leads.filter((l) => l.clientId === clientId && l.status === "kept");
+    const byAction = new Map<Db["leads"][number]["action"], typeof kept>();
+    kept.forEach((l) => byAction.set(l.action, [...(byAction.get(l.action) ?? []), l]));
+    let next = db;
+    const ids: string[] = [];
+    for (const [action, leads] of byAction) {
+      const taskId = id("t");
+      ids.push(taskId);
+      const base = { id: taskId, clientId, dueAt, done: false, sentAt: nowIso() };
+      const task: Db["tasks"][number] =
+        action === "connect"
+          ? { ...base, kind: "connect", title: `Connect with ${plural(leads.length, "person", "people")}`, people: leads.map((l) => ({ id: id("pp"), name: l.name, role: l.detail.split(" · ")[0], profileUrl: l.url, photo: l.photo, why: l.why, note: l.draft ?? "", done: false })) }
+          : {
+              ...base,
+              kind: action,
+              title: engageKinds[action].title(leads.length),
+              items: leads.map((l) => ({ id: id("ei"), name: l.name, role: l.detail.split(" · ")[0], photo: l.photo, url: l.url, post: l.post, why: l.why, text: l.draft, reaction: l.reaction, done: false, leadId: l.id })),
+            };
+      next = { ...next, tasks: [task, ...next.tasks], leads: next.leads.map((l) => (leads.some((x) => x.id === l.id) ? { ...l, status: "sent" as const, taskId } : l)) };
+      next = autoHandOver(next, taskId);
+    }
+    made = ids.length;
+    if (!made) return db;
+    const first = next.tasks.find((t) => t.id === ids[0])!;
+    next = log(next, clientId, "team", "setting", `Prepared ${plural(kept.length, "thing")} for you to do on LinkedIn`);
+    return notify(next, clientUser(db, clientId)?.id, made === 1 ? `New quick task: ${first.title}. About ${Math.max(1, Math.round(kept.length / 2))} minutes.` : `${made} new quick tasks: ${plural(kept.length, "thing")} to do on LinkedIn, about ${Math.max(2, Math.round(kept.length / 2))} minutes.`, made === 1 ? `/tasks/${ids[0]}` : "/home#tasks");
   });
+  return made;
 }
 
 export async function addAlert(clientId: string, topic: string, url: string) {

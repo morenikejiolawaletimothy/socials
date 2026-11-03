@@ -186,7 +186,7 @@ Bluecut Socials is a LinkedIn account management service for busy senior profess
 **US-3.7 (P0, changed)** As a client, I want to set how I review during setup, so that I stay in control without micromanaging. (C5)
 - How often: once a week (default), twice a week, every post.
 - Where to tell me: email (default), in the app, or both.
-- What needs my approval: "Ask me first" or "Go ahead without asking" per action type. Defaults: posts ask first; routine likes and comments go ahead. Profile changes and sensitive topics always ask first.
+- What needs my approval: posts, "Ask me first" (default) or "Go ahead without asking". Engagement and connection requests are the client's own quick tasks, so they need no setting. Profile changes and sensitive topics always ask first.
 - If I do not reply by the due time: "Wait for me" (default; held, reported as waiting on me) or "Go ahead if I have not replied within 24 hours" (fixed).
 - Changes apply to new items only.
 
@@ -253,14 +253,24 @@ Bluecut Socials is a LinkedIn account management service for busy senior profess
 **US-6.2 (P0)** As a manager, I want to add the people and posts I find and have them rated for fit, so that only strong targets reach the client. (M6)
 - Fit reasons shown; off-limits people, companies and topics warned. Drafted comments and connection notes in the client's voice.
 
-**US-6.3 (P0)** As a manager, I want engagement to go out the right way for each action. (M6)
-- Likes and comments through the API, following the client's review setting.
+**US-6.3 (P0, changed)** As a manager, I want engagement to go out the right way for each action. (M6)
+- LinkedIn's API lets us post for the client and nothing else. Every reaction, comment, repost, save, follow, message and connection request is done by the client (or their assistant) as a quick task (US-6.5).
+- The system suggests what to do (who, which post, why, the text in the client's voice). The manager checks each one on LinkedIn with their own account, adjusts it, and sends the checked ones as quick tasks, one task per kind of action.
 - Totals stay within the strategy's targets and LinkedIn limits.
 
 **US-6.4 (P0)** As any role, I want engagement tracked against weekly targets.
 
 **US-6.5 (P0, new)** As a client, I want the things only I can do prepared as quick tasks, so that each takes 1 to 3 minutes. (C17)
 - Connection requests: person, profile link, why they matter, ready note; Open profile, Copy note, Mark as sent.
+- Comments: the post (opening lines), why, the ready comment; Open post, Copy comment, Mark as commented.
+- Reactions: the post, why, which reaction (Like, Celebrate, Support, Love, Insightful, Funny); Open post, Mark as reacted.
+- Reposts: the post, why, ready thoughts; Open post, Copy thoughts, Mark as reposted.
+- Saves: the post and why; Open post, Mark as saved.
+- Follows: the person or Page and why; Open profile, Mark as followed.
+- Messages: the person, why, the ready message; Open profile, Copy message, Mark as sent.
+- Every item takes 2 or 3 steps and under a minute. Ready text can be edited before copying.
+- When every item is marked, the task finishes and leaves the client's list. Unmarking brings it back.
+- Each item done is recorded in the activity log and the weekly and monthly reports; comments and connection requests count toward the weekly targets.
 - Profile updates: text ready to copy, where to paste it, Mark as done.
 - Brought up when the strategy needs them; sent by the manager.
 - "Hand to my assistant" sends the task to the client's EA or PA by email or WhatsApp with a private link to that task only; no account needed (US-14.8).
@@ -300,10 +310,10 @@ Bluecut Socials is a LinkedIn account management service for busy senior profess
 | Switch | Default | Notes |
 | --- | --- | --- |
 | Post for me | On | API |
-| Like and comment for me | On | API |
 | Post to my company Page | Off | Connect the Page; Community Management API |
-| Draft connection requests for me to send | Off | Quick tasks |
-| Draft profile updates for me to apply | Off | Quick tasks; always asks first |
+| Prepare reactions, comments, reposts and follows | On | Quick tasks (LinkedIn only lets the member do these) |
+| Prepare connection requests and messages | Off | Quick tasks |
+| Prepare profile updates | Off | Quick tasks; always asks first |
 | Account and privacy settings | Never | Not available to anyone |
 
 **US-8.3 (P0)** As a manager, I want to act only through the platform's API connection. Every action logged.

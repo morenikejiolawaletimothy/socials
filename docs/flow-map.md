@@ -165,11 +165,8 @@ These rules apply to every flow below.
   1. Why we connect: what we can do, that nothing happens without your say, that we never see your password.
   2. LinkedIn's own sign-in and consent screen (mocked in Phase 1).
   3. **What should we do for you?** Plain switches:
-     - Post for me (on)
-     - Like and comment for me (on)
-     - Post to my company Page (off, connect the Page to turn on)
-     - Draft connection requests for me to send (off)
-     - Draft profile updates for me to apply (off)
+     - **We do for you:** Post for me (on); Post to my company Page (off, connect the Page to turn on)
+     - **We prepare, you do in seconds** (LinkedIn only lets the member do these): Prepare reactions, comments, reposts and follows (on); Prepare connection requests and messages (off); Prepare profile updates (off)
 - **States:** consent declined, connection failed.
 - **Note:** whether each of these needs your approval first is set in C5, in one place.
 
@@ -204,7 +201,7 @@ These rules apply to every flow below.
 - **Steps:**
   1. **How often do you want to review?** Once a week (default), twice a week, or every post.
   2. **Where should we tell you?** Email, in the app, or both. (Email is on by default.)
-  3. **What needs your approval?** For each thing we do: "Ask me first" or "Go ahead without asking". Defaults: posts ask first; routine likes and comments go ahead. Profile changes and sensitive topics always ask first.
+  3. **What needs your approval?** Posts: "Ask me first" (default) or "Go ahead without asking". A note says reactions, comments, follows and connection requests come as quick tasks, so nothing goes out without the client. Profile changes and sensitive topics always ask first.
   4. **If you do not reply by the due time:**
      - "Wait for me" (default): nothing goes out until you approve. We remind you, but we cannot post without you. Posts not approved in time are held, and your weekly update shows what was held and why.
      - "Go ahead if I have not replied within 24 hours": your manager posts the reviewed drafts. You can still take any post down. (24 hours is fixed.)
@@ -413,9 +410,10 @@ Replaces "Send to my assistant" in C17.
 
 - **Steps:**
   1. **This week's brief:** who to look for and which conversations to join, based on the goal and signals from their field.
-  2. **Add what you find:** paste a profile or post link. The platform rates the fit and says why, and warns if it touches the client's off limits (a topic, person or company to avoid). Keep or drop.
-  3. **Drafted comments and connection notes** in the client's voice. Routine likes and comments follow the client's review setting; others go to the client for approval.
-  4. **Client quick tasks:** connection requests (person, profile link, why they matter, ready-written note) and other steps LinkedIn does not allow us to do, such as profile updates. The platform prepares them when the strategy calls for them; the manager reviews and sends them to the client (C17). Progress comes back as the client marks each one done.
+  2. **To check (Suggested):** the system suggests what to do for the goal: comment, react (with which reaction), repost, save, follow, message or connect, with the post, why, fit, off-limits warnings and the text in the client's voice. The manager opens each on LinkedIn with their own account, edits the text or reaction, then "Checked, add" or Drop.
+  3. **Add what you find:** choose what to do, paste the post or profile link. It joins Ready to send with text in the client's voice.
+  4. **Ready to send:** checked items, a due date (in 2 days, Friday, in a week), and "Send N items to Chidi". One quick task per kind of action ("Comment on 3 posts", "Follow 2 people and Pages"); assistants set to get that kind receive it straight away (C19). The client is told by their channels (C18).
+  5. **Client quick tasks:** each task with the client's progress and who has it (client or assistant). Suggestions show "In a quick task", then "Done by the client".
   5. **Progress:** done vs this week's target.
 
 ### M7. Listening for a client
