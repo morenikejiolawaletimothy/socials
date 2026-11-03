@@ -75,6 +75,8 @@ These rules apply to every flow below.
 | C15 | Your brand | Client | 3.2, 5.4 | Built |
 | C16 | Paused account and reactivation | Client | 2.4, 2.5, 11.6, 11.7 | Built |
 | C17 | Quick tasks for you | Client | 6.3, 8.3, 5.8 | Built |
+| C18 | Notifications by email and WhatsApp, with links to the exact page | Client, Manager | 14.1, 14.2, 14.6, 14.7 | Draft |
+| C19 | Hand a task to my assistant (EA or PA) | Client, Assistant | 6.5, 14.8 to 14.10 | Draft |
 | M1 | Home: what to do next | Manager | 13.4, 12.1, 12.5 | Built |
 | M2 | Clients and the client page | Manager | 3.8, 8.2 | Built |
 | M3 | Onboard a client | Manager | 3.4 to 3.7, 4.2 to 4.5 | Built |
@@ -310,6 +312,34 @@ These rules apply to every flow below.
   - Other one-off steps the strategy calls for, written the same way.
 - **Hand it to your assistant:** "Send to my assistant" emails the task list and notes to an address you choose. They do not need an account.
 - **States:** due this week, partly done (for example 9 of 15 sent), done. Tasks not done count as waiting on you in the weekly update, the same as held posts.
+
+### C18. Notifications by email and WhatsApp (Draft)
+
+- **Why:** clients are busy. Anything that needs them reaches them where they already are, and one tap takes them to the exact place to act.
+- **Channels:** in the app (always), email (default) and WhatsApp (opt in). The client picks Email, WhatsApp or both in Account > Notifications and during setup (C5 "Where to tell me" gains WhatsApp).
+- **WhatsApp number:** entered with country code and confirmed with a 6-digit code sent on WhatsApp. Shown as "Confirmed". Change or remove at any time.
+- **Every message links to the exact page:** the review item, the quick task, the message thread, the call, the payment page. Never just "open the app". Every event in the PRD event catalogue has its page.
+- **Signing in from a link:** if the client is signed in, the link opens the page. If not, they sign in and land on that same page (not Home). Links never sign anyone in by themselves, so a forwarded email cannot open the account.
+- **Not too many:** urgent items (review due soon, post failed, payment, pause) go at once. Everything else can come together: "Straight away" or "Once a day at 9am" (client's time zone). Quiet hours 9pm to 7am, except urgent.
+- **Locked:** security, billing, review deadlines and pause notices cannot be turned off; they use at least one channel.
+- **Manager side:** managers get the same choice for their own alerts. On the client page, the manager sees how each client is told (Email, WhatsApp) so they know what to expect.
+- **Messages:** a new message from the manager is sent as "Ada sent you a message" with the first line and a link to the thread. Replies are made in the app (replying on WhatsApp is Phase 3).
+- **States:** sent, delivered, read (WhatsApp), failed. If WhatsApp fails, the same note goes by email.
+
+### C19. Hand a task to my assistant (Draft)
+
+Replaces "Send to my assistant" in C17.
+
+- **Who:** an executive or personal assistant who acts for the client. They never get an account and never see the rest of the client's work.
+- **Add an assistant:** Account > Assistants: name, role (EA or PA), email and/or WhatsApp number. Edit or remove. A client can have more than one.
+- **Hand over a task:** on a quick task, "Hand to my assistant": pick the assistant, add an optional note, Send. The assistant gets one email or WhatsApp message with a private link to that task only.
+- **Automatic handover (optional):** "Send these to Ada when they arrive": per task type (connection requests, profile updates, event sign-ups, supplying files).
+- **What the assistant sees:** one simple page with the Bluecut logo, "Ada, Tunde asked you to do this", the task with its notes, and the same actions the client has (Open profile, Copy note, Mark as sent or done, add a note, upload a file when the task asks for one). Nothing else: no content, messages, strategy, billing or settings.
+- **What the assistant cannot do:** approve or reject posts, change settings, book or cancel calls, pay. Those stay with the client.
+- **The link:** private to that task, stops working when the task is done, when the client takes it back, or after 14 days. An expired link says so and offers "Ask Tunde for a new link" (notifies the client).
+- **The client stays in the loop:** the task shows "With Ada (EA)", opened, and progress ("9 of 15 sent by Ada"). The client can resend the link, take the task back, or do it themselves. Work done by the assistant is labelled "by Ada" in activity and the weekly update.
+- **Manager:** sees "With Ada (EA)" on the task. Waiting on the assistant counts as waiting on the client.
+- **Reminders:** if the task is not done 1 day before it is due, the assistant gets a reminder; if it is overdue, the client is told.
 
 ---
 

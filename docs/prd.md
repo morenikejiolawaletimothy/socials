@@ -263,7 +263,7 @@ Bluecut Socials is a LinkedIn account management service for busy senior profess
 - Connection requests: person, profile link, why they matter, ready note; Open profile, Copy note, Mark as sent.
 - Profile updates: text ready to copy, where to paste it, Mark as done.
 - Brought up when the strategy needs them; sent by the manager.
-- "Send to my assistant" emails the list and notes; no account needed.
+- "Hand to my assistant" sends the task to the client's EA or PA by email or WhatsApp with a private link to that task only; no account needed (US-14.8).
 - Progress shown (9 of 15 sent). Unfinished tasks count as waiting on the client.
 
 **US-6.6 (P2)** Opportunities (events, podcasts, awards) and communities to join.
@@ -433,6 +433,25 @@ Bluecut Socials is a LinkedIn account management service for busy senior profess
 **US-14.4 (P0)** Clear feedback for every action: success messages, inline errors, warnings before destructive actions (take down, disconnect, pause, cancel, delete).
 
 **US-14.5 (P2)** Daily or weekly digest.
+
+**US-14.6 (P0, new, draft)** As a client, I want to be told by email and/or WhatsApp, so that I see what needs me wherever I am. (C18)
+- In-app always; email default; WhatsApp opt in with a confirmed number (6-digit code).
+- Urgent at once; the rest straight away or once a day; quiet hours 9pm to 7am except urgent.
+- If WhatsApp fails, email is sent.
+
+**US-14.7 (P0, new, draft)** As any user, I want every notification to open the exact page that needs me, so that I can act in one tap. (C18)
+- Signed out: sign in, then land on that page. Links never sign anyone in by themselves.
+
+**US-14.8 (P0, new, draft)** As a client, I want to hand a task to my EA or PA, so that it gets done when I am not available. (C19)
+- Assistants are added in Account (name, role, email and/or WhatsApp). Hand over per task or automatically per task type.
+- The assistant gets a private link to that one task. No account, no access to anything else.
+
+**US-14.9 (P0, new, draft)** As an assistant, I want to open the task from my email or WhatsApp and complete it, so that I can help without an account. (C19)
+- Same actions as the client on that task; cannot approve content, change settings, book calls or pay.
+- Link ends when the task is done, taken back, or after 14 days.
+
+**US-14.10 (P0, new, draft)** As a client and manager, I want to see what the assistant has done, so that nothing is lost. (C19)
+- "With Ada (EA)", opened, progress, "by Ada" in activity and updates. Resend, take back.
 
 **Event catalogue**
 

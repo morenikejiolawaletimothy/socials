@@ -61,6 +61,8 @@ Source of truth: `docs/prd.md` (v2) for stories and rules, `docs/flow-map.md` fo
 | 0.7 | Real testimonials (videos, profile images) | Fola | Before launch |
 | 0.8 | White logo added to the design system in Claude, then synced | Fola, then Claude | Days |
 | 0.9 | Terms, privacy and refund policies | Fola | Before launch |
+| 0.10 | WhatsApp Business: Meta business verification, a WhatsApp sender number, message templates approved (one per event in C18 and C19), through Meta Cloud API or Twilio | Fola | 1 to 3 weeks |
+| 0.11 | Email sending domain set up (SPF, DKIM, DMARC) for Resend | Fola, then Claude | Days |
 
 ---
 
@@ -113,6 +115,15 @@ Flows: A1 to A8.
 - Overview, clients with assignment suggestions and step in, managers with training status and payouts, framework with versions and "What works on LinkedIn", money with automatic refund threshold and cancellation reasons, complaints, settings, audit log.
 **Exit:** the owner can see every state and take every action on dummy data, including stepping in for a manager. Signed off.
 
+### Batch 1.8. Notifications and assistants (after C18 and C19 are approved)
+- Account > Notifications: channels (email, WhatsApp with code), straight away or daily, quiet hours, locked items.
+- Account > Assistants: add, edit, remove.
+- Quick task: Hand to my assistant, automatic handover per task type, With Ada status, resend, take back.
+- Assistant page `/a/[token]`: one task, no app shell; expired and taken-back states.
+- Sign in from a link returns to the exact page.
+- Demo bar "Sent messages": shows each email and WhatsApp message the demo would send, with its link, so the flow can be tried end to end.
+**Exit:** a dummy client hands quick tasks to an assistant, the assistant completes them from the link, the client and manager see it. Signed off.
+
 ### Batch 1.7. Full walkthrough and polish
 - All state machines wired in the mock layer, including every PRD edge case.
 - Notifications per the event catalogue; success messages; warnings before destructive actions.
@@ -130,7 +141,8 @@ Starts only after the Phase 1 gate and Fola's yes on the stack. The mock layer i
 | 2.1 Data model | Schema for every state model, row-level security per role, seed framework, audit log (real actor, including step-in) | Epics 1, 12, 13 | |
 | 2.2 Accounts | Google and email sign-up with code, two-step sign-in, reset, sessions, staff invites, availability | Epic 1, 13.11 | 2.1 |
 | 2.3 Files and voice | Brand files and Moments, message attachments, voice notes with transcription | 7.3, 14.3, 16.1 | 2.2 |
-| 2.4 Notifications | In-app and email for the event catalogue, review-setting channel choice, locked notices | Epic 14 | 2.2 |
+| 2.4 Notifications | In-app, email (Resend) and WhatsApp (approved templates) for the event catalogue; deep link per event with sign-in return; channel choice, daily batch, quiet hours in the person's time zone, locked notices; delivery status webhooks; WhatsApp to email fallback; opt-in and STOP handling; retries and de-duplication | Epic 14, 14.6, 14.7 | 2.2, 0.10, 0.11 |
+| 2.4b Assistant access | Assistants table per client; task-scoped access tokens (random, stored hashed, one task, ends on done, take back or 14 days, revocable); assistant endpoints limited to that task's read and complete actions and file upload; rate limits; every action audited as "by assistant"; reminders; no personal data beyond the task | 14.8 to 14.10 | 2.4, 2.3 |
 | 2.5 Calls | Booking from slots, calendar invites, reminders, recording consent, notetaker transcripts, manual notes fallback | 3.2 to 3.5 | 2.2, 0.4 |
 | 2.6 AI engine | Framework, research with sources, audit, measurable strategy drafting with direction, ideas with reasons, drafts in voice, visual suggestions, checks including off limits, feedback to change list, weekly updates | Epics 4, 5, 7, 10 | 2.1, 2.3 |
 | 2.7 Niche listening | Per-client knowledge base: Google Alert feeds, manager findings, web and news search with location, client results, LinkedIn knowledge base, preferences; signals with sources | Epic 15 | 2.6 |
