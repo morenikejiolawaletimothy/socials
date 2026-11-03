@@ -49,8 +49,13 @@ export default function ContractPage() {
   const b = contractBadge[contract.status];
   const changeRequest = db.changeRequests.find((r) => r.clientId === client.id && r.status === "open");
   const unpaid = !contract.paid && (contract.status === "free" || contract.status === "paused");
+  const fs = client.fullService;
+  const fsMonthly = fs ? db.settings.fullServiceCents + (fs.pageManagement ? db.settings.pageManagementCents : 0) : 0;
   const rows: [string, string][] = [
     ["Plan", `${contract.months} months, ${money(contract.monthlyCents)} a month`],
+    ...(fs ? ([["Full-service", `+${money(db.settings.fullServiceCents)} a month`]] as [string, string][]) : []),
+    ...(fs?.pageManagement ? ([["Company Page management", `+${money(db.settings.pageManagementCents)} a month`]] as [string, string][]) : []),
+    ...(fs ? ([["Total a month", money(contract.monthlyCents + fsMonthly)]] as [string, string][]) : []),
     ["Signed", `${date(contract.signedAt)} by ${contract.signedName}`],
     ["Free 2 weeks", `Until ${date(contract.freeEndsAt)}`],
     ["Contract", `${date(contract.startsAt)} to ${date(contract.endsAt)}`],

@@ -36,6 +36,7 @@ export const mainNav: Record<Exclude<Role, "owner">, NavItem[]> = {
 export const profileNav: Record<Exclude<Role, "owner">, { label: string; href: string; description: string }[]> = {
   client: [
     { label: "Your brand", href: "/brand", description: "Photos, voice, Moments and what is off limits" },
+    { label: "Full-service", href: "/full-service", description: "Hand the work to us, or manage your team access" },
     { label: "Control", href: "/control", description: "What we do for you, how you review, activity" },
     { label: "Contract", href: "/contract", description: "Your plan, payments and invoices" },
     { label: "Assistants", href: "/assistants", description: "Hand quick tasks to your EA or PA" },

@@ -1,7 +1,8 @@
 import type { SetupStep } from "@/lib/mock";
 
-/** C1: the six setup steps, where each one is done, in order. */
+/** C1: the setup steps, where each one is done, in order. */
 export const setupSteps: { step: SetupStep; label: string; href: string; minutes: string }[] = [
+  { step: "service", label: "Choose how we work together", href: "/setup/service", minutes: "1 min" },
   { step: "linkedin", label: "Connect LinkedIn", href: "/setup/linkedin", minutes: "1 min" },
   { step: "permissions", label: "Choose what we do for you", href: "/setup/linkedin?step=2", minutes: "1 min" },
   { step: "goals-call", label: "Book your goals call", href: "/setup/calls", minutes: "1 min" },

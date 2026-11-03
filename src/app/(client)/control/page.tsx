@@ -8,7 +8,7 @@ import { PermissionsForm } from "@/components/client/PermissionsForm";
 import { ReviewForm, reviewSummary } from "@/components/client/ReviewForm";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Badge, Banner, Button, buttonClass, Card, Pill, Tabs, TextButton, Tile, TileFooter, useConfirm, useTask } from "@/components/ui";
+import { TextLink, Badge, Banner, Button, buttonClass, Card, Pill, Tabs, TextButton, Tile, TileFooter, useConfirm, useTask } from "@/components/ui";
 import { agoIn, dayTime } from "@/lib/format";
 import { act, useMyClient, type Activity } from "@/lib/mock";
 
@@ -47,8 +47,14 @@ export default function ControlPage() {
   const shown = activity.filter((a) => inGroup(a, filter)).sort((a, b) => b.at.localeCompare(a.at));
   const listed = showAll ? shown : shown.slice(0, RECENT);
 
+  const fullService = client.service === "full-service";
   return (
     <Columns {...rails.clientSettings}>
+      {fullService && (
+        <Banner tone="info" title="You are on full-service" action={<TextLink href="/full-service">Manage access</TextLink>}>
+          Your account team does the work, following the settings on this page exactly. Only you can change them. Anything they need from you comes in Messages, not as a task.
+        </Banner>
+      )}
       {(pending.length > 0 || approved.length > 0) && (
         <Card title="Requests from your manager" action={pending.length > 0 && <Pill>{pending.length === 1 ? "1 to answer" : `${pending.length} to answer`}</Pill>}>
           <ul className="flex flex-col gap-4">

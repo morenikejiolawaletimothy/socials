@@ -52,3 +52,10 @@ These sign in to the dummy data on the preview site and on `npm run dev`. They s
 - Posts are no longer auto-posted. After approval and a recommended time, they appear in "Posts to publish" (`/content/publish`) and Home > Coming up.
 - Sarah has a ready-to-publish post past its best time (demonstrates the overdue flag). Chidi has ready-to-publish posts at future times.
 - "Mark as posted" moves a post to Live and counts it toward the week.
+
+## Full-service and delegated access (C20)
+
+- Tari Briggs (Delmont Group) is the full-service demo client, in the switcher as "Tari: active (full-service)". No Tasks tab; delegated access Ready; company Page managed; access log seeded.
+- Chidi stays self-serve. Open Full-service as Chidi to see the activation screen, or David (setting up) to see the onboarding fork at /setup/service.
+- Manager view: Tari is Ada's client. Open Tari to see the Account access card and the Notify-and-request-sign-in handshake.
+- Owner: the Overview has one seeded Account access alert (a security-page attempt) to show the monitoring surface.

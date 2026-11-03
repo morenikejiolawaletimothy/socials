@@ -53,11 +53,131 @@ export function OffLimitsBox({ b }: { b: ClientBundle }) {
 
 /* ---------- Overview ---------- */
 
+/** C20: the manager's view of a full-service client. Read-only contract, access log, log a session, pause warning. */
+function FullServiceCard({ b }: { b: ClientBundle }) {
+  const fs = b.client?.fullService;
+  const { run, pending } = useTask();
+  const [action, setAction] = useState("");
+  const [minutes, setMinutes] = useState("15");
+  const [note, setNote] = useState("");
+  if (!fs) return null;
+  const first = b.user?.firstName ?? "the client";
+  const access = fs.access;
+  const session = access?.session;
+  const canSignIn = access?.credentials === "set" && !fs.paused;
+  return (
+    <Card title="Account access" action={<Badge status={fs.paused ? "warning" : "success"}>{fs.paused ? "Paused by client" : "Active"}</Badge>}>
+      <div className="flex flex-col gap-4">
+        {fs.paused ? (
+          <Banner tone="danger" title="Do not work on this account">The client has paused your access. Wait until they resume before doing anything on their LinkedIn or Page.</Banner>
+        ) : (
+          <Banner tone="info">
+            You manage this account directly. Follow their permission contract exactly. You cannot change their settings. If you need them to do something, message them, do not create a task.
+          </Banner>
+        )}
+
+        {canSignIn && (
+          <div className="flex flex-col gap-3 rounded-md border border-border p-4">
+            <span className="flex items-center justify-between gap-3">
+              <span className="text-body font-semibold text-primary">Delegated sign-in</span>
+              {session?.state === "requested" && <Badge status="warning">Waiting for approval</Badge>}
+              {session?.state === "active" && <Badge status="success">Session active</Badge>}
+            </span>
+            {session?.state === "requested" ? (
+              <p className="text-body-sm text-secondary">Waiting for {first} to approve on their phone. You can sign in once they approve.</p>
+            ) : session?.state === "active" ? (
+              <form
+                className="flex flex-col gap-3"
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (await run("end", () => act.endSession(b.client!.id, action, Number(minutes) || 0), "Session ended and recorded. The client can see it.")) setAction("");
+                }}
+              >
+                <p className="text-body-sm text-secondary">You are signed in. When you finish, write what you did and end the session. It is recorded for {first}.</p>
+                <Input label="What you did" value={action} onChange={(e) => setAction(e.target.value)} placeholder="Posted the weekly update and replied to comments" />
+                <div className="flex items-end gap-3">
+                  <Select label="Minutes" value={minutes} onChange={(e) => setMinutes(e.target.value)} wrapperClassName="w-32">
+                    {["5", "10", "15", "20", "30", "45", "60"].map((m) => (
+                      <option key={m} value={m}>
+                        {m} min
+                      </option>
+                    ))}
+                  </Select>
+                  <Button type="submit" variant="secondary" loading={pending("end")} className="mb-px">
+                    End session
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <>
+                <p className="text-body-sm text-secondary">You must notify {first} before you sign in. They approve on their phone, then you can work.</p>
+                <Input label="Tell them why (optional)" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Weekly posting and engagement" />
+                <Button variant="secondary" className="self-start" loading={pending("req")} onClick={() => run("req", () => act.requestSession(b.client!.id, note.trim()), `${first} has been asked to approve. You can sign in once they do.`)}>
+                  Notify and request sign-in
+                </Button>
+              </>
+            )}
+          </div>
+        )}
+
+        {fs.pageManagement && (
+          <p className="text-body-sm text-secondary">
+            Company Page: <span className="font-medium text-primary">{fs.pageGrant === "granted" ? "admin access granted" : "waiting for the client to add us as a Page admin"}</span>.
+          </p>
+        )}
+        {!fs.paused && (
+          <form
+            className="flex flex-col gap-3 border-t border-border pt-4"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!action.trim()) return;
+              if (await run("log", () => act.logManagementSession(b.client!.id, action.trim(), Number(minutes) || 0), "Session logged. The client can see it.")) setAction("");
+            }}
+          >
+            <span className="text-body font-semibold text-primary">Log a management session</span>
+            <p className="text-body-sm text-secondary">Record what you did on their account, so they can see it. Kept in their account log for accountability.</p>
+            <Input label="What you did" value={action} onChange={(e) => setAction(e.target.value)} placeholder="Posted the weekly Page update and replied to comments" />
+            <div className="flex items-end gap-3">
+              <Select label="Minutes" value={minutes} onChange={(e) => setMinutes(e.target.value)} wrapperClassName="w-32">
+                {["5", "10", "15", "20", "30", "45", "60"].map((m) => (
+                  <option key={m} value={m}>
+                    {m} min
+                  </option>
+                ))}
+              </Select>
+              <Button type="submit" variant="secondary" loading={pending("log")} className="mb-px">
+                Log session
+              </Button>
+            </div>
+          </form>
+        )}
+        {b.accessLog.length > 0 && (
+          <div className="flex flex-col gap-2 border-t border-border pt-4">
+            <span className="text-body font-semibold text-primary">Recent sessions</span>
+            <Rows>
+              {b.accessLog.slice(0, 6).map((a) => (
+                <Row key={a.id}>
+                  <span className="flex min-w-0 flex-1 items-start gap-3">
+                    <Clock className="mt-0.5 size-4 shrink-0 text-primary-600" aria-hidden />
+                    <RowText title={a.action} sub={`${a.who} · ${agoIn(a.at)}${a.minutes ? ` · ${a.minutes} min` : ""}`} />
+                  </span>
+                </Row>
+              ))}
+            </Rows>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
+}
+
 export function OverviewTab({ b }: { b: ClientBundle }) {
   const p = b.client!.permissions;
   const r = b.client!.review;
+  const fullService = b.client?.service === "full-service";
   return (
     <>
+      {fullService && <FullServiceCard b={b} />}
       <Card title="Goal">
         <div className="flex flex-col gap-4">
           <p className="text-body text-primary">{b.strategy?.goal ?? b.client!.goal}</p>
@@ -338,6 +458,7 @@ const dueOptions = () => {
 
 export function EngagementTab({ b }: { b: ClientBundle }) {
   const { run, pending } = useTask();
+  const fullService = b.client?.service === "full-service";
   const [url, setUrl] = useState("");
   const [action, setAction] = useState<Lead["action"]>("comment");
   const [urlError, setUrlError] = useState<string>();
@@ -425,15 +546,16 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
               </Select>
               <Button
                 loading={pending("send")}
-                onClick={() => run("send", () => act.sendLeads(b.client!.id, due), `Sent to ${firstName} as ${plural(kinds, "quick task")}. ${firstName} is told by ${[b.user?.channels?.email !== false && "email", b.user?.channels?.whatsapp && "WhatsApp"].filter(Boolean).join(" and ") || "email"}.`)}
+                onClick={() => run("send", () => (fullService ? act.doEngagementForClient(b.client!.id) : act.sendLeads(b.client!.id, due)), fullService ? `Marked ${plural(ready.length, "action")} as done and logged to ${firstName}'s account.` : `Sent to ${firstName} as ${plural(kinds, "quick task")}. ${firstName} is told by ${[b.user?.channels?.email !== false && "email", b.user?.channels?.whatsapp && "WhatsApp"].filter(Boolean).join(" and ") || "email"}.`)}
               >
-                {pending("send") ? "Sending" : `Send ${plural(ready.length, "item")} to ${firstName}`}
+                {pending("send") ? (fullService ? "Saving" : "Sending") : fullService ? `Mark ${plural(ready.length, "item")} as done by you` : `Send ${plural(ready.length, "item")} to ${firstName}`}
               </Button>
             </div>
           )}
         </div>
       </Card>
 
+      {!fullService && (
       <Card title="Quick tasks for the client" action={b.tasks.length > 0 && <Pill>{b.tasks.filter((t) => t.done).length} of {b.tasks.length} done</Pill>}>
         {b.tasks.length ? (
           <ul className="flex flex-col gap-3">
@@ -465,6 +587,7 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
           <EmptyState title="No quick tasks yet">Send checked suggestions above and they show here with the client&apos;s progress.</EmptyState>
         )}
       </Card>
+      )}
 
       {closed.length > 0 && (
         <Card title="Sent, done and dropped" action={<TextButton onClick={() => setShowClosed(!showClosed)}>{showClosed ? "Hide" : `Show ${closed.length}`}</TextButton>}>

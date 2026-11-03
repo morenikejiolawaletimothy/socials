@@ -46,8 +46,9 @@ export function seed(): Db {
 
   const client = (c: Partial<Client> & Pick<Client, "id" | "userId" | "company" | "role" | "country" | "industry" | "status" | "goal">): Client => ({
     managerId: null,
+    service: "self-serve",
     setupProgress: 100,
-    setupDone: ["linkedin", "permissions", "goals-call", "strategy-call", "plan", "review"],
+    setupDone: ["service", "linkedin", "permissions", "goals-call", "strategy-call", "plan", "review"],
     linkedin: "connected",
     postingPaused: false,
     permissions: allOn,
@@ -88,7 +89,7 @@ export function seed(): Db {
   });
 
   return {
-    version: 22,
+    version: 24,
     session: {
       role: "client",
       userIds: { client: "u-chidi", manager: "u-ada", owner: "u-fola" },
@@ -109,6 +110,7 @@ export function seed(): Db {
       { id: "u-zainab", role: "client", firstName: "Zainab", lastName: "Bello", email: "zainab@carecircle.example", title: "Medical director, CareCircle", timeZone: "Africa/Lagos", twoStep: false },
       { id: "u-tobi", role: "client", firstName: "Tobi", lastName: "Akin", email: "tobi@ledgerly.example", title: "CTO, Ledgerly", timeZone: "Europe/London", twoStep: false },
       { id: "u-musa", role: "client", firstName: "Musa", lastName: "Ibrahim", email: "musa@sahelventures.example", title: "Partner, Sahel Ventures", timeZone: "Africa/Lagos", twoStep: false },
+      { id: "u-tari", role: "client", firstName: "Tari", lastName: "Briggs", email: "tari@delmontgroup.example", title: "CEO, Delmont Group", timeZone: "Africa/Lagos", twoStep: true },
     ],
     clients: [
       client({ review: { ...review, channels: { email: true, app: true, whatsapp: true } }, id: "c-chidi", userId: "u-chidi", managerId: "m-ada", company: "Paystream", role: "CEO", country: "Nigeria", industry: "Fintech", status: "active", goal: "Be known as a leading voice on payments in West Africa and start conversations with investors.", joinedAt: at(-64) }),
@@ -116,10 +118,11 @@ export function seed(): Db {
       client({ id: "c-ngozi", userId: "u-ngozi", managerId: "m-ada", company: "Harvest Foods", role: "Founder", country: "Nigeria", industry: "Food and agriculture", status: "free", stage: "calls", goal: "Find distribution partners and become known for local sourcing.", joinedAt: at(-2) }),
       client({ id: "c-femi", userId: "u-femi", managerId: "m-ada", company: "BrightGrid Energy", role: "CEO", country: "Nigeria", industry: "Energy", status: "free", stage: "strategy", goal: "Raise a Series A and be seen as the expert on off-grid solar.", joinedAt: at(-6) }),
       client({ id: "c-zainab", userId: "u-zainab", managerId: "m-ada", company: "CareCircle", role: "Medical director", country: "Nigeria", industry: "Health", status: "active", goal: "Become a trusted voice on maternal health and win speaking invitations.", joinedAt: at(-95), atRisk: "Slow to review: 3 posts held this week", review: { ...review, frequency: "twice-weekly" } }),
-      client({ id: "c-david", userId: "u-david", managerId: null, company: "Adeyemi & Co", role: "Managing partner", country: "Nigeria", industry: "Law", status: "setting-up", stage: "setup", setupProgress: 33, setupDone: ["linkedin", "permissions"], goal: "Win board roles and speaking invitations.", joinedAt: at(-1) }),
+      client({ id: "c-david", userId: "u-david", managerId: null, company: "Adeyemi & Co", role: "Managing partner", country: "Nigeria", industry: "Law", status: "setting-up", stage: "setup", setupProgress: 43, setupDone: ["service", "linkedin", "permissions"], goal: "Win board roles and speaking invitations.", joinedAt: at(-1) }),
       client({ id: "c-kemi", userId: "u-kemi", managerId: "m-tunde", company: "Northwind", role: "Head of product", country: "Canada", industry: "Software", status: "paused", pausedReason: "unpaid", pausedAt: at(-12), goal: "Grow visibility for a move into a VP role.", joinedAt: at(-26), atRisk: "Paused for 12 days, unpaid" }),
       client({ id: "c-tobi", userId: "u-tobi", managerId: "m-tunde", company: "Ledgerly", role: "CTO", country: "United Kingdom", industry: "Fintech", status: "active", goal: "Hire senior engineers and be known for engineering culture.", joinedAt: at(-120), atRisk: "Open complaint about post quality" }),
       client({ id: "c-musa", userId: "u-musa", managerId: "m-tunde", company: "Sahel Ventures", role: "Partner", country: "Nigeria", industry: "Venture capital", status: "active", goal: "Attract strong founders in the Sahel to pitch.", joinedAt: at(-40) }),
+      client({ id: "c-tari", userId: "u-tari", managerId: "m-ada", company: "Delmont Group", role: "CEO", country: "Nigeria", industry: "Real estate", status: "active", service: "full-service", permissions: { ...allOn, companyPage: true }, fullService: { since: at(-30), pageManagement: true, pageGrant: "granted", access: { credentials: "set", twoFactor: true } }, goal: "Be the best-known name in West African commercial real estate and attract institutional investors.", joinedAt: at(-38) }),
     ],
     managers: [
       { id: "m-ada", userId: "u-ada", status: "active", intro: "I help founders in fintech and health tell their story on LinkedIn. Six years in communications, based in Lagos.",
@@ -319,6 +322,7 @@ export function seed(): Db {
       ]),
       strategy("c-tobi", "Hire senior engineers and be known for engineering culture.", [["Engineering culture", "Why engineers join."], ["Fintech", "Your field."]]),
       strategy("c-musa", "Attract strong founders in the Sahel to pitch.", [["Investing in the Sahel", "What founders look for."]]),
+      strategy("c-tari", "Be the best-known name in West African commercial real estate and attract institutional investors.", [["Commercial real estate", "Where the market is going."], ["Institutional investment", "What funds look for in a local partner."]]),
       strategy("c-kemi", "Grow visibility for a move into a VP role.", [["Product leadership", "Shows VP-level thinking."]]),
     ],
 
@@ -328,6 +332,7 @@ export function seed(): Db {
       week("c-zainab", [3, 1], [15, 13], [10, 10], ["2 posts held, waiting for review"]),
       week("c-tobi", [3, 2], [15, 9], [10, 7]),
       week("c-musa", [2, 2], [10, 10], [10, 4]),
+      week("c-tari", [2, 2], [12, 12], [8, 8]),
     ],
 
     updates: [
@@ -454,6 +459,7 @@ export function seed(): Db {
       { id: "k-kemi", clientId: "c-kemi", months: 3, monthlyCents: 90000, signedAt: at(-26), signedName: "Kemi Ola", freeEndsAt: at(-12), startsAt: at(-12), endsAt: at(79), status: "paused", paid: false },
       { id: "k-tobi", clientId: "c-tobi", months: 12, monthlyCents: 70000, signedAt: at(-120), signedName: "Tobi Akin", freeEndsAt: at(-106), startsAt: at(-106), endsAt: at(259), status: "active", paid: true, card: { brand: "Visa", last4: "5560" } },
       { id: "k-musa", clientId: "c-musa", months: 6, monthlyCents: 80000, signedAt: at(-40), signedName: "Musa Ibrahim", freeEndsAt: at(-26), startsAt: at(-26), endsAt: at(9), status: "cancelled", paid: true, card: { brand: "Visa", last4: "3301" } },
+      { id: "k-tari", clientId: "c-tari", months: 12, monthlyCents: 80000, signedAt: at(-38), signedName: "Tari Briggs", freeEndsAt: at(-24), startsAt: at(-24), endsAt: at(341), status: "active", paid: true, card: { brand: "Mastercard", last4: "7782" } },
     ],
     invoices: [
       { id: "i1", clientId: "c-chidi", number: "BC-1042", amountCents: 80000, at: at(-49), status: "paid", label: "Month 1 of 6" },
@@ -563,8 +569,14 @@ export function seed(): Db {
       { id: "po3", managerId: "m-ada", period: "Last month", clients: 4, amountCents: 100000, status: "paid" },
       { id: "po4", managerId: "m-tunde", period: "Last month", clients: 3, amountCents: 75000, status: "paid" },
     ],
-    settings: { freeDays: 14, autoRefundLimitCents: 100000, reminderDays: [5, 3, 0], pauseWarningDays: 15, removalDays: 30, goAheadHours: 24, maxClientsPerManager: 10, daysBetweenCalls: 3, sessionTimeoutMinutes: 60, videoAddonCents: 30000 },
+    settings: { freeDays: 14, autoRefundLimitCents: 100000, reminderDays: [5, 3, 0], pauseWarningDays: 15, removalDays: 30, goAheadHours: 24, maxClientsPerManager: 10, daysBetweenCalls: 3, sessionTimeoutMinutes: 60, videoAddonCents: 30000, fullServiceCents: 80000, pageManagementCents: 40000 },
     changeRequests: [{ id: "cr1", clientId: "c-zainab", reason: "I would like a manager with a health background.", at: at(-1, 16), status: "open" }],
+    accessLog: [
+      { id: "ac1", clientId: "c-tari", who: "Ada Obi", at: hoursAgo(6), action: "Posted your approved update and replied to comments on your Page", minutes: 25 },
+      { id: "ac2", clientId: "c-tari", who: "Ada Obi", at: at(-2, 10), action: "Researched investors and commented on your behalf", minutes: 40 },
+      { id: "ac3", clientId: "c-tari", who: "Ada Obi", at: at(-5, 9), action: "Published your weekly post and updated your headline (you approved it)", minutes: 20 },
+    ],
+    accessAlerts: [{ id: "al1", clientId: "c-tari", managerName: "Ada Obi", at: hoursAgo(5), kind: "security-page", detail: "Opened LinkedIn Sign-in & security during a session. Blocked automatically.", resolved: false }],
     assistants: [{ id: "as-amaka", clientId: "c-chidi", name: "Amaka Obi", role: "EA", email: "amaka@paystream.example", whatsapp: "+234 803 555 0142", auto: [] }],
     outbox: [],
   };

@@ -77,6 +77,8 @@ These rules apply to every flow below.
 | C17 | Quick tasks for you | Client | 6.3, 8.3, 5.8 | Built |
 | C18 | Notifications by email and WhatsApp, with links to the exact page | Client, Manager | 14.1, 14.2, 14.6, 14.7 | Built (frontend), awaiting review |
 | C19 | Hand a task to my assistant (EA or PA) | Client, Assistant | 6.5, 14.8 to 14.10 | Built (frontend), awaiting review |
+| B0 | Onboarding fork: self-serve or full-service | Client | 17.1 | Built (frontend), awaiting review |
+| C20 | Full-service (done-for-you) + delegated access | Client, Manager, Owner | 17.1 to 18.4 | Built (frontend), awaiting review |
 | M1 | Home: what to do next | Manager | 13.4, 12.1, 12.5 | Built |
 | M2 | Clients and the client page | Manager | 3.8, 8.2 | Built |
 | M3 | Onboard a client | Manager | 3.4 to 3.7, 4.2 to 4.5 | Built |
@@ -342,6 +344,22 @@ Replaces "Send to my assistant" in C17.
 - **Phase 1 build:** Account > Notifications (also in the manager's Profile), WhatsApp in How you review, Account > Assistants, "Hand to my assistant" on every quick task, the assistant page at `/a/[token]`, sign-in returning to `?next=`, and "Sent messages" in the demo bar listing every email and WhatsApp message with its link. Reminders and the 14-day expiry run in Phase 2 (2.4, 2.4b).
 
 ---
+
+### C20. Full-service and delegated access (built in Phase 1, awaiting review)
+
+A premium tier chosen at onboarding. Only built on compliant mechanisms (PRD Epics 17 and 18 hold the hard boundary: no password seen, no session cookies, no proxy, no anti-detect browser).
+
+- **Onboarding fork (B):** the first setup step is "How we work together": Self-serve (hands-on) or Full-service (done-for-you). Stored on the client; changeable later.
+- **Full-service hub** (`/full-service`, in the account menu):
+  - **Status:** Active or Paused, with Pause / Resume (instant) and End full-service (back to self-serve, clears access). Monthly price shown.
+  - **Delegated access:** set up (consent, authenticator 2FA, store login in the vault at `/full-service/access`), then a status of Ready / Needs refresh. When the manager requests a sign-in, an **Approve / Decline** prompt appears here (and on the client's phone). Remove stored login any time.
+  - **Company Page:** add or remove management; add Bluecut as a Content admin on LinkedIn, then confirm; Managed by your team once granted.
+  - **Permission contract:** read-only, "only you can change these; your team cannot".
+  - **What your team has done:** the access log (who, when, what, minutes).
+- **No Tasks tab:** Home drops Tasks for full-service clients. Member-only needs come in Messages.
+- **Manager view:** an Account access card: read-only contract banner; **Delegated sign-in** (Notify and request sign-in → waiting for approval → active → End session with a note); Company Page grant; recent sessions. A danger banner when the client paused access. In Engagement, checked items are done by the team and logged, not sent as tasks.
+- **Owner:** an Account access alerts card (breach signals: sign-in without approval, security-page access, off-hours, bulk, dev-tools) with resolve; full-service and Page prices in Settings; a Full-service pill on the clients list.
+- **Compliance boundary and the companion extension:** delegated access never uses cookies, a proxy or an anti-detect browser. The autofill tool is a separate, compliant extension in its own repo that fills the login on the manager's own browser after the client approves, and records the session. The app mocks this handshake in Phase 1.
 
 ## 5. Account manager flows
 

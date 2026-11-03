@@ -63,6 +63,8 @@ Source of truth: `docs/prd.md` (v2) for stories and rules, `docs/flow-map.md` fo
 | 0.9 | Terms, privacy and refund policies | Fola | Before launch |
 | 0.10 | WhatsApp Business: Meta business verification, a WhatsApp sender number, message templates approved (one per event in C18 and C19), through Meta Cloud API or Twilio | Fola | 1 to 3 weeks |
 | 0.11 | Email sending domain set up (SPF, DKIM, DMARC) for Resend | Fola, then Claude | Days |
+| 0.12 | Full-service pricing: full-service tier and company Page management prices (USD base, NGN fixed) | Fola | Before full-service launch |
+| 0.13 | Delegated access ops: a secrets vault / KMS (e.g. AWS or GCP KMS), and a signed companion browser extension published to the Chrome Web Store (own listing). Managed-device enforcement (Chrome Enterprise / MDM) comes when devices are issued, not at launch. | Fola, then Claude | 1 to 3 weeks |
 
 ---
 
@@ -124,6 +126,19 @@ Flows: A1 to A8.
 - Demo bar "Sent messages": shows each email and WhatsApp message the demo would send, with its link, so the flow can be tried end to end.
 **Exit:** a dummy client hands quick tasks to an assistant, the assistant completes them from the link, the client and manager see it. Signed off.
 
+### Batch 1.9. Onboarding fork and full-service tier (built, awaiting Fola's review)
+- New first setup step: choose **Self-serve** or **Full-service** (B).
+- Full-service experience: no Tasks tab; permission contract the manager follows and cannot change; messages-not-tasks; access log; pause / resume / end; pricing on Contract; manager Account access card; engagement done by the team (not sent as tasks); owner prices and a Full-service pill.
+- Company Page: official admin delegation add-on (client adds Bluecut as a Content admin; managed manually; priced).
+**Exit:** a dummy client turns on full-service, manages the Page grant, pauses and resumes; the manager logs sessions and runs engagement directly. Signed off.
+
+### Batch 1.10. Delegated access (built, awaiting Fola's review)
+- Compliant delegated access: encrypted vault for the client's login (mocked in Phase 1, nothing real stored), client-set authenticator 2FA, consent and terms. **No cookies, no proxy, no anti-detect browser** (hard boundary; see PRD Epic 18).
+- Login handshake: the manager must **notify before signing in**; the client approves on their phone; the session goes active and is recorded; the manager ends it with a note. A sign-in without the notify-and-approve step is a breach signal.
+- Client controls: approve / decline a session, pause access, remove stored login, refresh an expired session, end full-service.
+- Owner: an Account access alerts card (insider-threat monitoring) with resolve.
+**Exit:** a manager requests a sign-in, the client approves, the session is recorded, and a breach signal shows to the owner. Signed off.
+
 ### Batch 1.7. Full walkthrough and polish
 - All state machines wired in the mock layer, including every PRD edge case.
 - Notifications per the event catalogue; success messages; warnings before destructive actions.
@@ -151,10 +166,24 @@ Starts only after the Phase 1 gate and Fola's yes on the stack. The mock layer i
 | 2.10 Scheduling and accountability | Recommended-time reminders to publish (no auto-post), time zones, review deadlines, 24-hour go ahead, waiting-on attribution (includes "not published yet"), missed-deadline questions, 15 and 30-day pause jobs with data deletion | Epics 7, 12, 2.5 | 2.8, 2.9 |
 | 2.11 Progress and owner views | Goal metrics, targets vs done, updates and PDF, overview and at-risk, manager performance and payouts, assignment suggestions | Epics 10, 13 | 2.9, 2.10 |
 | 2.12 Hardening and pilot | Security review, rate limits, encryption checks, deletion and retention checks, accessibility and performance, policies live, live keys, LinkedIn app approved | Non-functional | All |
+| 2.13 Full-service | Tier and company Page add-on billing; official LinkedIn Page admin delegation (and Community Management API only if automated Page posting is wanted); no Tasks for full-service accounts; manager cannot edit a full-service client's settings (server role check); access log; pause/resume/end enforced server-side | Epic 17, 18 | 2.2, 2.4, 2.8 |
+| 2.14 Delegated access | Encrypted login vault (envelope encryption + KMS, per-credential keys, client-side encryption so neither Bluecut nor the account manager reads plaintext), rotation and revocation; **server-gated credential release** per session, only after the client approves; the companion extension autofills the login on the account manager's own local browser and instruments the session; **notify-before-login enforced** (a release without a matching client approval is blocked and alerted); full session activity logging and recording; security-page lockout; anomaly alerts; authenticator-2FA handshake. Managed-device (Chrome Enterprise/MDM) enforcement added when devices are issued. | Epic 18 | 2.2, 2.13, 0.13 |
+
+**Explicitly out of scope, in every phase (compliance).** No capturing, storing, injecting or replaying LinkedIn **session cookies** taken from a browser; no driving a client's account through automation or an **anti-detect browser**; no routing the account manager through a **residential/location-matched proxy** to impersonate the client. Delegated access works only through the real LinkedIn login the client stores and the client's own authenticator-2FA approval of each sign-in; the account manager then operates the account by hand from their own local browser.
 
 **Phase 2 gate (launch):** pilot clients complete setup and publish approved content with no security incidents.
 
 ---
+
+## Companion browser extension (F)
+
+The delegated-access autofill tool is a Chrome/Edge extension in **its own repository**, not in this app. It imports the Bluecut design system as a shared package so its few screens use the exact same components and tokens. Scope is deliberately small and compliant:
+- Fetch the client's login from the backend **only after the client has approved the session**, autofill the LinkedIn login form on the account manager's own local browser, then clear it from memory.
+- Instrument the session: log pages and actions to the backend (this feeds the client's access log), detect and block the account security pages, detect dev-tools, and raise anomaly alerts.
+- It never handles cookies, never runs automation against the account, and never uses a proxy. It only fills a login the client consented to and that their 2FA still gates.
+- Hardening ladder: launch with the software controls above; add managed-device enforcement (Chrome Enterprise / MDM, force-installed extension, locked dev-tools) once the business issues devices to account managers.
+
+The app side (Phase 1, built) mocks the handshake so the whole flow can be demoed without the extension.
 
 ## Phase 3. After the pilot
 

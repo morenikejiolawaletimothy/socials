@@ -22,8 +22,10 @@ export function HomeFeed({ b, primary }: { b: ClientBundle; primary: boolean }) 
   const updates = b.updates.filter((u) => u.status === "sent").length;
 
   // Reports has no count tag; it opens on its own when there is a weekly update. Messages live in Messages and Notifications.
+  // Full-service clients have no Tasks tab: we do the work, and anything only they can do comes in Messages, not as a task.
+  const fullService = b.client?.service === "full-service";
   const tabs: { value: FeedTab; label: string; count?: number; live?: boolean }[] = [
-    { value: "tasks", label: "Tasks", count: openTasks },
+    ...(fullService ? [] : [{ value: "tasks" as FeedTab, label: "Tasks", count: openTasks }]),
     { value: "review", label: "Review", count: waiting },
     { value: "live", label: "Live", count: live, live: true },
     { value: "upcoming", label: "Coming up", count: upcoming },
@@ -31,7 +33,7 @@ export function HomeFeed({ b, primary }: { b: ClientBundle; primary: boolean }) 
   ];
 
   const [picked, setPicked] = useState<FeedTab>();
-  const tab = picked ?? tabs.find((t) => (t.count ?? 0) > 0 || (t.value === "updates" && updates > 0))?.value ?? "tasks";
+  const tab = picked ?? tabs.find((t) => (t.count ?? 0) > 0 || (t.value === "updates" && updates > 0))?.value ?? tabs[0].value;
   const label = tabs.find((t) => t.value === tab)?.label;
 
   const empty: Record<FeedTab, { title: string; text: string }> = {

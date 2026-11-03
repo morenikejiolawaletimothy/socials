@@ -13,7 +13,8 @@ const labels: Record<Role, string> = { client: "Client", manager: "Manager", own
 
 // Demo clients, one per state, so every client screen can be seen. Full list in docs/demo-accounts.md.
 const demoClients = [
-  { userId: "u-chidi", label: "Chidi: active" },
+  { userId: "u-chidi", label: "Chidi: active (self-serve)" },
+  { userId: "u-tari", label: "Tari: active (full-service)" },
   { userId: "u-sarah", label: "Sarah: free 2 weeks, ending soon" },
   { userId: "u-ngozi", label: "Ngozi: calls booked" },
   { userId: "u-femi", label: "Femi: approve strategy" },

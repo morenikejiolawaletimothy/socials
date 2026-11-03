@@ -696,6 +696,174 @@ export async function saveFileToBrand(messageId: string) {
   });
 }
 
+/* ---------- Full-service (C20) + delegated access (D) ---------- */
+
+/** Records the account team working on a full-service client's account, for the client to see (accountability). */
+function access(db: Db, clientId: string, who: string, action: string, minutes?: number): Db {
+  return { ...db, accessLog: [{ id: id("ac"), clientId, who, at: nowIso(), action, minutes }, ...(db.accessLog ?? [])] };
+}
+
+/** C20: turn on full-service (also reachable from onboarding). Default access is set up next (Page admin, delegated login). */
+export async function activateFullService(clientId: string, pageManagement: boolean) {
+  await delay(600);
+  update((db) => {
+    let next = patchClient(db, clientId, (c) => ({ service: "full-service" as const, fullService: { since: nowIso(), pageManagement, pageGrant: pageManagement ? ("pending" as const) : undefined, access: { credentials: "none" as const, twoFactor: false } }, permissions: { ...c.permissions, companyPage: pageManagement } }));
+    next = log(next, clientId, "you", "setting", "Turned on full-service");
+    next = audit(next, "Client turned on full-service", clientUser(db, clientId)?.firstName ?? "Client", "account");
+    return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} turned on full-service. Follow their permission contract exactly; you cannot change their settings.`, `/manager/clients/${clientId}`, { urgent: true });
+  });
+}
+
+/** C20: add or remove company Page management (official Page admin delegation). */
+export async function setPageManagement(clientId: string, on: boolean) {
+  await delay(400);
+  update((db) => {
+    let next = patchClient(db, clientId, (c) => ({ fullService: c.fullService && { ...c.fullService, pageManagement: on, pageGrant: on ? ("pending" as const) : undefined }, permissions: { ...c.permissions, companyPage: on } }));
+    next = log(next, clientId, "you", "setting", `Turned ${on ? "on" : "off"} company Page management`);
+    return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} turned ${on ? "on" : "off"} company Page management.`, `/manager/clients/${clientId}`, { email: false });
+  });
+}
+
+/** C20: the client confirms they added Bluecut as an admin on their LinkedIn Page (official delegation). */
+export async function confirmPageGrant(clientId: string) {
+  await delay(500);
+  update((db) => {
+    let next = patchClient(db, clientId, (c) => ({ fullService: c.fullService && { ...c.fullService, pageGrant: "granted" as const } }));
+    next = log(next, clientId, "you", "setting", "Added Bluecut as a Page admin");
+    return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} added Bluecut as a Page admin. You can manage it now.`, `/manager/clients/${clientId}`, { email: false });
+  });
+}
+
+/** C20: the client pauses all our work at once. Sovereignty: one click, instant. */
+export async function pauseFullServiceAccess(clientId: string) {
+  await delay(300);
+  update((db) => {
+    let next = patchClient(db, clientId, (c) => ({ fullService: c.fullService && { ...c.fullService, paused: true, pausedAt: nowIso(), access: c.fullService.access && { ...c.fullService.access, session: undefined } } }));
+    next = access(next, clientId, clientUser(db, clientId)?.firstName ?? "Client", "Paused the account team's access");
+    next = log(next, clientId, "you", "setting", "Paused your account team's access");
+    return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} paused your access. Do not work on their account until they resume.`, `/manager/clients/${clientId}`, { urgent: true });
+  });
+}
+
+/** C20: the client resumes access. */
+export async function resumeFullServiceAccess(clientId: string) {
+  await delay(300);
+  update((db) => {
+    let next = patchClient(db, clientId, (c) => ({ fullService: c.fullService && { ...c.fullService, paused: false, pausedAt: undefined } }));
+    next = log(next, clientId, "you", "setting", "Resumed your account team's access");
+    return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} resumed your access.`, `/manager/clients/${clientId}`, { email: false });
+  });
+}
+
+/** C20: the client ends full-service and goes back to self-serve. Vaulted login is cleared, Page admin removed. */
+export async function endFullService(clientId: string) {
+  await delay(500);
+  update((db) => {
+    let next = patchClient(db, clientId, (c) => ({ service: "self-serve" as const, fullService: undefined, permissions: { ...c.permissions, companyPage: false } }));
+    next = access(next, clientId, clientUser(db, clientId)?.firstName ?? "Client", "Ended full-service and removed all access");
+    next = log(next, clientId, "you", "setting", "Ended full-service");
+    next = audit(next, "Client ended full-service", clientUser(db, clientId)?.firstName ?? "Client", "account");
+    return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} ended full-service and is back on self-serve. Remove your Page admin access.`, `/manager/clients/${clientId}`, { urgent: true });
+  });
+}
+
+/** C20: the manager records a management session on a full-service client (accountability). */
+export async function logManagementSession(clientId: string, action: string, minutes: number) {
+  await delay(400);
+  update((db) => {
+    const who = nameOf(managerUserOf(db, clientId)) || "Your account team";
+    const next = access(db, clientId, who, action, minutes);
+    return log(next, clientId, "team", "account", action);
+  });
+}
+
+/* ---------- Delegated access (D) ---------- */
+
+const patchAccess = (db: Db, clientId: string, fn: (a: NonNullable<Client["fullService"]>["access"]) => NonNullable<Client["fullService"]>["access"]): Db =>
+  patchClient(db, clientId, (c) => ({ fullService: c.fullService && { ...c.fullService, access: fn(c.fullService.access ?? { credentials: "none", twoFactor: false }) } }));
+
+/** D1: the client stores (or clears) their LinkedIn login in the encrypted vault. Phase 1 stores nothing real. */
+export async function setDelegatedCredentials(clientId: string, set: boolean) {
+  await delay(500);
+  update((db) => {
+    let next = patchAccess(db, clientId, (a) => ({ ...a!, credentials: set ? "set" : "none", needsRefresh: false }));
+    next = log(next, clientId, "you", "setting", set ? "Saved your login to the secure vault" : "Removed your login from the vault");
+    return set ? notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} secured their login for delegated access.`, `/manager/clients/${clientId}`, { email: false }) : next;
+  });
+}
+
+/** D1: the client confirms authenticator-app 2FA is on, so they approve each login. */
+export async function setTwoFactor(clientId: string, on: boolean) {
+  await delay(400);
+  update((db) => {
+    const next = patchAccess(db, clientId, (a) => ({ ...a!, twoFactor: on }));
+    return log(next, clientId, "you", "setting", on ? "Turned on authenticator 2FA for delegated access" : "Turned off authenticator 2FA");
+  });
+}
+
+/** D3: the client re-enters their login after LinkedIn rotated the session. */
+export async function refreshDelegatedSession(clientId: string) {
+  await delay(500);
+  update((db) => {
+    const next = patchAccess(db, clientId, (a) => ({ ...a!, credentials: "set", needsRefresh: false }));
+    return log(next, clientId, "you", "setting", "Refreshed your secure session");
+  });
+}
+
+/**
+ * D2: the manager must notify before logging in. This creates a "requested" session and alerts the client to
+ * approve on their phone. A manager who logs in without this step is a breach signal (handled server-side).
+ */
+export async function requestSession(clientId: string, note?: string) {
+  await delay(400);
+  update((db) => {
+    const who = nameOf(managerUserOf(db, clientId)) || "Your account team";
+    const session = { id: id("se"), managerName: who, state: "requested" as const, note: note || undefined, requestedAt: nowIso() };
+    const next = patchAccess(db, clientId, (a) => ({ ...a!, session }));
+    return notify(next, clientUser(db, clientId)?.id, `${who} wants to log in to manage your account${note ? `: "${note}"` : ""}. Approve it on your phone, or here.`, "/full-service", { urgent: true });
+  });
+}
+
+/** D2: the client approves the session (their phone 2FA). The manager can now work; the session is recorded. */
+export async function approveSession(clientId: string) {
+  await delay(400);
+  update((db) => {
+    const s0 = db.clients.find((c) => c.id === clientId)?.fullService?.access?.session;
+    if (!s0) return db;
+    let next = patchAccess(db, clientId, (a) => ({ ...a!, session: { ...a!.session!, state: "active", approvedAt: nowIso() } }));
+    next = log(next, clientId, "you", "setting", `Approved a management session for ${s0.managerName}`);
+    return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} approved your session. You can work now. The session is recorded.`, `/manager/clients/${clientId}`, { email: false });
+  });
+}
+
+/** D2: the client declines the session. */
+export async function declineSession(clientId: string) {
+  await delay(300);
+  update((db) => {
+    let next = patchAccess(db, clientId, (a) => ({ ...a!, session: a!.session && { ...a!.session, state: "declined", endedAt: nowIso() } }));
+    next = log(next, clientId, "you", "setting", "Declined a management session");
+    return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} declined your session request.`, `/manager/clients/${clientId}`, { urgent: true });
+  });
+}
+
+/** D2: the manager ends the session and records what they did (accountability). */
+export async function endSession(clientId: string, action: string, minutes: number) {
+  await delay(400);
+  update((db) => {
+    const s0 = db.clients.find((c) => c.id === clientId)?.fullService?.access?.session;
+    const who = s0?.managerName || nameOf(managerUserOf(db, clientId)) || "Your account team";
+    let next = patchAccess(db, clientId, (a) => ({ ...a!, session: a!.session && { ...a!.session, state: "ended", endedAt: nowIso() } }));
+    next = access(next, clientId, who, action.trim() || "Managed your account", minutes);
+    return log(next, clientId, "team", "account", action.trim() || "Managed your account");
+  });
+}
+
+/** D3: admin marks a breach signal reviewed. */
+export async function resolveAccessAlert(alertId: string) {
+  await delay(300);
+  update((db) => ({ ...db, accessAlerts: (db.accessAlerts ?? []).map((a) => (a.id === alertId ? { ...a, resolved: true } : a)) }));
+}
+
 /* ---------- Client: control ---------- */
 
 const permissionLabels: Record<keyof Permissions, string> = {
@@ -942,7 +1110,18 @@ export async function setVideoAddon(clientId: string, maker: "client" | "bluecut
 
 /* ---------- Client: setup (C2 to C6) ---------- */
 
-const stepOrder: SetupStep[] = ["linkedin", "permissions", "goals-call", "strategy-call", "plan", "review"];
+const stepOrder: SetupStep[] = ["service", "linkedin", "permissions", "goals-call", "strategy-call", "plan", "review"];
+
+/** B: the client chooses their service at onboarding: self-serve (hands-on) or full-service (done-for-you). */
+export async function setService(clientId: string, service: "self-serve" | "full-service") {
+  await delay(300);
+  update((db) => {
+    let next = patchClient(db, clientId, () => ({ service }));
+    next = log(next, clientId, "you", "setting", `Chose ${service === "full-service" ? "full-service (done-for-you)" : "self-serve"}`);
+    return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} chose ${service === "full-service" ? "full-service" : "self-serve"} at onboarding.`, `/manager/clients/${clientId}`, { email: false });
+  });
+  await completeSetupStep(clientId, "service");
+}
 
 export async function completeSetupStep(clientId: string, step: SetupStep) {
   await delay(300);
@@ -1346,6 +1525,24 @@ export async function sendLeads(clientId: string, dueAt: string) {
     return notify(next, clientUser(db, clientId)?.id, made === 1 ? `New quick task: ${first.title}. About ${Math.max(1, Math.round(kept.length / 2))} minutes.` : `${made} new quick tasks: ${plural(kept.length, "thing")} to do on LinkedIn, about ${Math.max(2, Math.round(kept.length / 2))} minutes.`, made === 1 ? `/tasks/${ids[0]}` : "/home#tasks");
   });
   return made;
+}
+
+/** C20 Full-service: the team does the checked engagement themselves and records it. No tasks are sent. */
+export async function doEngagementForClient(clientId: string) {
+  await delay(700);
+  update((db) => {
+    const kept = db.leads.filter((l) => l.clientId === clientId && l.status === "kept");
+    if (!kept.length) return db;
+    const who = nameOf(managerUserOf(db, clientId)) || "Your account team";
+    let next: Db = { ...db, leads: db.leads.map((l) => (kept.some((k) => k.id === l.id) ? { ...l, status: "done" as const } : l)) };
+    next = { ...next, accessLog: [{ id: id("ac"), clientId, who, at: nowIso(), action: `Did ${plural(kept.length, "engagement action")} on your behalf (comments, reactions and follows)`, minutes: Math.max(10, kept.length * 3) }, ...(next.accessLog ?? [])] };
+    next = log(next, clientId, "team", "engagement", `Did ${plural(kept.length, "engagement action")} for you`);
+    const comments = kept.filter((l) => l.action === "comment").length;
+    if (comments) next = countWeek(next, clientId, "comments", comments);
+    const connects = kept.filter((l) => l.action === "connect").length;
+    if (connects) next = countWeek(next, clientId, "connections", connects);
+    return notify(next, clientUser(db, clientId)?.id, `Your team did ${plural(kept.length, "action")} on LinkedIn for you. See your account log.`, "/full-service", { email: false });
+  });
 }
 
 export async function addAlert(clientId: string, topic: string, url: string) {

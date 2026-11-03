@@ -2,6 +2,7 @@
 
 import { ClientCell, Stats, managerName } from "@/components/admin/parts";
 import { Banner, Card, PageHeader, Pill, Tile, TileAction, TileFooter } from "@/components/ui";
+import { AccessAlertsCard } from "@/components/admin/AccessAlertsCard";
 import { daysFrom, fullName, money, plural } from "@/lib/format";
 import { useData } from "@/lib/mock";
 
@@ -38,6 +39,8 @@ export default function Overview() {
           { label: "Delivery this week", value: `${Math.round((done / Math.max(target, 1)) * 100)}%`, note: `${done} of ${target} against targets` },
         ]}
       />
+
+      <AccessAlertsCard />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <Card title="Needs you today" action={<Pill>{plural(needs.length, "thing")}</Pill>}>

@@ -58,7 +58,7 @@ export type ReviewSettings = {
 };
 
 /** C1: the six setup steps, in order. */
-export type SetupStep = "linkedin" | "permissions" | "goals-call" | "strategy-call" | "plan" | "review";
+export type SetupStep = "service" | "linkedin" | "permissions" | "goals-call" | "strategy-call" | "plan" | "review";
 
 export type Client = {
   id: string;
@@ -86,6 +86,56 @@ export type Client = {
   stage: "setup" | "calls" | "strategy" | "running";
   joinedAt: string;
   atRisk?: string;
+  /** B (onboarding fork): self-serve (client does the LinkedIn actions) or full-service (done-for-you). Missing = self-serve. */
+  service?: "self-serve" | "full-service";
+  /** Set when the client is on full-service (C20). */
+  fullService?: FullService;
+};
+
+/**
+ * C20 Full-service: the client delegates the work, not control. We never see their password and can never
+ * change their account security. We act only through: the company Page as an official admin they grant, and
+ * (delegated access) a login the client secures with their own authenticator 2FA and approves each time. There
+ * is no Tasks tab; anything only the member can do is asked for in Messages. The permission contract is the
+ * client's alone: the manager follows it and cannot change it. The client can pause or end access any time.
+ */
+export type FullService = {
+  since: string;
+  /** We run their company Page too, via official LinkedIn Page admin delegation. A paid add-on. */
+  pageManagement: boolean;
+  pageGrant?: "granted" | "pending" | "not-granted";
+  /** Delegated profile access (D): the client's secured login we operate with their per-session approval. */
+  access?: DelegatedAccess;
+  /** The client paused all our work from their side. We stop at once until they resume. */
+  paused?: boolean;
+  pausedAt?: string;
+};
+
+/**
+ * D Delegated access: the client stores their LinkedIn login in an encrypted vault (we never read it), turns
+ * on authenticator-app 2FA, and approves every management session on their phone. No cookies, no proxy.
+ */
+export type DelegatedAccess = {
+  /** The vault holds the client's login (encrypted). In Phase 1 this is mocked; no real password is stored. */
+  credentials: "set" | "none";
+  /** The client turned on authenticator-app 2FA on LinkedIn, so they approve each login. */
+  twoFactor: boolean;
+  /** The stored login needs re-entering (LinkedIn rotated the session). */
+  needsRefresh?: boolean;
+  /** An open or pending management session by the account manager. */
+  session?: AccessSession;
+};
+
+/** D: one management session: the manager notifies, the client approves on their phone, then the manager works. */
+export type AccessSession = {
+  id: string;
+  managerName: string;
+  /** requested: manager notified, waiting for the client. active: client approved, manager working. */
+  state: "requested" | "active" | "ended" | "declined";
+  note?: string;
+  requestedAt: string;
+  approvedAt?: string;
+  endedAt?: string;
 };
 
 export type Manager = {
@@ -625,6 +675,12 @@ export type FrameworkVersion = { version: string; at: string; note: string };
 
 export type AuditEntry = { id: string; who: string; action: string; target: string; at: string; kind: "assignment" | "refund" | "setting" | "account" | "content" | "step-in" };
 
+/** C20: a record of the account team working on a full-service client's account, shown to the client. */
+export type AccessLog = { id: string; clientId: string; who: string; at: string; action: string; minutes?: number };
+
+/** D: a breach signal on a full-service client's delegated access, for admins (insider-threat monitoring). */
+export type AccessAlert = { id: string; clientId: string; managerName: string; at: string; kind: "no-notify" | "security-page" | "off-hours" | "bulk" | "devtools"; detail: string; resolved?: boolean };
+
 export type Payout = { id: string; managerId: string; period: string; clients: number; amountCents: number; status: "to-approve" | "approved" | "paid" };
 
 export type Settings = {
@@ -639,6 +695,10 @@ export type Settings = {
   sessionTimeoutMinutes: number;
   /** Video add-on price, a month, on top of the plan (USD cents). */
   videoAddonCents: number;
+  /** Full-service done-for-you tier, a month, on top of the plan (USD cents). */
+  fullServiceCents: number;
+  /** Company Page management add-on, a month (USD cents). Full-service only. */
+  pageManagementCents: number;
 };
 
 export type ManagerChangeRequest = { id: string; clientId: string; reason: string; at: string; status: "open" | "done" };
@@ -688,4 +748,6 @@ export type Db = {
   changeRequests: ManagerChangeRequest[];
   assistants: Assistant[];
   outbox: OutboxItem[];
+  accessLog: AccessLog[];
+  accessAlerts: AccessAlert[];
 };

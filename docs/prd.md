@@ -93,6 +93,8 @@ Bluecut Socials is a LinkedIn account management service for busy senior profess
 
 ---
 
+**Companion browser extension (recommendation).** The delegated-access autofill tool is a separate, compliant Chrome/Edge extension in its own repository that imports the Bluecut design system. It fills the client's login on the account manager's own browser only after the client approves a session, and instruments the session for the access log and breach alerts. It never handles cookies, automation or proxies. Out of scope for Phase 1 (the app mocks the handshake).
+
 ## Epic 1. Accounts and access
 
 **US-1.1 (P0, changed)** As a visitor, I want to create an account with Google or with my email, so that I can get started in under a minute. (P2)
@@ -581,6 +583,43 @@ Editing approved content sends it back to Awaiting client.
 | Complaint | Open, Under review, Resolved, Closed |
 | Account manager | Invited, Waiting for training, Active, Suspended, Removed |
 | Task | To do, Doing, Waiting on client, Done, Missed |
+
+## Epic 17. Full-service (done-for-you)
+
+A premium tier chosen at onboarding, for clients who want to delegate the work, not control. Flows C20, and the onboarding fork (B). The client keeps their login and their settings; we act only through official mechanisms and their own approvals.
+
+**US-17.1 (P1, new)** As a client, I want to choose self-serve or full-service when I sign up, so that I get the experience that fits me. (B)
+- The first setup step is the choice. It can be changed later with the manager.
+
+**US-17.2 (P1, new)** As a full-service client, I want a done-for-you experience with no task list, so that I just approve and stay informed. (C20)
+- No Tasks tab. Anything only the member can do is asked for in Messages, never a task. Priced on top of the plan (`fullServiceCents`), shown on Contract.
+
+**US-17.3 (P1, new)** As a full-service client, I want the team to run my company Page, so that it is handled for me.
+- Official LinkedIn Page admin delegation (I add Bluecut as a Content admin; no password). Add-on priced at `pageManagementCents`. Removable any time.
+
+**US-17.4 (P0 for this tier, new)** As a full-service client, I want my permission contract to be mine alone, so that the team stays within what I allow.
+- The manager follows my permissions, off limits and review settings exactly and cannot change them. I change them in Control and Your brand.
+
+**US-17.5 (P0 for this tier, new)** As a full-service client, I want to pause or end access in one click, and see everything the team did, so that I keep control and accountability.
+- Pause stops all work at once; end returns me to self-serve and clears access. Every management session is logged (who, when, what, minutes).
+
+## Epic 18. Delegated access (how full-service signs in)
+
+How the team gets into a full-service client's personal profile, without taking their login.
+
+**Compliance (hard boundary, set by Fola and Claude).** No session-cookie capture, injection or replay; no automation or anti-detect browser driving the account; no location-matched residential proxy to impersonate the client. Delegated access uses only: the real LinkedIn login the client stores in an encrypted vault, the client's own authenticator-app 2FA, and the account manager operating the account by hand from their own local browser.
+
+**US-18.1 (P0 for this tier, new)** As a full-service client, I want to store my login securely and turn on 2FA, so that the team can sign in but no one can see or misuse my password.
+- The login is kept in an encrypted vault that the account manager and Bluecut never read. The client turns on authenticator-app 2FA so they approve each sign-in. Consent and terms are shown and recorded.
+
+**US-18.2 (P0 for this tier, new)** As a full-service client, I want to be told before every sign-in and approve it on my phone, so that nothing happens without me.
+- The manager must notify first; the client approves (or declines) on their phone. A sign-in attempt without that approval is a breach signal. Each session is recorded; the manager ends it with a note of what they did.
+
+**US-18.3 (P0 for this tier, new)** As a client, I want to revoke access instantly and be told when my session expires, so that I stay in control.
+- Pause, remove stored login, or end full-service, any time. When LinkedIn rotates the session, the client is asked to refresh it.
+
+**US-18.4 (P0, new)** As the owner, I want breach signals from delegated sessions surfaced, so that I can hold account managers accountable.
+- Alerts for: a sign-in without the client's approval, reaching the account security pages, off-hours sessions, bulk access, dev-tools opened. Shown to the owner to review. Managed-device enforcement is added at scale.
 
 ## Non-functional requirements
 

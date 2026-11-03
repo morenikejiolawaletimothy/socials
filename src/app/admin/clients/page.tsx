@@ -88,7 +88,10 @@ function ClientsPage() {
                   <ClientCell db={db} clientId={c.id} />
                 </td>
                 <td className={td}>
-                  <Badge status={b.tone}>{c.status === "paused" ? `Paused ${-daysFrom(c.pausedAt ?? c.joinedAt)} days` : b.label}</Badge>
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    <Badge status={b.tone}>{c.status === "paused" ? `Paused ${-daysFrom(c.pausedAt ?? c.joinedAt)} days` : b.label}</Badge>
+                    {c.service === "full-service" && <Pill>Full-service</Pill>}
+                  </span>
                 </td>
                 <td className={td}>
                   {c.managerId ? (

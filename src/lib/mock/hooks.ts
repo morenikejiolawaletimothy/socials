@@ -39,6 +39,8 @@ export function clientBundle(db: Db, clientId: string | undefined) {
     signals: byClient(db.signals),
     alerts: byClient(db.alerts),
     complaints: byClient(db.complaints),
+    accessLog: byClient(db.accessLog ?? []),
+    accessAlerts: byClient(db.accessAlerts ?? []),
     assistants: byClient(db.assistants ?? []),
   };
 }
