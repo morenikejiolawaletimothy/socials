@@ -16,10 +16,10 @@ const options: { value: Service; title: string; lead: string; note: string; poin
     lead: "We prepare everything. You do the few things only you can do.",
     note: "You stay in full control of your account.",
     points: [
-      "Write and schedule posts",
-      "Publish in one tap",
-      "Comments and connections",
-      "Never share your login",
+      "Posts prepared",
+      "One-tap publish",
+      "Comments prepared",
+      "Keep your login",
     ],
   },
   {
@@ -28,10 +28,10 @@ const options: { value: Service; title: string; lead: string; note: string; poin
     lead: "We handle the day-to-day. You approve the plan and the posts.",
     note: "Your manager sets this up with you. We never need your password.",
     points: [
-      "We run your LinkedIn by your rules",
-      "Your company Page too, if you like",
-      "No tasks. We message you if needed",
-      "Pause or stop us any time",
+      "Done for you",
+      "Company Page too",
+      "No task list",
+      "Pause any time",
     ],
   },
 ];
