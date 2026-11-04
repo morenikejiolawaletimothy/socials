@@ -1,35 +1,37 @@
 "use client";
 
-import { Buildings, ChatCircle, CheckCircle, HandTap, ShieldCheck, Sparkle } from "@phosphor-icons/react";
+import { CheckCircle } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SetupFrame } from "@/components/client/SetupFrame";
-import { Badge, Banner, Button, useTask } from "@/components/ui";
+import { Button, useTask } from "@/components/ui";
 import { act, useMyClient } from "@/lib/mock";
 
 type Service = "self-serve" | "full-service";
 
-const options: { value: Service; title: string; tag?: string; lead: string; points: string[] }[] = [
+const options: { value: Service; title: string; lead: string; note: string; points: string[] }[] = [
   {
     value: "self-serve",
     title: "You stay hands-on",
-    lead: "We prepare everything; you do the few things only you can do on LinkedIn.",
+    lead: "We prepare everything. You do the few things only you can do.",
+    note: "You stay in full control of your account.",
     points: [
-      "We write and schedule your posts. You publish each one in a tap, at the best time.",
-      "Comments, reactions, follows and connection requests come to you as quick tasks, ready in seconds.",
-      "You keep full control and never share your login.",
+      "Write and schedule posts",
+      "Publish in one tap",
+      "Comments and connections",
+      "Never share your login",
     ],
   },
   {
     value: "full-service",
     title: "We do it for you",
-    tag: "Premium",
-    lead: "Hand the day-to-day to us. You approve the plan and the posts, and nothing lands on your to-do list.",
+    lead: "We handle the day-to-day. You approve the plan and the posts.",
+    note: "Your manager sets this up with you. We never need your password.",
     points: [
-      "We manage your LinkedIn for you, following the rules you set.",
-      "We can run your company Page too.",
-      "No task list. If we ever need you, we message you.",
-      "You keep your login and your settings, and can pause or stop us any time.",
+      "We run your LinkedIn by your rules",
+      "Your company Page too, if you like",
+      "No tasks. We message you if needed",
+      "Pause or stop us any time",
     ],
   },
 ];
@@ -47,55 +49,60 @@ export default function ServicePage() {
       <div className="flex flex-col gap-6">
         <p className="text-body text-secondary">Pick what fits you. You can change this later with your manager.</p>
 
-        <div role="radiogroup" aria-label="How we work together" className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:items-center">
           {options.map((o) => {
             const on = choice === o.value;
+            const card = (
+              <div
+                onClick={on ? undefined : () => setChoice(o.value)}
+                className={`flex flex-col gap-6 rounded-lg border bg-card p-6 transition-colors ${on ? "border-primary-600" : "cursor-pointer border-border hover:border-primary-300"}`}
+              >
+                <div className="flex flex-col gap-1">
+                  <h3 className="text-body-lg font-semibold text-primary">{o.title}</h3>
+                  <p className="text-body-sm text-secondary">{o.lead}</p>
+                </div>
+
+                {on ? (
+                  <Button
+                    fullWidth
+                    loading={pending("save")}
+                    onClick={async () => {
+                      if (await run("save", () => act.setService(client.id, choice), choice === "full-service" ? "Full-service chosen. Next, choose what we do for you." : "Self-serve chosen. Next, choose what we prepare for you.")) router.push("/setup/permissions");
+                    }}
+                  >
+                    {pending("save") ? "Saving" : "Save and continue"}
+                  </Button>
+                ) : (
+                  <Button variant="secondary" fullWidth onClick={() => setChoice(o.value)}>
+                    Choose this
+                  </Button>
+                )}
+
+                <div className="flex flex-col gap-3">
+                  <p className="text-body-sm font-medium text-primary">What you get</p>
+                  <ul className="flex flex-col gap-3">
+                    {o.points.map((pt) => (
+                      <li key={pt} className="flex items-center gap-3 text-body-sm text-primary">
+                        <CheckCircle className="size-5 shrink-0 text-primary-600" aria-hidden />
+                        {pt}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            );
+
+            if (!on) return <div key={o.value}>{card}</div>;
+
             return (
-              <label key={o.value} className={`flex cursor-pointer flex-col gap-3 rounded-lg border p-5 transition-colors ${on ? "border-primary-600 bg-primary-50" : "border-border hover:border-primary-300"}`}>
-                <span className="flex items-start gap-3">
-                  <input type="radio" name="service" checked={on} onChange={() => setChoice(o.value)} className="mt-1 size-4 shrink-0 accent-primary-600 focus-visible:focus-ring" />
-                  <span className="flex min-w-0 flex-1 flex-col gap-1">
-                    <span className="flex flex-wrap items-center gap-2">
-                      <span className="flex size-9 items-center justify-center rounded-md bg-primary-50 text-primary-700">
-                        {o.value === "self-serve" ? <HandTap className="size-5" aria-hidden /> : <Sparkle className="size-5" aria-hidden />}
-                      </span>
-                      <span className="text-body font-semibold text-primary">{o.title}</span>
-                      {o.tag && <Badge status="info">{o.tag}</Badge>}
-                    </span>
-                    <span className="text-body-sm text-secondary">{o.lead}</span>
-                  </span>
-                </span>
-                <ul className="flex flex-col gap-2 pl-8">
-                  {o.points.map((pt) => (
-                    <li key={pt} className="flex items-start gap-2 text-body-sm text-primary">
-                      <CheckCircle className="mt-0.5 size-4 shrink-0 text-success" aria-hidden /> {pt}
-                    </li>
-                  ))}
-                </ul>
-              </label>
+              <div key={o.value} className="flex flex-col rounded-xl border border-primary-200 bg-primary-50 p-1">
+                <p className="py-2 text-center text-caption font-medium text-primary-700">Your choice</p>
+                {card}
+                <p className="px-4 py-3 text-center text-body-sm text-primary-700">{o.note}</p>
+              </div>
             );
           })}
         </div>
-
-        {choice === "full-service" && (
-          <Banner tone="info" title="How full-service is set up">
-            <ul className="flex flex-col gap-1">
-              <li className="flex items-start gap-2"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary-600" aria-hidden /> We never ask for your password and can never change your account security.</li>
-              <li className="flex items-start gap-2"><Buildings className="mt-0.5 size-4 shrink-0 text-primary-600" aria-hidden /> Your company Page is run through LinkedIn&apos;s own admin access that you grant.</li>
-              <li className="flex items-start gap-2"><ChatCircle className="mt-0.5 size-4 shrink-0 text-primary-600" aria-hidden /> Your manager finishes setting this up with you. You stay in control and can pause any time.</li>
-            </ul>
-          </Banner>
-        )}
-
-        <Button
-          className="self-start"
-          loading={pending("save")}
-          onClick={async () => {
-            if (await run("save", () => act.setService(client.id, choice), choice === "full-service" ? "Full-service chosen. Next, choose what we do for you." : "Self-serve chosen. Next, choose what we prepare for you.")) router.push("/setup/permissions");
-          }}
-        >
-          {pending("save") ? "Saving" : "Save and continue"}
-        </Button>
       </div>
     </SetupFrame>
   );
