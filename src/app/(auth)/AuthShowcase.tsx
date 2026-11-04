@@ -39,15 +39,15 @@ function Row({ icon: I, label, last, children }: { icon?: Icon; label: string; l
 
 const story: { title: string; caption: string; body: React.ReactNode }[] = [
   {
-    title: "Connect LinkedIn",
-    caption: "You connect through LinkedIn's own sign-in. We never see your password.",
+    title: "Choose how we help",
+    caption: "Self-serve, where we prepare and you post, or full-service, where we do it all. We never ask for your password.",
     body: (
       <>
-        <Row icon={LinkedinLogo} label="LinkedIn connected">
-          <Pill tone="done">Done</Pill>
+        <Row icon={LinkedinLogo} label="Posts prepared for you">
+          <Pill tone="done">Ready</Pill>
         </Row>
-        <Row label="Post for you">
-          <Pill tone="done">On</Pill>
+        <Row label="You publish in a tap">
+          <Pill tone="done">1 min</Pill>
         </Row>
         <Row label="Comments prepared for you" last>
           <Pill tone="todo">Quick task</Pill>

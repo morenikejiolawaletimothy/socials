@@ -48,7 +48,7 @@ export function seed(): Db {
     managerId: null,
     service: "self-serve",
     setupProgress: 100,
-    setupDone: ["service", "linkedin", "permissions", "goals-call", "strategy-call", "plan", "review"],
+    setupDone: ["service", "permissions", "goals-call", "strategy-call", "plan", "review"],
     linkedin: "connected",
     postingPaused: false,
     permissions: allOn,
@@ -89,7 +89,7 @@ export function seed(): Db {
   });
 
   return {
-    version: 24,
+    version: 25,
     session: {
       role: "client",
       userIds: { client: "u-chidi", manager: "u-ada", owner: "u-fola" },
@@ -118,11 +118,11 @@ export function seed(): Db {
       client({ id: "c-ngozi", userId: "u-ngozi", managerId: "m-ada", company: "Harvest Foods", role: "Founder", country: "Nigeria", industry: "Food and agriculture", status: "free", stage: "calls", goal: "Find distribution partners and become known for local sourcing.", joinedAt: at(-2) }),
       client({ id: "c-femi", userId: "u-femi", managerId: "m-ada", company: "BrightGrid Energy", role: "CEO", country: "Nigeria", industry: "Energy", status: "free", stage: "strategy", goal: "Raise a Series A and be seen as the expert on off-grid solar.", joinedAt: at(-6) }),
       client({ id: "c-zainab", userId: "u-zainab", managerId: "m-ada", company: "CareCircle", role: "Medical director", country: "Nigeria", industry: "Health", status: "active", goal: "Become a trusted voice on maternal health and win speaking invitations.", joinedAt: at(-95), atRisk: "Slow to review: 3 posts held this week", review: { ...review, frequency: "twice-weekly" } }),
-      client({ id: "c-david", userId: "u-david", managerId: null, company: "Adeyemi & Co", role: "Managing partner", country: "Nigeria", industry: "Law", status: "setting-up", stage: "setup", setupProgress: 43, setupDone: ["service", "linkedin", "permissions"], goal: "Win board roles and speaking invitations.", joinedAt: at(-1) }),
+      client({ id: "c-david", userId: "u-david", managerId: null, company: "Adeyemi & Co", role: "Managing partner", country: "Nigeria", industry: "Law", status: "setting-up", stage: "setup", setupProgress: 33, setupDone: ["service", "permissions"], goal: "Win board roles and speaking invitations.", joinedAt: at(-1) }),
       client({ id: "c-kemi", userId: "u-kemi", managerId: "m-tunde", company: "Northwind", role: "Head of product", country: "Canada", industry: "Software", status: "paused", pausedReason: "unpaid", pausedAt: at(-12), goal: "Grow visibility for a move into a VP role.", joinedAt: at(-26), atRisk: "Paused for 12 days, unpaid" }),
       client({ id: "c-tobi", userId: "u-tobi", managerId: "m-tunde", company: "Ledgerly", role: "CTO", country: "United Kingdom", industry: "Fintech", status: "active", goal: "Hire senior engineers and be known for engineering culture.", joinedAt: at(-120), atRisk: "Open complaint about post quality" }),
       client({ id: "c-musa", userId: "u-musa", managerId: "m-tunde", company: "Sahel Ventures", role: "Partner", country: "Nigeria", industry: "Venture capital", status: "active", goal: "Attract strong founders in the Sahel to pitch.", joinedAt: at(-40) }),
-      client({ id: "c-tari", userId: "u-tari", managerId: "m-ada", company: "Delmont Group", role: "CEO", country: "Nigeria", industry: "Real estate", status: "active", service: "full-service", permissions: { ...allOn, companyPage: true }, fullService: { since: at(-30), pageManagement: true, pageGrant: "granted", access: { credentials: "set", twoFactor: true } }, goal: "Be the best-known name in West African commercial real estate and attract institutional investors.", joinedAt: at(-38) }),
+      client({ id: "c-tari", userId: "u-tari", managerId: "m-ada", company: "Delmont Group", role: "CEO", country: "Nigeria", industry: "Real estate", status: "active", service: "full-service", setupDone: ["service", "permissions", "access", "goals-call", "strategy-call", "plan", "review"], permissions: { ...allOn, companyPage: true }, fullService: { since: at(-30), pageManagement: true, pageGrant: "granted", access: { credentials: "set", twoFactor: true } }, goal: "Be the best-known name in West African commercial real estate and attract institutional investors.", joinedAt: at(-38) }),
     ],
     managers: [
       { id: "m-ada", userId: "u-ada", status: "active", intro: "I help founders in fintech and health tell their story on LinkedIn. Six years in communications, based in Lagos.",

@@ -1110,7 +1110,8 @@ export async function setVideoAddon(clientId: string, maker: "client" | "bluecut
 
 /* ---------- Client: setup (C2 to C6) ---------- */
 
-const stepOrder: SetupStep[] = ["service", "linkedin", "permissions", "goals-call", "strategy-call", "plan", "review"];
+/** The setup steps for a client, in order. Full-service adds a secure-access step; neither uses the LinkedIn API. */
+const setupOrder = (service?: Client["service"]): SetupStep[] => ["service", "permissions", ...(service === "full-service" ? ["access" as const] : []), "goals-call", "strategy-call", "plan", "review"];
 
 /** B: the client chooses their service at onboarding: self-serve (hands-on) or full-service (done-for-you). */
 export async function setService(clientId: string, service: "self-serve" | "full-service") {
@@ -1127,11 +1128,12 @@ export async function completeSetupStep(clientId: string, step: SetupStep) {
   await delay(300);
   update((db) => {
     const next = patchClient(db, clientId, (c) => {
-      const done = c.setupDone.includes(step) ? c.setupDone : stepOrder.filter((s) => s === step || c.setupDone.includes(s));
-      const finished = done.length === stepOrder.length;
+      const order = setupOrder(c.service);
+      const done = c.setupDone.includes(step) ? c.setupDone : order.filter((s) => s === step || c.setupDone.includes(s));
+      const finished = done.length === order.length;
       return {
         setupDone: done,
-        setupProgress: Math.round((done.length / stepOrder.length) * 100),
+        setupProgress: Math.round((done.length / order.length) * 100),
         ...(finished && c.status === "setting-up" ? { status: "free" as const, stage: "calls" as const } : {}),
       };
     });

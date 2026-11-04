@@ -17,7 +17,7 @@ import { LivePostActions } from "./LivePostActions";
 import { PayDialog } from "./PayDialog";
 import { monthlyTotal } from "./VideoAddon";
 import { reportActivity } from "./reportActivity";
-import { nextSetupStep, setupSteps } from "./setup";
+import { nextSetupStep, stepsFor } from "./setup";
 
 const linkClass = textActionClass;
 const buttonLink = (primary: boolean) => `self-start ${buttonClass(primary ? "primary" : "secondary")}`;
@@ -68,18 +68,13 @@ export function PausedCard({ b }: { b: ClientBundle }) {
   );
 }
 
-/** C1 states: free 2 weeks, reconnect LinkedIn, posting paused. */
+/** C1 states: free 2 weeks, posting paused. */
 export function StateBanners({ b }: { b: ClientBundle }) {
   const { client, contract } = b;
   if (!client || client.status === "paused") return null;
   const daysLeft = contract ? daysFrom(contract.freeEndsAt) : 99;
   return (
     <>
-      {client.linkedin === "expired" && (
-        <Banner tone="warning" title="Your LinkedIn connection has expired" action={<Link href="/control" className={linkClass}>Reconnect</Link>}>
-          Nothing can be posted until you reconnect. It takes a minute.
-        </Banner>
-      )}
       {client.postingPaused && (
         <Banner tone="warning" title="You paused all posting" action={<Link href="/control" className={linkClass}>Turn it back on</Link>}>
           Scheduled posts are held until you turn posting back on.
@@ -108,11 +103,12 @@ function FreeWeeksNote({ b }: { b: ClientBundle }) {
 
 /* ---------- Setting up ---------- */
 
-/** C1: setup progress with the six steps and one button. */
+/** C1: setup progress with its steps and one button (steps depend on self-serve vs full-service). */
 export function SetupCard({ b }: { b: ClientBundle }) {
   const { client } = b;
   if (!client || client.status !== "setting-up") return null;
-  const next = nextSetupStep(client.setupDone);
+  const steps = stepsFor(client.service);
+  const next = nextSetupStep(client.setupDone, client.service);
   return (
     <Card title="Account setup">
       <div className="flex flex-col gap-6">
@@ -120,16 +116,16 @@ export function SetupCard({ b }: { b: ClientBundle }) {
         <div className="flex flex-col gap-2">
           <span className="flex items-center justify-between text-body-sm">
             <span className="text-primary">{client.setupProgress}% done</span>
-            <span className="text-secondary">{plural(setupSteps.length - client.setupDone.length, "step")} left, about 8 minutes</span>
+            <span className="text-secondary">{plural(steps.length - client.setupDone.length, "step")} left</span>
           </span>
           <ProgressBar value={client.setupProgress} />
         </div>
         <ol className="flex flex-col">
-          {setupSteps.map((s, i) => {
+          {steps.map((s, i) => {
             const done = client.setupDone.includes(s.step);
             const isNext = next?.step === s.step;
             return (
-              <li key={s.step} className={`flex items-center gap-3 py-3 ${i < setupSteps.length - 1 ? "border-b border-border" : ""}`}>
+              <li key={s.step} className={`flex items-center gap-3 py-3 ${i < steps.length - 1 ? "border-b border-border" : ""}`}>
                 {done ? <CheckCircle className="size-6 shrink-0 text-success" aria-label="Done" /> : <Circle className={`size-6 shrink-0 ${isNext ? "text-primary-600" : "text-neutral-300"}`} aria-label="Not done" />}
                 <span className={`flex-1 text-body ${done ? "text-secondary line-through" : "text-primary"}`}>{s.label}</span>
                 <span className="text-caption text-secondary">{done ? "Done" : s.minutes}</span>

@@ -11,7 +11,7 @@ import { act, useMyClient } from "@/lib/mock";
 const steps = ["Agree", "Protect with 2FA", "Save your login"];
 
 /** D1: set up delegated access: agree to the terms, turn on authenticator 2FA, then store the login in the vault. */
-export function DelegatedAccessSetup() {
+export function DelegatedAccessSetup({ inSetup = false }: { inSetup?: boolean }) {
   const router = useRouter();
   const { client } = useMyClient();
   const { run, pending } = useTask();
@@ -25,7 +25,7 @@ export function DelegatedAccessSetup() {
 
   return (
     <Columns {...rails.clientSettings}>
-      <Card title="Set up delegated access" eyebrow={<Breadcrumbs items={[{ label: "Full-service", href: "/full-service" }, { label: "Delegated access" }]} />}>
+      <Card title="Set up delegated access" eyebrow={<Breadcrumbs items={inSetup ? [{ label: "Home", href: "/home" }, { label: "Set up" }, { label: "Secure access" }] : [{ label: "Full-service", href: "/full-service" }, { label: "Delegated access" }]} />}>
         <div className="flex flex-col gap-6">
           <Stepper steps={steps} current={step} />
 
@@ -84,7 +84,10 @@ export function DelegatedAccessSetup() {
                 if (!/^\S+@\S+\.\S+$/.test(email.trim()) || !password) return setError("Enter the email and password you use for LinkedIn.");
                 setError(undefined);
                 await run("save", () => act.setTwoFactor(client.id, true), undefined);
-                if (await run("save", () => act.setDelegatedCredentials(client.id, true), "Secure access is set up. Your team will notify you before they sign in.")) router.push("/full-service");
+                if (await run("save", () => act.setDelegatedCredentials(client.id, true), "Secure access is set up. Your team will notify you before they sign in.")) {
+                  if (inSetup) await act.completeSetupStep(client.id, "access");
+                  router.push(inSetup ? "/home" : "/full-service");
+                }
               }}
             >
               <Banner tone="success">

@@ -1,7 +1,6 @@
 "use client";
 
 import { PencilSimple } from "@phosphor-icons/react";
-import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import { PermissionsForm } from "@/components/client/PermissionsForm";
@@ -204,45 +203,16 @@ export default function ControlPage() {
         </div>
       </Card>
 
-      <Card title="LinkedIn connection">
-        <div className="flex flex-col gap-4">
-          <div className="flex items-start gap-3">
-            <Image src="/brand/linkedin.svg" alt="" width={40} height={40} unoptimized className="size-10 shrink-0" />
-            <div className="flex min-w-0 flex-1 flex-col gap-1">
-              <span className="flex flex-wrap items-center gap-2">
-                <span className="text-body font-medium text-primary">LinkedIn</span>
-                <Badge status={client.linkedin === "connected" ? "success" : "warning"}>
-                  {{ connected: "Connected", expired: "Expired", disconnected: "Disconnected", "not-connected": "Not connected" }[client.linkedin]}
-                </Badge>
-              </span>
-              <span className="text-body-sm text-secondary">Connected through LinkedIn&apos;s own sign-in. We never see your password.</span>
-            </div>
+      {fullService && (
+        <Card title="Secure access">
+          <div className="flex flex-col gap-3">
+            <p className="text-body-sm text-secondary">Your account team signs in with your approval each time. Manage your stored login, approvals and the Page from Full-service.</p>
+            <TextLink href="/full-service" className="self-start">
+              Manage secure access
+            </TextLink>
           </div>
-          {client.linkedin === "connected" ? (
-            <Button
-              variant="remove"
-              className="self-start"
-              onClick={() =>
-                confirm({
-                  title: "Disconnect LinkedIn?",
-                  body: "We stop posting and engaging at once. Scheduled posts are held. Your manager is told.",
-                  warning: "Nothing can go out until you reconnect. You can reconnect any time.",
-                  confirmLabel: "Disconnect",
-                  tone: "danger",
-                  action: () => act.setLinkedIn(client.id, "disconnected"),
-                  success: "LinkedIn disconnected.",
-                })
-              }
-            >
-              Disconnect
-            </Button>
-          ) : (
-            <Button className="self-start" loading={isPending("reconnect")} onClick={() => run("reconnect", () => act.setLinkedIn(client.id, "connected"), "LinkedIn connected again.")}>
-              {isPending("reconnect") ? "Reconnecting" : "Reconnect LinkedIn"}
-            </Button>
-          )}
-        </div>
-      </Card>
+        </Card>
+      )}
 
       <Card title="Activity" padding="none" action={<Pill>{activity.length === 1 ? "1 action" : `${activity.length} actions`}</Pill>}>
         <div className="px-6 pt-4 pb-2">

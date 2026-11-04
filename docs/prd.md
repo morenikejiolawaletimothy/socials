@@ -589,7 +589,7 @@ Editing approved content sends it back to Awaiting client.
 A premium tier chosen at onboarding, for clients who want to delegate the work, not control. Flows C20, and the onboarding fork (B). The client keeps their login and their settings; we act only through official mechanisms and their own approvals.
 
 **US-17.1 (P1, new)** As a client, I want to choose self-serve or full-service when I sign up, so that I get the experience that fits me. (B)
-- The first setup step is the choice. It can be changed later with the manager.
+- The first setup step is the choice ("How can we help you?"). There is no Connect LinkedIn / OAuth step: self-serve clients do the LinkedIn actions themselves; full-service clients set up secure delegated access (the vault). Self-serve permissions read "prepare/draft for me"; full-service reads "do for me". Changeable later with the manager.
 
 **US-17.2 (P1, new)** As a full-service client, I want a done-for-you experience with no task list, so that I just approve and stay informed. (C20)
 - No Tasks tab. Anything only the member can do is asked for in Messages, never a task. Priced on top of the plan (`fullServiceCents`), shown on Contract.

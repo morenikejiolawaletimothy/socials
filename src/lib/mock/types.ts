@@ -58,7 +58,7 @@ export type ReviewSettings = {
 };
 
 /** C1: the six setup steps, in order. */
-export type SetupStep = "service" | "linkedin" | "permissions" | "goals-call" | "strategy-call" | "plan" | "review";
+export type SetupStep = "service" | "permissions" | "access" | "goals-call" | "strategy-call" | "plan" | "review";
 
 export type Client = {
   id: string;

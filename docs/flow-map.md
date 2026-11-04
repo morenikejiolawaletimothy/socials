@@ -59,7 +59,7 @@ These rules apply to every flow below.
 | P3 | Sign in and reset password | All | 1.3, 1.4 | Built |
 | P4 | Accept staff invite | Manager | 1.2, 1.3 | Built |
 | C1 | Home and setup progress | Client | 3.9, 10.1 | Built |
-| C2 | Connect LinkedIn and choose what we do | Client | 8.1, 8.2 | Built |
+| C2 | Choose what we prepare / do (no LinkedIn API) | Client | 8.2, 17.1 | Built (frontend), awaiting review |
 | C3 | Book your two calls | Client | 3.3, 3.4 | Built |
 | C4 | Choose a plan, sign, pay now or later | Client | 2.2, 2.3, 11.1 | Built |
 | C5 | Set how you review | Client | 3.8, 7.5, 7.6, 14.2 | Built |
@@ -109,7 +109,7 @@ These rules apply to every flow below.
 - **Goal:** a busy senior professional understands, in seconds, what we do for them, trusts us with their account, and clicks Get started.
 - **Sections, top to bottom:**
   1. **Hero (above the fold):** one benefit-led headline about what they get (being seen and known for the right things on LinkedIn, without spending their time on it). One supporting line. One primary button: Get started. Secondary: See how it works.
-  2. **How it works:** 3 or 4 short steps. Connect LinkedIn, two short calls, we create and you approve, see results against your goals.
+  2. **How it works:** 3 or 4 short steps. Choose how we help, two short calls, we create and you approve, see results against your goals.
   3. **Why Bluecut:** the main selling points. A dedicated expert runs your account, with a strategy built around you. Every post is checked before you see it. Results measured against your goals, not likes.
   4. **You stay in control:** nothing is posted without your approval. You choose what we can do. We never see your password. Pause or disconnect at any time.
   5. **Testimonials:** short client videos and images of their LinkedIn profiles (before and after, results), each with name, role and company. Real only. Placeholder frames until real ones exist.
@@ -149,7 +149,7 @@ These rules apply to every flow below.
 
 - **Goal:** the client always knows what is next, and can choose to continue now or later.
 - **While setting up:** a setup card at the top with a percentage and these steps, done in one sitting or over several visits:
-  1. Connect LinkedIn
+  1. Choose how we help you
   2. Choose what we do for you
   3. Book your goals call
   4. Book your strategy call
@@ -161,16 +161,19 @@ These rules apply to every flow below.
 - **After the calls:** Home becomes a feed of cards, newest first: quick tasks for you (C17), posts waiting for your review, what went live, upcoming posts, the weekly update, messages from your manager.
 - **States:** "Your first 2 weeks are free" banner with the end date (becomes "Pay to keep going" in the last 5 days if not paid), account paused (see C16), LinkedIn connection expired (Reconnect card at the top), posting paused by you.
 
-### C2. Connect LinkedIn and choose what we do
+### C2. Choose what we prepare / do (no LinkedIn API)
 
-- **Steps:**
-  1. Why we connect: what we can do, that nothing happens without your say, that we never see your password.
-  2. LinkedIn's own sign-in and consent screen (mocked in Phase 1).
-  3. **What should we do for you?** Plain switches:
-     - **We do for you:** Post for me (on); Post to my company Page (off, connect the Page to turn on)
-     - **We prepare, you do in seconds** (LinkedIn only lets the member do these): Prepare reactions, comments, reposts and follows (on); Prepare connection requests and messages (off); Prepare profile updates (off)
-- **States:** consent declined, connection failed.
-- **Note:** whether each of these needs your approval first is set in C5, in one place.
+There is **no Connect LinkedIn step** and no LinkedIn OAuth anywhere: self-serve clients do the LinkedIn actions themselves, full-service clients set up secure access (a vault, not a login connection). The onboarding branches on the service chosen in B.
+
+- **Self-serve ("What we prepare for you"):** plain switches framed as prepare/draft, because the client does each action themselves:
+  - Draft my posts (we write and schedule; you publish in a tap)
+  - Prepare my reactions, comments, reposts and follows
+  - Prepare my connection requests and messages
+  - Prepare my profile updates
+- **Full-service ("What we do for you"):** the same keys, framed as done-for-you, because the team acts for the client (who approves and is told before anything goes out):
+  - Post for me; Comment, react, repost and follow for me; Send connection requests and messages for me; Update my profile for me; Run my company Page
+- **Then, full-service only:** a **Set up secure access** step (delegated access: store the login in the vault, turn on authenticator 2FA). Self-serve skips it. See C20 and PRD Epic 18.
+- **Note:** whether posts need your approval first is set in C5, in one place.
 
 ### C3. Book your two calls
 
@@ -349,7 +352,7 @@ Replaces "Send to my assistant" in C17.
 
 A premium tier chosen at onboarding. Only built on compliant mechanisms (PRD Epics 17 and 18 hold the hard boundary: no password seen, no session cookies, no proxy, no anti-detect browser).
 
-- **Onboarding fork (B):** the first setup step is "How we work together": Self-serve (hands-on) or Full-service (done-for-you). Stored on the client; changeable later.
+- **Onboarding fork (B):** the first setup step is "How can we help you?": Self-serve (hands-on) or Full-service (done-for-you). There is no Connect LinkedIn step. Self-serve then sets "what we prepare"; full-service sets "what we do" and then "set up secure access" (the vault). Stored on the client; changeable later.
 - **Full-service hub** (`/full-service`, in the account menu):
   - **Status:** Active or Paused, with Pause / Resume (instant) and End full-service (back to self-serve, clears access). Monthly price shown.
   - **Delegated access:** set up (consent, authenticator 2FA, store login in the vault at `/full-service/access`), then a status of Ready / Needs refresh. When the manager requests a sign-in, an **Approve / Decline** prompt appears here (and on the client's phone). Remove stored login any time.

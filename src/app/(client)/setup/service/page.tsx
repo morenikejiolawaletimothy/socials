@@ -43,7 +43,7 @@ export default function ServicePage() {
   if (!client) return null;
 
   return (
-    <SetupFrame title="How we work together" step="How we work together" steps={["Choose how we work together"]} current={0}>
+    <SetupFrame title="How can we help you?" step="How can we help you?" steps={["How can we help you?"]} current={0}>
       <div className="flex flex-col gap-6">
         <p className="text-body text-secondary">Pick what fits you. You can change this later with your manager.</p>
 
@@ -91,7 +91,7 @@ export default function ServicePage() {
           className="self-start"
           loading={pending("save")}
           onClick={async () => {
-            if (await run("save", () => act.setService(client.id, choice), choice === "full-service" ? "Full-service chosen. Your manager will set it up with you." : "Self-serve chosen. Next, connect LinkedIn.")) router.push("/setup/linkedin");
+            if (await run("save", () => act.setService(client.id, choice), choice === "full-service" ? "Full-service chosen. Next, choose what we do for you." : "Self-serve chosen. Next, choose what we prepare for you.")) router.push("/setup/permissions");
           }}
         >
           {pending("save") ? "Saving" : "Save and continue"}
