@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
 import { quietLink } from "@/components/rails/NextCallCard";
-import { Avatar, Badge, Banner, Button, Card, EmptyState, Meta, Pill, Segmented, Select, Tabs, Textarea, textActionClass, TextLink, Tile, TileAction, TileFooter, useTask } from "@/components/ui";
+import { Avatar, Badge, Banner, Button, Card, EmptyState, Meta, Pill, Select, Tabs, Textarea, textActionClass, TextLink, Tile, TileAction, TileFooter, useTask } from "@/components/ui";
 import { dateTime, dayTimeIn, fullName, plural } from "@/lib/format";
 import { act, useMyManager, type Db, type ManagerTask } from "@/lib/mock";
 
@@ -89,91 +89,11 @@ function MissedCard({ tasks, db }: { tasks: ManagerTask[]; db: Db }) {
   );
 }
 
-const columns: { key: ManagerTask["column"]; label: string }[] = [
-  { key: "todo", label: "To do" },
-  { key: "doing", label: "Doing" },
-  { key: "waiting", label: "Waiting on client" },
-  { key: "done", label: "Done this week" },
-];
-
-/** M1 Board: the same tasks in columns. Drag between To do and Doing; the rest move on their own. */
-function Board({ tasks, db }: { tasks: ManagerTask[]; db: Db }) {
-  const { run } = useTask();
-  const [mobileCol, setMobileCol] = useState<ManagerTask["column"]>("todo");
-  const [dragging, setDragging] = useState<string | null>(null);
-  const [over, setOver] = useState<string | null>(null);
-
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="lg:hidden">
-        <Segmented
-          label="Column"
-          value={mobileCol}
-          onChange={setMobileCol}
-          options={columns.map((c) => ({ value: c.key, label: { todo: "To do", doing: "Doing", waiting: "Waiting", done: "Done" }[c.key] }))}
-        />
-      </div>
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
-        {columns.map((col) => {
-          const items = tasks.filter((t) => t.column === col.key);
-          const droppable = col.key === "todo" || col.key === "doing";
-          return (
-            <section
-              key={col.key}
-              aria-label={col.label}
-              onDragOver={(e) => {
-                if (!droppable || !dragging) return;
-                e.preventDefault();
-                setOver(col.key);
-              }}
-              onDragLeave={() => setOver(null)}
-              onDrop={() => {
-                const t = tasks.find((x) => x.id === dragging);
-                if (t && droppable && t.column !== col.key) {
-                  const from = t.column;
-                  run("move", () => act.moveTask(t.id, col.key), { text: `Moved to ${col.label}.`, action: { label: "Undo", onClick: () => act.moveTask(t.id, from) } });
-                }
-                setDragging(null);
-                setOver(null);
-              }}
-              className={`${mobileCol === col.key ? "flex" : "hidden"} min-h-40 flex-col gap-2 rounded-lg p-2 transition-colors lg:flex ${over === col.key ? "bg-primary-50" : "bg-neutral-50"}`}
-            >
-              <h3 className="flex items-center justify-between px-2 py-1 text-body font-medium text-primary">
-                {col.label}
-                <Pill>{items.length}</Pill>
-              </h3>
-              {items.map((t) => (
-                <Link
-                  key={t.id}
-                  href={t.href}
-                  draggable={droppable}
-                  onDragStart={() => setDragging(t.id)}
-                  onDragEnd={() => setDragging(null)}
-                  className={`flex flex-col gap-2 rounded-md border border-border bg-card p-3 transition-colors hover:border-primary-300 hover:bg-primary-50 focus-visible:focus-ring ${droppable ? "cursor-grab active:cursor-grabbing" : ""} ${t.group === "urgent" ? "border-l-4 border-l-danger" : ""}`}
-                >
-                  <span className="flex flex-col gap-1">
-                    <span className="text-body-sm font-medium text-primary">{t.title}</span>
-                    <span className="text-caption text-secondary">{who(db, t.clientId)}</span>
-                  </span>
-                  <Meta icon={Timer} className="border-t border-border pt-2 text-caption">
-                    Due {dayTimeIn(t.dueAt)}
-                  </Meta>
-                </Link>
-              ))}
-            </section>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-/** M1 Home: what to do next, in order, across all clients. Feed or Board. */
+/** M1 Home: what to do next, in order, across all clients. */
 type FeedSection = "missed" | "urgent" | "calls" | "work" | "waiting";
 
 export default function ManagerHome() {
   const { db, manager, clients } = useMyManager();
-  const [view, setView] = useState<"feed" | "board">("feed");
   const [clientFilter, setClientFilter] = useState("all");
   const all = db.managerTasks.filter((t) => t.managerId === manager?.id && (clientFilter === "all" || t.clientId === clientFilter)).sort((a, b) => a.dueAt.localeCompare(b.dueAt));
   const urgent = all.filter((t) => t.group === "urgent" && t.column !== "done");
@@ -193,18 +113,9 @@ export default function ManagerHome() {
   const section = sections.find((s) => s.value === picked)?.value ?? sections[0].value;
 
   return (
-    <Columns {...(view === "board" ? {} : rails.managerFeed)}>
+    <Columns {...rails.managerFeed}>
       <Card padding="sm">
-        <div className="flex flex-col gap-3 p-2 sm:flex-row sm:items-center sm:justify-between">
-          <Segmented
-            label="Task view"
-            value={view}
-            onChange={setView}
-            options={[
-              { value: "feed", label: "Feed" },
-              { value: "board", label: "Board" },
-            ]}
-          />
+        <div className="flex items-center justify-end p-2">
           <label className="flex items-center gap-2 text-body-sm text-secondary">
             Client
             <Select size="sm" value={clientFilter} onChange={(e) => setClientFilter(e.target.value)}>
@@ -219,20 +130,14 @@ export default function ManagerHome() {
         </div>
       </Card>
 
-      {view === "board" ? (
-        <Card title="This week" info="Drag cards between To do and Doing. Cards move to Waiting on client and Done by themselves when the work is sent or finished.">
-          <Board tasks={all} db={db} />
-        </Card>
-      ) : (
-        <>
-          {/* One feed card at a time, picked from this row. Same tab card as the client page sections (scrolls sideways on phones). */}
-          <div className="rounded-lg border border-border bg-card p-2">
-            <Tabs<FeedSection> label="Home sections" value={section} onChange={setPicked} tabs={sections} className="max-w-none w-full bg-neutral-50!" />
-          </div>
+      {/* One feed card at a time, picked from this row. Same tab card as the client page sections (scrolls sideways on phones). */}
+      <div className="rounded-lg border border-border bg-card p-2">
+        <Tabs<FeedSection> label="Home sections" value={section} onChange={setPicked} tabs={sections} className="max-w-none w-full bg-neutral-50!" />
+      </div>
 
-          {section === "missed" && <MissedCard tasks={all} db={db} />}
+      {section === "missed" && <MissedCard tasks={all} db={db} />}
 
-          {section === "urgent" && (
+      {section === "urgent" && (
             <Card
               title="Urgent"
               action={urgent.length > 0 && <Pill>{plural(urgent.length, "thing")}</Pill>}
@@ -338,8 +243,6 @@ export default function ManagerHome() {
               )}
             </Card>
           )}
-        </>
-      )}
     </Columns>
   );
 }

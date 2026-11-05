@@ -1417,11 +1417,6 @@ export async function confirmGoalsSummary(clientId: string, summary: { goal: str
 
 /* ---------- Manager: tasks and content ---------- */
 
-export async function moveTask(taskId: string, column: Db["managerTasks"][number]["column"]) {
-  await delay(250);
-  update((db) => ({ ...db, managerTasks: db.managerTasks.map((t) => (t.id === taskId ? { ...t, column } : t)) }));
-}
-
 export async function setPostStatus(postId: string, status: PostStatus, patch: Partial<Db["posts"][number]> = {}) {
   await delay();
   update((db) => {

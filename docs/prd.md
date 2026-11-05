@@ -415,8 +415,8 @@ Bluecut Socials is a LinkedIn account management service for busy senior profess
 **US-13.3 (P0, changed)** As the owner, I want the platform to suggest a manager for each new client, which I confirm or override. (A2)
 - Reasons shown: free capacity, industry experience, time zone. Managers at 10 clients cannot be chosen.
 
-**US-13.4 (P0, changed)** As a manager, I want one task list across clients as a feed or a board. (M1)
-- Board columns: To do, Doing, Waiting on client, Done. Manager drags between To do and Doing; other moves are automatic.
+**US-13.4 (P0, changed)** As a manager, I want one task list across clients as a feed. (M1)
+- Grouped as Urgent, Tasks, Due time (when a due time is missed), Calls today and Waiting, one group at a time; filterable by client. (The Kanban board view was removed.)
 
 **US-13.5 (P1)** As the owner, I want performance per manager.
 
@@ -532,7 +532,7 @@ Bluecut Socials is a LinkedIn account management service for busy senior profess
 | Client | Contract and billing, cancel | C13 |
 | Client | Account | C14 |
 | Client | Your brand | C15 |
-| Manager | Home: feed and board | M1 |
+| Manager | Home: task feed | M1 |
 | Manager | Clients and client page | M2 |
 | Manager | Onboard a client | M3 |
 | Manager | Plan and draft content | M4, M5 |

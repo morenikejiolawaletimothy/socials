@@ -109,7 +109,7 @@ Flows: C7 to C17.
 
 ### Batch 1.5. Account manager
 Flows: M1 to M10.
-- Home feed and board, clients and client page, onboard a client (prep, summary, listening, strategy direction, What we agreed), plan and draft content (ideas with reasons, drafts, visuals, checks with off limits), after review and scheduling, engagement and quick tasks, listening, updates, messages, calls and availability.
+- Home feed, clients and client page, onboard a client (prep, summary, listening, strategy direction, What we agreed), plan and draft content (ideas with reasons, drafts, visuals, checks with off limits), after review and scheduling, engagement and quick tasks, listening, updates, messages, calls and availability.
 **Exit:** a dummy manager takes one client from goals call to a scheduled first week, prepares quick tasks and sends the weekly update. Signed off.
 
 ### Batch 1.6. Owner

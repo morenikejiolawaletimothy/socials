@@ -384,7 +384,6 @@ A premium tier chosen at onboarding. Only built on compliant mechanisms (PRD Epi
 - **Missed deadline:** if the manager misses a due time, a card asks for a short reason. Repeated misses go to the owner.
 - **Two views of the same tasks, switched at the top:**
   - **Feed** (default): the list above.
-  - **Board:** columns To do, Doing, Waiting on client, Done (this week). The manager drags cards between To do and Doing. Cards move to Waiting on client and Done automatically when the work is actually sent or finished, so the board always matches reality. Filter by client. On mobile, one column at a time with a switcher at the top.
 
 ### M2. Clients and the client page
 
@@ -608,7 +607,7 @@ Once approved, these will be written into `docs/prd.md`.
 | Off limits | Topics to avoid in the intake form | A dedicated Off limits list in Your brand, captured on the goals call, checked against every post and engagement |
 | Call slots | From manager availability | Managers open slots when they join; clients book inside them; managers must attend or reschedule from their side |
 | Assigning managers | Admin assigns | Platform suggests a manager by capacity and experience; the owner confirms or picks someone else |
-| Manager tasks | Task queue | Feed view and Board view of the same tasks |
+| Manager tasks | Task queue | Feed grouped by Urgent, Tasks, Due time, Calls today, Waiting; filter by client |
 | Client co-pilot tasks | Weekly connection list handed to the client | "Quick tasks for you": timed by the strategy, 1 to 3 minutes each, copy-ready notes, mark as done, send to an assistant by email |
 | Owner stepping in | Not covered | "Step in for a manager": the owner works through the manager's workspace; client sees no change; internal records stay true |
 | Manager training | In-app modules and test | 60-minute onboarding video call off the platform; owner marks training done before any client is assigned |
