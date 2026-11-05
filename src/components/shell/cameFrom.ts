@@ -41,7 +41,6 @@ export function useCameFrom(fallback: { label: string; href?: string }) {
     const label = from && from !== pathname ? pageName(from) : undefined;
     if (from && label && label !== "Bluecut Socials") setCrumb({ label, href: from });
     // Only on arrival: the fallback object is recreated on every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname]);
   return crumb;
 }

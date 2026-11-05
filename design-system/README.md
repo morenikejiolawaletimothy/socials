@@ -47,6 +47,10 @@ Keep surfaces mostly flat and lift only what floats. Use `shadow-sm` for resting
 
 Every value comes from a token, and every role uses the same token everywhere. One radius for all buttons (`radius-md`), one for all inputs (`radius-sm`). One brand blue for all primary actions (`primary-600`). The same text style for every body paragraph (`body`), every label (`caption`), every field. Never hand-type a near value like `9px` or `4.1px` next to a token. Change the token once and it updates everywhere. That is the point of the system.
 
+## Explaining, not cluttering
+
+Keep screens quiet. An explanation of how something works never sits on the screen as a coloured box or a grey paragraph — it lives in a small **info icon** beside the title or field, and opens in a tooltip on hover, focus or tap (`InfoTip`; `Card`, `Dialog`, `Input` and `Select` all take an `info` prop). Reserve **banners** for things the person must act on or know before acting (held, failed, payment due, access paused); info and neutral banners are plain grey with no icon. Field help is plain grey text under the field. This split — act-on in a banner, how-it-works in a tooltip, descriptions in grey — keeps every screen calm and scannable. See "Fola's design language" in `CLAUDE.md` for the full set of patterns (56px avatars, Badge-height pills, hairline-split stat cards, clickable tiles, deadline Timer + time, back-aware breadcrumbs, tabs over long stacks).
+
 ## Icons
 
 Use one icon family across the whole product and nothing else: **Phosphor**, at its Regular weight, so icons match the brand's soft rounded shapes. Keep to that one weight everywhere. Never mix in Phosphor's other weights, or icons from another set.

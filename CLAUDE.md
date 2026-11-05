@@ -65,13 +65,32 @@ Corrections Fola has already made. Check every new screen against them before sh
 - Actions that tell someone use `notify(...)` in `src/lib/mock/actions.ts` (`email: true` marks the ones that will also send an email in Phase 2). Owner actions also write to the audit log.
 - Test error states with "Simulate errors" in the demo bar: every action must fail gracefully, keep what the person typed, and say what to do.
 - Type hierarchy is set by size, not only weight: card titles 18px (`text-display-lg`, automatic in `Card`), item titles and subsection headings `text-body` (16px) medium or semibold, supporting text `text-body-sm text-secondary`, meta `text-caption`. Never a 14px bold title over 14px text.
-- Anything the person should act on, or know before they act (held, failed, taken down, what happens if they do not reply), is a `Banner` (with or without a title), not grey text. Grey text is for descriptions only.
+- `Banner` is only for what the person must **act on or know before acting** (held, failed, taken down, payment due, access paused, what happens if they do not reply). Warning/danger/success banners carry an icon; info and neutral banners are plain grey boxes (`bg-neutral-25`) with **no icon**, for a short status note. How something *works* is never a banner — it goes in an `InfoTip` (see "Fola's design language"). Plain grey text is for descriptions only.
 - Cards are flat: hairline border, no shadow. Shadows only on things that float (menus, dialogs, toasts, the phone bottom bar).
 - Avatars: when the text beside them runs two or more lines, align to the top (`items-start`), as LinkedIn does; one line centres.
 - Modals (`Dialog`) are for quick actions only: a confirmation, one or two fields, a pick from a list, a media viewer. Any form that adds or edits a record (an assistant, a Moment, a video request, an invite) is its own page route with breadcrumbs, Save then Cancel, and goes back when done.
 - Dropdowns use `Select` (caret evenly inset). Popovers use `Menu`, which renders above the page and opens upwards near the bottom. Never put a dropdown inside a card with `absolute` positioning.
 - Toasts appear bottom right (bottom centre above the tab bar on phones).
 - Media follows LinkedIn's rules, kept in one place: `src/lib/linkedin.ts`. Every upload goes through `prepareUpload` / `prepareAttachment` in `src/lib/upload.ts` (checks, cover frames, PDF pages). Large files live in the browser via `src/lib/media.ts` in Phase 1; show them with `useMediaSrc`, never `next/image` on an `idb:` source.
+
+### Fola's design language (apply to every new screen, all three views)
+
+The direction Fola repeats in every Mode Inspect pass. Build new components, sections and pages to match these from the start, so little has to be re-adjusted. They are consistent across client, manager and owner.
+
+- **Explanations live in an `InfoTip`, not a banner.** Any "how this works / what this means / about this field" note is an info icon beside the title or label, with the text in a tooltip on hover, focus or tap. Use `Card info=...`, `Dialog info=...`, `Input`/`Select info=...` (all built in). `useConfirm`'s `warning` and `info` already render in the dialog's info tooltip. Never put explanatory help in a visible info banner or a grey paragraph inside a card.
+- **Field help is plain grey text** (`text-body-sm text-secondary`) under the field — `Input`/`Select` `help` already render it this way. Errors stay red (problem, then fix).
+- **Banners are grey and iconless for info/neutral.** `tone="info"` and `"neutral"` are `bg-neutral-25`, text only, no icon; only warning/danger/success show an icon. Pass `icon={false}` when the content carries its own icon. Keep banners for act-on / must-know status only.
+- **The product avatar is 56px (`<Avatar size="md">`) everywhere** — lists, rows, tiles, tables, chat, cards. `size="sm"` (40px) is reserved for the top-bar Me menu.
+- **`Pill` is the same 28px height as `Badge`** and sits beside it; counts and small labels in a card header use `Pill`.
+- **Owner numbers use `Stats`** (`components/admin/parts`): one bordered card split into even cells by hairlines (2 per row on phones, one row on desktop), each cell a tinted icon square + the big number, with the label and any note joined by "·" under. Give each stat an `icon`; `tone` tints the icon and number.
+- **A `Tile` can be a button** (`onClick`, e.g. opens a dialog), not only a link; the whole tile is clickable with the same light-blue hover.
+- **Header-only cards** (a `Card title=...` with no body) automatically drop the divider and the empty padded body — use them for section headers.
+- **Dialog titles** truncate to one line (full title on hover); keep them short.
+- **`Meta` deadlines** (Due, Was due, Closing by, Link works until) use the Timer icon and always show the time via `dayTimeIn` ("Due Fri 6 Nov at 5pm"). `dateTime` in `format.ts` is "Thu 6 Nov · 10am" for calls.
+- **Breadcrumbs can return to where the person came from:** mark the parent crumb `back: true` (with a label/href fallback) on pages reachable from several places; `useCameFrom` resolves it.
+- **Step/time estimates are honest and snappy** ("10 secs", "5 secs"), never padded.
+- **When a card or page accumulates several groupings, use tabs**, not a long stack (e.g. the owner notifications, Messages "sent").
+- Reusable pieces added in these passes, prefer them over re-inventing: `InfoTip` (`components/ui`), `Stats` (`components/admin/parts`), `cameFrom`/`useCameFrom` (`components/shell`), `VoiceWave` + `useDictation` (`components/messages`, voice input), `slots` (`src/lib`, call scheduling), `AdminNotifications` (`components/admin`).
 
 ## Landing page exception
 

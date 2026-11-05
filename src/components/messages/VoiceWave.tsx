@@ -57,7 +57,7 @@ export function VoiceWave({ active }: { active: boolean }) {
       }
     };
 
-    if (navigator.mediaDevices?.getUserMedia) listen();
+    if (typeof navigator.mediaDevices?.getUserMedia === "function") listen();
     else simulate();
 
     return () => {
