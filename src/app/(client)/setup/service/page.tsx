@@ -9,10 +9,11 @@ import { act, useMyClient } from "@/lib/mock";
 
 type Service = "self-serve" | "full-service";
 
-const options: { value: Service; title: string; lead: string; note: string; points: string[] }[] = [
+const options: { value: Service; label: string; title: string; lead: string; note: string; points: string[] }[] = [
   {
     value: "self-serve",
-    title: "You stay hands-on",
+    label: "Regular",
+    title: "You do it yourself",
     lead: "We prepare everything. You do the few things only you can do.",
     note: "You stay in full control of your account.",
     points: [
@@ -24,6 +25,7 @@ const options: { value: Service; title: string; lead: string; note: string; poin
   },
   {
     value: "full-service",
+    label: "Premium",
     title: "We do it for you",
     lead: "We handle the day-to-day. You approve the plan and the posts.",
     note: "Your manager sets this up with you. We never need your password.",
@@ -73,7 +75,7 @@ export default function ServicePage() {
                     {pending("save") ? "Saving" : "Save and continue"}
                   </Button>
                 ) : (
-                  <Button variant="secondary" fullWidth onClick={() => setChoice(o.value)}>
+                  <Button variant="secondary" fullWidth className="border-primary-600!" onClick={() => setChoice(o.value)}>
                     Choose this
                   </Button>
                 )}
@@ -96,7 +98,7 @@ export default function ServicePage() {
 
             return (
               <div key={o.value} className="flex flex-col rounded-xl border border-primary-200 bg-primary-50 p-1">
-                <p className="py-2 text-center text-caption font-medium text-primary-700">Your choice</p>
+                <p className="py-2 text-center text-caption font-medium uppercase tracking-wide text-primary-700">{o.label}</p>
                 {card}
                 <p className="px-4 py-3 text-center text-body-sm text-primary-700">{o.note}</p>
               </div>

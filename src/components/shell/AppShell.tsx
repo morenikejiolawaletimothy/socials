@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { Avatar, EmptyState, Logo, Menu, Tooltip } from "@/components/ui";
 import { act, useNotifications, useSession } from "@/lib/mock";
+import { useTrackPath } from "./cameFrom";
 import { CoveringBanner } from "./CoveringBanner";
 import { DemoBar } from "./DemoBar";
 import { isActive, mainNav, pageName, meHref, meIcon as MeIcon, navItemClass, profileNav, type NavItem } from "./nav";
@@ -49,6 +50,7 @@ function TopItem({ item, active, count = 0 }: { item: NavItem; active: boolean; 
  */
 export function AppShell({ role, children }: { role: "client" | "manager"; children: React.ReactNode }) {
   useRoleSync(role);
+  useTrackPath();
   const pathname = usePathname();
   const mounted = usePageReady(pathname);
   const title = pageName(pathname);
@@ -110,7 +112,7 @@ export function AppShell({ role, children }: { role: "client" | "manager"; child
                   triggerClassName={`flex h-14 items-center gap-1 px-2 ${navItemClass(meActive)}`}
                   trigger={
                     <>
-                      <Avatar name={name || "You"} src={user?.photo} size="md" />
+                      <Avatar name={name || "You"} src={user?.photo} size="sm" />
                       <CaretDown className="size-4" aria-hidden />
                     </>
                   }

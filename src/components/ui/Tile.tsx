@@ -5,16 +5,19 @@ const linked = "group transition-colors hover:border-primary-300 hover:bg-primar
 
 /**
  * An item inside a card (a task, a post to review, a person, a call): hairline border, 16px padding.
- * With `href` the whole tile is the link and turns light blue on hover. `done` greys the background
+ * With `href` the whole tile is the link and turns light blue on hover; with `onClick` the whole tile is a button
+ * that does the same (opens a dialog, for example). `done` greys the background
  * for items that are finished but still listed (a sent connection request).
  */
 export function Tile({
   href,
+  onClick,
   done = false,
   className = "",
   children,
 }: {
   href?: string;
+  onClick?: () => void;
   done?: boolean;
   className?: string;
   children: React.ReactNode;
@@ -25,6 +28,13 @@ export function Tile({
       <Link href={href} className={`${box} ${linked} ${tone} ${className}`}>
         {children}
       </Link>
+    );
+  }
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={`${box} ${linked} ${tone} w-full cursor-pointer text-left ${className}`}>
+        {children}
+      </button>
     );
   }
   return <div className={`${box} ${tone} ${className}`}>{children}</div>;

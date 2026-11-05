@@ -11,29 +11,43 @@ import { NotificationBell } from "./NotificationBell";
 import { PageSkeleton } from "./PageSkeleton";
 import { usePageReady } from "./useMounted";
 import { useRoleSync } from "./useRoleSync";
-import { isActive, navItemClass, ownerNav, pageName } from "./nav";
+import { isActive, ownerNav, pageName } from "./nav";
+
+/** The owner menu in three groups, in the order of the main menu, split by a line and space (no labels). */
+const navGroups: string[][] = [
+  ["/admin", "/admin/clients", "/admin/managers", "/admin/money"],
+  ["/admin/framework", "/admin/complaints"],
+  ["/admin/settings", "/admin/audit-log"],
+];
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   return (
-    <ul className="flex flex-col gap-1">
-      {ownerNav.map((item) => {
-        const active = isActive(pathname, item);
-        return (
-          <li key={item.href}>
-            <Link
-              href={item.href}
-              onClick={onNavigate}
-              aria-current={active ? "page" : undefined}
-              className={`flex items-center gap-3 rounded-md px-4 py-2 text-body-sm font-medium ${navItemClass(active, "vertical")}`}
-            >
-              <item.icon className="size-5" aria-hidden />
-              {item.label}
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
+    <div className="flex flex-col">
+      {navGroups.map((hrefs, i) => (
+        <ul key={hrefs[0]} className={`flex flex-col gap-1 ${i > 0 ? "mt-4 border-t border-border pt-4" : ""}`}>
+          {ownerNav
+            .filter((item) => hrefs.includes(item.href))
+            .map((item) => {
+              const active = isActive(pathname, item);
+              return (
+                <li key={item.href}>
+                  {/* Active: blue text on a light blue fill, no side line. */}
+                  <Link
+                    href={item.href}
+                    onClick={onNavigate}
+                    aria-current={active ? "page" : undefined}
+                    className={`flex items-center gap-3 rounded-md px-4 py-2 text-body-sm font-medium transition-colors focus-visible:focus-ring ${active ? "bg-primary-50 text-primary-700" : "text-secondary hover:bg-neutral-50 hover:text-primary"}`}
+                  >
+                    <item.icon className="size-5 shrink-0" aria-hidden />
+                    {item.label}
+                  </Link>
+                </li>
+              );
+            })}
+        </ul>
+      ))}
+    </div>
   );
 }
 
@@ -53,16 +67,19 @@ export function OwnerShell({ children }: { children: React.ReactNode }) {
         Skip to content
       </a>
       <div className="lg:flex">
-        <aside className="hidden w-64 shrink-0 flex-col gap-6 border-r border-border bg-card px-4 py-6 lg:sticky lg:top-0 lg:flex lg:h-dvh">
-          <Link href="/admin" className="flex items-center gap-2 rounded-full px-2 focus-visible:focus-ring">
-            <Logo size={32} />
-            <span className="font-display text-display-lg text-primary">Bluecut</span>
-          </Link>
-          <nav aria-label="Main" className="flex-1">
+        {/* Logo strip the same height as the top bar, so their lines meet; the menu scrolls; the owner sits at the bottom under a line. */}
+        <aside className="hidden w-64 shrink-0 flex-col border-r border-border bg-card lg:sticky lg:top-0 lg:flex lg:h-dvh">
+          <div className="flex h-14 shrink-0 items-center border-b border-border px-4">
+            <Link href="/admin" className="flex items-center gap-2 rounded-full px-2 focus-visible:focus-ring">
+              <Logo size={32} />
+              <span className="font-display text-display-lg text-primary">Bluecut</span>
+            </Link>
+          </div>
+          <nav aria-label="Main" className="flex-1 overflow-y-auto px-4 py-6">
             <NavList />
           </nav>
-          <div className="flex items-center gap-3 px-2">
-            <Avatar name={name || "Owner"} src={user?.photo} size="sm" />
+          <div className="flex shrink-0 items-center gap-3 border-t border-border px-6 py-4">
+            <Avatar name={name || "Owner"} src={user?.photo} size="md" />
             <div className="flex min-w-0 flex-col">
               <span className="truncate text-body-sm font-semibold text-primary">{name}</span>
               <span className="text-caption text-secondary">Owner</span>

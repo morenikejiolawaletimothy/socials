@@ -1,12 +1,13 @@
 "use client";
 
-import { CalendarBlank, Clock, VideoCamera, WarningCircle } from "@phosphor-icons/react";
+import { Clock, Timer, WarningCircle } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Avatar, Banner, Button, buttonClass, Card, Meta, Pill, Segmented, Select, Textarea, TextButton, TextLink, Tile, TileAction, TileFooter, useTask } from "@/components/ui";
-import { dayTimeIn, fullName, plural, time } from "@/lib/format";
+import { quietLink } from "@/components/rails/NextCallCard";
+import { Avatar, Badge, Banner, Button, Card, EmptyState, Meta, Pill, Segmented, Select, Tabs, Textarea, textActionClass, TextLink, Tile, TileAction, TileFooter, useTask } from "@/components/ui";
+import { dateTime, dayTimeIn, fullName, plural } from "@/lib/format";
 import { act, useMyManager, type Db, type ManagerTask } from "@/lib/mock";
 
 function who(db: Db, clientId: string) {
@@ -30,7 +31,7 @@ function TaskTile({ t, db }: { t: ManagerTask; db: Db }) {
           </span>
         </span>
         <TileFooter>
-          <Meta icon={late ? WarningCircle : CalendarBlank} className={late ? "text-danger" : ""}>
+          <Meta icon={late ? WarningCircle : Timer} className={late ? "text-danger" : ""}>
             {late ? `Was due ${dayTimeIn(t.dueAt)}` : `Due ${dayTimeIn(t.dueAt)}`}
           </Meta>
           <TileAction>{t.action}</TileAction>
@@ -46,25 +47,44 @@ function MissedCard({ tasks, db }: { tasks: ManagerTask[]; db: Db }) {
   const [reason, setReason] = useState("");
   const late = tasks.filter((t) => t.group === "work" && t.column !== "done" && !t.missed && new Date(t.dueAt).getTime() < Date.now());
   if (!late.length) return null;
+  const t = late[0];
   return (
-    <Card title="You missed a due time" action={<Meta icon={WarningCircle}>Was due {dayTimeIn(late[0].dueAt)}</Meta>}>
-      <div className="flex flex-col gap-4">
-        <Banner tone="warning">
-          &ldquo;{late[0].title}&rdquo; for {who(db, late[0].clientId)}. Tell us why, in a line. The owner sees reasons only if misses repeat.
-        </Banner>
-        <Textarea label="What happened?" rows={2} value={reason} onChange={(e) => setReason(e.target.value)} />
-        <Button
-          variant="secondary"
-          className="self-start"
-          disabled={!reason.trim()}
-          loading={pending("reason")}
-          onClick={async () => {
-            if (await run("reason", () => act.sendMissedReason(late[0].id, reason.trim()), "Thanks. Finish it as soon as you can.")) setReason("");
-          }}
-        >
-          Send reason
-        </Button>
-      </div>
+    <Card title="You missed a due time" info="Tell us why, in a line. The owner sees reasons only if misses repeat.">
+      {/* Not a linked tile: the reason form sits inside it, so the task opens from its action link instead. */}
+      <Tile>
+        <span className="flex items-start gap-3">
+          <Avatar name={who(db, t.clientId)} size="md" />
+          <span className="flex min-w-0 flex-1 flex-col gap-1">
+            <span className="text-body font-medium text-primary">{t.title}</span>
+            <span className="text-body-sm text-secondary">
+              {who(db, t.clientId)} · {t.detail}
+            </span>
+          </span>
+        </span>
+        <TileFooter>
+          <Meta icon={WarningCircle} className="text-danger">
+            Was due {dayTimeIn(t.dueAt)}
+          </Meta>
+          <TextLink href={t.href} className="text-body-sm">
+            {t.action}
+          </TextLink>
+        </TileFooter>
+        <div className="flex flex-col gap-3 border-t border-border pt-4">
+          <Textarea label="What happened?" rows={2} value={reason} onChange={(e) => setReason(e.target.value)} />
+          <Button
+            variant="secondary"
+            size="sm"
+            className="self-start"
+            disabled={!reason.trim()}
+            loading={pending("reason")}
+            onClick={async () => {
+              if (await run("reason", () => act.sendMissedReason(t.id, reason.trim()), "Thanks. Finish it as soon as you can.")) setReason("");
+            }}
+          >
+            Send reason
+          </Button>
+        </div>
+      </Tile>
     </Card>
   );
 }
@@ -135,7 +155,7 @@ function Board({ tasks, db }: { tasks: ManagerTask[]; db: Db }) {
                     <span className="text-body-sm font-medium text-primary">{t.title}</span>
                     <span className="text-caption text-secondary">{who(db, t.clientId)}</span>
                   </span>
-                  <Meta icon={CalendarBlank} className="border-t border-border pt-2 text-caption">
+                  <Meta icon={Timer} className="border-t border-border pt-2 text-caption">
                     Due {dayTimeIn(t.dueAt)}
                   </Meta>
                 </Link>
@@ -144,24 +164,33 @@ function Board({ tasks, db }: { tasks: ManagerTask[]; db: Db }) {
           );
         })}
       </div>
-      <Banner tone="info" closeKey="manager-board-note">
-        Drag cards between To do and Doing. Cards move to Waiting on client and Done by themselves when the work is sent or finished.
-      </Banner>
     </div>
   );
 }
 
 /** M1 Home: what to do next, in order, across all clients. Feed or Board. */
+type FeedSection = "missed" | "urgent" | "calls" | "work" | "waiting";
+
 export default function ManagerHome() {
   const { db, manager, clients } = useMyManager();
   const [view, setView] = useState<"feed" | "board">("feed");
   const [clientFilter, setClientFilter] = useState("all");
-  const [showWaiting, setShowWaiting] = useState(false);
   const all = db.managerTasks.filter((t) => t.managerId === manager?.id && (clientFilter === "all" || t.clientId === clientFilter)).sort((a, b) => a.dueAt.localeCompare(b.dueAt));
   const urgent = all.filter((t) => t.group === "urgent" && t.column !== "done");
   const work = all.filter((t) => t.group === "work" && t.column !== "done");
   const waiting = all.filter((t) => t.group === "waiting");
   const calls = db.calls.filter((c) => c.managerId === manager?.id && c.status === "booked" && new Date(c.at).toDateString() === new Date().toDateString());
+  const missed = all.filter((t) => t.group === "work" && t.column !== "done" && !t.missed && new Date(t.dueAt).getTime() < Date.now());
+  // Feed sections as tabs. "Missed" only shows while a due time is missed; if the open tab goes away, the first tab opens.
+  const sections: { value: FeedSection; label: string; count?: number }[] = [
+    { value: "urgent", label: "Urgent", count: urgent.length },
+    { value: "work", label: "Tasks", count: work.length },
+    ...(missed.length ? [{ value: "missed" as const, label: "Due time", count: missed.length }] : []),
+    { value: "calls", label: "Calls today", count: calls.length },
+    { value: "waiting", label: "Waiting", count: waiting.length },
+  ];
+  const [picked, setPicked] = useState<FeedSection | null>(null);
+  const section = sections.find((s) => s.value === picked)?.value ?? sections[0].value;
 
   return (
     <Columns {...(view === "board" ? {} : rails.managerFeed)}>
@@ -191,63 +220,94 @@ export default function ManagerHome() {
       </Card>
 
       {view === "board" ? (
-        <Card title="This week">
+        <Card title="This week" info="Drag cards between To do and Doing. Cards move to Waiting on client and Done by themselves when the work is sent or finished.">
           <Board tasks={all} db={db} />
         </Card>
       ) : (
         <>
-          <MissedCard tasks={all} db={db} />
+          {/* One feed card at a time, picked from this row. Same tab card as the client page sections (scrolls sideways on phones). */}
+          <div className="rounded-lg border border-border bg-card p-2">
+            <Tabs<FeedSection> label="Home sections" value={section} onChange={setPicked} tabs={sections} className="max-w-none w-full bg-neutral-50!" />
+          </div>
 
-          {urgent.length > 0 && (
+          {section === "missed" && <MissedCard tasks={all} db={db} />}
+
+          {section === "urgent" && (
             <Card
-              title={
-                <span className="flex items-center gap-2">
-                  <WarningCircle className="size-5 text-danger" aria-hidden /> Urgent
-                </span>
-              }
-              action={<Pill>{plural(urgent.length, "thing")}</Pill>}
+              title="Urgent"
+              action={urgent.length > 0 && <Pill>{plural(urgent.length, "thing")}</Pill>}
             >
-              <ul className="flex flex-col gap-3">
-                {urgent.map((t) => (
-                  <TaskTile key={t.id} t={t} db={db} />
-                ))}
-              </ul>
+              {urgent.length ? (
+                <ul className="flex flex-col gap-3">
+                  {urgent.map((t) => (
+                    <TaskTile key={t.id} t={t} db={db} />
+                  ))}
+                </ul>
+              ) : (
+                <EmptyState title="Nothing urgent">Failed posts, held posts and client requests that need you now show here.</EmptyState>
+              )}
             </Card>
           )}
 
-          {calls.length > 0 && (
-            <Card title="Calls today" action={<Pill>{plural(calls.length, "call")}</Pill>}>
+          {section === "calls" && (
+            <Card title="Calls today" action={calls.length > 0 && <Pill>{plural(calls.length, "call")}</Pill>}>
+              {!calls.length && <EmptyState title="No calls today">Booked calls show here on the day.</EmptyState>}
               <ul className="flex flex-col gap-3">
-                {calls.map((c) => (
+                {calls.map((c) => {
+                  const callName = c.kind === "goals" ? "Goals call" : c.kind === "strategy" ? "Strategy call" : "Check-in";
+                  return (
                   <li key={c.id}>
-                    <Tile>
-                      <span className="flex items-start gap-3">
+                    {/* As on the Calls page: the whole tile opens the Meet link (a covering link); the footer actions sit above it. */}
+                    <Tile className="group relative transition-colors hover:border-primary-300 hover:bg-primary-50">
+                      <a
+                        href={c.meetUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        aria-label={`Join the ${callName.toLowerCase()} with ${who(db, c.clientId)} on Google Meet`}
+                        className="absolute inset-0 rounded-md focus-visible:focus-ring"
+                      />
+                      <div className="flex items-start gap-4">
                         <Avatar name={who(db, c.clientId)} size="md" />
-                        <span className="flex min-w-0 flex-1 flex-col gap-1">
-                          <span className="text-body font-medium text-primary">
-                            {who(db, c.clientId)}, {c.kind === "goals" ? "goals call" : c.kind === "strategy" ? "strategy call" : "check-in"}
+                        <div className="flex min-w-0 flex-1 flex-col gap-1">
+                          <span className="flex flex-wrap items-center justify-between gap-2">
+                            <span className="text-body font-medium text-primary">
+                              {callName} with {who(db, c.clientId)}
+                            </span>
+                            {c.recording ? (
+                              <Badge status="info">
+                                Record<span className="sr-only">: recorded with the client&apos;s consent</span>
+                              </Badge>
+                            ) : (
+                              <Badge>
+                                Don&apos;t record<span className="sr-only">: not recorded, take notes</span>
+                              </Badge>
+                            )}
                           </span>
-                          <span className="text-body-sm text-secondary">{c.recording ? "Recorded with consent." : "Not recorded: take notes."}</span>
-                        </span>
-                      </span>
+                          <span className="text-body-sm text-secondary">{c.recording ? "Recorded with the client's consent." : "Not recorded. Take notes during the call."}</span>
+                        </div>
+                      </div>
                       <TileFooter>
-                        <Meta icon={Clock}>{time(c.at)} · 30 min</Meta>
-                        <span className="flex items-center gap-4">
-                          <TextLink href={`/manager/clients/${c.clientId}/onboard`} className="text-body-sm">
-                            Prep notes
-                          </TextLink>
-                          <a href={c.meetUrl} className={buttonClass("secondary", "sm")}>
-                            <VideoCamera className="size-4" aria-hidden /> Join
+                        <Meta icon={Clock}>
+                          {dateTime(c.at)} · {c.minutes} min
+                        </Meta>
+                        <span className="relative z-10 flex items-center gap-4">
+                          <a href={c.meetUrl} target="_blank" rel="noreferrer" className={textActionClass}>
+                            Join call
                           </a>
+                          <Link href={`/manager/clients/${c.clientId}/onboard`} className={quietLink}>
+                            Prep notes
+                          </Link>
                         </span>
                       </TileFooter>
                     </Tile>
                   </li>
-                ))}
+                  );
+                })}
               </ul>
             </Card>
           )}
 
+          {section === "work" && (
           <Card title="Your work" action={<Pill label={`${plural(work.length, "task")}, by due time`}>{plural(work.length, "task")}</Pill>}>
             {work.length ? (
               <ul className="flex flex-col gap-3">
@@ -259,27 +319,22 @@ export default function ManagerHome() {
               <Banner tone="success">All done. New work appears here as it comes in.</Banner>
             )}
           </Card>
+          )}
 
-          {waiting.length > 0 && (
+          {section === "waiting" && (
             <Card
               title="Waiting on clients"
-              action={
-                <span className="flex items-center gap-3">
-                  <Pill>{waiting.length}</Pill>
-                  <TextButton aria-expanded={showWaiting} onClick={() => setShowWaiting((v) => !v)}>
-                    {showWaiting ? "Hide" : "Show"}
-                  </TextButton>
-                </span>
-              }
+              info="Posts and requests with clients. They move back to Your work when the client answers."
+              action={waiting.length > 0 && <Pill>{waiting.length}</Pill>}
             >
-              {showWaiting ? (
+              {waiting.length ? (
                 <ul className="flex flex-col gap-3">
                   {waiting.map((t) => (
                     <TaskTile key={t.id} t={t} db={db} />
                   ))}
                 </ul>
               ) : (
-                <p className="text-body-sm text-secondary">Posts and requests with clients. They move back to Your work when the client answers.</p>
+                <EmptyState title="Nothing with clients">Posts and requests you send to clients wait here until they answer.</EmptyState>
               )}
             </Card>
           )}

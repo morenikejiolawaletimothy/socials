@@ -24,7 +24,7 @@ export function ProfileCard() {
         <p className="text-body-sm text-secondary">{user.title}</p>
         <div className="absolute items-center justify-start ml-36 mt-3.5 w-auto">
           {badge ? (
-            <Badge status={badge.tone} live={client?.status === "active"}>{client?.status === "free" ? "Free" : badge.label}</Badge>
+            <Badge status={badge.tone} live={client?.status === "active"}>{client?.status === "free" ? "Free" : client?.status === "setting-up" ? "Setup" : badge.label}</Badge>
           ) : (
             <Pill>{plural(clientCount, "client")}</Pill>
           )}

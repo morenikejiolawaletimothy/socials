@@ -1,12 +1,20 @@
-import Link from "next/link";
+"use client";
 
-export type Crumb = { label: string; href?: string };
+import Link from "next/link";
+import { useCameFrom } from "@/components/shell/cameFrom";
+
+/** `back`: this level goes to the page the person came from; label and href are the fallback when that is unknown. */
+export type Crumb = { label: string; href?: string; back?: boolean };
 
 /**
  * Where you are inside a flow. Every level is a way out.
  * On mobile only the parent and current page show, so it fits on one line.
+ * Pages reached from several places mark their parent `back`, so it returns to wherever the person was.
  */
-export function Breadcrumbs({ items }: { items: Crumb[] }) {
+export function Breadcrumbs({ items: given }: { items: Crumb[] }) {
+  const backAt = given.findIndex((c) => c.back);
+  const cameFrom = useCameFrom(given[backAt] ?? { label: "" });
+  const items = backAt < 0 ? given : given.map((c, i) => (i === backAt ? cameFrom : c));
   return (
     <nav aria-label="Breadcrumb" className="min-w-0">
       <ol className="flex min-w-0 items-center gap-2 text-body-sm">

@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 import { use, useState } from "react";
 import { managerName } from "@/components/admin/parts";
 import { ActivityTab, BrandTab, CallsTab, ContentTab, EngagementTab, OverviewTab, PlanTab, UpdatesTab } from "@/components/manager/ClientTabs";
-import { Avatar, Badge, Button, Card, EmptyState, PageHeader, Pill, Row, Rows, RowText, Tabs, TextLink, buttonClass, useConfirm, useToast } from "@/components/ui";
+import { Avatar, Badge, Button, Card, EmptyState, PageHeader, Pill, Row, Rows, RowText, Tabs, buttonClass, useConfirm, useToast } from "@/components/ui";
 import { ago, date, fullName, money, plural } from "@/lib/format";
 import { act, clientBundle, useData } from "@/lib/mock";
+import { plans } from "@/lib/pricing";
 import { statusBadge } from "@/lib/status";
 
 const tabs = [
@@ -44,7 +45,6 @@ export default function OwnerClientPage({ params }: { params: Promise<{ id: stri
         action={
           b.client.managerId && (
             <Button
-              variant="secondary"
               onClick={async () => {
                 const ok = await confirm({
                   title: `Step in for ${mName.split(" ")[0]}?`,
@@ -65,11 +65,10 @@ export default function OwnerClientPage({ params }: { params: Promise<{ id: stri
       />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-4 lg:col-span-2">
-          <Card padding="none">
-            <div className="px-6 pt-2">
-              <Tabs label="Client sections" value={tab} onChange={setTab} tabs={[...tabs]} />
-            </div>
-          </Card>
+          {/* Same tab card as the Overview and the manager's client page: one card at a time under it, scrolls sideways on phones. */}
+          <div className="rounded-lg border border-border bg-card p-2">
+            <Tabs label="Client sections" value={tab} onChange={setTab} tabs={[...tabs]} className="max-w-none w-full bg-neutral-50!" />
+          </div>
           {tab === "overview" && <OverviewTab b={b} />}
           {tab === "plan" && <PlanTab b={b} id={id} />}
           {tab === "content" && <ContentTab b={b} id={id} />}
@@ -96,43 +95,48 @@ export default function OwnerClientPage({ params }: { params: Promise<{ id: stri
           )}
         </div>
         <div className="flex flex-col gap-4">
-          <Card title="Account" action={<Badge status={badge.tone}>{badge.label}</Badge>}>
-            <div className="flex flex-col gap-4">
-              <span className="flex items-center gap-3">
-                <Avatar name={fullName(b.user)} src={b.user.photo} size="md" />
-                <span className="flex min-w-0 flex-col">
-                  <span className="truncate text-body font-medium text-primary">{fullName(b.user)}</span>
-                  <span className="truncate text-body-sm text-secondary">{b.user.email}</span>
-                </span>
+          <Card title="Account" padding="none" action={<Badge status={badge.tone}>{badge.label}</Badge>}>
+            {/* Who, then one two-sided row per fact (label left, value right), then the link under a divider. */}
+            <div className="flex items-center gap-3 border-b border-border px-6 py-4">
+              <Avatar name={fullName(b.user)} src={b.user.photo} />
+              <span className="flex min-w-0 flex-col gap-1">
+                <span className="truncate text-body font-medium text-primary">{fullName(b.user)}</span>
+                <span className="truncate text-body-sm text-secondary">{b.user.email}</span>
               </span>
-              <Rows>
-                <Row>
-                  <RowText title="Manager" sub={mName || "Not assigned"} />
+            </div>
+            <Rows flush label="Account details">
+              {[
+                { label: "Manager", value: mName || "Not assigned" },
+                ...(b.contract
+                  ? [
+                      {
+                        label: "Plan",
+                        value: `${plans.find((p) => p.months === b.contract!.months)?.tier ?? "Plan"}, ${b.contract.months} months`,
+                      },
+                      {
+                        label: "Paid",
+                        value: b.contract.paid ? `${money(b.contract.monthlyCents * b.contract.months)} up front` : "Not paid yet",
+                      },
+                      { label: "Dates", value: `${date(b.contract.startsAt)} to ${date(b.contract.endsAt)}` },
+                      {
+                        label: "Video add-on",
+                        value: b.contract.videoAddon
+                          ? { client: `On, ${money(db.settings.videoAddonCents)} a month. Client supplies the videos`, bluecut: "On. Bluecut makes the videos, production quoted separately", both: `On, ${money(db.settings.videoAddonCents)} a month, plus production quoted separately` }[b.contract.videoAddon.maker]
+                          : "Off",
+                      },
+                    ]
+                  : []),
+              ].map((r) => (
+                <Row key={r.label} className="flex-nowrap items-start justify-between">
+                  <span className="shrink-0 text-body-sm text-secondary">{r.label}</span>
+                  <span className="min-w-0 text-right text-body-sm font-medium text-primary">{r.value}</span>
                 </Row>
-                {b.contract && (
-                  <>
-                    <Row>
-                      <RowText title="Contract" sub={`${b.contract.months} months, ${money(b.contract.monthlyCents)} a month, ${b.contract.paid ? "paid" : "not paid"}`} />
-                    </Row>
-                    <Row>
-                      <RowText
-                        title="Video add-on"
-                        sub={
-                          b.contract.videoAddon
-                            ? { client: `On, ${money(db.settings.videoAddonCents)} a month. Client supplies the videos`, bluecut: "On. Bluecut makes the videos: production quoted separately", both: `On, ${money(db.settings.videoAddonCents)} a month, plus production quoted separately` }[b.contract.videoAddon.maker]
-                            : "Off"
-                        }
-                      />
-                    </Row>
-                    <Row>
-                      <RowText title="Dates" sub={`${date(b.contract.startsAt)} to ${date(b.contract.endsAt)}`} />
-                    </Row>
-                  </>
-                )}
-              </Rows>
-              <TextLink href="/admin/money" className="self-start text-body-sm">
+              ))}
+            </Rows>
+            <div className="border-t border-border px-6 py-4">
+              <Link href="/admin/money" className={buttonClass("secondary", "sm")}>
                 Contract and payments
-              </TextLink>
+              </Link>
             </div>
           </Card>
         </div>

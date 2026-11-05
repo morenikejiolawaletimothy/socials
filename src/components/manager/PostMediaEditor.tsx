@@ -1,10 +1,11 @@
 "use client";
 
-import { Image as ImageIcon, FilePpt, Plus, Sparkle, Trash, UploadSimple, VideoCamera } from "@phosphor-icons/react";
+import { Image as ImageIcon, FilePpt, Plus, UploadSimple, VideoCamera } from "@phosphor-icons/react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRef, useState } from "react";
 import { fileToMedia, MediaThumb } from "@/components/content/MediaThumb";
-import { Banner, Button, Card, Dialog, Input, Select, Tabs, Textarea, TextButton, TextLink, useConfirm, useTask } from "@/components/ui";
+import { Banner, Button, buttonClass, Card, Dialog, InfoTip, Input, Select, Tabs, Textarea, useConfirm, useTask } from "@/components/ui";
 import { dayIn } from "@/lib/format";
 import { CAPTIONS, duration, VIDEO } from "@/lib/linkedin";
 import { act, type BrandFile, type ClientBundle, type Post, type VideoBrief } from "@/lib/mock";
@@ -134,33 +135,43 @@ export function VideoRequestForm({ b, brief, taskId, onClose }: { b: ClientBundl
   const lines = (s: string) => s.split("\n").map((x) => x.trim()).filter(Boolean);
 
   return (
-    <Card title={taskId ? "Edit the video request" : `Ask ${first} for a video`}>
+    <Card title={taskId ? "Edit the video request" : `Ask ${first} for a video`} info="Suggested from their strategy. Change anything before you send it.">
+      {/* Three sections split by dividers (the idea, what to say, the format), then Send and Cancel under the last divider. */}
       <div className="flex flex-col gap-4">
-      <p className="flex items-center gap-1 text-caption text-secondary">
-        <Sparkle className="size-4 text-primary-600" aria-hidden /> Suggested from their strategy. Change anything before you send it.
-      </p>
-      <Input label="What to record" value={v.idea} onChange={(e) => { setV({ ...v, idea: e.target.value }); setError(undefined); }} error={error} />
-      <Textarea label="Why it helps their goal" rows={2} value={v.why} onChange={(e) => setV({ ...v, why: e.target.value })} />
-      <Textarea label="What to say, one step a line" rows={4} value={shots} onChange={(e) => setShots(e.target.value)} />
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Input label="Length" value={v.length} onChange={(e) => setV({ ...v, length: e.target.value })} />
-        <Select label="Shape" value={v.shape} onChange={(e) => setV({ ...v, shape: e.target.value as VideoBrief["shape"] })}>
-          <option value="portrait">Upright (portrait)</option>
-          <option value="landscape">Sideways (landscape)</option>
-          <option value="square">Square</option>
-        </Select>
-      </div>
-      <Textarea label="Tips, one a line" rows={3} value={tips} onChange={(e) => setTips(e.target.value)} />
-      {!taskId && (
-        <Select label="Due in" value={days} onChange={(e) => setDays(e.target.value)}>
-          {["3", "5", "7", "14"].map((d) => (
-            <option key={d} value={d}>
-              {d} days ({dayIn(new Date(Date.now() + Number(d) * 86_400_000).toISOString())})
-            </option>
-          ))}
-        </Select>
-      )}
-      <div className="flex flex-wrap gap-3">
+        <section className="flex flex-col gap-4">
+          <h3 className="text-body font-medium text-primary">The idea</h3>
+          <Input label="What to record" value={v.idea} onChange={(e) => { setV({ ...v, idea: e.target.value }); setError(undefined); }} error={error} />
+          <Textarea label="Why it helps their goal" rows={2} value={v.why} onChange={(e) => setV({ ...v, why: e.target.value })} />
+        </section>
+
+        <section className="flex flex-col gap-4 border-t border-border pt-4">
+          <h3 className="text-body font-medium text-primary">What to say</h3>
+          <Textarea label="Steps, one a line" rows={4} value={shots} onChange={(e) => setShots(e.target.value)} />
+          <Textarea label="Tips, one a line" rows={3} value={tips} onChange={(e) => setTips(e.target.value)} />
+        </section>
+
+        <section className="flex flex-col gap-4 border-t border-border pt-4">
+          <h3 className="text-body font-medium text-primary">Format</h3>
+          <div className={`grid grid-cols-1 gap-4 ${taskId ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
+            <Input label="Length" value={v.length} onChange={(e) => setV({ ...v, length: e.target.value })} />
+            <Select label="Shape" value={v.shape} onChange={(e) => setV({ ...v, shape: e.target.value as VideoBrief["shape"] })}>
+              <option value="portrait">Upright (portrait)</option>
+              <option value="landscape">Sideways (landscape)</option>
+              <option value="square">Square</option>
+            </Select>
+            {!taskId && (
+              <Select label="Due in" value={days} onChange={(e) => setDays(e.target.value)}>
+                {["3", "5", "7", "14"].map((d) => (
+                  <option key={d} value={d}>
+                    {d} days ({dayIn(new Date(Date.now() + Number(d) * 86_400_000).toISOString())})
+                  </option>
+                ))}
+              </Select>
+            )}
+          </div>
+        </section>
+
+      <div className="flex flex-wrap gap-3 border-t border-border pt-4">
         <Button
           loading={pending("send")}
           onClick={async () => {
@@ -197,45 +208,60 @@ export function PostMediaEditor({ post, b }: { post: Post; b: ClientBundle }) {
   const kind: Kind | null = post.video ? "video" : post.carousel ? "carousel" : post.image ? "image" : null;
   const Icon = kind === "video" ? VideoCamera : kind === "carousel" ? FilePpt : ImageIcon;
 
-  if (post.repostOf?.reshare) return <p className="text-caption text-secondary">A reshare carries the original post, so it takes no media of its own.</p>;
+  if (post.repostOf?.reshare) return <p className="text-body-sm text-secondary">A reshare carries the original post, so it takes no media of its own.</p>;
+
+  const thumb = post.video?.poster ?? post.carousel?.slides[0]?.src ?? post.image?.src;
 
   return (
-    <div className="flex flex-col gap-3 rounded-md bg-neutral-25 p-4">
-      <div className="flex items-start gap-3">
-        {post.video || post.carousel || post.image ? (
-          <span className="relative size-16 shrink-0 overflow-hidden rounded-sm bg-neutral-100">
-            {(post.video?.poster ?? post.carousel?.slides[0]?.src ?? post.image?.src) ? (
-              <Image src={(post.video?.poster ?? post.carousel?.slides[0]?.src ?? post.image?.src)!} alt="" fill sizes="64px" className="object-cover" />
-            ) : (
-              <FilePpt className="m-4 size-8 text-primary-600" aria-hidden />
-            )}
+    // A section like the others in the draft: a heading with a tooltip, one bordered group (the media, then captions
+    // or the carousel title as rows split by lines), then any checks under it.
+    <div className="flex flex-col gap-3">
+      <span className="flex items-center gap-2">
+        <span className="text-body font-medium text-primary">Media</span>
+        <InfoTip label="About media">An image, a carousel (PDF, PowerPoint or Word) or a video, from {first}&apos;s Brand or uploaded. What you upload is saved to their Brand too.</InfoTip>
+      </span>
+
+      <div className="flex flex-col overflow-hidden rounded-md border border-border">
+        <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+          <span className="flex min-w-0 flex-1 items-center gap-3">
+            <span className="relative flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary-50 text-primary-700">
+              {thumb ? <Image src={thumb} alt="" fill sizes="64px" className="object-cover" /> : <Icon className="size-6" aria-hidden />}
+            </span>
+            <span className="flex min-w-0 flex-1 flex-col gap-1">
+              <span className="text-body font-medium text-primary">{kind ? kindLabel[kind] : request ? "Video requested" : "No media yet"}</span>
+              <span className="line-clamp-2 text-body-sm text-secondary">
+                {post.video
+                  ? `${post.video.alt}. ${duration(post.video.seconds)}, ${post.video.shape ?? "landscape"}.`
+                  : post.carousel
+                    ? `${post.carousel.title}${post.carousel.file?.pages ? `, ${post.carousel.file.pages} pages` : ""}.`
+                    : post.image
+                      ? `${post.image.alt}.`
+                      : request
+                        ? `Waiting for ${first}'s video: ${request.video?.idea}.`
+                        : "The post goes out as text only."}
+              </span>
+            </span>
           </span>
-        ) : (
-          <Icon className="mt-0.5 size-5 shrink-0 text-primary-600" aria-hidden />
-        )}
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="text-body font-semibold text-primary">{kind ? kindLabel[kind] : "Media"}</span>
-          <span className="text-body-sm text-secondary">
-            {post.video
-              ? `${post.video.alt}. ${duration(post.video.seconds)}, ${post.video.shape ?? "landscape"}.`
-              : post.carousel
-                ? `${post.carousel.title}${post.carousel.file?.pages ? `, ${post.carousel.file.pages} pages` : ""}.`
-                : post.image
-                  ? `${post.image.alt}.`
-                  : request
-                    ? `Waiting for ${first}'s video: ${request.video?.idea}.`
-                    : "None yet. An image, a carousel (PDF, PowerPoint or Word) or a video, from their Brand or uploaded."}
-          </span>
-          <span className="flex flex-wrap gap-x-4 gap-y-1">
+          <span className="flex shrink-0 flex-wrap gap-2">
             {!request && (
-              <TextButton onClick={() => setPicking(kind ?? (post.format === "video" ? "video" : post.format === "carousel" ? "carousel" : "image"))}>
-                {kind ? "Change" : "Add media"}
-              </TextButton>
+              <Button variant="secondary" size="sm" onClick={() => setPicking(kind ?? (post.format === "video" ? "video" : post.format === "carousel" ? "carousel" : "image"))}>
+                {!kind && <Plus className="size-4" aria-hidden />} {kind ? "Change" : "Add media"}
+              </Button>
             )}
-            {!kind && !request && <TextLink href={`/manager/clients/${b.client?.id}/content/video?post=${post.id}`}>Ask {first} for a video</TextLink>}
-            {request && <TextLink href={`/manager/clients/${b.client?.id}/content/video?post=${post.id}`}>Edit the request</TextLink>}
+            {!kind && !request && (
+              <Link href={`/manager/clients/${b.client?.id}/content/video?post=${post.id}`} className={buttonClass("secondary", "sm")}>
+                <VideoCamera className="size-4" aria-hidden /> Ask for a video
+              </Link>
+            )}
             {request && (
-              <TextButton
+              <Link href={`/manager/clients/${b.client?.id}/content/video?post=${post.id}`} className={buttonClass("secondary", "sm")}>
+                Edit request
+              </Link>
+            )}
+            {request && (
+              <Button
+                variant="remove"
+                size="sm"
                 onClick={() =>
                   confirm({
                     title: "Withdraw the video request?",
@@ -246,11 +272,13 @@ export function PostMediaEditor({ post, b }: { post: Post; b: ClientBundle }) {
                   })
                 }
               >
-                Withdraw the request
-              </TextButton>
+                Withdraw
+              </Button>
             )}
             {kind && (
-              <TextButton
+              <Button
+                variant="remove"
+                size="sm"
                 onClick={() =>
                   confirm({
                     title: `Remove the ${kindLabel[kind].toLowerCase()}?`,
@@ -262,75 +290,75 @@ export function PostMediaEditor({ post, b }: { post: Post; b: ClientBundle }) {
                 }
               >
                 Remove
-              </TextButton>
-            )}
-          </span>
-        </div>
-      </div>
-
-      {post.video && (
-        <div className="flex flex-col gap-2 border-t border-border pt-3">
-          <span className="text-body-sm font-medium text-primary">Captions</span>
-          <input
-            ref={captionsRef}
-            type="file"
-            aria-label="Choose a caption file"
-            accept={CAPTIONS.accept}
-            className="sr-only"
-            tabIndex={-1}
-            onChange={async (e) => {
-              const f = e.target.files?.[0];
-              e.target.value = "";
-              if (!f || !post.video) return;
-              await run("captions", () => act.setPostMedia(post.id, { video: { ...post.video!, captions: f.name, noSpeech: false } }), "Captions added.");
-            }}
-          />
-          <span className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            {post.video.captions ? (
-              <span className="text-body-sm text-primary">{post.video.captions}</span>
-            ) : (
-              <Button variant="secondary" size="sm" loading={pending("captions")} onClick={() => captionsRef.current?.click()}>
-                <Plus className="size-4" aria-hidden /> Add captions (.srt)
               </Button>
             )}
-            {post.video.captions && (
-              <TextButton onClick={() => run("captions", () => act.setPostMedia(post.id, { video: { ...post.video!, captions: undefined } }), "Captions removed.")}>
-                <Trash className="size-4" aria-hidden /> Remove captions
-              </TextButton>
-            )}
-            {!post.video.captions && (
-              <label className="flex cursor-pointer items-center gap-2 text-body-sm text-primary">
-                <input
-                  type="checkbox"
-                  checked={!!post.video.noSpeech}
-                  onChange={(e) => run("speech", () => act.setPostMedia(post.id, { video: { ...post.video!, noSpeech: e.target.checked } }), e.target.checked ? "Marked as having no speech." : "Captions needed again.")}
-                  className="size-4 accent-primary-600 focus-visible:focus-ring"
-                />
-                No speech in this video
-              </label>
-            )}
           </span>
-          <span className="text-caption text-secondary">{CAPTIONS.label}. LinkedIn shows them over the video.</span>
         </div>
-      )}
 
-      {post.carousel && (
-        <form
-          className="flex flex-col gap-2 border-t border-border pt-3 sm:flex-row sm:items-end"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            if (!title.trim() || !post.carousel) return;
-            await run("title", () => act.setPostMedia(post.id, { carousel: { ...post.carousel!, title: title.trim() } }), "Carousel title saved.");
-          }}
-        >
-          <div className="flex-1">
-            <Input label="Carousel title (shown on the post)" value={title} onChange={(e) => setTitle(e.target.value)} />
+        {post.video && (
+          <div className="flex flex-col gap-3 border-t border-border p-4">
+            <span className="flex items-center gap-2">
+              <span className="text-body-sm font-medium text-primary">Captions</span>
+              <InfoTip label="About captions">{CAPTIONS.label}. LinkedIn shows them over the video. Most people watch with the sound off.</InfoTip>
+            </span>
+            <input
+              ref={captionsRef}
+              type="file"
+              aria-label="Choose a caption file"
+              accept={CAPTIONS.accept}
+              className="sr-only"
+              tabIndex={-1}
+              onChange={async (e) => {
+                const f = e.target.files?.[0];
+                e.target.value = "";
+                if (!f || !post.video) return;
+                await run("captions", () => act.setPostMedia(post.id, { video: { ...post.video!, captions: f.name, noSpeech: false } }), "Captions added.");
+              }}
+            />
+            {post.video.captions ? (
+              <span className="flex flex-wrap items-center justify-between gap-3">
+                <span className="text-body-sm text-primary">{post.video.captions}</span>
+                <Button variant="remove" size="sm" loading={pending("captions")} onClick={() => run("captions", () => act.setPostMedia(post.id, { video: { ...post.video!, captions: undefined } }), "Captions removed.")}>
+                  Remove captions
+                </Button>
+              </span>
+            ) : (
+              <span className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                <Button variant="secondary" size="sm" loading={pending("captions")} onClick={() => captionsRef.current?.click()}>
+                  <Plus className="size-4" aria-hidden /> Add captions (.srt)
+                </Button>
+                <label className="flex cursor-pointer items-center gap-2 text-body-sm text-primary">
+                  <input
+                    type="checkbox"
+                    checked={!!post.video.noSpeech}
+                    onChange={(e) => run("speech", () => act.setPostMedia(post.id, { video: { ...post.video!, noSpeech: e.target.checked } }), e.target.checked ? "Marked as having no speech." : "Captions needed again.")}
+                    className="size-4 accent-primary-600 focus-visible:focus-ring"
+                  />
+                  No speech in this video
+                </label>
+              </span>
+            )}
           </div>
-          <Button type="submit" variant="secondary" size="sm" disabled={!title.trim() || title === post.carousel.title} loading={pending("title")}>
-            Save title
-          </Button>
-        </form>
-      )}
+        )}
+
+        {post.carousel && (
+          <form
+            className="flex flex-col gap-3 border-t border-border p-4 sm:flex-row sm:items-end"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!title.trim() || !post.carousel) return;
+              await run("title", () => act.setPostMedia(post.id, { carousel: { ...post.carousel!, title: title.trim() } }), "Carousel title saved.");
+            }}
+          >
+            <div className="flex-1">
+              <Input label="Carousel title (shown on the post)" value={title} onChange={(e) => setTitle(e.target.value)} />
+            </div>
+            <Button type="submit" variant="secondary" disabled={!title.trim() || title === post.carousel.title} loading={pending("title")}>
+              Save title
+            </Button>
+          </form>
+        )}
+      </div>
 
       {mediaChecks(post).map((c) => (
         <Banner key={c} tone={post.waitingForVideo ? "info" : "warning"}>

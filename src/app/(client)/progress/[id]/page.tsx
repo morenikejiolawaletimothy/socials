@@ -40,12 +40,12 @@ export default function UpdatePage({ params }: { params: Promise<{ id: string }>
     <Columns {...rails.clientMain}>
       <Card
         title={u.title}
-        eyebrow={<Breadcrumbs items={[{ label: "Progress", href: "/progress" }, { label: u.title }]} />}
+        eyebrow={<Breadcrumbs items={[{ label: "Progress", href: "/progress", back: true }, { label: u.title }]} />}
         action={<TextButton onClick={() => window.print()}>Download as PDF</TextButton>}
       >
         <div className="flex flex-col gap-6">
           <div className="flex items-center gap-3">
-            {managerUser && <Avatar name={fullName(managerUser)} size="sm" />}
+            {managerUser && <Avatar name={fullName(managerUser)} size="md" />}
             <span className="text-body-sm text-secondary">
               {[`From ${fullName(managerUser) || "your account team"}`, u.sentAt ? ago(u.sentAt) : "Draft", u.periodLabel, u.correctedAt ? `Corrected ${agoIn(u.correctedAt)}` : null].filter(Boolean).join(" · ")}
             </span>

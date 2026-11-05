@@ -27,7 +27,6 @@ export default function AuditPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Audit log"
-        description="Every admin and system action. Nothing here can be changed."
         action={
           <Button
             variant="secondary"

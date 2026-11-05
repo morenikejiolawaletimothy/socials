@@ -1,12 +1,12 @@
 "use client";
 
-import { CalendarBlank, Circle, Copy, LinkedinLogo, LinkSimple } from "@phosphor-icons/react";
+import { Circle, Copy, LinkedinLogo, LinkSimple, Timer } from "@phosphor-icons/react";
 import { useEffect } from "react";
 import { EngageItemTile } from "@/components/client/EngageItemTile";
 import { VideoTask } from "@/components/client/VideoTask";
 import { engageKinds, isEngage, progressWord, taskProgress } from "@/lib/engage";
 import { Avatar, Badge, Banner, Button, Card, EmptyState, Logo, Meta, ProgressBar, TextButton, textActionClass, Tile, TileFooter, useTask, useToast } from "@/components/ui";
-import { dayIn } from "@/lib/format";
+import { dayIn, dayTimeIn } from "@/lib/format";
 import { act, useData, type Assistant, type QuickTask } from "@/lib/mock";
 
 async function copy(text: string) {
@@ -40,8 +40,8 @@ function Person({ task, p, by }: { task: QuickTask; p: NonNullable<QuickTask["pe
     <li>
       <Tile done={p.done}>
         <span className="flex items-start gap-4">
-          <Avatar name={p.name} src={p.photo} size="md" />
-          <span className="flex min-w-0 flex-1 flex-col gap-1">
+          <Avatar name={p.name} src={p.photo} size="lg" />
+          <span className="flex min-w-0 flex-1 flex-col gap-1 pt-1">
             <span className="text-body font-medium text-primary">{p.name}</span>
             <span className="text-body-sm text-secondary">{p.role}</span>
           </span>
@@ -143,7 +143,7 @@ export function AssistantTask({ token }: { token: string }) {
 
   return (
     <Frame>
-      <Card title={task.title} action={<Meta icon={CalendarBlank}>Due {dayIn(task.dueAt)}</Meta>}>
+      <Card title={task.title} action={<Meta icon={Timer}>Due {dayTimeIn(task.dueAt)}</Meta>}>
         <div className="flex flex-col gap-4">
           <Banner tone="info" title={`${first}, ${owner.firstName} asked you to do this`}>
             {h.note ? <>&ldquo;{h.note}&rdquo; </> : null}

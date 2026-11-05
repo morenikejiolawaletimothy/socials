@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { managerName } from "@/components/admin/parts";
-import { Banner, Button, Dialog, useTask } from "@/components/ui";
+import { Avatar, Badge, Button, Dialog, Pill, useTask } from "@/components/ui";
 import { fullName } from "@/lib/format";
 import { act, type Client, type Db } from "@/lib/mock";
 
@@ -36,32 +36,39 @@ export function AssignDialog({ db, client, onClose, onAssign, title }: { db: Db;
   const [pick, setPick] = useState(options.find((o) => !o.full)?.m.id ?? "");
   const top = options[0];
   return (
-    <Dialog open onClose={onClose} title={title ?? `Assign a manager to ${fullName(db.users.find((u) => u.id === client.userId))}`}>
-      {top && (
-        <Banner tone="info" title={`Suggested: ${managerName(db, top.m.id)}`}>
-          {[top.industry && `Works in ${client.industry.toLowerCase()}`, top.tz && "Same time zone", `${top.m.maxClients - top.load} places free`].filter(Boolean).join(". ")}.
-        </Banner>
-      )}
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-2 text-body-sm font-medium text-primary">Choose a manager</legend>
-        {options.map((o) => (
-          <label
-            key={o.m.id}
-            className={`flex items-center gap-3 rounded-md border p-3 ${o.full ? "cursor-not-allowed opacity-50" : "cursor-pointer"} ${pick === o.m.id ? "border-primary-600 bg-primary-50" : "border-border"}`}
-          >
-            <input type="radio" name="manager" disabled={o.full} checked={pick === o.m.id} onChange={() => setPick(o.m.id)} className="size-4 accent-primary-600" />
-            <span className="flex flex-1 flex-col">
-              <span className="text-body font-medium text-primary">
-                {managerName(db, o.m.id)} {o === top && <span className="text-caption text-primary-600">Suggested</span>}
-              </span>
-              <span className="text-caption text-secondary">
-                {o.load} of {o.m.maxClients} clients. {o.m.industries.join(", ")}.{o.full ? " Full." : ""}
-              </span>
-            </span>
-          </label>
-        ))}
+    <Dialog
+      open
+      onClose={onClose}
+      title={title ?? `Assign a manager to ${fullName(db.users.find((u) => u.id === client.userId))}`}
+    >
+      <fieldset className="flex flex-col gap-3">
+        <legend className="mb-3 text-body font-medium text-primary">Choose a manager</legend>
+        <div className="flex flex-col divide-y divide-border overflow-hidden rounded-lg border border-border">
+          {options.map((o) => {
+            const name = managerName(db, o.m.id);
+            return (
+              <label
+                key={o.m.id}
+                className={`flex items-center gap-3 p-4 ${o.full ? "cursor-not-allowed opacity-50" : "cursor-pointer hover:bg-primary-50"} ${pick === o.m.id ? "bg-primary-50" : ""}`}
+              >
+                <input type="radio" name="manager" disabled={o.full} checked={pick === o.m.id} onChange={() => setPick(o.m.id)} className="size-4 shrink-0 accent-primary-600 focus-visible:focus-ring" />
+                <Avatar name={name} />
+                <span className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="truncate text-body font-medium text-primary">{name}</span>
+                    {o === top && !o.full && <Pill>Suggested</Pill>}
+                    {o.full && <Badge>Full</Badge>}
+                  </span>
+                  <span className="text-body-sm text-secondary">
+                    {o.load} of {o.m.maxClients} clients · {o.m.industries.join(", ")}
+                  </span>
+                </span>
+              </label>
+            );
+          })}
+        </div>
       </fieldset>
-      <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+      <div className="-mx-6 flex flex-col-reverse gap-3 border-t border-border px-6 pt-4 sm:flex-row sm:justify-end">
         <Button variant="cancel" onClick={onClose}>
           Cancel
         </Button>

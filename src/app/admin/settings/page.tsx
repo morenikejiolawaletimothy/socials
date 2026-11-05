@@ -15,17 +15,16 @@ export default function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Settings" description="The rules the product runs on." />
+      <PageHeader title="Settings" />
       <Banner tone="info" title="Changes apply to new contracts only">
         Clients already signed keep the terms they signed. Every change is recorded in the audit log.
       </Banner>
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <Card title="Plans and prices">
+        <Card title="Plans and prices" info="Prices are in US dollars. Stripe shows each client their local currency.">
           <div className="flex flex-col gap-4">
             {plans.map((p) => (
               <Input key={p.id} label={`${p.label}, a month (USD)`} defaultValue={String(p.monthlyUsdCents / 100)} inputMode="numeric" />
             ))}
-            <Banner tone="info">Prices are in US dollars. Stripe shows each client their local currency.</Banner>
           </div>
         </Card>
         <Card title="Money">

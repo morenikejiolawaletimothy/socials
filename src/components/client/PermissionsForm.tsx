@@ -23,8 +23,14 @@ const fullServiceItems: Item[] = [
   { key: "companyPage", label: "Run my company Page", description: "Posts, comments and replies on your Page. You add us as an admin on LinkedIn." },
 ];
 
+/** The short note on how these work, by service. Shown above the switches, or by the page in its title tooltip. */
+export const permissionsNote = (fullService: boolean) =>
+  fullService
+    ? "We do these for you, following your rules exactly. You approve your posts and we tell you before anything goes out. Change any of this any time; your manager cannot."
+    : "We get each of these ready for you, so you can do them yourself in a tap or two, whenever suits you.";
+
 /** C2 "What should we do for you?" Plain switches, saved as they change. Framing depends on self-serve vs full-service. */
-export function PermissionsForm({ client }: { client: Client }) {
+export function PermissionsForm({ client, note = true }: { client: Client; /** Show the note above the switches. Off when the page shows it in a tooltip. */ note?: boolean }) {
   const confirm = useConfirm();
   const { run } = useTask();
   const [saving, setSaving] = useState<keyof Permissions | null>(null);
@@ -50,11 +56,7 @@ export function PermissionsForm({ client }: { client: Client }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <Banner tone="neutral">
-        {fullService
-          ? "We do these for you, following your rules exactly. You approve your posts and we tell you before anything goes out. Change any of this any time; your manager cannot."
-          : "We get each of these ready for you. LinkedIn only lets you act from your own account, so you do them yourself in a tap or two, whenever suits you."}
-      </Banner>
+      {note && <Banner tone="neutral">{permissionsNote(fullService)}</Banner>}
       <ul className="flex flex-col">
         {items.map((i) => (
           <li key={i.key} className="border-b border-border py-4 first:pt-0 last:border-b-0 last:pb-0">

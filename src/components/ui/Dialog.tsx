@@ -2,6 +2,7 @@
 
 import { X } from "@phosphor-icons/react";
 import { useEffect, useRef } from "react";
+import { InfoTip } from "./InfoTip";
 
 /**
  * Modal dialog on the native <dialog> element (focus trap and Escape for free).
@@ -11,12 +12,18 @@ export function Dialog({
   open,
   onClose,
   title,
+  info,
+  infoIcon,
   children,
   variant = "center",
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
+  /** Explains the action: an info icon after the title, with the text in a tooltip. */
+  info?: React.ReactNode;
+  /** Another icon for the info tooltip, such as a padlock for payment security. */
+  infoIcon?: React.ComponentProps<typeof InfoTip>["icon"];
   children: React.ReactNode;
   variant?: "center" | "sheet";
 }) {
@@ -44,7 +51,21 @@ export function Dialog({
     >
       <div className="flex flex-col gap-4 p-6">
         <div className="flex items-start justify-between gap-4">
-          {variant === "center" ? <h2 className="font-display text-display-xl text-primary">{title}</h2> : <span />}
+          {variant === "center" ? (
+            <div className="flex min-w-0 items-center gap-2">
+              {/* Long titles stay on one line, cut with an ellipsis; the full title shows on hover. */}
+              <h2 title={title} className="min-w-0 truncate font-display text-display-xl text-primary">
+                {title}
+              </h2>
+              {info && (
+                <InfoTip label={`About ${title}`} icon={infoIcon}>
+                  {info}
+                </InfoTip>
+              )}
+            </div>
+          ) : (
+            <span />
+          )}
           <button
             type="button"
             onClick={onClose}

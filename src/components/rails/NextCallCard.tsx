@@ -11,10 +11,12 @@ import { act, useMyClient, type Call } from "@/lib/mock";
 const callName = { goals: "Goals call", strategy: "Strategy call", "check-in": "Check-in call" };
 export const callTitle = (c: Call) => c.title ?? callName[c.kind];
 
-const quietLink = "rounded-sm text-body-sm font-medium text-secondary hover:text-primary hover:underline focus-visible:focus-ring";
+export const quietLink = "rounded-sm text-body-sm font-medium text-secondary hover:text-primary hover:underline focus-visible:focus-ring";
 
 /** How long each call stays in view before the card moves to the next one. */
 const ADVANCE_MS = 5000;
+/** The most calls the carousel slides through. */
+const MAX_SLIDES = 5;
 
 /** Booked calls that have not finished yet, soonest first. */
 export function upcomingCalls(calls: Call[]) {
@@ -65,7 +67,16 @@ export function CallRow({ call: c }: { call: Call }) {
  */
 export function NextCallCard() {
   const { calls } = useMyClient();
-  const upcoming = upcomingCalls(calls);
+  return <CallsCarousel calls={upcomingCalls(calls)} viewAllHref="/calls" renderCall={(c) => <CallRow call={c} />} />;
+}
+
+/**
+ * The Upcoming calls card itself, shared by the client (NextCallCard) and the manager (rails CallsCard):
+ * one call per slide, auto-advancing dots, and View all under a divider. Hidden when there are no calls.
+ */
+export function CallsCarousel({ calls: all, viewAllHref, renderCall }: { calls: Call[]; viewAllHref: string; renderCall: (c: Call) => React.ReactNode }) {
+  // Only the next few calls slide, so the dots stay on one short row. View all shows the rest.
+  const upcoming = all.slice(0, MAX_SLIDES);
   const count = upcoming.length;
 
   const track = useRef<HTMLUListElement>(null);
@@ -139,14 +150,14 @@ export function NextCallCard() {
               aria-label={`${i + 1} of ${count}`}
               className="min-w-0 shrink-0 basis-full snap-start"
             >
-              <CallRow call={c} />
+              {renderCall(c)}
             </li>
           ))}
         </ul>
 
         <div className="flex items-center justify-between gap-3 border-t border-border pt-3">
           {count > 1 ? (
-            <div className="flex flex-wrap items-center gap-1">
+            <div className="-ml-1.5 flex items-center">
               {upcoming.map((c, i) => (
                 <button
                   key={c.id}
@@ -157,17 +168,17 @@ export function NextCallCard() {
                     setActive(i);
                     goTo(i);
                   }}
-                  className="flex size-6 items-center justify-center rounded-full focus-visible:focus-ring"
+                  className="flex size-5 items-center justify-center rounded-full focus-visible:focus-ring"
                 >
-                  <span className={`h-2 rounded-full transition-all ${i === active ? "w-4 bg-primary-600" : "w-2 bg-neutral-300"}`} />
+                  <span className={`h-1.5 rounded-full transition-all ${i === active ? "w-3 bg-primary-600" : "w-1.5 bg-neutral-300"}`} />
                 </button>
               ))}
             </div>
           ) : (
             <span />
           )}
-          <Link href="/calls" className={textActionClass}>
-            View all
+          <Link href={viewAllHref} className={`shrink-0 ${textActionClass}`}>
+            {all.length > count ? `View all ${all.length}` : "View all"}
           </Link>
         </div>
       </div>

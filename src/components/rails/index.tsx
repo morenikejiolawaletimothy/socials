@@ -50,8 +50,8 @@ export const rails = {
     rightLabel: "Upcoming calls",
   },
   clientSettings: { left: <SideMenu {...clientAccountMenu} />, leftLabel: "Your account" },
-  managerFeed: { left: <ProfileCard />, leftLabel: "Your profile", right: <CallsCard />, rightLabel: "Calls today" },
-  managerMain: { right: <CallsCard />, rightLabel: "Calls today" },
+  managerFeed: { left: <ProfileCard />, leftLabel: "Your profile", right: <CallsCard />, rightLabel: "Upcoming calls" },
+  managerMain: { right: <CallsCard />, rightLabel: "Upcoming calls" },
   managerSettings: { left: <SideMenu {...managerAccountMenu} />, leftLabel: "Your account" },
 };
 export type RailSet = keyof typeof rails;

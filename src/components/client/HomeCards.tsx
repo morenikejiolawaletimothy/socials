@@ -1,6 +1,6 @@
 "use client";
 
-import { BookmarkSimple, CalendarBlank, CalendarStar, ChatCircleText, CheckCircle, Circle, GraduationCap, LinkedinLogo, MagnifyingGlass, PaperPlaneTilt, Repeat, ThumbsUp, UserCirclePlus, UserPlus, VideoCamera, X } from "@phosphor-icons/react";
+import { BookmarkSimple, CalendarBlank, CalendarStar, ChatCircleText, CheckCircle, Circle, Clock, GraduationCap, LinkedinLogo, MagnifyingGlass, PaperPlaneTilt, Repeat, ThumbsUp, Timer, UserCirclePlus, UserPlus, VideoCamera, X } from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
@@ -11,11 +11,11 @@ import { callTitle, upcomingCalls } from "@/components/rails/NextCallCard";
 import { Avatar, Badge, Banner, Button, buttonClass, Card, Meta, Pill, ProgressBar, Select, TextButton, textActionClass, Tile, TileAction, TileFooter, TileIcon, useToast } from "@/components/ui";
 import { isOverdue } from "@/lib/status";
 import { isEngage, progressWord, taskProgress } from "@/lib/engage";
-import { ago, agoIn, date, day, dayIn, dayTime, dayTimeIn, daysFrom, fullName, money, plural, time } from "@/lib/format";
+import { ago, agoIn, date, dateTime, day, dayIn, dayTime, dayTimeIn, daysFrom, fullName, money, plural, time } from "@/lib/format";
 import { useData, type ClientBundle, type Post, type QuickTask, type TaskEvent } from "@/lib/mock";
 import { LivePostActions } from "./LivePostActions";
 import { PayDialog } from "./PayDialog";
-import { monthlyTotal } from "./VideoAddon";
+import { contractTotal } from "./VideoAddon";
 import { reportActivity } from "./reportActivity";
 import { nextSetupStep, stepsFor } from "./setup";
 
@@ -33,27 +33,43 @@ export function PausedCard({ b }: { b: ClientBundle }) {
   if (client?.status !== "paused") return null;
   const daysPaused = client.pausedAt ? -daysFrom(client.pausedAt) : 0;
   const waiting = posts.filter((p) => ["on-hold", "scheduled", "approved", "awaiting-client"].includes(p.status)).length;
-  const why = client.pausedReason === "contract-ended" ? "Your contract ended." : "Your free 2 weeks ended before we received payment.";
+  const why = client.pausedReason === "contract-ended" ? "Your contract ended." : "Your free period ended before we received payment.";
+  const facts = [
+    { label: "Paused for", value: plural(daysPaused, "day") },
+    { label: "Waiting for you", value: waiting ? plural(waiting, "post") : "Nothing" },
+    ...(contract ? [{ label: "Amount due", value: `${money(contractTotal(contract, addonCents))} for ${contract.months} months` }] : []),
+  ];
 
   return (
-    <Card title="Account paused">
-      <div className="flex flex-col gap-4">
-        <p className="text-body text-primary">
+    <Card
+      title="Account paused"
+      padding="none"
+      action={<Badge status="warning">Paused</Badge>}
+      info="Your strategy, brand and settings are kept while you are paused. Nothing is lost. The contract is paid once, up front."
+    >
+      {/* What happened, the key facts as two-sided rows, any warning, then Pay under a divider. */}
+      <div className="flex flex-col divide-y divide-border">
+        <p className="px-6 py-5 text-body text-primary">
           {why} Nothing is being posted or engaged with. Pay to pick up where you left off, with the same account manager.
         </p>
-        <ul className="flex flex-col gap-2 text-body-sm text-secondary">
-          <li>Paused for {plural(daysPaused, "day")}.</li>
-          <li>{waiting ? `Waiting for you: ${plural(waiting, "post")}, your strategy and your settings.` : "Your strategy, brand and settings are kept."} Nothing is lost.</li>
-          {contract && <li>Amount due: {money(monthlyTotal(contract, addonCents))} for month 1.</li>}
+        <ul className="flex flex-col divide-y divide-border">
+          {facts.map((f) => (
+            <li key={f.label} className="flex items-center justify-between gap-4 px-6 py-4">
+              <span className="text-body-sm text-secondary">{f.label}</span>
+              <span className="text-right text-body-sm font-medium text-primary">{f.value}</span>
+            </li>
+          ))}
         </ul>
         {daysPaused >= 15 && (
-          <Banner tone="warning" title="Your account will be removed in 30 days">
-            If your account stays paused for 30 days, we remove it and delete your data. To come back after that, you would start again.
-          </Banner>
+          <div className="px-6 py-5">
+            <Banner tone="warning" title="Your account will be removed in 30 days">
+              If your account stays paused for 30 days, we remove it and delete your data. To come back after that, you would start again.
+            </Banner>
+          </div>
         )}
-        <Button className="self-start" onClick={() => setPaying(true)}>
-          {client.pausedReason === "contract-ended" ? "Renew" : "Pay now"}
-        </Button>
+        <div className="px-6 py-5">
+          <Button onClick={() => setPaying(true)}>{client.pausedReason === "contract-ended" ? "Renew" : "Pay now"}</Button>
+        </div>
       </div>
       {contract && (
         <PayDialog
@@ -61,7 +77,7 @@ export function PausedCard({ b }: { b: ClientBundle }) {
           onClose={() => setPaying(false)}
           onPaid={() => toast("Your account is active again. Scheduled posts are back on.")}
           clientId={client.id}
-          amountCents={monthlyTotal(contract, addonCents)}
+          amountCents={contractTotal(contract, addonCents)}
         />
       )}
     </Card>
@@ -80,14 +96,54 @@ export function StateBanners({ b }: { b: ClientBundle }) {
           Scheduled posts are held until you turn posting back on.
         </Banner>
       )}
-      {client.status === "free" && contract && !contract.paid && daysLeft <= 5 && (
-        <Banner tone="warning" title={`Pay to keep going. Your free 2 weeks end ${dayIn(contract.freeEndsAt)}.`} action={<Link href="/contract" className={linkClass}>Pay now</Link>}>
-          If we have not received payment by {date(contract.freeEndsAt)}, your account pauses until you pay. You can pull out any time.
-        </Banner>
-      )}
+      {client.status === "free" && contract && !contract.paid && daysLeft <= 5 && <FreeEndingCard b={b} />}
       {client.status === "free" && contract && (contract.paid || daysLeft > 5) && !showsCallsCard(client) && <FreeWeeksNote b={b} />}
     </>
   );
+}
+
+/** C1: the free period ends in 5 days or less and nothing is paid. Laid out like Account paused: what happens, the facts, then Pay. */
+function FreeEndingCard({ b }: { b: ClientBundle }) {
+  const addonCents = useData().settings.videoAddonCents;
+  const { contract } = b;
+  if (!contract) return null;
+  const facts = [
+    { label: "Free until", value: date(contract.freeEndsAt) },
+    { label: "Amount due", value: `${money(contractTotal(contract, addonCents))} for ${contract.months} months` },
+  ];
+  return (
+    <Card
+      title="Your free period is ending"
+      padding="none"
+      action={<Badge status="warning">Ends {dayIn(contract.freeEndsAt)}</Badge>}
+      info="The contract is paid once, up front. You can pull out any time."
+    >
+      <div className="flex flex-col divide-y divide-border">
+        <p className="px-6 py-5 text-body text-primary">
+          Pay to keep going. If we have not received payment by {date(contract.freeEndsAt)}, your account pauses until you pay.
+        </p>
+        <ul className="flex flex-col divide-y divide-border">
+          {facts.map((f) => (
+            <li key={f.label} className="flex items-center justify-between gap-4 px-6 py-4">
+              <span className="text-body-sm text-secondary">{f.label}</span>
+              <span className="text-right text-body-sm font-medium text-primary">{f.value}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="px-6 py-5">
+          <Link href="/contract" className={buttonClass("primary")}>
+            Pay now
+          </Link>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+/** The free 2 weeks note as one line, for the info tooltip on Your two calls. */
+function freeWeeksInfo({ client, contract }: ClientBundle) {
+  if (client?.status !== "free" || !contract || (!contract.paid && daysFrom(contract.freeEndsAt) <= 5)) return undefined;
+  return `Your first 2 weeks are free, until ${date(contract.freeEndsAt)}. ${contract.paid ? "You have paid already, so nothing changes when they end." : "You get the full service. We will remind you before they end."}`;
 }
 
 /** The free 2 weeks note. Sits at the top of Your two calls while that card shows, otherwise with the state banners. */
@@ -110,9 +166,8 @@ export function SetupCard({ b }: { b: ClientBundle }) {
   const steps = stepsFor(client.service);
   const next = nextSetupStep(client.setupDone, client.service);
   return (
-    <Card title="Account setup">
+    <Card id="setup" title="Account setup" info="Do it now or come back later. We save your progress and remind you by email.">
       <div className="flex flex-col gap-6">
-        <Banner tone="info">Do it now or come back later. We save your progress and remind you by email.</Banner>
         <div className="flex flex-col gap-2">
           <span className="flex items-center justify-between text-body-sm">
             <span className="text-primary">{client.setupProgress}% done</span>
@@ -124,11 +179,28 @@ export function SetupCard({ b }: { b: ClientBundle }) {
           {steps.map((s, i) => {
             const done = client.setupDone.includes(s.step);
             const isNext = next?.step === s.step;
-            return (
-              <li key={s.step} className={`flex items-center gap-3 py-3 ${i < steps.length - 1 ? "border-b border-border" : ""}`}>
+            const row = (
+              <>
                 {done ? <CheckCircle className="size-6 shrink-0 text-success" aria-label="Done" /> : <Circle className={`size-6 shrink-0 ${isNext ? "text-primary-600" : "text-neutral-300"}`} aria-label="Not done" />}
                 <span className={`flex-1 text-body ${done ? "text-secondary line-through" : "text-primary"}`}>{s.label}</span>
-                <span className="text-caption text-secondary">{done ? "Done" : s.minutes}</span>
+              </>
+            );
+            return (
+              <li key={s.step} className={i < steps.length - 1 ? "border-b border-border" : ""}>
+                {done ? (
+                  // Done steps open their page again, so the person can change what they chose.
+                  <Link href={s.href} className="-mx-2 flex items-center gap-3 rounded-md px-2 py-3 transition-colors hover:bg-primary-50 focus-visible:focus-ring">
+                    {row}
+                    <span className="text-caption text-secondary">
+                      Done<span className="sr-only">. Open to change {s.label.toLowerCase()}</span>
+                    </span>
+                  </Link>
+                ) : (
+                  <div className="flex items-center gap-3 py-3">
+                    {row}
+                    <span className="text-caption text-secondary">{s.minutes}</span>
+                  </div>
+                )}
               </li>
             );
           })}
@@ -160,9 +232,8 @@ export function CallsCard({ b }: { b: ClientBundle }) {
   if (!client || !showsCallsCard(client)) return null;
   const intro = calls.filter((c) => c.kind !== "check-in");
   return (
-    <Card title="Your two calls">
+    <Card title="Your two calls" info={freeWeeksInfo(b)}>
       <div className="flex flex-col gap-4">
-        <FreeWeeksNote b={b} />
         {managerUser && (
           <div className="flex items-start gap-3">
             <Avatar name={fullName(managerUser)} src={managerUser?.photo} size="md" />
@@ -173,10 +244,14 @@ export function CallsCard({ b }: { b: ClientBundle }) {
         )}
         <ul className="flex flex-col gap-3">
           {intro.map((c) => {
-            const soon = c.status === "booked" && Math.abs(new Date(c.at).getTime() - Date.now()) < 3_600_000 * 6 && day(c.at) === "Today";
+            const booked = c.status === "booked";
             return (
               <li key={c.id}>
-                <Tile done={c.status === "done"}>
+                {/* A booked call opens its Meet link from anywhere on the tile (a covering link), so Join call and Reschedule can sit in the footer. */}
+                <Tile done={c.status === "done"} className={booked ? "group relative transition-colors hover:border-primary-300 hover:bg-primary-50" : ""}>
+                  {booked && (
+                    <a href={c.meetUrl} target="_blank" rel="noreferrer" aria-label={`Join the ${callInfo[c.kind].name.toLowerCase()} on Google Meet`} className="absolute inset-0 rounded-md focus-visible:focus-ring" />
+                  )}
                   <div className="flex items-start gap-4">
                     <span className="flex size-12 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700">
                       <VideoCamera className="size-5" aria-hidden />
@@ -185,23 +260,37 @@ export function CallsCard({ b }: { b: ClientBundle }) {
                       <span className="flex flex-wrap items-center justify-between gap-2">
                         <span className="text-body font-medium text-primary">{callInfo[c.kind].name}</span>
                         {c.status === "done" && <Badge status="success">Done</Badge>}
+                        {c.status === "booked" &&
+                          (c.recording ? (
+                            <Badge status="info">
+                              Record<span className="sr-only">: recorded with your consent</span>
+                            </Badge>
+                          ) : (
+                            <Badge>
+                              Don&apos;t record<span className="sr-only">: not recorded, your manager takes notes</span>
+                            </Badge>
+                          ))}
                       </span>
                       <span className="text-body-sm text-secondary">{c.status === "done" ? c.summary : callInfo[c.kind].covers}</span>
-                      {c.status === "booked" && <span className="text-caption text-secondary">{c.recording ? "Recorded with your consent" : "Not recorded. Your manager takes notes."}</span>}
                     </div>
                   </div>
                   <TileFooter>
-                    <Meta icon={CalendarBlank}>{dayTime(c.at)}</Meta>
-                    {c.status === "booked" &&
-                      (soon ? (
-                        <a href={c.meetUrl} className={linkClass}>
-                          Join the call
+                    <Meta icon={Clock}>
+                      {dateTime(c.at)} · {c.minutes} min
+                    </Meta>
+                    {booked && (
+                      <span className="relative z-10 flex items-center gap-4">
+                        <a href={c.meetUrl} target="_blank" rel="noreferrer" className={linkClass}>
+                          Join call
                         </a>
-                      ) : (
-                        <Link href="/setup/calls" className={linkClass}>
+                        <Link
+                          href={`/setup/calls${c.kind === "strategy" ? "?step=2" : ""}`}
+                          className="inline-flex items-center gap-2 rounded-sm text-body-sm font-medium text-secondary hover:text-primary hover:underline focus-visible:focus-ring"
+                        >
                           Reschedule
                         </Link>
-                      ))}
+                      </span>
+                    )}
                   </TileFooter>
                 </Tile>
               </li>
@@ -219,14 +308,16 @@ export function StrategyReadyCard({ b }: { b: ClientBundle }) {
   if (!strategy || (strategy.status !== "shared" && strategy.status !== "agreed-sent")) return null;
   const call = calls.find((c) => c.kind === "strategy");
   return (
-    <Card title={strategy.status === "agreed-sent" ? "Approve your strategy" : "Strategy ready"}>
+    <Card
+      title={strategy.status === "agreed-sent" ? "Approve your strategy" : "Strategy ready"}
+      info={
+        strategy.status === "agreed-sent"
+          ? "Your manager added what you changed on the call. Work starts once you approve."
+          : `Read it before your strategy call${call ? ` ${dayTimeIn(call.at)}` : ""}. Bring any questions.`
+      }
+    >
       <div className="flex flex-col gap-4">
         <p className="text-body text-primary">{strategy.goal}</p>
-        <Banner tone="info">
-          {strategy.status === "agreed-sent"
-            ? "Your manager added what you changed on the call. Work starts once you approve."
-            : `Read it before your strategy call${call ? ` ${dayTimeIn(call.at)}` : ""}. Bring any questions.`}
-        </Banner>
         <Link href="/strategy" className={buttonLink(true)}>
           Read your strategy
         </Link>
@@ -293,8 +384,8 @@ export function TasksCard({ b }: { b: ClientBundle }) {
       id="tasks"
       title="Quick tasks"
       action={<Pill label={`${doneCount} of ${b.tasks.length} tasks done`}>{doneCount} of {b.tasks.length} done</Pill>}
+      info="Things LinkedIn only lets you do: reactions, comments, reposts, follows, messages and connection requests, plus events to sign up for. We prepare everything, so each takes seconds. Done tasks leave this list."
     >
-      <Banner tone="info" closeKey="home-tasks-note" className="mb-4">Things LinkedIn only lets you do: reactions, comments, reposts, follows, messages and connection requests, plus events to sign up for. We prepare everything, so each takes seconds. Done tasks leave this list.</Banner>
       <ul className="flex flex-col gap-3">
         {open.map((t) => {
           const { done: sent, total } = taskProgress(t);
@@ -316,8 +407,8 @@ export function TasksCard({ b }: { b: ClientBundle }) {
                   </span>
                 </span>
                 <TileFooter>
-                  <Meta icon={CalendarBlank}>
-                    {t.kind === "event" ? "Closing by" : "Due"} {dayIn(t.dueAt)}
+                  <Meta icon={Timer}>
+                    {t.kind === "event" ? "Closing by" : "Due"} {dayTimeIn(t.dueAt)}
                   </Meta>
                   <TileAction>{t.kind === "event" ? (t.event?.type === "program" ? "Apply" : "Register") : t.kind === "video" ? "See what to record" : sent > 0 ? "Continue" : "Start"}</TileAction>
                 </TileFooter>
@@ -355,13 +446,13 @@ export function ReviewCard({ b, overdue: withOverdue = true }: { b: ClientBundle
           <Pill label={`${plural(late.length, "post")} overdue`}>{plural(late.length, "post")} overdue</Pill>
         )
       }
+      info={
+        wait
+          ? "Any post you have not reviewed by its due time is held. Nothing goes out without your approval, and you can still review it at any time."
+          : `Any post you have not reviewed by its due time is posted by ${b.managerUser?.firstName ?? "your manager"} as planned. You can still take a post down at any time.`
+      }
     >
       <div className="flex flex-col gap-4">
-        <Banner tone="info" closeKey={`home-review-note-${wait ? "wait" : "post"}`}>
-          {wait
-            ? "Any post you have not reviewed by its due time is held. Nothing goes out without your approval, and you can still review it at any time."
-            : `Any post you have not reviewed by its due time is posted by ${b.managerUser?.firstName ?? "your manager"} as planned. You can still take a post down at any time.`}
-        </Banner>
         <ul className="flex flex-col gap-3">
           {waiting.map((p) => {
             const isLate = isOverdue(p);
@@ -380,7 +471,7 @@ export function ReviewCard({ b, overdue: withOverdue = true }: { b: ClientBundle
                   </span>
                   <TileFooter>
                     <span className="flex flex-wrap items-center gap-3">
-                      <Meta icon={CalendarBlank}>{p.dueAt ? `${isLate ? "Was due" : "Due"} ${dayIn(p.dueAt)}` : "No due date"}</Meta>
+                      <Meta icon={Timer}>{p.dueAt ? `${isLate ? "Was due" : "Due"} ${dayTimeIn(p.dueAt)}` : "No due date"}</Meta>
                       {isLate && <Badge status="danger">Overdue</Badge>}
                     </span>
                     <TileAction>Review</TileAction>
@@ -689,7 +780,7 @@ export function MessageCard({ b }: { b: ClientBundle }) {
     <Card title={`From ${b.managerUser.firstName}`} action={<span className="text-caption text-secondary">{ago(m.at)}</span>}>
       <div className="flex flex-col gap-3">
         <div className="flex items-start gap-3">
-          <Avatar name={fullName(b.managerUser)} src={b.managerUser?.photo} size="sm" />
+          <Avatar name={fullName(b.managerUser)} src={b.managerUser?.photo} size="md" />
           <p className="rounded-md bg-neutral-25 px-4 py-3 text-body-sm text-primary">{m.text}</p>
         </div>
         <Link href="/messages" className={linkClass}>

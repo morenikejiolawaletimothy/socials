@@ -1,8 +1,8 @@
 "use client";
 
-import { LockSimple } from "@phosphor-icons/react";
+import { CreditCard, LockSimple } from "@phosphor-icons/react";
 import { useState } from "react";
-import { Button, Dialog, Input, useToast } from "@/components/ui";
+import { Button, Dialog, useToast } from "@/components/ui";
 import { money } from "@/lib/format";
 import { act } from "@/lib/mock";
 
@@ -33,10 +33,10 @@ export function PayDialog({
   const [busy, setBusy] = useState(false);
 
   return (
-    <Dialog open={open} onClose={onClose} title={title}>
+    <Dialog open={open} onClose={onClose} title={title} info="Payments are handled by Stripe. We never store your card number." infoIcon={LockSimple}>
       <form
         noValidate
-        className="flex flex-col gap-4"
+        className="flex flex-col gap-5"
         onSubmit={async (e) => {
           e.preventDefault();
           setError(undefined);
@@ -59,23 +59,53 @@ export function PayDialog({
           toast("Payment received. Your receipt is in Contract.");
         }}
       >
-        <p className="text-body text-primary">
-          Amount: <span className="font-medium">{money(amountCents)}</span>
-        </p>
-        <Input label="Card number" inputMode="numeric" autoComplete="cc-number" value={card} onChange={(e) => setCard(e.target.value)} error={error} />
-        <div className="grid grid-cols-2 gap-4">
-          <Input label="Expiry" autoComplete="cc-exp" value={exp} onChange={(e) => setExp(e.target.value)} />
-          <Input label="Security code" inputMode="numeric" autoComplete="cc-csc" value={cvc} onChange={(e) => setCvc(e.target.value)} />
+        {/* Standard checkout: what you pay, one grouped card field, the security note, then the pay button. */}
+        <div className="flex items-center justify-between gap-4 rounded-md border border-border bg-neutral-25 px-4 py-3">
+          <span className="text-body-sm text-secondary">Amount due today</span>
+          <span className="font-display text-display-lg text-primary">{money(amountCents)}</span>
         </div>
-        <p className="flex items-center gap-2 text-caption text-secondary">
-          <LockSimple className="size-4" aria-hidden /> Payments are handled by Stripe. We never store your card number.
-        </p>
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="ghost" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" loading={busy}>
+
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-2 text-body-sm leading-5 font-medium text-primary">Card details</legend>
+          <div className={`flex flex-col overflow-hidden rounded-sm border bg-card shadow-sm has-focus-visible:focus-ring ${error ? "border-danger" : "border-border-strong"}`}>
+            <label className="flex items-center gap-3 border-b border-border px-4">
+              <span className="sr-only">Card number</span>
+              <input
+                inputMode="numeric"
+                autoComplete="cc-number"
+                placeholder="1234 1234 1234 1234"
+                value={card}
+                onChange={(e) => setCard(e.target.value)}
+                aria-invalid={error ? true : undefined}
+                aria-describedby={error ? "pay-error" : undefined}
+                className="h-11 min-w-0 flex-1 bg-transparent text-body text-primary outline-none placeholder:text-neutral-400"
+              />
+              <CreditCard className="size-5 shrink-0 text-secondary" aria-hidden />
+            </label>
+            <div className="grid grid-cols-2 divide-x divide-border">
+              <label className="flex px-4">
+                <span className="sr-only">Expiry</span>
+                <input autoComplete="cc-exp" placeholder="MM / YY" value={exp} onChange={(e) => setExp(e.target.value)} className="h-11 w-full bg-transparent text-body text-primary outline-none placeholder:text-neutral-400" />
+              </label>
+              <label className="flex px-4">
+                <span className="sr-only">Security code</span>
+                <input inputMode="numeric" autoComplete="cc-csc" placeholder="CVC" value={cvc} onChange={(e) => setCvc(e.target.value)} className="h-11 w-full bg-transparent text-body text-primary outline-none placeholder:text-neutral-400" />
+              </label>
+            </div>
+          </div>
+          {error && (
+            <span id="pay-error" className="text-body-sm text-danger">
+              {error}
+            </span>
+          )}
+        </fieldset>
+
+        <div className="flex flex-col gap-3 pt-2">
+          <Button type="submit" fullWidth loading={busy}>
             {busy ? "Paying" : `Pay ${money(amountCents)}`}
+          </Button>
+          <Button variant="cancel" fullWidth onClick={onClose}>
+            Cancel
           </Button>
         </div>
       </form>

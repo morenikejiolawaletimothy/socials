@@ -1,16 +1,64 @@
 "use client";
 
-import { CheckCircle, Clock, Sparkle } from "@phosphor-icons/react";
+import { CheckCircle, Clock } from "@phosphor-icons/react";
 import Link from "next/link";
 import { use, useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { OffLimitsBox } from "@/components/manager/ClientTabs";
 import { rails } from "@/components/rails";
-import { Badge, Banner, Breadcrumbs, Button, buttonClass, Card, EmptyState, Input, Meta, Pill, Row, Rows, RowText, Stepper, Textarea, TextLink, Tile, useConfirm, useTask } from "@/components/ui";
-import { dayTime, fullName } from "@/lib/format";
+import { Badge, Banner, Breadcrumbs, Button, buttonClass, Card, EmptyState, InfoTip, Input, Meta, Pill, Row, Rows, RowText, Stepper, Textarea, useConfirm, useTask } from "@/components/ui";
+import { dateTime, fullName } from "@/lib/format";
 import { act, clientBundle, useMyManager, type ClientBundle } from "@/lib/mock";
 
 const steps = ["Prep", "Goals call", "Listening", "Strategy", "What we agreed", "Approved"];
+
+/** One step's body: under a line below the Stepper, with 24px between sections. */
+function Step({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-col gap-6 border-t border-border pt-6">{children}</div>;
+}
+
+/** The step's title, an optional info icon after it, and key info (the call time) on the right. */
+function StepHead({ title, info, children }: { title: string; info?: React.ReactNode; children?: React.ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <span className="flex items-center gap-2">
+        <h3 className="text-body font-semibold text-primary">{title}</h3>
+        {info && <InfoTip label={`About ${title.toLowerCase()}`}>{info}</InfoTip>}
+      </span>
+      {children}
+    </div>
+  );
+}
+
+/** A titled section of a step: a small heading (with an optional action on the right), then its content 12px below. */
+function Section({ title, info, action, children }: { title: React.ReactNode; info?: React.ReactNode; action?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span className="flex items-center gap-2">
+          <h4 className="text-body-sm font-semibold text-primary">{title}</h4>
+          {info && <InfoTip label="More about this section">{info}</InfoTip>}
+        </span>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** The step's buttons under a line: the main action first, then Back. */
+function StepFooter({ onBack, children }: { onBack?: () => void; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row">
+      {children}
+      {onBack && (
+        <Button variant="ghost" onClick={onBack}>
+          Back
+        </Button>
+      )}
+    </div>
+  );
+}
 
 function currentStep(b: ClientBundle) {
   const goals = b.calls.find((c) => c.kind === "goals");
@@ -52,7 +100,7 @@ function Onboard({ id }: { id: string }) {
         title="Onboarding"
         eyebrow={<Breadcrumbs items={[{ label: "Clients", href: "/manager/clients" }, { label: fullName(b.user), href: `/manager/clients/${id}` }, { label: "Onboarding" }]} />}
       >
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-6">
           <div role="region" aria-label="Steps" tabIndex={0} className="overflow-x-auto rounded-sm focus-visible:focus-ring">
             <div className="min-w-xl">
               <Stepper steps={steps} current={step} />
@@ -60,51 +108,70 @@ function Onboard({ id }: { id: string }) {
           </div>
 
           {step === 0 && (
-            <div className="flex flex-col gap-4">
-              <h3 className="text-body font-semibold text-primary">Prep sheet for the goals call</h3>
-              {goals && <Meta icon={Clock}>{dayTime(goals.at)} · {goals.recording ? "Recorded with consent" : "Not recorded: you write the notes"}</Meta>}
-              <Tile>
-                <span className="text-body font-semibold text-primary">Their LinkedIn today</span>
-                <p className="text-body-sm text-primary">Headline: &ldquo;Founder&rdquo;. 1,240 followers. Last post 8 months ago (a product launch, 40 reactions). About section is two lines. No featured posts.</p>
-              </Tile>
-              <Tile>
-                <span className="flex items-center gap-1 text-body font-semibold text-primary">
-                  <Sparkle className="size-4 text-primary-600" aria-hidden /> Questions to ask
-                </span>
-                <ul className="flex list-disc flex-col gap-1 pl-5 text-body-sm text-primary">
-                  {(goals?.prep ?? ["What do you want to be known for?", "Who do you most want to reach?", "What would success look like in 6 months?", "What is off limits: topics, people, companies?"]).map((q) => (
-                    <li key={q}>{q}</li>
+            <Step>
+              <StepHead
+                title="Prep sheet for the goals call"
+                info={goals ? (goals.recording ? "Recorded with consent. The summary is drafted from the transcript." : "Not recorded. You write the notes after the call.") : undefined}
+              >
+                {goals && (
+                  <Meta icon={Clock}>
+                    {dateTime(goals.at)} · {goals.minutes} min
+                  </Meta>
+                )}
+              </StepHead>
+              <Section title="Their LinkedIn today">
+                <Rows>
+                  {[
+                    ["Headline", "“Founder”"],
+                    ["Followers", "1,240"],
+                    ["Last post", "8 months ago, a product launch with 40 reactions"],
+                    ["About", "Two lines"],
+                    ["Featured", "None"],
+                  ].map(([k, v]) => (
+                    <Row key={k}>
+                      <span className="w-24 shrink-0 text-body-sm text-secondary">{k}</span>
+                      <span className="min-w-0 flex-1 text-body-sm text-primary">{v}</span>
+                    </Row>
                   ))}
-                  <li>Which 3 people would you most like to see your posts?</li>
-                </ul>
-              </Tile>
-              <Button className="self-start" onClick={() => setStep(1)}>
-                The call is done
-              </Button>
-            </div>
+                </Rows>
+              </Section>
+              <Section title="Suggested questions">
+                <Rows>
+                  {[...(goals?.prep ?? ["What do you want to be known for?", "Who do you most want to reach?", "What would success look like in 6 months?", "What is off limits: topics, people, companies?"]), "Which 3 people would you most like to see your posts?"].map((q, i) => (
+                    <Row key={q}>
+                      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-50 text-caption font-medium text-primary-700">{i + 1}</span>
+                      <span className="min-w-0 flex-1 text-body-sm text-primary">{q}</span>
+                    </Row>
+                  ))}
+                </Rows>
+              </Section>
+              <StepFooter>
+                <Button onClick={() => setStep(1)}>The call is done</Button>
+              </StepFooter>
+            </Step>
           )}
 
           {step === 1 && (
-            <div className="flex flex-col gap-4">
-              <h3 className="text-body font-semibold text-primary">After the goals call</h3>
-              <Banner tone="info" title={goals?.recording ? "The transcript has arrived" : "Not recorded: write up your notes"}>
-                {goals?.recording ? "The summary below is drafted from it. Correct anything, then confirm." : "Write what you heard. The summary below fills in from your notes."}
-              </Banner>
+            <Step>
+              <StepHead
+                title="After the goals call"
+                info={goals?.recording ? "The transcript has arrived. The summary below is drafted from it. Correct anything, then confirm." : "The call was not recorded. Write what you heard; the summary fills in from your notes."}
+              />
               {!goals?.recording && <Textarea label="Your notes" rows={4} {...field("notes")} />}
-              <div className="grid grid-cols-1 gap-4">
-                <Textarea label="Goals" rows={2} {...field("goal")} error={summaryError} />
-                <Textarea label="Audience" rows={2} {...field("audience")} />
-                <Textarea label="Tone" rows={2} {...field("tone")} />
-              </div>
-              <div className="flex flex-col gap-2">
-                <span className="text-body font-semibold text-primary">Off limits (saved to their Brand, where they can see and edit it)</span>
-                <OffLimitsBox b={b} />
-                <Input label="Add to off limits (optional)" placeholder="For example: never name competitors" {...field("offLimit")} />
-              </div>
-              <div className="flex gap-2">
-                <Button variant="ghost" onClick={() => setStep(0)}>
-                  Back
-                </Button>
+              <Section title="Summary">
+                <div className="flex flex-col gap-4">
+                  <Textarea label="Goals" rows={2} {...field("goal")} error={summaryError} />
+                  <Textarea label="Audience" rows={2} {...field("audience")} />
+                  <Textarea label="Tone" rows={2} {...field("tone")} />
+                </div>
+              </Section>
+              <Section title="Off limits" info="Saved to their Brand, where they can see and edit it.">
+                <div className="flex flex-col gap-4">
+                  <OffLimitsBox b={b} />
+                  <Input label="Add to off limits (optional)" placeholder="For example: never name competitors" {...field("offLimit")} />
+                </div>
+              </Section>
+              <StepFooter onBack={() => setStep(0)}>
                 <Button
                   loading={pending("summary")}
                   onClick={async () => {
@@ -124,106 +191,142 @@ function Onboard({ id }: { id: string }) {
                 >
                   Confirm summary
                 </Button>
-              </div>
-            </div>
+              </StepFooter>
+            </Step>
           )}
 
-          {step === 2 && (
-            <div className="flex flex-col gap-4">
-              <h3 className="text-body font-semibold text-primary">Set up listening</h3>
-              <Banner tone="info">Create a Google Alert for each suggested topic, then paste each alert&apos;s feed link here.</Banner>
-              <ul className="flex flex-wrap gap-2">
-                {(s?.topics.map((t) => t.name) ?? ["Local sourcing", "Food distribution Nigeria", "Lagos food startups", "Agriculture policy"]).map((t) => (
-                  <li key={t}>
-                    <Pill>{t}</Pill>
-                  </li>
-                ))}
-              </ul>
-              <p className="text-body-sm text-primary">
-                {b.alerts.length ? `${b.alerts.filter((a) => a.working).length} of ${b.alerts.length} feeds working.` : "No feeds yet."}{" "}
-                <TextLink href={`/manager/clients/${id}?tab=listening`}>
-                  Add feeds in Listening
-                </TextLink>
-              </p>
-              <div className="flex gap-2">
-                <Button variant="ghost" onClick={() => setStep(1)}>
-                  Back
-                </Button>
-                <Button onClick={() => setStep(3)}>Continue</Button>
-              </div>
-            </div>
-          )}
+          {step === 2 && (() => {
+            // One row per suggested topic, with the state of its Google Alert feed.
+            const topics = s?.topics.map((t) => t.name) ?? ["Local sourcing", "Food distribution Nigeria", "Lagos food startups", "Agriculture policy"];
+            const feedFor = (t: string) => b.alerts.find((a) => a.topic.toLowerCase() === t.toLowerCase());
+            const ready = topics.filter((t) => feedFor(t)?.working).length;
+            return (
+              <Step>
+                <StepHead title="Set up listening" info="Create a Google Alert for each topic, then paste each alert's feed link in Listening.">
+                  <Pill>
+                    {ready} of {topics.length} set up
+                  </Pill>
+                </StepHead>
+                <Section
+                  title="Topics to follow"
+                  action={
+                    <Link href={`/manager/clients/${id}?tab=listening`} className={buttonClass("secondary", "sm")}>
+                      Add feeds
+                    </Link>
+                  }
+                >
+                  <Rows>
+                    {topics.map((t, i) => {
+                      const feed = feedFor(t);
+                      return (
+                        <Row key={t}>
+                          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-50 text-caption font-medium text-primary-700">{i + 1}</span>
+                          <span className="min-w-0 flex-1 text-body-sm text-primary">{t}</span>
+                          {feed ? (
+                            <Badge status={feed.working ? "success" : "warning"}>{feed.working ? "Feed working" : "Feed not working"}</Badge>
+                          ) : (
+                            <Badge status="neutral">No feed yet</Badge>
+                          )}
+                        </Row>
+                      );
+                    })}
+                  </Rows>
+                </Section>
+                <StepFooter onBack={() => setStep(1)}>
+                  <Button onClick={() => setStep(3)}>Continue</Button>
+                </StepFooter>
+              </Step>
+            );
+          })()}
 
           {step === 3 && (
-            <div className="flex flex-col gap-4">
-              <h3 className="text-body font-semibold text-primary">Research, audit and strategy</h3>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <Step>
+              <StepHead title="Research, audit and strategy" />
+              <Rows>
                 {[
                   ["Research", "12 sources on their field, with links"],
                   ["Profile audit", "Headline, About, featured, activity"],
                   ["Strategy draft", `Version ${s?.version ?? 1}, framework v3`],
                 ].map(([t, d]) => (
-                  <Tile key={t} className="gap-1">
-                    <span className="flex items-center gap-2 text-body font-medium text-primary">
-                      <CheckCircle className="size-5 text-success" aria-hidden /> {t}
+                  <Row key={t}>
+                    <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-success-bg text-success">
+                      <CheckCircle className="size-5" aria-hidden />
                     </span>
-                    <span className="text-body-sm text-secondary">{d}</span>
-                  </Tile>
+                    <RowText title={t} sub={d} size="md" />
+                    <Badge status="success">Ready</Badge>
+                  </Row>
                 ))}
-              </div>
+              </Rows>
               {s && (
-                <Tile>
-                  <p className="text-body font-medium text-primary">{s.goal}</p>
-                  <Rows>
-                    {s.topics.map((t, i) => (
-                      <Row key={t.name}>
-                        <RowText title={`${i + 1}. ${t.name}`} sub={t.why} />
-                      </Row>
-                    ))}
-                    {s.targets.map((t) => (
-                      <Row key={t.period}>
-                        <RowText title={t.period} />
-                        <span className="text-body-sm text-primary">
-                          {t.posts} posts · {t.comments} comments · {t.connections} connections a week
-                        </span>
-                      </Row>
-                    ))}
+                <>
+                  <Section title="Goal">
+                    <p className="text-body text-primary">{s.goal}</p>
+                  </Section>
+                  <Section title="Topics">
+                    <Rows>
+                      {s.topics.map((t, i) => (
+                        <Row key={t.name}>
+                          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-50 text-caption font-medium text-primary-700">{i + 1}</span>
+                          <RowText title={t.name} sub={t.why} />
+                        </Row>
+                      ))}
+                    </Rows>
+                  </Section>
+                  <Section title="Weekly targets">
+                    <Rows>
+                      {s.targets.map((t) => (
+                        <Row key={t.period}>
+                          <span className="min-w-0 flex-1 text-body-sm font-medium text-primary">{t.period}</span>
+                          <span className="text-body-sm text-secondary">
+                            {t.posts} posts · {t.comments} comments · {t.connections} connections
+                          </span>
+                        </Row>
+                      ))}
+                    </Rows>
+                  </Section>
+                </>
+              )}
+              <Section title="Direct the strategy" info="Say what should change in plain words. Each change makes a new version of the strategy.">
+                <form
+                  className="flex flex-col gap-3"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!direction.trim()) return;
+                    const text = direction.trim();
+                    run("direct", () => act.save(), `Strategy updated: "${text}"`).then((ok) => {
+                      if (!ok) return;
+                      setDirections((d) => [...d, text]);
+                      setDirection("");
+                    });
+                  }}
+                >
+                  <Textarea
+                    label="What should change?"
+                    rows={2}
+                    placeholder={'For example: "make topic 2 about policy", "the tone is too formal"'}
+                    value={direction}
+                    onChange={(e) => setDirection(e.target.value)}
+                  />
+                  <Button type="submit" variant="secondary" size="sm" className="self-start" disabled={!direction.trim()} loading={pending("direct")}>
+                    {pending("direct") ? "Updating" : "Apply change"}
+                  </Button>
+                </form>
+                {directions.length > 0 && (
+                  <Rows label="Changes applied">
+                    {[...directions].reverse().map((d, i) => {
+                      const version = (s?.version ?? 1) + directions.length - i;
+                      return (
+                        <Row key={version}>
+                          <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary-50 text-body-sm font-medium text-primary-700">v{version}</span>
+                          <RowText title={`“${d}”`} sub={`Version ${version}`} />
+                          <Badge status="success">Applied</Badge>
+                        </Row>
+                      );
+                    })}
                   </Rows>
-                </Tile>
-              )}
-              {directions.length > 0 && (
-                <Rows>
-                  {directions.map((d, i) => (
-                    <Row key={i}>
-                      <RowText title={`Version ${(s?.version ?? 1) + i + 1}`} sub={`“${d}” applied`} />
-                    </Row>
-                  ))}
-                </Rows>
-              )}
-              <form
-                className="flex flex-col gap-2 sm:flex-row sm:items-end"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (!direction.trim()) return;
-                  const text = direction.trim();
-                  run("direct", () => act.save(), `Strategy updated: "${text}"`).then((ok) => {
-                    if (!ok) return;
-                    setDirections((d) => [...d, text]);
-                    setDirection("");
-                  });
-                }}
-              >
-                <div className="flex-1">
-                  <Input label="Direct the strategy" placeholder={'For example: "make topic 2 about policy", "the tone is too formal"'} value={direction} onChange={(e) => setDirection(e.target.value)} />
-                </div>
-                <Button type="submit" variant="secondary" loading={pending("direct")}>
-                  {pending("direct") ? "Updating" : "Apply"}
-                </Button>
-              </form>
-              <div className="flex gap-2">
-                <Button variant="ghost" onClick={() => setStep(2)}>
-                  Back
-                </Button>
+                )}
+              </Section>
+              <StepFooter onBack={() => setStep(2)}>
                 <Button
                   onClick={async () => {
                     const ok = await confirm({
@@ -238,26 +341,40 @@ function Onboard({ id }: { id: string }) {
                 >
                   Share with {first}
                 </Button>
-              </div>
-            </div>
+              </StepFooter>
+            </Step>
           )}
 
           {step === 4 && (
-            <div className="flex flex-col gap-4">
-              <h3 className="text-body font-semibold text-primary">After the strategy call</h3>
-              {stratCall && <Meta icon={Clock}>Strategy call · {dayTime(stratCall.at)}</Meta>}
-              {stratCall?.summary && <Banner tone="neutral">{stratCall.summary}</Banner>}
-              <Banner tone="info">Adjust the strategy with anything changed on the call, then send it as &ldquo;What we agreed&rdquo;. Nothing starts until {first} approves.</Banner>
-              <span className="self-start">
-                <Badge status={s?.status === "agreed-sent" ? "info" : s?.status === "change-asked" ? "warning" : "neutral"}>
-                  {s?.status === "agreed-sent" ? `Sent. Waiting for ${first} to approve` : s?.status === "change-asked" ? `${first} asked for a change` : "Not sent yet"}
-                </Badge>
-              </span>
-              {s?.changeNote && <blockquote className="rounded-md bg-warning-bg p-4 text-body-sm text-primary">&ldquo;{s.changeNote}&rdquo;</blockquote>}
-              <div className="flex gap-2">
-                <Button variant="ghost" onClick={() => setStep(3)}>
-                  Back
-                </Button>
+            <Step>
+              <StepHead title="After the strategy call" info={`Adjust the strategy with anything changed on the call, then send it as “What we agreed”. Nothing starts until ${first} approves.`}>
+                {stratCall && (
+                  <Meta icon={Clock}>
+                    {dateTime(stratCall.at)} · {stratCall.minutes} min
+                  </Meta>
+                )}
+              </StepHead>
+              {stratCall?.summary && (
+                <Section title="Call summary">
+                  <Banner tone="neutral">{stratCall.summary}</Banner>
+                </Section>
+              )}
+              <Section title="What we agreed">
+                <Rows>
+                  <Row>
+                    <span className="min-w-0 flex-1 text-body-sm text-secondary">Status</span>
+                    <Badge status={s?.status === "agreed-sent" ? "info" : s?.status === "change-asked" ? "warning" : "neutral"}>
+                      {s?.status === "agreed-sent" ? `Sent. Waiting for ${first} to approve` : s?.status === "change-asked" ? `${first} asked for a change` : "Not sent yet"}
+                    </Badge>
+                  </Row>
+                </Rows>
+                {s?.changeNote && (
+                  <Banner tone="warning" title={`${first} asked for a change`}>
+                    &ldquo;{s.changeNote}&rdquo;
+                  </Banner>
+                )}
+              </Section>
+              <StepFooter onBack={() => setStep(3)}>
                 <Button
                   variant={s?.status === "agreed-sent" ? "secondary" : "primary"}
                   onClick={() =>
@@ -272,21 +389,30 @@ function Onboard({ id }: { id: string }) {
                 >
                   {s?.status === "agreed-sent" ? "Send again" : "Send What we agreed"}
                 </Button>
-              </div>
-            </div>
+              </StepFooter>
+            </Step>
           )}
 
           {step === 5 && (
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-3">
-                <CheckCircle className="size-8 text-success" aria-hidden />
-                <p className="font-display text-display-lg text-primary">Approved. Work has started.</p>
+            <Step>
+              <div className="flex items-start gap-4">
+                <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-success-bg text-success">
+                  <CheckCircle className="size-6" aria-hidden />
+                </span>
+                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="flex items-center gap-2">
+                    <h3 className="text-body font-semibold text-primary">Approved. Work has started.</h3>
+                    <InfoTip label="About what happens next">The approved strategy set the content plan and weekly targets. They drive your Home, engagement and the weekly update.</InfoTip>
+                  </span>
+                  <p className="text-body-sm text-secondary">{first} approved the strategy. Plan the first posts next.</p>
+                </div>
               </div>
-              <Banner tone="info">The approved strategy set the content plan and weekly targets. They drive your Home, engagement and the weekly update.</Banner>
-              <Link href={`/manager/clients/${id}/content?tab=ideas`} className={`${buttonClass("primary")} self-start`}>
-                Plan the first posts
-              </Link>
-            </div>
+              <StepFooter>
+                <Link href={`/manager/clients/${id}/content?tab=ideas`} className={buttonClass("primary")}>
+                  Plan the first posts
+                </Link>
+              </StepFooter>
+            </Step>
           )}
         </div>
       </Card>

@@ -25,19 +25,33 @@ export function DelegatedAccessSetup({ inSetup = false }: { inSetup?: boolean })
 
   return (
     <Columns {...rails.clientSettings}>
-      <Card title="Set up delegated access" eyebrow={<Breadcrumbs items={inSetup ? [{ label: "Home", href: "/home" }, { label: "Set up" }, { label: "Secure access" }] : [{ label: "Full-service", href: "/full-service" }, { label: "Delegated access" }]} />}>
+      <Card
+        title="Set up delegated access"
+        info={step === 1 ? "This is what keeps you in control: every sign-in needs your approval on your phone, so no one can use your login without you." : undefined}
+        eyebrow={<Breadcrumbs items={inSetup ? [{ label: "Home", href: "/home" }, { label: "Set up", href: "/home#setup" }, { label: "Secure access" }] : [{ label: "Full-service", href: "/full-service" }, { label: "Delegated access" }]} />}
+      >
         <div className="flex flex-col gap-6">
           <Stepper steps={steps} current={step} />
 
           {step === 0 && (
-            <div className="flex flex-col gap-4">
-              <Banner tone="info" title="How delegated access works">
-                <ul className="flex flex-col gap-1">
-                  <li className="flex items-start gap-2"><ShieldCheck className="mt-0.5 size-4 shrink-0 text-primary-600" aria-hidden /> Your login is kept in an encrypted vault. Your account manager and Bluecut never see or type your password.</li>
-                  <li className="flex items-start gap-2"><DeviceMobile className="mt-0.5 size-4 shrink-0 text-primary-600" aria-hidden /> We tell you before every sign-in, and you approve it on your phone. Nothing happens without your approval.</li>
-                  <li className="flex items-start gap-2"><Lock className="mt-0.5 size-4 shrink-0 text-primary-600" aria-hidden /> We can never change your account security. You can pause or remove our access in one click, any time.</li>
+            <div className="flex flex-col gap-6">
+              <section className="flex flex-col gap-3">
+                <h3 className="text-body font-medium text-primary">How delegated access works</h3>
+                <ul className="flex flex-col divide-y divide-border rounded-md border border-border">
+                  {[
+                    { icon: ShieldCheck, text: "Your login is kept in an encrypted vault. Your account manager and Bluecut never see or type your password." },
+                    { icon: DeviceMobile, text: "We tell you before every sign-in, and you approve it on your phone. Nothing happens without your approval." },
+                    { icon: Lock, text: "We can never change your account security. You can pause or remove our access in one click, any time." },
+                  ].map((row) => (
+                    <li key={row.text} className="flex items-start gap-3 px-4 py-4">
+                      <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700">
+                        <row.icon className="size-4" aria-hidden />
+                      </span>
+                      <span className="pt-1 text-body-sm text-primary">{row.text}</span>
+                    </li>
+                  ))}
                 </ul>
-              </Banner>
+              </section>
               <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border p-4">
                 <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-1 size-4 shrink-0 accent-primary-600 focus-visible:focus-ring" />
                 <span className="text-body-sm text-primary">
@@ -51,15 +65,27 @@ export function DelegatedAccessSetup({ inSetup = false }: { inSetup?: boolean })
           )}
 
           {step === 1 && (
-            <div className="flex flex-col gap-4">
-              <Banner tone="info" title="Turn on 2FA with an authenticator app">
-                This is what keeps you in control: every sign-in needs your approval on your phone, so no one can use your login without you.
-              </Banner>
-              <ol className="flex list-decimal flex-col gap-2 pl-5 text-body-sm text-primary">
-                <li>On LinkedIn, open Settings, then Sign in &amp; security, then Two-step verification.</li>
-                <li>Choose Authenticator app and follow the steps with an app like Google Authenticator or Authy.</li>
-                <li>Keep your backup codes somewhere safe.</li>
-              </ol>
+            <div className="flex flex-col gap-6">
+              <section className="flex flex-col gap-3">
+                <h3 className="text-body font-medium text-primary">Turn on 2FA with an authenticator app</h3>
+                <ol className="flex flex-col divide-y divide-border rounded-md border border-border">
+                  {[
+                    "On LinkedIn, open Settings, then Sign in & security, then Two-step verification.",
+                    "Choose Authenticator app and follow the steps with an app like Google Authenticator or Authy.",
+                    "Keep your backup codes somewhere safe.",
+                  ].map((text, i) => (
+                    <li key={text} className="flex items-start gap-3 px-4 py-4">
+                      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-600 text-caption font-semibold text-inverse" aria-hidden>
+                        {i + 1}
+                      </span>
+                      <span className="pt-0.5 text-body-sm text-primary">
+                        <span className="sr-only">Step {i + 1}: </span>
+                        {text}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </section>
               <label className="flex cursor-pointer items-start gap-3 rounded-md border border-border p-4">
                 <input type="checkbox" checked={twoFactor} onChange={(e) => setTwoFactor(e.target.checked)} className="mt-1 size-4 shrink-0 accent-primary-600 focus-visible:focus-ring" />
                 <span className="text-body-sm text-primary">I have turned on two-step verification with an authenticator app.</span>
@@ -90,7 +116,7 @@ export function DelegatedAccessSetup({ inSetup = false }: { inSetup?: boolean })
                 }
               }}
             >
-              <Banner tone="success">
+              <Banner tone="success" icon={false}>
                 <span className="flex items-start gap-2">
                   <Lock className="mt-0.5 size-4 shrink-0 text-success" aria-hidden /> Your login is encrypted in the vault the moment you save it. Your account manager and Bluecut never see it.
                 </span>

@@ -2,37 +2,34 @@
 
 import { useState } from "react";
 import { WhatsAppDialog } from "@/components/account/NotifySettings";
-import { Banner, Button, Switch, TextButton, useTask } from "@/components/ui";
+import { Button, InfoTip, Switch, TextButton, useTask } from "@/components/ui";
 import { useMyClient, type ReviewSettings } from "@/lib/mock";
 
-const freq: { value: ReviewSettings["frequency"]; label: string; help: string }[] = [
-  { value: "weekly", label: "Once a week", help: "All of next week's posts in one go. Most people choose this." },
-  { value: "twice-weekly", label: "Twice a week", help: "Smaller batches, more often." },
-  { value: "every-post", label: "Every post", help: "Each post on its own, as it is ready." },
+const freq: { value: ReviewSettings["frequency"]; label: string }[] = [
+  { value: "weekly", label: "Once a week" },
+  { value: "twice-weekly", label: "Twice a week" },
+  { value: "every-post", label: "Every post" },
 ];
 
 const kinds: { key: keyof ReviewSettings["approval"]; label: string }[] = [
   { key: "posts", label: "Posts" },
 ];
 
-function Choice({ name, checked, onChange, label, help }: { name: string; checked: boolean; onChange: () => void; label: string; help?: string }) {
+function Choice({ name, checked, onChange, label }: { name: string; checked: boolean; onChange: () => void; label: string }) {
   return (
-    <label className={`flex cursor-pointer items-start gap-3 rounded-md border p-4 transition-colors ${checked ? "border-primary-600 bg-primary-50" : "border-border hover:border-primary-300"}`}>
-      <input type="radio" name={name} checked={checked} onChange={onChange} className="mt-1 size-4 accent-primary-600 focus-visible:focus-ring" />
-      <span className="flex flex-col gap-1">
-        <span className="text-body font-medium text-primary">{label}</span>
-        {help && <span className="text-body-sm text-secondary">{help}</span>}
-      </span>
+    <label className={`flex cursor-pointer items-center gap-3 rounded-md border p-4 transition-colors ${checked ? "border-primary-600 bg-primary-50" : "border-border hover:border-primary-300"}`}>
+      <input type="radio" name={name} checked={checked} onChange={onChange} className="size-4 shrink-0 accent-primary-600 focus-visible:focus-ring" />
+      <span className="text-body text-primary">{label}</span>
     </label>
   );
 }
 
-function Question({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
+function Question({ title, info, children }: { title: string; info?: React.ReactNode; children: React.ReactNode }) {
   return (
     <fieldset className="flex flex-col gap-3">
       <legend className="mb-3 flex items-center gap-2 font-display text-display-lg text-primary">
-        <span className="flex size-7 items-center justify-center rounded-full bg-primary-50 text-caption text-primary-700">{n}</span>
         {title}
+        {info && <InfoTip label={`About ${title}`}>{info}</InfoTip>}
       </legend>
       {children}
     </fieldset>
@@ -64,41 +61,52 @@ export function ReviewForm({
 
   return (
     <div className="flex flex-col gap-8">
-      <Question n={1} title="How often do you want to review?">
-        {freq.map((f) => (
-          <Choice key={f.value} name="frequency" checked={r.frequency === f.value} onChange={() => setR({ ...r, frequency: f.value })} label={f.label} help={f.help} />
-        ))}
+      <Question title="How often do you want to review?">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {freq.map((f) => (
+            <Choice key={f.value} name="frequency" checked={r.frequency === f.value} onChange={() => setR({ ...r, frequency: f.value })} label={f.label} />
+          ))}
+        </div>
       </Question>
 
-      <Question n={2} title="Where should we tell you?">
-        <div className="flex flex-col gap-4 rounded-md border border-border p-4">
-          <Switch label="Email" checked={r.channels.email} onChange={(v) => { setR({ ...r, channels: { ...r.channels, email: v } }); setError(undefined); }} />
-          {waReady ? (
-            <div className="flex flex-col gap-2">
-            <Switch label="WhatsApp" checked={!!r.channels.whatsapp} onChange={(v) => { setR({ ...r, channels: { ...r.channels, whatsapp: v } }); setError(undefined); }} />
-              <span className="flex flex-wrap items-center gap-3 text-body-sm text-secondary">
-                {user?.whatsapp?.number}
-                <TextButton onClick={() => setAddingWa(true)}>Change</TextButton>
-              </span>
-            </div>
-          ) : (
-            <span className="flex flex-wrap items-center justify-between gap-3">
-              <span className="flex flex-col gap-1">
-                <span className="text-body font-medium text-primary">WhatsApp</span>
-                <span className="text-body-sm text-secondary">Add your number to get a message with a link to each review.</span>
-              </span>
-              <Button size="sm" variant="secondary" onClick={() => setAddingWa(true)}>
-                Add number
-              </Button>
-            </span>
-          )}
-          <Switch label="In the app" checked={r.channels.app} onChange={(v) => { setR({ ...r, channels: { ...r.channels, app: v } }); setError(undefined); }} />
-        </div>
+      <Question title="Where should we tell you?">
+        <ul className="flex flex-col divide-y divide-border rounded-md border border-border">
+          <li className="px-4 py-4">
+            <Switch label="Email" checked={r.channels.email} onChange={(v) => { setR({ ...r, channels: { ...r.channels, email: v } }); setError(undefined); }} />
+          </li>
+          <li className="px-4 py-4">
+            {waReady ? (
+              <div className="flex flex-col gap-1">
+                <Switch label="WhatsApp" checked={!!r.channels.whatsapp} onChange={(v) => { setR({ ...r, channels: { ...r.channels, whatsapp: v } }); setError(undefined); }} />
+                <span className="flex flex-wrap items-center gap-3 text-body-sm text-secondary">
+                  {user?.whatsapp?.number}
+                  <TextButton onClick={() => setAddingWa(true)}>Change</TextButton>
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between gap-4">
+                <span className="flex min-w-0 flex-col gap-1">
+                  <span className="text-body text-primary">WhatsApp</span>
+                  <span className="text-body-sm text-secondary">Add your number to get a message with a link to each review.</span>
+                </span>
+                <Button size="sm" variant="secondary" className="shrink-0" onClick={() => setAddingWa(true)}>
+                  Add number
+                </Button>
+              </div>
+            )}
+          </li>
+          <li className="px-4 py-4">
+            <Switch label="In the app" checked={r.channels.app} onChange={(v) => { setR({ ...r, channels: { ...r.channels, app: v } }); setError(undefined); }} />
+          </li>
+        </ul>
         {user && <WhatsAppDialog key={String(addingWa)} user={user} open={addingWa} onClose={() => { setAddingWa(false); setR((x) => ({ ...x, channels: { ...x.channels, whatsapp: true } })); }} />}
         {error && <p className="text-body-sm text-danger">{error}</p>}
       </Question>
 
-      <Question n={3} title="What needs your approval?">
+      <Question
+        title="What needs your approval?"
+        info="Reactions, comments, follows and connection requests come to you as quick tasks, ready to do in seconds. LinkedIn only lets you send them, so nothing goes out without you."
+      >
         <ul className="flex flex-col rounded-md border border-border">
           {kinds.map((k) => (
             <li key={k.key} className="flex flex-col gap-2 border-b border-border p-4 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
@@ -121,24 +129,23 @@ export function ReviewForm({
           ))}
           <li className="p-4 text-body-sm text-secondary">Profile changes and sensitive topics always ask you first.</li>
         </ul>
-        <Banner tone="neutral">Reactions, comments, follows and connection requests come to you as quick tasks, ready to do in seconds. LinkedIn only lets you send them, so nothing goes out without you.</Banner>
       </Question>
 
-      <Question n={4} title="If you do not reply by the due time">
-        <Choice
-          name="noreply"
-          checked={r.ifNoReply === "wait"}
-          onChange={() => setR({ ...r, ifNoReply: "wait" })}
-          label="Wait for me"
-          help="Nothing goes out until you approve. We remind you, but we cannot post without you. Posts not approved in time are held, and your weekly update shows what was held and why."
-        />
-        <Choice
-          name="noreply"
-          checked={r.ifNoReply === "go"}
-          onChange={() => setR({ ...r, ifNoReply: "go" })}
-          label="Go ahead if I have not replied within 24 hours"
-          help="Your manager posts the reviewed drafts. You can still take any post down."
-        />
+      <Question title="If you do not reply within 24 hours">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <Choice
+            name="noreply"
+            checked={r.ifNoReply === "wait"}
+            onChange={() => setR({ ...r, ifNoReply: "wait" })}
+            label="Wait for me"
+          />
+          <Choice
+            name="noreply"
+            checked={r.ifNoReply === "go"}
+            onChange={() => setR({ ...r, ifNoReply: "go" })}
+            label="Go ahead"
+          />
+        </div>
       </Question>
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row">

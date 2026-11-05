@@ -10,6 +10,8 @@ import { prepareAttachment } from "@/lib/upload";
 import { VideoPlayer } from "@/components/content/PostMedia";
 import { act, type Message, type Reaction, type Thread, type User } from "@/lib/mock";
 import { MessageActions, MessageEditor, MessageMarks, PinnedStrip, ReactionChips } from "./MessageActions";
+import { VoiceWave } from "./VoiceWave";
+import { useDictation } from "./useDictation";
 
 /** The conversation for messages sent before conversations existed (no threadId). Shown only when it has messages. */
 const GENERAL = "general";
@@ -146,7 +148,7 @@ function ChatMessage({ m, mine, divided, author, authorPhoto, meId, nameOf, onSa
   }
   return (
     <li id={`msg-${m.id}`} className={`group flex scroll-mt-4 items-start gap-3 ${line}`}>
-      <Avatar name={author} src={authorPhoto} size="sm" />
+      <Avatar name={author} src={authorPhoto} size="md" />
       <div className="flex min-w-0 flex-1 flex-col gap-2 pt-1">
         <span className="flex items-center gap-2 text-caption text-secondary">
           <span className="font-medium text-primary">{author}</span>
@@ -161,14 +163,6 @@ function ChatMessage({ m, mine, divided, author, authorPhoto, meId, nameOf, onSa
   );
 }
 
-/* Voice to text: the browser's speech recognition where there is one; the demo fills a sample sentence otherwise. */
-type Recognition = { lang: string; interimResults: boolean; continuous: boolean; start: () => void; stop: () => void; onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onend: (() => void) | null };
-function makeRecognition(): Recognition | null {
-  if (typeof window === "undefined") return null;
-  const w = window as unknown as { SpeechRecognition?: new () => Recognition; webkitSpeechRecognition?: new () => Recognition };
-  const R = w.SpeechRecognition ?? w.webkitSpeechRecognition;
-  return R ? new R() : null;
-}
 const SAMPLE_DICTATION = "Can we move Thursday's post to next week? I want to add the new numbers first.";
 
 /**
@@ -226,8 +220,7 @@ export function ClientChat({
 
   const [text, setText] = useState("");
   const [file, setFile] = useState<Attachment | null>(null);
-  const [listening, setListening] = useState(false);
-  const recognition = useRef<Recognition | null>(null);
+  const { listening, toggle: toggleDictation } = useDictation({ text, setText, sample: SAMPLE_DICTATION });
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLLIElement>(null);
   const listRef = useRef<HTMLOListElement>(null);
@@ -286,38 +279,6 @@ export function ClientChat({
     if (!ok) {
       setText(body);
       setFile(attach);
-    }
-  };
-
-  const toggleDictation = () => {
-    if (listening) {
-      recognition.current?.stop();
-      if (!recognition.current) {
-        setText((t) => (t ? `${t} ${SAMPLE_DICTATION}` : SAMPLE_DICTATION));
-        setListening(false);
-      }
-      return;
-    }
-    const r = makeRecognition();
-    recognition.current = r;
-    setListening(true);
-    if (!r) return; // Demo: the sample sentence goes in when they press stop.
-    r.lang = "en-GB";
-    r.interimResults = false;
-    r.continuous = true;
-    r.onresult = (e) => {
-      const said = Array.from(e.results)
-        .map((res) => res[0]?.transcript ?? "")
-        .join(" ")
-        .trim();
-      if (said) setText((t) => (t ? `${t} ${said}` : said));
-    };
-    r.onend = () => setListening(false);
-    try {
-      r.start();
-    } catch {
-      setListening(false);
-      toast("Voice typing is not available in this browser. Type your message instead.", "danger");
     }
   };
 
@@ -597,13 +558,13 @@ export function ClientChat({
                   aria-pressed={listening}
                   aria-label={listening ? "Stop voice typing" : "Voice typing: speak and it types for you"}
                   title={listening ? "Stop voice typing" : "Voice typing"}
-                  className={`flex size-10 items-center justify-center rounded-full focus-visible:focus-ring ${listening ? "bg-danger-bg text-danger" : "text-secondary hover:bg-primary-50 hover:text-primary-700"}`}
+                  className={`flex size-10 items-center justify-center rounded-full focus-visible:focus-ring ${listening ? "bg-primary-50 text-primary-600 hover:bg-primary-100 hover:text-primary-700" : "text-secondary hover:bg-primary-50 hover:text-primary-700"}`}
                 >
                   {listening ? <Stop className="size-5" aria-hidden /> : <Microphone className="size-5" aria-hidden />}
                 </button>
                 {listening && (
-                  <span className="flex items-center gap-2 text-caption text-danger" aria-live="polite">
-                    <span className="size-2 animate-pulse rounded-full bg-danger" aria-hidden /> Listening
+                  <span className="flex items-center gap-2 text-caption text-primary-600" aria-live="polite">
+                    <VoiceWave active={listening} /> Listening
                   </span>
                 )}
               </span>

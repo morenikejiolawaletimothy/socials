@@ -2,7 +2,7 @@
 
 import { EnvelopeSimple, WhatsappLogo } from "@phosphor-icons/react";
 import { useState } from "react";
-import { Badge, Banner, Button, Card, CodeInput, Dialog, Input, Row, Rows, RowText, Select, Switch, TextButton, useConfirm, useTask, useToast } from "@/components/ui";
+import { Badge, Button, Card, CodeInput, Dialog, InfoTip, Input, Row, Rows, RowText, Select, Switch, TextButton, useConfirm, useTask, useToast } from "@/components/ui";
 import { act, type Client, type User } from "@/lib/mock";
 
 /** A WhatsApp number with country code: a plus, then 8 to 15 digits (spaces allowed). */
@@ -31,7 +31,7 @@ export function WhatsAppDialog({ user, open, onClose }: { user: User; open: bool
       {step === "number" ? (
         <form
           noValidate
-          className="flex flex-col gap-4"
+          className="flex flex-col gap-5"
           onSubmit={async (e) => {
             e.preventDefault();
             if (!whatsappNumberOk(number)) return setError("Enter the number with its country code, like +234 802 555 0187.");
@@ -40,7 +40,7 @@ export function WhatsAppDialog({ user, open, onClose }: { user: User; open: bool
           }}
         >
           <Input label="WhatsApp number" type="tel" autoComplete="tel" value={number} onChange={(e) => setNumber(e.target.value)} error={error} help="With the country code. We send a 6-digit code to it on WhatsApp." />
-          <div className="flex flex-wrap justify-end gap-3">
+          <div className="flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:justify-end">
             <Button variant="cancel" onClick={close}>
               Cancel
             </Button>
@@ -52,7 +52,7 @@ export function WhatsAppDialog({ user, open, onClose }: { user: User; open: bool
       ) : (
         <form
           noValidate
-          className="flex flex-col gap-4"
+          className="flex flex-col gap-5"
           onSubmit={async (e) => {
             e.preventDefault();
             if (code.length !== 6) return setError("Enter the 6 digits from the WhatsApp message.");
@@ -62,8 +62,8 @@ export function WhatsAppDialog({ user, open, onClose }: { user: User; open: bool
         >
           <p className="text-body-sm text-secondary">We sent a code to {number.trim()} on WhatsApp.</p>
           <CodeInput label="6-digit code" value={code} onChange={setCode} error={error} />
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <TextButton onClick={() => setStep("number")}>Change number</TextButton>
+          <div className="flex flex-col-reverse gap-3 border-t border-border pt-5 sm:flex-row sm:items-center sm:justify-between">
+            <TextButton className="self-center" onClick={() => setStep("number")}>Change number</TextButton>
             <Button type="submit" loading={pending("wa-code")}>
               {pending("wa-code") ? "Checking" : "Confirm"}
             </Button>
@@ -93,22 +93,28 @@ export function NotifySettings({ user, client, children }: { user: User; client?
   };
 
   return (
-    <Card title="Notifications">
+    <Card title="Notifications" info="Each message links straight to the page that needs you. Security, payments, review deadlines and account notices always reach you.">
+      {/* Three sections, each a heading over its rows, with a line and the same space between sections. */}
       <div className="flex flex-col gap-6">
-        <Banner tone="info">Each message links straight to the page that needs you. Security, payments, review deadlines and account notices always reach you.</Banner>
-
         <section className="flex flex-col gap-3" aria-labelledby="notify-how">
-          <h3 id="notify-how" className="text-body font-semibold text-primary">
-            How we tell you
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 id="notify-how" className="text-body font-semibold text-primary">
+              How we tell you
+            </h3>
+            <InfoTip label="About how we tell you">You always see everything in the app too, under Notifications.</InfoTip>
+          </div>
           <Rows label="How we tell you">
             <Row>
-              <EnvelopeSimple className="size-6 shrink-0 text-primary-600" aria-hidden />
-              <RowText size="md" title="Email" sub={user.email} />
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700">
+                <EnvelopeSimple className="size-5" aria-hidden />
+              </span>
+              <RowText size="md" title="Email" sub={<span className="break-all">{user.email}</span>} />
               <Switch hideLabel label="Email" checked={ch.email} disabled={pending("email")} onChange={(v) => setChannel("email", v)} />
             </Row>
             <Row>
-              <WhatsappLogo className="size-6 shrink-0 text-primary-600" aria-hidden />
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700">
+                <WhatsappLogo className="size-5" aria-hidden />
+              </span>
               <RowText
                 size="md"
                 title={
@@ -116,7 +122,30 @@ export function NotifySettings({ user, client, children }: { user: User; client?
                     WhatsApp {wa?.confirmed && <Badge status="success">Confirmed</Badge>}
                   </span>
                 }
-                sub={wa?.confirmed ? wa.number : "Add your number to get messages on WhatsApp."}
+                sub={
+                  wa?.confirmed ? (
+                    <span className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                      {wa.number}
+                      <TextButton onClick={() => setAdding(true)}>Change</TextButton>
+                      <TextButton
+                        onClick={() =>
+                          confirm({
+                            title: "Remove your WhatsApp number?",
+                            body: "We will stop messaging you on WhatsApp. Email stays on.",
+                            confirmLabel: "Remove",
+                            tone: "danger",
+                            action: () => act.removeWhatsApp(user.id),
+                            success: "WhatsApp number removed. We will email you instead.",
+                          })
+                        }
+                      >
+                        Remove
+                      </TextButton>
+                    </span>
+                  ) : (
+                    "Add your number to get messages on WhatsApp."
+                  )
+                }
               />
               {wa?.confirmed ? (
                 <Switch hideLabel label="WhatsApp" checked={ch.whatsapp} disabled={pending("whatsapp")} onChange={(v) => setChannel("whatsapp", v)} />
@@ -127,55 +156,41 @@ export function NotifySettings({ user, client, children }: { user: User; client?
               )}
             </Row>
           </Rows>
-          {wa?.confirmed && (
-            <span className="flex flex-wrap gap-x-6 gap-y-2">
-              <TextButton onClick={() => setAdding(true)}>Change number</TextButton>
-              <TextButton
-                onClick={() =>
-                  confirm({
-                    title: "Remove your WhatsApp number?",
-                    body: "We will stop messaging you on WhatsApp. Email stays on.",
-                    confirmLabel: "Remove",
-                    tone: "danger",
-                    action: () => act.removeWhatsApp(user.id),
-                    success: "WhatsApp number removed. We will email you instead.",
-                  })
-                }
-              >
-                Remove number
-              </TextButton>
-            </span>
-          )}
-          <p className="text-body-sm text-secondary">You always see everything in the app too, under Notifications.</p>
         </section>
 
-        <section className="flex flex-col gap-4" aria-labelledby="notify-when">
+        <section className="flex flex-col gap-3 border-t border-border pt-6" aria-labelledby="notify-when">
           <h3 id="notify-when" className="text-body font-semibold text-primary">
             When
           </h3>
-          <Select
-            label="Send messages"
-            value={ch.timing}
-            disabled={pending("timing")}
-            onChange={(e) => {
-              const v = e.target.value as "now" | "daily";
-              run("timing", () => act.setChannels(user.id, { timing: v }), v === "now" ? "We will message you as things happen." : "We will send one message a day at 9am, plus anything urgent.");
-            }}
-          >
-            <option value="now">Straight away</option>
-            <option value="daily">Together, once a day at 9am</option>
-          </Select>
-          <Switch
-            label="Quiet at night"
-            description={pending("quiet") ? "Saving" : "No messages from 9pm to 7am your time, except urgent ones."}
-            checked={ch.quietNights}
-            disabled={pending("quiet")}
-            onChange={(v) => run("quiet", () => act.setChannels(user.id, { quietNights: v }), v ? "Quiet at night is on." : "Quiet at night is off.")}
-          />
+          <div className="flex flex-col divide-y divide-border">
+            <div className="pb-4">
+              <Select
+                label="Send messages"
+                value={ch.timing}
+                disabled={pending("timing")}
+                onChange={(e) => {
+                  const v = e.target.value as "now" | "daily";
+                  run("timing", () => act.setChannels(user.id, { timing: v }), v === "now" ? "We will message you as things happen." : "We will send one message a day at 9am, plus anything urgent.");
+                }}
+              >
+                <option value="now">Straight away</option>
+                <option value="daily">Together, once a day at 9am</option>
+              </Select>
+            </div>
+            <div className="pt-4">
+              <Switch
+                label="Quiet at night"
+                description={pending("quiet") ? "Saving" : "No messages from 9pm to 7am your time, except urgent ones."}
+                checked={ch.quietNights}
+                disabled={pending("quiet")}
+                onChange={(v) => run("quiet", () => act.setChannels(user.id, { quietNights: v }), v ? "Quiet at night is on." : "Quiet at night is off.")}
+              />
+            </div>
+          </div>
         </section>
 
         {children && (
-          <section className="flex flex-col gap-3" aria-labelledby="notify-what">
+          <section className="flex flex-col gap-4 border-t border-border pt-6" aria-labelledby="notify-what">
             <h3 id="notify-what" className="text-body font-semibold text-primary">
               What we tell you about
             </h3>

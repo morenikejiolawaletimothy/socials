@@ -1,12 +1,12 @@
 "use client";
 
-import { CalendarBlank, Check, CheckCircle, Circle, CreditCard, Receipt, ShieldCheck } from "@phosphor-icons/react";
+import { CalendarBlank, Check, CheckCircle, CreditCard, Receipt, ShieldCheck } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PayDialog } from "@/components/client/PayDialog";
 import { SetupFrame } from "@/components/client/SetupFrame";
-import { VideoAddonPicker, addonCents, addonReady, makerLabel, needsQuote, type AddonChoice } from "@/components/client/VideoAddon";
-import { Banner, Button, Input, useTask } from "@/components/ui";
+import { VideoAddonPicker, addonCents, addonReady, type AddonChoice } from "@/components/client/VideoAddon";
+import { Button, Input, useTask } from "@/components/ui";
 import { date, fullName, money } from "@/lib/format";
 import { act, useData, useMyClient } from "@/lib/mock";
 import { included, plans, type PlanId } from "@/lib/pricing";
@@ -36,30 +36,52 @@ export default function PlanPage() {
   const ends = new Date(now + 14 * DAY + plan.months * 30 * DAY).toISOString();
 
   return (
-    <SetupFrame title="Choose your plan and sign" step="Plan" steps={["Choose", "Review and sign", "Pay", "Done"]} current={step}>
+    <SetupFrame
+      title="Choose your plan and sign"
+      step="Plan"
+      steps={["Choose", "Review and sign", "Pay", "Done"]}
+      current={step}
+      info={`Your first 2 weeks are free, with the full service. Your contract starts after that. We refund every paid month that has not started. If we have not received payment by ${date(contract?.freeEndsAt ?? freeEnds)}, your account pauses until you pay, and picks up again as soon as you do. We remind you 5 days and 3 days before, and on the last day.`}
+    >
       {step === 0 && (
         <div className="flex flex-col gap-6">
-          <Banner tone="success">Your first 2 weeks are free, with the full service. Your contract starts after that.</Banner>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            {plans.map((p) => (
-              <label
-                key={p.id}
-                className={`flex cursor-pointer flex-col rounded-lg border transition-colors has-focus-visible:focus-ring ${planId === p.id ? "border-primary-600 bg-primary-50" : "border-border bg-card hover:border-primary-300"}`}
-              >
-                <input type="radio" name="plan" className="sr-only" checked={planId === p.id} onChange={() => setPlanId(p.id)} />
-                <span className="flex flex-col gap-2 p-4">
-                  <span className="flex items-center justify-between gap-2">
-                    <span className="text-body font-medium text-primary">{p.label}</span>
-                    {planId === p.id ? <CheckCircle className="size-5 shrink-0 text-primary-600" aria-hidden /> : <Circle className="size-5 shrink-0 text-neutral-300" aria-hidden />}
-                  </span>
-                  <span className="font-display text-display-xl text-primary">
-                    {money(p.monthlyUsdCents)}
-                    <span className="text-body-sm font-normal text-secondary"> a month</span>
-                  </span>
-                </span>
-                <span className={`border-t p-4 text-body-sm text-secondary ${planId === p.id ? "border-primary-200" : "border-border"}`}>{p.summary}</span>
-              </label>
-            ))}
+          {/* Same arrangement as the service choice: the chosen plan sits in a light blue frame with a label above and a note below. */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 sm:items-center">
+            {plans.map((p) => {
+              const on = planId === p.id;
+              const card = (
+                <div
+                  onClick={on ? undefined : () => setPlanId(p.id)}
+                  className={`flex flex-col gap-5 rounded-lg border bg-card p-5 transition-colors ${on ? "border-primary-600" : "cursor-pointer border-border hover:border-primary-300"}`}
+                >
+                  <div className="flex flex-col gap-1">
+                    <h3 className="text-body-lg font-semibold text-primary">{p.label}</h3>
+                    <p className="text-primary">
+                      <span className="font-display text-display-xl">{money(p.monthlyUsdCents)}</span>
+                      <span className="text-body-sm text-secondary"> a month</span>
+                    </p>
+                  </div>
+                  {!on && (
+                    <Button variant="secondary" fullWidth className="border-primary-600!" onClick={() => setPlanId(p.id)}>
+                      Choose this
+                    </Button>
+                  )}
+                  <p className="text-body-sm text-secondary">{p.summary}</p>
+                </div>
+              );
+
+              if (!on) return <div key={p.id}>{card}</div>;
+
+              return (
+                <div key={p.id} className="flex flex-col rounded-xl border border-primary-200 bg-primary-50 p-1">
+                  <p className="py-2 text-center text-caption font-medium uppercase tracking-wide text-primary-700">{p.tier}</p>
+                  {card}
+                  <p className="px-4 py-3 text-center text-body-sm text-primary-700">
+                    Contract {date(freeEnds)} to {date(ends)}
+                  </p>
+                </div>
+              );
+            })}
           </div>
           <VideoAddonPicker value={video} priceCents={videoPrice} onChange={setVideo} />
           <section className="flex flex-col rounded-md border border-border">
@@ -98,34 +120,21 @@ export default function PlanPage() {
             if (ok) setStep(2);
           }}
         >
-          <Banner tone="info" title="You can pull out any time">
-            We refund every paid month that has not started. If we have not received payment by {date(freeEnds)}, your account pauses until you pay, and picks up again as soon as you do.
-          </Banner>
           <dl className="flex flex-col divide-y divide-border overflow-hidden rounded-md border border-border">
             {[
               { label: "Plan", value: `${plan.label}, ${money(plan.monthlyUsdCents)} a month` },
-              {
-                label: "Video add-on",
-                value: !video.on ? "Not added" : video.maker === "bluecut" ? "Quoted after your onboarding call" : `${money(videoPrice)} a month`,
-                note: video.on ? `${makerLabel[video.maker]}${video.maker === "both" ? ". Production quoted after your onboarding call" : ""}` : undefined,
-              },
-              { label: "Free 2 weeks", value: `Today to ${date(freeEnds)}`, note: "With the full service" },
+              { label: "Video add-on", value: !video.on ? "Not added" : video.maker === "bluecut" ? "Quoted after your onboarding call" : `${money(videoPrice)} a month` },
+              { label: "Free 2 weeks", value: `Today to ${date(freeEnds)}` },
               { label: "Contract", value: `${date(freeEnds)} to ${date(ends)}` },
             ].map((row) => (
-              <div key={row.label} className="flex flex-col gap-1 px-4 py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
+              <div key={row.label} className="flex items-center justify-between gap-6 px-5 py-4">
                 <dt className="text-body-sm text-secondary">{row.label}</dt>
-                <dd className="flex flex-col gap-1 sm:items-end sm:text-right">
-                  <span className="text-body-sm font-medium text-primary">{row.value}</span>
-                  {row.note && <span className="text-caption text-primary-600">{row.note}</span>}
-                </dd>
+                <dd className="text-right text-body-sm font-medium text-primary">{row.value}</dd>
               </div>
             ))}
-            <div className="flex flex-col gap-1 bg-neutral-25 px-4 py-3 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
-              <dt className="text-body font-medium text-primary">Total</dt>
-              <dd className="flex flex-col gap-1 sm:items-end sm:text-right">
-                <span className="text-body-lg font-medium text-primary">{money((plan.monthlyUsdCents + videoMonthly) * plan.months)}</span>
-                {video.on && needsQuote(video.maker) && <span className="text-caption text-secondary">Plus video production once you agree a quote</span>}
-              </dd>
+            <div className="flex items-center justify-between gap-6 bg-neutral-25 px-5 py-4">
+              <dt className="text-body font-semibold text-primary">Total</dt>
+              <dd className="text-right font-display text-display-lg text-primary">{money((plan.monthlyUsdCents + videoMonthly) * plan.months)}</dd>
             </div>
           </dl>
           <Input
@@ -139,12 +148,12 @@ export default function PlanPage() {
             error={error}
             help="Typing your name signs the contract."
           />
-          <div className="flex flex-col-reverse gap-3 sm:flex-row">
-            <Button variant="ghost" onClick={() => setStep(0)}>
-              Back
-            </Button>
+          <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row">
             <Button type="submit" loading={pending("sign")}>
               {pending("sign") ? "Signing" : "Sign the contract"}
+            </Button>
+            <Button variant="ghost" onClick={() => setStep(0)}>
+              Back
             </Button>
           </div>
         </form>
@@ -154,22 +163,21 @@ export default function PlanPage() {
         <div className="flex flex-col gap-6">
           <p className="text-body text-primary">Pay now, or later before your free 2 weeks end on {date(contract?.freeEndsAt ?? freeEnds)}. It is up to you.</p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Button variant="secondary" onClick={() => setPaying(true)}>
+            <Button onClick={() => setPaying(true)}>
               Pay now
             </Button>
             <Button variant="secondary" onClick={() => setStep(3)}>
               Skip for now
             </Button>
           </div>
-          <p className="text-caption text-secondary">We remind you 5 days and 3 days before, and on the last day.</p>
         </div>
       )}
 
       {step === 3 && (
         <div className="flex flex-col gap-6">
-          <div className="flex items-center gap-3">
-            <CheckCircle className="size-8 text-success" aria-hidden />
+          <div className="flex items-center justify-center gap-3 text-center">
             <p className="font-display text-display-lg text-primary">{paid ? "Signed and paid" : "Signed"}</p>
+            <CheckCircle className="size-8 shrink-0 text-success" aria-hidden />
           </div>
           <ul className="flex flex-col divide-y divide-border rounded-md border border-border">
             {[

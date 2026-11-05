@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarBlank, CalendarPlus, CheckCircle } from "@phosphor-icons/react";
+import { CalendarBlank, CalendarPlus, CheckCircle, Globe } from "@phosphor-icons/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import { SetupFrame } from "@/components/client/SetupFrame";
@@ -8,31 +8,14 @@ import { Avatar, Banner, Button, Meta, TextButton, Tile, TileFooter, useTask, us
 import { day, dayTime, dayTimeIn, fullName, time } from "@/lib/format";
 import { downloadCall } from "@/lib/calendar";
 import { act, useData, useMyClient } from "@/lib/mock";
+import { slotTimes } from "@/lib/slots";
 
 const DAY = 86_400_000;
-const hours: Record<string, number[]> = { morning: [9, 10, 11], afternoon: [13, 14, 15, 16], evening: [17, 18] };
-const weekdays = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
 /** Bookable times for the next two weeks, from the manager's open slots (M10). */
-function openTimes(slots: string[], from: number) {
-  const out: string[] = [];
-  const start = new Date(from);
-  start.setHours(0, 0, 0, 0);
-  for (let d = 1; d <= 14; d++) {
-    const date = new Date(start.getTime() + d * DAY);
-    const wd = weekdays[date.getDay()];
-    for (const s of slots.filter((x) => x.startsWith(wd))) {
-      for (const h of hours[s.split("-")[1]] ?? []) {
-        const t = new Date(date);
-        t.setHours(h, 0, 0, 0);
-        out.push(t.toISOString());
-      }
-    }
-  }
-  return out;
-}
+const openTimes = (slots: string[], from: number) => slotTimes(slots, from, 14);
 
-/** Times grouped by day, as a simple list of day rows with time buttons. */
+/** Times grouped by day: one bordered group, a row per day with the day on the left and its times in an even grid. */
 function TimePicker({ times, value, onChange }: { times: string[]; value: string | null; onChange: (t: string) => void }) {
   const days = times.reduce<Record<string, string[]>>((acc, t) => {
     const k = day(t);
@@ -40,20 +23,20 @@ function TimePicker({ times, value, onChange }: { times: string[]; value: string
     return acc;
   }, {});
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col divide-y divide-border rounded-md border border-border">
       {Object.entries(days)
         .slice(0, 6)
         .map(([d, ts]) => (
-          <div key={d} className="flex flex-col gap-2">
-            <span className="text-body-sm font-medium text-primary">{d}</span>
-            <div className="flex flex-wrap gap-2">
+          <div key={d} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:gap-6">
+            <span className="text-body-sm font-medium text-primary sm:w-28 sm:shrink-0 sm:pt-3">{d}</span>
+            <div className="grid flex-1 grid-cols-3 gap-2 sm:grid-cols-4">
               {ts.map((t) => (
                 <button
                   key={t}
                   type="button"
                   aria-pressed={value === t}
                   onClick={() => onChange(t)}
-                  className={`min-h-11 rounded-md border px-4 text-body-sm font-medium transition-colors focus-visible:focus-ring ${
+                  className={`min-h-11 w-full rounded-md border px-3 text-body-sm font-medium transition-colors focus-visible:focus-ring ${
                     value === t ? "border-primary-600 bg-primary-600 text-inverse" : "border-border-strong bg-card text-primary-700 hover:border-primary-300 hover:bg-primary-50"
                   }`}
                 >
@@ -67,15 +50,21 @@ function TimePicker({ times, value, onChange }: { times: string[]; value: string
   );
 }
 
+/** Buttons at the foot of a step: the main action first, Back beside it, under a divider. */
+function StepFooter({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row">{children}</div>;
+}
+
 /** C3 Book your two calls: why each call matters, consent to record, two times at least 3 days apart. */
 function BookCalls() {
   const router = useRouter();
   const startAt = useSearchParams().get("step") === "2" ? 2 : 0;
   const { client, user, manager, managerUser, calls } = useMyClient();
   const db = useData();
-  // A client without a confirmed manager books with the manager the platform suggests (A2).
+  // A client without a confirmed manager books into the suggested manager's open times (A2), but never sees their name:
+  // the owner may still override the suggestion. The name shows once the owner confirms.
   const m = manager ?? db.managers.find((x) => x.id === "m-ada")!;
-  const mu = managerUser ?? db.users.find((u) => u.id === m.userId);
+  const mu = managerUser;
   const goalsBooked = calls.find((c) => c.kind === "goals" && c.status !== "cancelled");
   const [step, setStep] = useState(startAt && goalsBooked ? 2 : 0);
   const [record, setRecord] = useState<boolean | null>(null);
@@ -91,15 +80,21 @@ function BookCalls() {
   if (!client || !user) return null;
 
   return (
-    <SetupFrame title="Book your two calls" step="Book your calls" steps={["Your calls", "Goals call", "Strategy call", "Booked"]} current={step}>
+    <SetupFrame
+      title="Book your two calls"
+      step="Book your calls"
+      steps={["Your calls", "Goals call", "Strategy call", "Booked"]}
+      current={step}
+      info={`${mu && manager ? "" : "We are matching you with an account manager. You will see who it is before your goals call. "}We remind you by email the day before and 1 hour before each call.`}
+    >
       {step === 0 && (
         <div className="flex flex-col gap-6">
-          {mu && (
+          {mu && manager && (
             <div className="flex items-start gap-4 rounded-md bg-neutral-25 p-4">
               <Avatar name={fullName(mu)} size="lg" />
               <div className="flex flex-col gap-1">
                 <span className="text-body font-medium text-primary">You will meet {fullName(mu)}</span>
-                <span className="text-body-sm text-secondary">Your account manager, the expert who runs your account. {m.intro}</span>
+                <span className="text-body-sm text-secondary">Your account manager, the expert who runs your account. {manager.intro}</span>
               </div>
             </div>
           )}
@@ -135,13 +130,10 @@ function BookCalls() {
 
       {step === 1 && (
         <div className="flex flex-col gap-6">
-          <p className="text-body-sm text-secondary">Times are in your time zone ({user.timeZone.replace("_", " ")}).</p>
+          <Meta icon={Globe}>Times are in your time zone ({user.timeZone.replace("_", " ")})</Meta>
           <TimePicker times={times} value={goals} onChange={(t) => { setGoals(t); setError(undefined); }} />
           {error && <p className="text-body-sm text-danger">{error}</p>}
-          <div className="flex flex-col-reverse gap-3 sm:flex-row">
-            <Button variant="ghost" onClick={() => setStep(0)}>
-              Back
-            </Button>
+          <StepFooter>
             <Button
               loading={pending("goals")}
               onClick={async () => {
@@ -151,7 +143,10 @@ function BookCalls() {
             >
               {pending("goals") ? "Booking" : "Book goals call"}
             </Button>
-          </div>
+            <Button variant="ghost" onClick={() => setStep(0)}>
+              Back
+            </Button>
+          </StepFooter>
         </div>
       )}
 
@@ -164,10 +159,7 @@ function BookCalls() {
             <Banner tone="info">No times are open yet. Your manager will open more soon, and we will remind you.</Banner>
           )}
           {error && <p className="text-body-sm text-danger">{error}</p>}
-          <div className="flex flex-col-reverse gap-3 sm:flex-row">
-            <Button variant="ghost" onClick={() => setStep(1)}>
-              Back
-            </Button>
+          <StepFooter>
             <Button
               loading={pending("strategy")}
               onClick={async () => {
@@ -177,17 +169,19 @@ function BookCalls() {
             >
               {pending("strategy") ? "Booking" : "Book strategy call"}
             </Button>
-          </div>
+            <Button variant="ghost" onClick={() => setStep(1)}>
+              Back
+            </Button>
+          </StepFooter>
         </div>
       )}
 
       {step === 3 && (
         <div className="flex flex-col gap-6">
-          <div className="flex items-center gap-3">
-            <CheckCircle className="size-8 text-success" aria-hidden />
+          <div className="flex items-center justify-center gap-3 text-center">
             <p className="font-display text-display-lg text-primary">Both calls are booked</p>
+            <CheckCircle className="size-8 shrink-0 text-success" aria-hidden />
           </div>
-          <Banner tone="info">We remind you by email the day before and 1 hour before each call.</Banner>
           <ul className="flex flex-col gap-3">
             {[
               { name: "Goals call", at: goals },

@@ -85,6 +85,7 @@ export function NotificationsPage({ layout }: { layout?: RailSet }) {
     </Card>
   );
 
-  if (!layout) return <div className="mx-auto flex max-w-2xl flex-col gap-6">{card}</div>;
+  // The owner dashboard has no rails: the card fills the page width, like the other owner pages.
+  if (!layout) return <div className="flex flex-col gap-6">{card}</div>;
   return <Columns {...rails[layout]}>{card}</Columns>;
 }

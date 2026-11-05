@@ -1,13 +1,14 @@
 "use client";
 
-import { ArrowSquareOut, CheckCircle, Copy } from "@phosphor-icons/react";
+import { ArrowSquareOut, CheckCircle, Clock, Copy } from "@phosphor-icons/react";
 import { useState } from "react";
+import { PostThumb } from "@/components/content/PostMedia";
 import { PostPreview } from "@/components/content/PostPreview";
 import { plainText } from "@/components/content/PostText";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Badge, Banner, Button, Card, EmptyState, Pill, textActionClass, useTask, useToast } from "@/components/ui";
-import { dayTimeIn, fullName, plural } from "@/lib/format";
+import { Badge, Banner, Button, Card, EmptyState, Meta, Pill, Tabs, Tile, TileAction, TileFooter, textActionClass, useTask, useToast } from "@/components/ui";
+import { agoIn, dayTimeIn, fullName, plural } from "@/lib/format";
 import { act, useMyClient, type Post } from "@/lib/mock";
 
 const LINKEDIN_COMPOSER = "https://www.linkedin.com/feed/?shareActive=true";
@@ -37,19 +38,21 @@ function PublishItem({ post, author }: { post: Post; author: { name: string; tit
   const media = mediaNote(post);
 
   return (
-    <Card title={post.topic} action={overdue ? <Badge status="warning">Past the best time</Badge> : post.scheduledFor ? <Badge status="info">Best time {dayTimeIn(post.scheduledFor)}</Badge> : undefined}>
+    <Card
+      title={post.topic}
+      action={overdue ? <Badge status="warning">Past the best time</Badge> : post.scheduledFor ? <Meta icon={Clock}>Best time {dayTimeIn(post.scheduledFor)}</Meta> : undefined}
+      info={
+        <ol className="flex list-decimal flex-col gap-1 pl-4">
+          <li>Copy the caption.</li>
+          <li>Open LinkedIn and paste it.</li>
+          {media && <li>{media}</li>}
+          <li>Post it, then mark it posted here.</li>
+        </ol>
+      }
+    >
       <div className="flex flex-col gap-4">
         {post.why && <Banner tone="info">Why: {post.why}</Banner>}
         <PostPreview post={post} author={author} meta={overdue ? "Ready to publish" : post.scheduledFor ? `Best time ${dayTimeIn(post.scheduledFor)}` : "Ready to publish"} clamp={false} />
-
-        <Banner tone="neutral">
-          <ol className="flex list-decimal flex-col gap-1 pl-4">
-            <li>Copy the caption.</li>
-            <li>Open LinkedIn and paste it.</li>
-            {media && <li>{media}</li>}
-            <li>Post it, then mark it posted here.</li>
-          </ol>
-        </Banner>
 
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
           <Button
@@ -87,7 +90,7 @@ function PublishItem({ post, author }: { post: Post; author: { name: string; tit
 /** C7 Publish: approved posts the client publishes themselves (no API). Full-service clients never see this; their team does it. */
 export function PublishList() {
   const { client, user, posts, managerUser } = useMyClient();
-  const [showDone, setShowDone] = useState(false);
+  const [tab, setTab] = useState<"publish" | "done">("publish");
   if (!client || !user) return null;
 
   const toPublish = posts
@@ -99,32 +102,67 @@ export function PublishList() {
 
   return (
     <Columns {...rails.clientMain}>
-      <Card title="Posts to publish" action={toPublish.length > 0 ? <Pill>{plural(toPublish.length, "post")}</Pill> : undefined}>
-        <div className="flex flex-col gap-4">
-          <Banner tone="info" closeKey="publish-how">
-            {managerUser?.firstName ?? "Your manager"} prepared these and you approved them. LinkedIn only lets you post from your own account, so publish each one yourself: it takes about a minute.
-          </Banner>
-          {overdue > 0 && <Banner tone="warning">{plural(overdue, "post")} past the best time to post. Publishing now still works.</Banner>}
-          {toPublish.length === 0 && <EmptyState title="Nothing to publish right now">When you approve a post and your manager sets its time, it shows here ready to publish.</EmptyState>}
-        </div>
+      <Card
+        title="Posts to publish"
+        padding="sm"
+        action={toPublish.length > 0 ? <Pill>{plural(toPublish.length, "post")}</Pill> : undefined}
+        info={`${managerUser?.firstName ?? "Your manager"} prepared these and you approved them. LinkedIn only lets you post from your own account, so publish each one yourself: it takes about a minute.`}
+      >
+        {/* The tab row sits right under the title; the picked tab's cards follow below the card. */}
+        <Tabs
+          label="Publish sections"
+          value={tab}
+          onChange={setTab}
+          className="max-w-none w-full bg-neutral-50!"
+          tabs={[
+            { value: "publish", label: "To publish", count: toPublish.length },
+            { value: "done", label: "Just published", count: justLive.length },
+          ]}
+        />
       </Card>
 
-      {toPublish.map((p) => (
-        <PublishItem key={p.id} post={p} author={author} />
-      ))}
+      {tab === "publish" && (
+        <>
+          {overdue > 0 && <Banner tone="warning">{plural(overdue, "post")} past the best time to post. Publishing now still works.</Banner>}
+          {toPublish.length === 0 && (
+            <Card>
+              <EmptyState title="Nothing to publish right now">When you approve a post and your manager sets its time, it shows here ready to publish.</EmptyState>
+            </Card>
+          )}
+          {toPublish.map((p) => (
+            <PublishItem key={p.id} post={p} author={author} />
+          ))}
+        </>
+      )}
 
-      {justLive.length > 0 && (
-        <Card title="Just published" action={<button type="button" className={textActionClass} onClick={() => setShowDone(!showDone)}>{showDone ? "Hide" : `Show ${justLive.length}`}</button>}>
-          {showDone ? (
-            <ul className="flex flex-col gap-2">
+      {tab === "done" && (
+        <Card title="Just published" action={justLive.length > 0 ? <Pill>{plural(justLive.length, "post")}</Pill> : undefined} info="Posts you have published show here, then move to Live.">
+          {justLive.length ? (
+            // The same post tile as the client Content page: thumbnail, first line and topic, then the footer (when it went out, View in Live).
+            <ul className="flex flex-col gap-3">
               {justLive.map((p) => (
-                <li key={p.id} className="flex items-center gap-2 text-body-sm text-primary">
-                  <CheckCircle className="size-4 shrink-0 text-success" aria-hidden /> {plainText(p.text).split("\n")[0]}
+                <li key={p.id}>
+                  <Tile href="/content?tab=live">
+                    <span className="flex items-start gap-4">
+                      <PostThumb post={p} size="lg" />
+                      <span className="flex min-w-0 flex-1 flex-col gap-1">
+                        <span className="line-clamp-2 text-body font-medium text-primary">{plainText(p.text).split("\n")[0]}</span>
+                        <span className="text-body-sm text-secondary">{p.topic}</span>
+                      </span>
+                    </span>
+                    <TileFooter>
+                      <span className="flex flex-wrap items-center gap-3">
+                        {p.publishedAt && <Meta icon={CheckCircle}>Published {agoIn(p.publishedAt)}</Meta>}
+                        <Badge status="success">Published</Badge>
+                      </span>
+                      <TileAction>View in Live</TileAction>
+                    </TileFooter>
+                  </Tile>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-body-sm text-secondary">Posts you have published show here, then move to Live.</p>
+            <p className="text-body-sm text-secondary">Nothing published yet.</p>
           )}
         </Card>
       )}

@@ -1,12 +1,12 @@
 "use client";
 
-import { CalendarBlank, PaperPlaneTilt } from "@phosphor-icons/react";
+import { PaperPlaneTilt, Timer } from "@phosphor-icons/react";
 import { useState } from "react";
 import { whatsappNumberOk } from "@/components/account/NotifySettings";
 import Link from "next/link";
 import { Avatar, Badge, Banner, Breadcrumbs, Button, buttonClass, Card, Dialog, Input, Meta, Select, Textarea, TextLink, Tile, TileFooter, useTask } from "@/components/ui";
 import { taskProgress } from "@/lib/engage";
-import { agoIn, dayIn } from "@/lib/format";
+import { agoIn, dayTimeIn } from "@/lib/format";
 import { act, useData, type Assistant, type QuickTask } from "@/lib/mock";
 
 /** The kinds of quick task an assistant can take, in the words clients see. */
@@ -115,7 +115,16 @@ export function HandoffCard({ task, clientId }: { task: QuickTask; clientId: str
   if (task.done && !h) return null;
 
   return (
-    <Card title={active ? `With ${first}` : "Someone does this for you?"}>
+    <Card
+      title={active ? `With ${first}` : "Someone does this for you?"}
+      info={
+        active || (task.done && h)
+          ? undefined
+          : assistants.length === 0
+            ? "Add your executive or personal assistant and we send them a private link to this task by email or WhatsApp. They do not need an account, and they only see this task."
+            : `We send ${assistants.length === 1 ? assistants[0].name.split(" ")[0] : "them"} a private link to this task only. They can do everything you can here, and you see their progress.`
+      }
+    >
       <div className="flex flex-col gap-4">
         {active && a ? (
           <Tile>
@@ -134,7 +143,7 @@ export function HandoffCard({ task, clientId }: { task: QuickTask; clientId: str
               </span>
             </span>
             <TileFooter>
-              <Meta icon={CalendarBlank}>Link works until {dayIn(h.expiresAt)}</Meta>
+              <Meta icon={Timer}>Link works until {dayTimeIn(h.expiresAt)}</Meta>
               <span className="flex flex-wrap gap-2">
                 <Button
                   size="sm"
@@ -151,7 +160,6 @@ export function HandoffCard({ task, clientId }: { task: QuickTask; clientId: str
                 </Button>
                 <Button
                   size="sm"
-                  variant="secondary"
                   loading={pending("resend")}
                   onClick={() => run("resend", () => act.resendHandoff(task.id), `Sent ${first} a new link. The old one no longer works.`)}
                 >
@@ -164,9 +172,6 @@ export function HandoffCard({ task, clientId }: { task: QuickTask; clientId: str
           <Banner tone="success">{task.doneBy ? `${task.doneBy} finished this.` : "Done. The link to your assistant has stopped working."}</Banner>
         ) : assistants.length === 0 ? (
           <>
-            <Banner tone="info">
-              Add your executive or personal assistant and we send them a private link to this task by email or WhatsApp. They do not need an account, and they only see this task.
-            </Banner>
             <Link href={`/assistants/new?back=${encodeURIComponent(`/tasks/${task.id}`)}`} className={`self-start ${buttonClass("secondary")}`}>
               Add an assistant
             </Link>
@@ -174,10 +179,7 @@ export function HandoffCard({ task, clientId }: { task: QuickTask; clientId: str
         ) : (
           <>
             {h?.endedReason === "taken-back" && <Banner tone="neutral">You took this back from {first}. Their link no longer works.</Banner>}
-            <Banner tone="info">
-              We send {assistants.length === 1 ? assistants[0].name.split(" ")[0] : "them"} a private link to this task only. They can do everything you can here, and you see their progress.
-            </Banner>
-            <Button variant="secondary" className="self-start" onClick={() => setOpen(true)}>
+            <Button className="self-start" onClick={() => setOpen(true)}>
               <PaperPlaneTilt className="size-4" aria-hidden /> Hand to my assistant
             </Button>
           </>
@@ -187,10 +189,15 @@ export function HandoffCard({ task, clientId }: { task: QuickTask; clientId: str
         </TextLink>
       </div>
 
-      <Dialog open={open} onClose={() => setOpen(false)} title="Hand to your assistant">
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        title="Hand to your assistant"
+        info="The link opens this task only and works for 14 days, or until it is done or you take it back. They cannot see anything else on your account."
+      >
         <form
           noValidate
-          className="flex flex-col gap-4"
+          className="flex flex-col gap-5"
           onSubmit={async (e) => {
             e.preventDefault();
             const to = assistants.find((x) => x.id === pick);
@@ -201,7 +208,7 @@ export function HandoffCard({ task, clientId }: { task: QuickTask; clientId: str
             }
           }}
         >
-          {assistants.length > 1 && (
+          {assistants.length > 1 ? (
             <Select label="Who" value={pick} onChange={(e) => setPick(e.target.value)}>
               {assistants.map((x) => (
                 <option key={x.id} value={x.id}>
@@ -209,17 +216,27 @@ export function HandoffCard({ task, clientId }: { task: QuickTask; clientId: str
                 </option>
               ))}
             </Select>
+          ) : (
+            assistants[0] && (
+              // One assistant: show who gets it and how, instead of a one-option dropdown.
+              <div className="flex items-center gap-3 rounded-md border border-border p-3">
+                <Avatar name={assistants[0].name} size="md" />
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-body font-medium text-primary">
+                    {assistants[0].name} ({assistants[0].role})
+                  </span>
+                  <span className="text-body-sm text-secondary">Sent by {via(assistants[0])}</span>
+                </span>
+              </div>
+            )
           )}
           <Textarea label="A note for them (optional)" value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} placeholder="Please finish these by Thursday." />
-          <Banner tone="neutral">
-            The link opens this task only and works for 14 days, or until it is done or you take it back. They cannot see anything else on your account.
-          </Banner>
-          <div className="flex flex-wrap justify-end gap-3">
-            <Button variant="cancel" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
+          <div className="flex flex-col gap-3 border-t border-border pt-5 sm:flex-row-reverse sm:justify-start">
             <Button type="submit" loading={pending("hand")}>
               {pending("hand") ? "Sending" : "Send"}
+            </Button>
+            <Button variant="cancel" onClick={() => setOpen(false)}>
+              Cancel
             </Button>
           </div>
         </form>

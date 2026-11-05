@@ -1,7 +1,7 @@
-import { NotificationsPage } from "@/components/shell/NotificationsPage";
+import { AdminNotifications } from "@/components/admin/AdminNotifications";
 
 export const metadata = { title: "Notifications · Bluecut Socials" };
 
 export default function Page() {
-  return <NotificationsPage />;
+  return <AdminNotifications />;
 }

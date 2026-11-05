@@ -2,8 +2,10 @@ import Image from "next/image";
 
 const sizes = {
   xs: "size-6 text-caption",
+  /** Only for the top bar's Me menu, which has to fit inside the 56px bar. */
   sm: "size-8 text-caption",
-  md: "size-10 text-body-sm",
+  /** The product avatar: 56px everywhere (lists, rows, tiles, tables, chat, cards). */
+  md: "size-14 text-body-lg",
   lg: "size-14 text-body-lg",
   xl: "size-20 font-display text-display-xl",
 };

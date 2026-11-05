@@ -4,14 +4,17 @@ import { CheckCircle, XCircle } from "@phosphor-icons/react";
 import { useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Badge, Banner, Button, Card, Dialog, EmptyState, Textarea, TextLink, useTask } from "@/components/ui";
+import { Badge, Banner, Button, Card, Dialog, EmptyState, InfoTip, Textarea, useTask } from "@/components/ui";
 import { date } from "@/lib/format";
 import { act, useMyClient } from "@/lib/mock";
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, info, children }: { title: string; info?: React.ReactNode; children: React.ReactNode }) {
   return (
     <section className="flex flex-col gap-2 border-t border-border pt-6">
-      <h3 className="font-display text-display-lg text-primary">{title}</h3>
+      <div className="flex items-center gap-2">
+        <h3 className="font-display text-display-lg text-primary">{title}</h3>
+        {info && <InfoTip label={`About ${title}`}>{info}</InfoTip>}
+      </div>
       {children}
     </section>
   );
@@ -95,7 +98,7 @@ export default function StrategyPage() {
           </Section>
 
           {brand && brand.offLimits.length > 0 && (
-            <Section title="Off limits">
+            <Section title="Off limits" info="We check every post and every comment against this. Change it any time in Your brand.">
               <ul className="flex flex-wrap gap-2">
                 {brand.offLimits.map((o) => (
                   <li key={o.id} className="flex items-center gap-1.5 rounded-full bg-danger-bg px-3 py-1 text-body-sm text-primary">
@@ -104,9 +107,6 @@ export default function StrategyPage() {
                   </li>
                 ))}
               </ul>
-              <Banner tone="info">
-                We check every post and every comment against this. Change it any time in <TextLink href="/brand">Your brand</TextLink>.
-              </Banner>
             </Section>
           )}
 

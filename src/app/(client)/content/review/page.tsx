@@ -114,8 +114,17 @@ function ReviewScreen({ only }: { only?: string }) {
     <Columns {...rails.clientMain}>
       <Card
         title={single ? "Review this post" : "Review your posts"}
-        eyebrow={<Breadcrumbs items={[{ label: "Content", href: "/content" }, { label: "Review" }]} />}
+        eyebrow={<Breadcrumbs items={[{ label: "Content", href: "/content", back: true }, { label: "Review" }]} />}
         action={pending.length > 1 && <Pill>{plural(pending.length, "post")} left</Pill>}
+        info={
+          due && pending.length > 0
+            ? `Due ${dayTimeIn(due)}. ${
+                client?.review.ifNoReply === "wait"
+                  ? "If you do not reply by then, we hold these posts and nothing goes out. You can change this in Control."
+                  : "If you do not reply within 24 hours, your manager posts them. You can still take any post down."
+              }`
+            : undefined
+        }
       >
         {pending.length === 0 ? (
           <div className="flex flex-col items-center gap-3 py-8 text-center">
@@ -143,13 +152,6 @@ function ReviewScreen({ only }: { only?: string }) {
                 {pending.length === 1
                   ? "This post was held because it was not reviewed by its due time. Nothing went out. Approve it or ask for changes now and it goes back on the plan."
                   : "Overdue posts were held because they were not reviewed by their due time. Nothing went out. Approve them or ask for changes now and they go back on the plan."}
-              </Banner>
-            )}
-            {due && (
-              <Banner tone="info" title={`Due ${dayTimeIn(due)}`}>
-                {client?.review.ifNoReply === "wait"
-                  ? "If you do not reply by then, we hold these posts and nothing goes out. You can change this in Control."
-                  : "If you do not reply within 24 hours, your manager posts them. You can still take any post down."}
               </Banner>
             )}
 

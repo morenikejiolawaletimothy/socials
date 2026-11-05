@@ -2,7 +2,7 @@
 
 import { CalendarBlank, Plus } from "@phosphor-icons/react";
 import { useState } from "react";
-import { Badge, Banner, Button, Card, Dialog, Input, Meta, PageHeader, Pill, Row, Rows, RowText, Tabs, Textarea, Tile, TileFooter, textActionClass, useConfirm, useTask } from "@/components/ui";
+import { Badge, Button, Card, Dialog, Input, Meta, PageHeader, Pill, Row, Rows, Tabs, Textarea, Tile, TileFooter, textActionClass, useConfirm, useTask } from "@/components/ui";
 import { date, plural } from "@/lib/format";
 import { act, useData, type FrameworkItem } from "@/lib/mock";
 
@@ -101,47 +101,48 @@ export default function FrameworkPage() {
   const [error, setError] = useState<string>();
   const current = db.frameworkVersions[0];
   const label = sections.find((s) => s.value === section)?.label ?? "";
+  const items = db.framework.filter((f) => f.section === section);
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Framework"
-        description={`Your method, used by every manager and every proposal. In use: ${current.version}.`}
         action={<Button onClick={() => setPublishing(true)}>Publish new version</Button>}
       />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <Card padding="none" className="lg:col-span-2">
-          <div className="px-6 pt-2">
-            <Tabs label="Framework sections" value={section} onChange={setSection} tabs={sections} />
+        <div className="flex flex-col gap-4 lg:col-span-2">
+          {/* Same tab card as the Overview: the tab row on its own, then the picked section's card under it. */}
+          <div className="rounded-lg border border-border bg-card p-2">
+            <Tabs label="Framework sections" value={section} onChange={setSection} tabs={sections} className="max-w-none w-full bg-neutral-50!" />
           </div>
-          <ul className="flex flex-col gap-3 p-6">
-            {db.framework
-              .filter((f) => f.section === section)
-              .map((f) => (
+          <Card title={label} padding="none" action={<Pill>{plural(items.length, "item")}</Pill>}>
+            <ul className="flex flex-col gap-3 p-6">
+              {items.map((f) => (
                 <Item key={f.id} item={f} />
               ))}
-            {!db.framework.some((f) => f.section === section) && <li className="text-body-sm text-secondary">Nothing here yet.</li>}
-          </ul>
-          <div className="border-t border-border px-6 py-4">
-            <button
-              type="button"
-              onClick={() => setAdding(true)}
-              className={textActionClass}
-            >
-              <Plus className="size-4" aria-hidden /> Add to {label.toLowerCase()}
-            </button>
-          </div>
-        </Card>
-        <Card title="Versions" action={<Pill>{plural(db.frameworkVersions.length, "version")}</Pill>}>
-          <Rows>
+              {!items.length && <li className="text-body-sm text-secondary">Nothing here yet.</li>}
+            </ul>
+            <div className="border-t border-border px-6 py-4">
+              <button type="button" onClick={() => setAdding(true)} className={textActionClass}>
+                <Plus className="size-4" aria-hidden /> Add to {label.toLowerCase()}
+              </button>
+            </div>
+          </Card>
+        </div>
+        <Card title="Versions" padding="none" className="self-start" action={<Pill>{plural(db.frameworkVersions.length, "version")}</Pill>} info="Each client's strategy records the version it was built on.">
+          {/* Edge to edge, newest first: the version in a light-blue square, what changed and when beside it, In use on the right. */}
+          <Rows flush label="Versions">
             {db.frameworkVersions.map((v, i) => (
-              <Row key={v.version} className="items-start">
-                <RowText title={v.version} sub={`${v.note} · ${date(v.at)}`} />
+              <Row key={v.version} className="flex-nowrap items-start">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary-50 text-body-sm font-medium text-primary-700">{v.version}</span>
+                <span className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="text-body-sm text-primary">{v.note}</span>
+                  <span className="text-caption text-secondary">{date(v.at)}</span>
+                </span>
                 {i === 0 && <Badge status="success">In use</Badge>}
               </Row>
             ))}
           </Rows>
-          <Banner tone="info" className="mt-4">Each client&apos;s strategy records the version it was built on.</Banner>
         </Card>
       </div>
 
@@ -176,8 +177,12 @@ export default function FrameworkPage() {
         </div>
       </Dialog>
 
-      <Dialog open={publishing} onClose={() => setPublishing(false)} title={`Publish v${Number(current.version.slice(1)) + 1}?`}>
-        <Banner tone="info">Every new strategy and proposal follows it from now on. Strategies already approved keep their version until their next review.</Banner>
+      <Dialog
+        open={publishing}
+        onClose={() => setPublishing(false)}
+        title={`Publish v${Number(current.version.slice(1)) + 1}?`}
+        info="Every new strategy and proposal follows it from now on. Strategies already approved keep their version until their next review."
+      >
         <Textarea label="What changed" rows={2} value={note} onChange={(e) => setNote(e.target.value)} help="Managers see this note." />
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Button variant="cancel" onClick={() => setPublishing(false)}>

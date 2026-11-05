@@ -8,15 +8,17 @@ export type Plan = {
   id: PlanId;
   months: 3 | 6 | 12;
   label: string;
+  /** Short tier name shown above the chosen plan card. */
+  tier: string;
   /** Monthly price in minor units (cents), USD base. */
   monthlyUsdCents: number;
   summary: string;
 };
 
 export const plans: Plan[] = [
-  { id: "3m", months: 3, label: "3 months", monthlyUsdCents: 90000, summary: "Get set up and build a steady presence." },
-  { id: "6m", months: 6, label: "6 months", monthlyUsdCents: 80000, summary: "Time to build real momentum toward your goal." },
-  { id: "12m", months: 12, label: "12 months", monthlyUsdCents: 70000, summary: "Become a known voice in your field." },
+  { id: "3m", months: 3, label: "3 months", tier: "Starter", monthlyUsdCents: 90000, summary: "Get set up and build a steady presence." },
+  { id: "6m", months: 6, label: "6 months", tier: "Standard", monthlyUsdCents: 80000, summary: "Time to build real momentum toward your goal." },
+  { id: "12m", months: 12, label: "12 months", tier: "Steady", monthlyUsdCents: 70000, summary: "Become a known voice in your field." },
 ];
 
 export const included = [

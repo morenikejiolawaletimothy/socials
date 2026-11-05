@@ -5,12 +5,13 @@ import { useState } from "react";
 
 type Tone = "info" | "success" | "warning" | "danger" | "neutral";
 
-const tones: Record<Tone, { box: string; icon: string; Icon: typeof Info }> = {
-  info: { box: "bg-info-bg border-primary-200", icon: "text-primary-600", Icon: Info },
+const tones: Record<Tone, { box: string; icon: string; Icon?: typeof Info }> = {
+  // Information notes (info and neutral) are plain text in the grey box, without an icon.
+  info: { box: "bg-neutral-25 border-border", icon: "text-secondary" },
   success: { box: "bg-success-bg border-success", icon: "text-success", Icon: CheckCircle },
   warning: { box: "bg-warning-bg border-warning", icon: "text-warning", Icon: Warning },
   danger: { box: "bg-danger-bg border-danger", icon: "text-danger", Icon: WarningCircle },
-  neutral: { box: "bg-neutral-25 border-border", icon: "text-secondary", Icon: Info },
+  neutral: { box: "bg-neutral-25 border-border", icon: "text-secondary" },
 };
 
 /** Notes closed during this visit. Kept in memory only, so a full page reload clears it. */
@@ -30,8 +31,11 @@ export function Banner({
   children,
   action,
   closeKey,
+  icon = true,
   className = "",
 }: {
+  /** Set to false to hide the tone icon (for a note that carries its own icon). */
+  icon?: boolean;
   tone?: Tone;
   title?: string;
   children?: React.ReactNode;
@@ -40,7 +44,7 @@ export function Banner({
   closeKey?: string;
   className?: string;
 }) {
-  const t = tones[tone];
+  const t = icon ? tones[tone] : { ...tones[tone], Icon: undefined };
   // Info notes are always closeable. Their key falls back to the title or plain text, so a closed note stays closed on other pages.
   const closable = !!closeKey || tone === "info";
   const key = closeKey ?? (title || (typeof children === "string" ? children : undefined));
@@ -58,9 +62,11 @@ export function Banner({
   return (
     <div role={tone === "danger" ? "alert" : "status"} className={`flex flex-col gap-3 rounded-md border px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-8 ${t.box} ${className}`}>
       <div className="flex min-w-0 flex-1 items-start gap-3">
-        <span className={`flex shrink-0 items-center ${title ? "h-6" : "h-5"}`}>
-          <t.Icon className={`size-5 ${t.icon}`} aria-hidden />
-        </span>
+        {t.Icon && (
+          <span className={`flex shrink-0 items-center ${title ? "h-6" : "h-5"}`}>
+            <t.Icon className={`size-5 ${t.icon}`} aria-hidden />
+          </span>
+        )}
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           {title && <p className="text-body font-semibold text-neutral-900">{title}</p>}
           {children && <div className="text-body-sm text-neutral-700">{children}</div>}
@@ -77,7 +83,7 @@ export function Banner({
         )}
       </div>
       {action && (
-        <div className="flex shrink-0 flex-wrap items-center gap-2 pl-8 sm:pl-0">
+        <div className={`flex shrink-0 flex-wrap items-center gap-2 sm:pl-0 ${t.Icon ? "pl-8" : ""}`}>
           {action}
           {closable && (
             <button

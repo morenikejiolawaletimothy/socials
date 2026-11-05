@@ -65,7 +65,7 @@ export default function AccountPage() {
             <Input label="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)} error={nameError} />
             <Input label="Last name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
           </div>
-          <Select label="Time zone" help="We show call times and due times in this time zone." value={zone} onChange={(e) => setZone(e.target.value)}>
+          <Select label="Time zone" info="We show call times and due times in this time zone." value={zone} onChange={(e) => setZone(e.target.value)}>
               {timeZones(user.timeZone).map((z) => (
                 <option key={z} value={z}>
                   {zoneLabel(z)}
@@ -80,35 +80,49 @@ export default function AccountPage() {
 
       <Card title="Sign-in and security">
         <div className="flex flex-col gap-6">
-          <dl className="flex flex-col gap-1">
-            <dt className="text-caption text-secondary">Email</dt>
-            <dd className="text-body text-primary">{user.email}</dd>
-          </dl>
-          <Link href="/reset" className={`self-start ${textActionClass}`}>
-            Change password
-          </Link>
-          <Switch
-            label="Two-step sign-in"
-            description={pending("2fa") ? "Saving" : "Ask for a code from your authenticator app when you sign in. Recommended."}
-            checked={user.twoStep}
-            disabled={pending("2fa")}
-            onChange={(v) =>
-              v
-                ? run("2fa", () => act.setTwoStep(user.id, true), "Two-step sign-in is on.")
-                : confirm({
-                    title: "Turn off two-step sign-in?",
-                    body: "You will sign in with your password only.",
-                    warning: "Your account is easier to break into without it. We recommend keeping it on.",
-                    confirmLabel: "Turn off",
-                    tone: "danger",
-                    action: () => act.setTwoStep(user.id, false),
-                    success: "Two-step sign-in is off.",
-                  })
-            }
-          />
-          <div className="flex flex-col gap-3">
-            <span className="flex items-center justify-between gap-3">
-              <span className="text-body font-semibold text-primary">Where you are signed in</span>
+          {/* One row per setting: what it is on the left, its action on the right, a line between rows. */}
+          <div className="flex flex-col divide-y divide-border">
+            <dl className="flex flex-col gap-1 pb-4">
+              <dt className="text-body-sm text-secondary">Email</dt>
+              <dd className="break-all text-body font-medium text-primary">{user.email}</dd>
+            </dl>
+            <div className="flex items-center justify-between gap-4 py-4">
+              <dl className="flex flex-col gap-1">
+                <dt className="text-body-sm text-secondary">Password</dt>
+                <dd className="text-body font-medium text-primary" aria-label="Hidden">
+                  ••••••••
+                </dd>
+              </dl>
+              <Link href="/reset" className={`shrink-0 ${textActionClass}`}>
+                Change password
+              </Link>
+            </div>
+            <div className="pt-4">
+              <Switch
+                label="Two-step sign-in"
+                description={pending("2fa") ? "Saving" : "Ask for a code from your authenticator app when you sign in. Recommended."}
+                checked={user.twoStep}
+                disabled={pending("2fa")}
+                onChange={(v) =>
+                  v
+                    ? run("2fa", () => act.setTwoStep(user.id, true), "Two-step sign-in is on.")
+                    : confirm({
+                        title: "Turn off two-step sign-in?",
+                        body: "You will sign in with your password only.",
+                        warning: "Your account is easier to break into without it. We recommend keeping it on.",
+                        confirmLabel: "Turn off",
+                        tone: "danger",
+                        action: () => act.setTwoStep(user.id, false),
+                        success: "Two-step sign-in is off.",
+                      })
+                }
+              />
+            </div>
+          </div>
+
+          <section aria-label="Where you are signed in" className="flex flex-col gap-3 border-t border-border pt-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3 className="text-body font-semibold text-primary">Where you are signed in</h3>
               {sessions.length > 1 && (
                 <TextButton
                   onClick={() =>
@@ -124,12 +138,14 @@ export default function AccountPage() {
                   Sign out everywhere else
                 </TextButton>
               )}
-            </span>
+            </div>
             <ul className="flex flex-col rounded-md border border-border">
               {sessions.map((s) => (
-                <li key={s.id} className="flex items-center gap-3 border-b border-border p-4 last:border-b-0">
-                  <s.icon className="size-6 text-secondary" aria-hidden />
-                  <span className="flex flex-1 flex-col">
+                <li key={s.id} className="flex items-center gap-4 border-b border-border px-4 py-3 last:border-b-0">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700">
+                    <s.icon className="size-5" aria-hidden />
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span className="text-body font-medium text-primary">{s.name}</span>
                     <span className="text-body-sm text-secondary">{s.where}</span>
                   </span>
@@ -153,7 +169,7 @@ export default function AccountPage() {
                 </li>
               ))}
             </ul>
-          </div>
+          </section>
         </div>
       </Card>
 
@@ -173,25 +189,21 @@ export default function AccountPage() {
         </ul>
       </NotifySettings>
 
-      <Card title="Your data">
+      <Card title="Your data" info="Download everything we hold about you: your strategy, posts, brand files, messages and activity.">
         <div className="flex flex-col gap-4">
-          <Banner tone="info">Download everything we hold about you: your strategy, posts, brand files, messages and activity.</Banner>
           <Button variant="secondary" className="self-start" loading={pending("data")} onClick={() => run("data", () => act.requestDataExport(user.id), "Your download is ready. We emailed you a link.")}>
             {pending("data") ? "Preparing" : "Download my data"}
           </Button>
         </div>
       </Card>
 
-      <Card title="Delete your account">
-        <div className="flex flex-col gap-3">
-          <Banner tone="warning">
-            This removes your account and deletes your data. We keep only invoices and payment records, as the law requires.
-            {activeContract ? " Your contract is cancelled first, with any refund due." : ""}
-          </Banner>
-          <Button variant="remove" className="self-start" onClick={() => setDeleting(true)}>
-            Delete my account
-          </Button>
-        </div>
+      <Card
+        title="Delete your account"
+        info={`This removes your account and deletes your data. We keep only invoices and payment records, as the law requires.${activeContract ? " Your contract is cancelled first, with any refund due." : ""}`}
+      >
+        <Button variant="remove" className="self-start" onClick={() => setDeleting(true)}>
+          Delete my account
+        </Button>
       </Card>
 
       <Dialog open={deleting} onClose={() => setDeleting(false)} title="Delete your account?">

@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarBlank } from "@phosphor-icons/react";
+import { CalendarBlank, Timer } from "@phosphor-icons/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 import { LiveCard, ReviewCard } from "@/components/client/HomeCards";
@@ -117,11 +117,12 @@ function ContentPage() {
             )}
 
             {tab === "overdue" && (
-              <Card title="Overdue" action={<Pill label={`${plural(list.length, "post")} overdue`}>{plural(list.length, "post")}</Pill>}>
+              <Card
+                title="Overdue"
+                action={<Pill label={`${plural(list.length, "post")} overdue`}>{plural(list.length, "post")}</Pill>}
+                info="Not reviewed by the due time, so held. Nothing went out. You can still review them at any time, and they go back on the plan."
+              >
                 <div className="flex flex-col gap-4">
-                  <Banner tone="info" closeKey="content-overdue-note">
-                    Not reviewed by the due time, so held. Nothing went out. You can still review them at any time, and they go back on the plan.
-                  </Banner>
                   <ul className="flex flex-col gap-3">
                     {list.map((p) => (
                       <li key={p.id}>
@@ -138,7 +139,7 @@ function ContentPage() {
                           </span>
                           <TileFooter>
                             <span className="flex flex-wrap items-center gap-3">
-                              <Meta icon={CalendarBlank}>{p.dueAt ? `Was due ${dayIn(p.dueAt)}` : "Past its due time"}</Meta>
+                              <Meta icon={Timer}>{p.dueAt ? `Was due ${dayTimeIn(p.dueAt)}` : "Past its due time"}</Meta>
                               <Badge status="danger">Overdue</Badge>
                             </span>
                             <TileAction>Review</TileAction>
@@ -186,7 +187,7 @@ function ContentPage() {
                         key={p.id}
                         post={p}
                         top={<Badge status={postBadge[p.status].tone}>{postBadge[p.status].label}</Badge>}
-                        actions={p.scheduledFor ? <Meta icon={CalendarBlank}>Was due {dayIn(p.scheduledFor)} · {time(p.scheduledFor)}</Meta> : undefined}
+                        actions={p.scheduledFor ? <Meta icon={Timer}>Was due {dayIn(p.scheduledFor)} · {time(p.scheduledFor)}</Meta> : undefined}
                       >
                         {stoppedByYou && <UpcomingPostActions post={p} />}
                         {p.heldReason && !stoppedByYou && <Banner tone="warning">Held: {p.heldReason}</Banner>}

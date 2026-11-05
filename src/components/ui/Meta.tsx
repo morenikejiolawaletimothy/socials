@@ -1,8 +1,9 @@
 import type { Icon } from "@phosphor-icons/react";
 
 /**
- * One line of key info with a blue icon: "Due Fri 6 Nov", "Goes live today · 9am", "Starts Thu 12 Nov".
+ * One line of key info with a blue icon: "Due Fri 6 Nov at 5pm", "Goes live today · 9am", "Starts Thu 12 Nov".
  * Used in card headers (the action slot) and at the bottom left of tiles. Dates come from `dayIn`/`time` in lib/format.
+ * Deadlines (Due, Was due, Closing by, Link works until) use the Timer icon and always show the time (`dayTimeIn`).
  */
 export function Meta({ icon: IconCmp, children, className = "" }: { icon: Icon; children: React.ReactNode; className?: string }) {
   return (

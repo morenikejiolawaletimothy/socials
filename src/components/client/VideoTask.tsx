@@ -1,6 +1,6 @@
 "use client";
 
-import { Lightbulb, ListNumbers, UploadSimple, VideoCamera } from "@phosphor-icons/react";
+import { UploadSimple, VideoCamera } from "@phosphor-icons/react";
 import { useRef, useState } from "react";
 import { Banner, Button, Tile, useTask } from "@/components/ui";
 import { prepareUpload, sectionRules } from "@/lib/upload";
@@ -31,9 +31,7 @@ export function VideoTask({ task }: { task: QuickTask }) {
       </Tile>
 
       <Tile>
-        <span className="flex items-center gap-2 text-body font-semibold text-primary">
-          <ListNumbers className="size-5 text-primary-600" aria-hidden /> What to say
-        </span>
+        <span className="text-body font-semibold text-primary">What to say</span>
         <ol className="flex list-decimal flex-col gap-2 pl-5 text-body-sm text-primary">
           {v.shots.map((s) => (
             <li key={s}>{s}</li>
@@ -42,9 +40,7 @@ export function VideoTask({ task }: { task: QuickTask }) {
       </Tile>
 
       <Tile>
-        <span className="flex items-center gap-2 text-body font-semibold text-primary">
-          <Lightbulb className="size-5 text-primary-600" aria-hidden /> Tips
-        </span>
+        <span className="text-body font-semibold text-primary">Tips</span>
         <ul className="flex list-disc flex-col gap-2 pl-5 text-body-sm text-primary">
           {v.tips.map((s) => (
             <li key={s}>{s}</li>

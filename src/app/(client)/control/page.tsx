@@ -1,14 +1,14 @@
 "use client";
 
-import { PencilSimple } from "@phosphor-icons/react";
+import { CalendarBlank, PencilSimple } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useState } from "react";
-import { PermissionsForm } from "@/components/client/PermissionsForm";
+import { PermissionsForm, permissionsNote } from "@/components/client/PermissionsForm";
 import { ReviewForm, reviewSummary } from "@/components/client/ReviewForm";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { TextLink, Badge, Banner, Button, buttonClass, Card, Pill, Tabs, TextButton, Tile, TileFooter, useConfirm, useTask } from "@/components/ui";
-import { agoIn, dayTime } from "@/lib/format";
+import { TextLink, Badge, Banner, Button, buttonClass, Card, Meta, Pill, Tabs, TextButton, Tile, TileFooter, useConfirm, useTask } from "@/components/ui";
+import { dateTime, dayTime } from "@/lib/format";
 import { act, useMyClient, type Activity } from "@/lib/mock";
 
 const who: Record<Activity["who"], string> = { you: "You", team: "Your account team", system: "Bluecut" };
@@ -50,9 +50,11 @@ export default function ControlPage() {
   return (
     <Columns {...rails.clientSettings}>
       {fullService && (
-        <Banner tone="info" title="You are on full-service" action={<TextLink href="/full-service">Manage access</TextLink>}>
-          Your account team does the work, following the settings on this page exactly. Only you can change them. Anything they need from you comes in Messages, not as a task.
-        </Banner>
+        <Card title="You are on full-service" action={<TextLink href="/full-service">Manage access</TextLink>}>
+          <p className="text-body text-primary">
+            Your account team does the work, following the settings on this page exactly. Only you can change them. Anything they need from you comes in Messages, not as a task.
+          </p>
+        </Card>
       )}
       {(pending.length > 0 || approved.length > 0) && (
         <Card title="Requests from your manager" action={pending.length > 0 && <Pill>{pending.length === 1 ? "1 to answer" : `${pending.length} to answer`}</Pill>}>
@@ -65,7 +67,7 @@ export default function ControlPage() {
                     {r.why && <span className="text-body-sm text-secondary">{r.why}</span>}
                   </div>
                   <TileFooter>
-                    <span className="text-caption text-secondary">Asked {agoIn(r.at)}</span>
+                    <Meta icon={CalendarBlank}>Asked {dateTime(r.at)}</Meta>
                     <span className="flex gap-2">
                       <Button
                         variant="cancel"
@@ -120,8 +122,8 @@ export default function ControlPage() {
         </Card>
       )}
 
-      <Card title="What we do for you">
-        <PermissionsForm client={client} />
+      <Card title="What we do for you" info={permissionsNote(fullService)}>
+        <PermissionsForm client={client} note={false} />
       </Card>
 
       <Card
@@ -173,14 +175,12 @@ export default function ControlPage() {
         )}
       </Card>
 
-      <Card title="Posting">
+      <Card title="Posting" info={client.postingPaused ? undefined : "Need a quiet week? Pause all posting in one tap. Scheduled posts are held, not lost."}>
         <div className="flex flex-col gap-4">
-          {client.postingPaused ? (
+          {client.postingPaused && (
             <Banner tone="warning" title="All posting is paused">
               Scheduled posts are held. Nothing goes out until you turn posting back on.
             </Banner>
-          ) : (
-            <Banner tone="info">Need a quiet week? Pause all posting in one tap. Scheduled posts are held, not lost.</Banner>
           )}
           <Button
             className="self-start"
@@ -205,11 +205,11 @@ export default function ControlPage() {
 
       {fullService && (
         <Card title="Secure access">
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-4">
             <p className="text-body-sm text-secondary">Your account team signs in with your approval each time. Manage your stored login, approvals and the Page from Full-service.</p>
-            <TextLink href="/full-service" className="self-start">
+            <Link href="/full-service" className={`self-start ${buttonClass("secondary")}`}>
               Manage secure access
-            </TextLink>
+            </Link>
           </div>
         </Card>
       )}

@@ -1,11 +1,12 @@
 "use client";
 
-import { CalendarBlank, Clock, LinkSimple, Sparkle, Trash } from "@phosphor-icons/react";
+import { BookmarkSimple, Buildings, CalendarBlank, ChatCircle, CheckCircle, Clock, EnvelopeSimple, LinkSimple, MapPin, Newspaper, Repeat, Timer, Trash, UserCirclePlus, UserPlus, XCircle } from "@phosphor-icons/react";
+import type { Icon } from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { Avatar, Badge, Banner, Button, buttonClass, Card, Dialog, EmptyState, IconButton, Input, Meta, Pill, ProgressBar, Row, Rows, RowText, Select, Textarea, TextButton, textActionClass, TextLink, Tile, TileFooter, useConfirm, useTask, useToast } from "@/components/ui";
-import { ago, agoIn, dayIn, dayTime, fullName, plural } from "@/lib/format";
+import { Avatar, Badge, Banner, Button, buttonClass, Card, Dialog, EmptyState, IconButton, InfoTip, Input, Meta, Pill, ProgressBar, Row, Rows, RowText, Select, Tabs, Textarea, TextButton, textActionClass, TextLink, Tile, TileFooter, useConfirm, useTask, useToast } from "@/components/ui";
+import { ago, agoIn, dayIn, dayTime, dayTimeIn, fullName, plural } from "@/lib/format";
 import { MediaThumb } from "@/components/content/MediaThumb";
 import { duration } from "@/lib/linkedin";
 import { act, type ClientBundle, type Lead, type LinkedInReaction, type Update } from "@/lib/mock";
@@ -36,18 +37,18 @@ function Targets({ b }: { b: ClientBundle }) {
   );
 }
 
+/** What the client has said never to touch, as a bordered list (as on the client's Your brand and contract pages). Title it where it is used. */
 export function OffLimitsBox({ b }: { b: ClientBundle }) {
-  if (!b.brand?.offLimits.length) return null;
+  if (!b.brand?.offLimits.length) return <p className="text-body-sm text-secondary">Nothing off limits yet.</p>;
   return (
-    <Banner tone="danger" title="Off limits">
-      <ul className="flex flex-col gap-1">
-        {b.brand.offLimits.map((o) => (
-          <li key={o.id}>
-            <span className="capitalize">{o.kind}</span>: {o.text}
-          </li>
-        ))}
-      </ul>
-    </Banner>
+    <Rows>
+      {b.brand.offLimits.map((o) => (
+        <Row key={o.id}>
+          <span className="min-w-0 flex-1 text-body-sm text-primary">{o.text}</span>
+          <Badge status="danger">{o.kind[0].toUpperCase() + o.kind.slice(1)}</Badge>
+        </Row>
+      ))}
+    </Rows>
   );
 }
 
@@ -66,20 +67,26 @@ function FullServiceCard({ b }: { b: ClientBundle }) {
   const session = access?.session;
   const canSignIn = access?.credentials === "set" && !fs.paused;
   return (
-    <Card title="Account access" action={<Badge status={fs.paused ? "warning" : "success"}>{fs.paused ? "Paused by client" : "Active"}</Badge>}>
-      <div className="flex flex-col gap-4">
-        {fs.paused ? (
+    <Card
+      title="Account access"
+      action={<Badge status={fs.paused ? "warning" : "success"}>{fs.paused ? "Paused by client" : "Active"}</Badge>}
+      info={fs.paused ? undefined : "You manage this account directly. Follow their permission contract exactly. You cannot change their settings. If you need them to do something, message them, do not create a task."}
+    >
+      {/* As on the client's Full-service page: sections top to bottom, each under a line, with notes in tooltips. */}
+      <div className="flex flex-col gap-6">
+        {fs.paused && (
           <Banner tone="danger" title="Do not work on this account">The client has paused your access. Wait until they resume before doing anything on their LinkedIn or Page.</Banner>
-        ) : (
-          <Banner tone="info">
-            You manage this account directly. Follow their permission contract exactly. You cannot change their settings. If you need them to do something, message them, do not create a task.
-          </Banner>
         )}
 
         {canSignIn && (
-          <div className="flex flex-col gap-3 rounded-md border border-border p-4">
+          <section className="flex flex-col gap-3" aria-labelledby="fs-signin">
             <span className="flex items-center justify-between gap-3">
-              <span className="text-body font-semibold text-primary">Delegated sign-in</span>
+              <span className="flex items-center gap-2">
+                <h3 id="fs-signin" className="text-body font-semibold text-primary">
+                  Delegated sign-in
+                </h3>
+                <InfoTip label="About delegated sign-in">You must notify {first} before you sign in. They approve on their phone, then you can work. Every session is recorded for them.</InfoTip>
+              </span>
               {session?.state === "requested" && <Badge status="warning">Waiting for approval</Badge>}
               {session?.state === "active" && <Badge status="success">Session active</Badge>}
             </span>
@@ -87,87 +94,117 @@ function FullServiceCard({ b }: { b: ClientBundle }) {
               <p className="text-body-sm text-secondary">Waiting for {first} to approve on their phone. You can sign in once they approve.</p>
             ) : session?.state === "active" ? (
               <form
-                className="flex flex-col gap-3"
+                className="flex flex-col gap-4"
                 onSubmit={async (e) => {
                   e.preventDefault();
                   if (await run("end", () => act.endSession(b.client!.id, action, Number(minutes) || 0), "Session ended and recorded. The client can see it.")) setAction("");
                 }}
               >
-                <p className="text-body-sm text-secondary">You are signed in. When you finish, write what you did and end the session. It is recorded for {first}.</p>
-                <Input label="What you did" value={action} onChange={(e) => setAction(e.target.value)} placeholder="Posted the weekly update and replied to comments" />
-                <div className="flex items-end gap-3">
-                  <Select label="Minutes" value={minutes} onChange={(e) => setMinutes(e.target.value)} wrapperClassName="w-32">
-                    {["5", "10", "15", "20", "30", "45", "60"].map((m) => (
-                      <option key={m} value={m}>
-                        {m} min
-                      </option>
-                    ))}
-                  </Select>
-                  <Button type="submit" variant="secondary" loading={pending("end")} className="mb-px">
-                    End session
-                  </Button>
+                <p className="text-body-sm text-secondary">You are signed in. When you finish, write what you did and end the session.</p>
+                <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-3">
+                  <div className="sm:col-span-2">
+                    <Input label="What you did" value={action} onChange={(e) => setAction(e.target.value)} placeholder="Posted the weekly update and replied to comments" />
+                  </div>
+                  <MinutesSelect value={minutes} onChange={setMinutes} />
                 </div>
+                <Button type="submit" variant="secondary" className="self-start" loading={pending("end")}>
+                  End session
+                </Button>
               </form>
             ) : (
-              <>
-                <p className="text-body-sm text-secondary">You must notify {first} before you sign in. They approve on their phone, then you can work.</p>
+              <div className="flex flex-col gap-4">
                 <Input label="Tell them why (optional)" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Weekly posting and engagement" />
-                <Button variant="secondary" className="self-start" loading={pending("req")} onClick={() => run("req", () => act.requestSession(b.client!.id, note.trim()), `${first} has been asked to approve. You can sign in once they do.`)}>
+                <Button className="self-start" loading={pending("req")} onClick={() => run("req", () => act.requestSession(b.client!.id, note.trim()), `${first} has been asked to approve. You can sign in once they do.`)}>
                   Notify and request sign-in
                 </Button>
-              </>
+              </div>
             )}
-          </div>
+          </section>
         )}
 
         {fs.pageManagement && (
-          <p className="text-body-sm text-secondary">
-            Company Page: <span className="font-medium text-primary">{fs.pageGrant === "granted" ? "admin access granted" : "waiting for the client to add us as a Page admin"}</span>.
-          </p>
+          <section className={`flex flex-col gap-3 ${canSignIn ? "border-t border-border pt-6" : ""}`} aria-labelledby="fs-page">
+            <h3 id="fs-page" className="text-body font-semibold text-primary">
+              Company Page
+            </h3>
+            <Rows>
+              <Row>
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700">
+                  <Buildings className="size-5" aria-hidden />
+                </span>
+                <span className="min-w-0 flex-1 text-body-sm text-secondary">{fs.pageGrant === "granted" ? "Admin access granted" : "Waiting for the client to add us as a Page admin"}</span>
+                <Badge status={fs.pageGrant === "granted" ? "success" : "warning"}>{fs.pageGrant === "granted" ? "Admin" : "Waiting"}</Badge>
+              </Row>
+            </Rows>
+          </section>
         )}
+
         {!fs.paused && (
           <form
-            className="flex flex-col gap-3 border-t border-border pt-4"
+            className={`flex flex-col gap-4 ${canSignIn || fs.pageManagement ? "border-t border-border pt-6" : ""}`}
+            aria-labelledby="fs-log"
             onSubmit={async (e) => {
               e.preventDefault();
               if (!action.trim()) return;
               if (await run("log", () => act.logManagementSession(b.client!.id, action.trim(), Number(minutes) || 0), "Session logged. The client can see it.")) setAction("");
             }}
           >
-            <span className="text-body font-semibold text-primary">Log a management session</span>
-            <p className="text-body-sm text-secondary">Record what you did on their account, so they can see it. Kept in their account log for accountability.</p>
-            <Input label="What you did" value={action} onChange={(e) => setAction(e.target.value)} placeholder="Posted the weekly Page update and replied to comments" />
-            <div className="flex items-end gap-3">
-              <Select label="Minutes" value={minutes} onChange={(e) => setMinutes(e.target.value)} wrapperClassName="w-32">
-                {["5", "10", "15", "20", "30", "45", "60"].map((m) => (
-                  <option key={m} value={m}>
-                    {m} min
-                  </option>
-                ))}
-              </Select>
-              <Button type="submit" variant="secondary" loading={pending("log")} className="mb-px">
-                Log session
-              </Button>
+            <span className="flex items-center gap-2">
+              <h3 id="fs-log" className="text-body font-semibold text-primary">
+                Log a session
+              </h3>
+              <InfoTip label="About logging a session">Record what you did on their account. It goes in their account log, so they can see it.</InfoTip>
+            </span>
+            <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-3">
+              <div className="sm:col-span-2">
+                <Input label="What you did" value={action} onChange={(e) => setAction(e.target.value)} placeholder="Posted the weekly Page update and replied to comments" />
+              </div>
+              <MinutesSelect value={minutes} onChange={setMinutes} />
             </div>
+            <Button type="submit" className="self-start" loading={pending("log")}>
+              Log session
+            </Button>
           </form>
         )}
+
         {b.accessLog.length > 0 && (
-          <div className="flex flex-col gap-2 border-t border-border pt-4">
-            <span className="text-body font-semibold text-primary">Recent sessions</span>
+          <section className="flex flex-col gap-3 border-t border-border pt-6" aria-labelledby="fs-recent">
+            <span className="flex items-center justify-between gap-3">
+              <h3 id="fs-recent" className="text-body font-semibold text-primary">
+                Recent sessions
+              </h3>
+              <Pill>{plural(b.accessLog.length, "session")}</Pill>
+            </span>
+            {/* As in the client's "What your team has done": clock, what was done, then who, when and how long. */}
             <Rows>
               {b.accessLog.slice(0, 6).map((a) => (
                 <Row key={a.id}>
                   <span className="flex min-w-0 flex-1 items-start gap-3">
                     <Clock className="mt-0.5 size-4 shrink-0 text-primary-600" aria-hidden />
-                    <RowText title={a.action} sub={`${a.who} · ${agoIn(a.at)}${a.minutes ? ` · ${a.minutes} min` : ""}`} />
+                    <span className="flex min-w-0 flex-1 flex-col gap-1">
+                      <span className="text-body-sm text-secondary">{a.action}</span>
+                      <span className="text-caption text-secondary">{`${a.who} · ${agoIn(a.at)}${a.minutes ? ` · ${a.minutes} min` : ""}`}</span>
+                    </span>
                   </span>
                 </Row>
               ))}
             </Rows>
-          </div>
+          </section>
         )}
       </div>
     </Card>
+  );
+}
+
+function MinutesSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <Select label="Minutes" value={value} onChange={(e) => onChange(e.target.value)}>
+      {["5", "10", "15", "20", "30", "45", "60"].map((m) => (
+        <option key={m} value={m}>
+          {m} min
+        </option>
+      ))}
+    </Select>
   );
 }
 
@@ -179,9 +216,18 @@ export function OverviewTab({ b }: { b: ClientBundle }) {
     <>
       {fullService && <FullServiceCard b={b} />}
       <Card title="Goal">
-        <div className="flex flex-col gap-4">
+        {/* The goal, then what is off limits under a line. */}
+        <div className="flex flex-col gap-6">
           <p className="text-body text-primary">{b.strategy?.goal ?? b.client!.goal}</p>
-          <OffLimitsBox b={b} />
+          <section className="flex flex-col gap-3 border-t border-border pt-6" aria-labelledby="ov-off">
+            <span className="flex items-center gap-2">
+              <h3 id="ov-off" className="text-body font-semibold text-primary">
+                Off limits
+              </h3>
+              <InfoTip label="About off limits">Never post about, name or engage with these. The client sets them in Your brand.</InfoTip>
+            </span>
+            <OffLimitsBox b={b} />
+          </section>
         </div>
       </Card>
       <Card
@@ -196,7 +242,7 @@ export function OverviewTab({ b }: { b: ClientBundle }) {
       >
         <Targets b={b} />
       </Card>
-      <Card title="What they let us do">
+      <Card title="What they let us do" info="Set by the client in Control. Follow it exactly; only they can change it.">
         <Rows>
           {(
             [
@@ -208,32 +254,27 @@ export function OverviewTab({ b }: { b: ClientBundle }) {
             ] as const
           ).map(([label, on]) => (
             <Row key={label}>
-              <RowText title={label} />
+              <span className="min-w-0 flex-1 text-body-sm text-secondary">{label}</span>
               <Badge status={on ? "success" : "neutral"}>{on ? "Allowed" : "Not allowed"}</Badge>
             </Row>
           ))}
         </Rows>
       </Card>
-      <Card title="How they review">
+      <Card title="How they review" info="Set by the client in Control.">
         <Rows>
-          <Row>
-            <RowText title="How often" />
-            <span className="text-body-sm text-primary">{{ weekly: "Once a week", "twice-weekly": "Twice a week", "every-post": "Every post" }[r.frequency]}</span>
-          </Row>
-          <Row>
-            <RowText title="How they are told" />
-            <span className="text-body-sm text-primary">
-              {[r.channels.email && "Email", r.channels.whatsapp && b.user?.whatsapp?.confirmed && "WhatsApp", r.channels.app && "In the app"].filter(Boolean).join(", ")}
-            </span>
-          </Row>
-          <Row>
-            <RowText title="If no reply" />
-            <span className="text-body-sm text-primary">{r.ifNoReply === "wait" ? "Wait for them" : "Go ahead after 24 hours"}</span>
-          </Row>
-          <Row>
-            <RowText title="Posts" />
-            <span className="text-body-sm text-primary">{r.approval.posts === "go" ? "Go ahead" : "Ask first"}</span>
-          </Row>
+          {(
+            [
+              ["How often", { weekly: "Once a week", "twice-weekly": "Twice a week", "every-post": "Every post" }[r.frequency]],
+              ["How they are told", [r.channels.email && "Email", r.channels.whatsapp && b.user?.whatsapp?.confirmed && "WhatsApp", r.channels.app && "In the app"].filter(Boolean).join(", ")],
+              ["If no reply", r.ifNoReply === "wait" ? "Wait for them" : "Go ahead after 24 hours"],
+              ["Posts", r.approval.posts === "go" ? "Go ahead" : "Ask first"],
+            ] as const
+          ).map(([label, value]) => (
+            <Row key={label}>
+              <span className="min-w-0 flex-1 text-body-sm text-secondary">{label}</span>
+              <span className="text-body-sm font-medium text-primary">{value}</span>
+            </Row>
+          ))}
         </Rows>
       </Card>
       <Card title="In their field this week">
@@ -260,36 +301,86 @@ export function PlanTab({ b, id }: { b: ClientBundle; id: string }) {
     );
   }
   return (
-    <Card title="Strategy and plan" action={<Badge status={s.status === "approved" ? "success" : "info"}>{s.status === "approved" ? `Approved, version ${s.version}` : "Not approved yet"}</Badge>}>
+    <Card
+      title="Strategy and plan"
+      info={`Built on framework ${s.frameworkVersion}.`}
+      action={<Badge status={s.status === "approved" ? "success" : "info"}>{s.status === "approved" ? `Approved, version ${s.version}` : "Not approved yet"}</Badge>}
+    >
+      {/* Sections top to bottom, each under a line: the goal, the topics, the weekly targets, then the button. */}
       <div className="flex flex-col gap-6">
-        <p className="text-body text-primary">{s.goal}</p>
-        <section className="flex flex-col gap-2">
-          <h3 className="text-body font-medium text-primary">Topics</h3>
+        <section className="flex flex-col gap-2" aria-labelledby="plan-goal">
+          <h3 id="plan-goal" className="text-body font-semibold text-primary">
+            Goal
+          </h3>
+          <p className="text-body text-primary">{s.goal}</p>
+        </section>
+        <section className="flex flex-col gap-3 border-t border-border pt-6" aria-labelledby="plan-topics">
+          <h3 id="plan-topics" className="text-body font-semibold text-primary">
+            Topics
+          </h3>
           <Rows>
             {s.topics.map((t, i) => (
               <Row key={t.name}>
-                <RowText title={`${i + 1}. ${t.name}`} sub={t.why} />
-              </Row>
-            ))}
-          </Rows>
-        </section>
-        <section className="flex flex-col gap-2">
-          <h3 className="text-body font-medium text-primary">Weekly targets</h3>
-          <Rows>
-            {s.targets.map((t) => (
-              <Row key={t.period}>
-                <RowText title={t.period} sub={t.extra} />
-                <span className="text-body-sm text-primary">
-                  {t.posts} posts{t.videos ? ` (${t.videos} video)` : ""} · {t.comments} comments · {t.connections} connections
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-50 text-caption font-medium text-primary-700">{i + 1}</span>
+                <span className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="text-body-sm font-medium text-primary">{t.name}</span>
+                  <span className="text-body-sm text-secondary">{t.why}</span>
                 </span>
               </Row>
             ))}
           </Rows>
         </section>
-        <Banner tone="neutral">Built on framework {s.frameworkVersion}.</Banner>
-        <TextLink href={`/manager/clients/${id}/onboard`} className="self-start text-body-sm">
-          Open onboarding and strategy
-        </TextLink>
+        <section className="flex flex-col gap-3 border-t border-border pt-6" aria-labelledby="plan-targets">
+          <h3 id="plan-targets" className="text-body font-semibold text-primary">
+            Weekly targets
+          </h3>
+          {/* As in the client's update report: a plain table with grey headings and a line between rows. It scrolls inside the card on phones. */}
+          <div className="overflow-x-auto rounded-md border border-border">
+            <table className="w-full min-w-md text-left text-body-sm">
+              <thead className="bg-neutral-25 text-caption text-secondary">
+                <tr>
+                  <th scope="col" className="px-4 py-2 font-medium">
+                    Weeks
+                  </th>
+                  <th scope="col" className="px-4 py-2 text-right font-medium">
+                    Posts
+                  </th>
+                  <th scope="col" className="px-4 py-2 text-right font-medium">
+                    Comments
+                  </th>
+                  <th scope="col" className="px-4 py-2 text-right font-medium">
+                    Connections
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {s.targets.map((t) => (
+                  <tr key={t.period} className="border-t border-border align-top">
+                    <th scope="row" className="px-4 py-3 text-left font-normal">
+                      <span className="flex flex-col gap-1">
+                        <span className="font-medium text-primary">{t.period}</span>
+                        {t.extra && <span className="text-secondary">{t.extra}</span>}
+                      </span>
+                    </th>
+                    <td className="px-4 py-3 text-right font-medium text-primary">
+                      <span className="inline-flex items-center justify-end gap-2">
+                        {t.videos ? <Pill label={`${t.videos} of them video`}>{t.videos} video</Pill> : null}
+                        {t.posts}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right font-medium text-primary">{t.comments}</td>
+                    <td className="px-4 py-3 text-right font-medium text-primary">{t.connections}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <div className="border-t border-border pt-6">
+          <Link href={`/manager/clients/${id}/onboard`} className={buttonClass("secondary")}>
+            Open onboarding and strategy
+          </Link>
+        </div>
       </div>
     </Card>
   );
@@ -335,11 +426,30 @@ const fitTone = { strong: "success", good: "info", weak: "neutral" } as const;
 const actionLabels: Record<Lead["action"], string> = { comment: "Comment", react: "React", reshare: "Repost", save: "Save", follow: "Follow", message: "Message", connect: "Connect" };
 const hasText = (a: Lead["action"]) => ["comment", "reshare", "message", "connect"].includes(a);
 
+/** What to do with a suggestion, as a line with a blue icon (the reaction has its own line, ReactionLabel). */
+const actionLines: Record<Exclude<Lead["action"], "react">, { icon: Icon; text: string }> = {
+  comment: { icon: ChatCircle, text: "Comment on the post" },
+  reshare: { icon: Repeat, text: "Repost with thoughts" },
+  save: { icon: BookmarkSimple, text: "Save the post" },
+  follow: { icon: UserCirclePlus, text: "Follow" },
+  message: { icon: EnvelopeSimple, text: "Send a message" },
+  connect: { icon: UserPlus, text: "Send a connection request" },
+};
+
+function ActionLabel({ action }: { action: Exclude<Lead["action"], "react"> }) {
+  const { icon: I, text } = actionLines[action];
+  return (
+    <span className="inline-flex items-center gap-2 text-body-sm font-medium text-primary">
+      <I className="size-5 text-primary-600" aria-hidden /> {text}
+    </span>
+  );
+}
+
 /**
  * One suggestion. The manager opens it on LinkedIn with their own account to check it is right, adjusts the
  * text or reaction, then marks it checked so it goes out in the next batch of quick tasks.
  */
-function LeadTile({ l }: { l: Lead }) {
+function LeadTile({ l, fullService }: { l: Lead; fullService?: boolean }) {
   const { run, pending } = useTask();
   const toast = useToast();
   const [editing, setEditing] = useState(false);
@@ -349,14 +459,16 @@ function LeadTile({ l }: { l: Lead }) {
   return (
     <li>
       <Tile done={closed}>
-        <span className="flex items-start gap-4">
-          <Avatar name={l.name} src={l.photo} size="md" />
-          <span className="flex min-w-0 flex-1 flex-col gap-1">
-            <span className="text-body font-medium text-primary">{l.name}</span>
-            <span className="text-body-sm text-secondary">{l.detail}</span>
+        {/* Who: 56px avatar with name and role (centred on the avatar), tags on the right; tags drop under on phones. */}
+        <span className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-4">
+          <span className="flex min-w-0 flex-1 items-start gap-4">
+            <Avatar name={l.name} src={l.photo} size="lg" />
+            <span className="flex min-w-0 flex-1 flex-col gap-1 pt-1">
+              <span className="text-body font-medium text-primary">{l.name}</span>
+              <span className="text-body-sm text-secondary">{l.detail}</span>
+            </span>
           </span>
-          <span className="flex shrink-0 flex-col items-end gap-2">
-            <Pill>{actionLabels[l.action]}</Pill>
+          <span className="shrink-0 sm:pt-3.5">
             <Badge status={fitTone[l.fit]}>{l.fit[0].toUpperCase() + l.fit.slice(1)} fit</Badge>
           </span>
         </span>
@@ -394,7 +506,8 @@ function LeadTile({ l }: { l: Lead }) {
           </div>
         ) : (
           <>
-            {l.reaction && <ReactionLabel reaction={l.reaction} />}
+            {/* The expected action, in the same line style as the reaction: icon and what to do. */}
+            {l.action === "react" ? <ReactionLabel reaction={l.reaction ?? "like"} /> : <ActionLabel action={l.action} />}
             {l.draft && <p className="text-body-sm text-primary">{l.draft}</p>}
           </>
         )}
@@ -409,7 +522,7 @@ function LeadTile({ l }: { l: Lead }) {
             {l.status === "dropped" ? (
               <TextButton onClick={() => run("undo", () => act.setLead(l.id, "suggested"), "Back on the list.")}>Bring back</TextButton>
             ) : l.status === "sent" ? (
-              <Badge status="info">In a quick task</Badge>
+              <Badge status="info">{fullService ? "Done by you" : "In a quick task"}</Badge>
             ) : l.status === "done" ? (
               <Badge status="success">Done by the client</Badge>
             ) : (
@@ -428,7 +541,7 @@ function LeadTile({ l }: { l: Lead }) {
                   </Button>
                 ) : (
                   !l.warning && (
-                    <Button size="sm" variant="secondary" loading={pending("keep")} onClick={() => run("keep", () => act.setLead(l.id, "kept"), "Checked. It goes out with the next quick tasks.")}>
+                    <Button size="sm" variant="secondary" loading={pending("keep")} onClick={() => run("keep", () => act.setLead(l.id, "kept"), fullService ? "Checked. Do it from their account, then mark it done below." : "Checked. It goes out with the next quick tasks.")}>
                       Checked, add
                     </Button>
                   )
@@ -456,13 +569,15 @@ const dueOptions = () => {
   ];
 };
 
+type EngageView = "check" | "add" | "ready" | "tasks" | "closed" | "progress";
+
 export function EngagementTab({ b }: { b: ClientBundle }) {
   const { run, pending } = useTask();
   const fullService = b.client?.service === "full-service";
   const [url, setUrl] = useState("");
   const [action, setAction] = useState<Lead["action"]>("comment");
   const [urlError, setUrlError] = useState<string>();
-  const [showClosed, setShowClosed] = useState(false);
+  const [view, setView] = useState<EngageView>("check");
   const [due, setDue] = useState(() => dueOptions()[1].value);
   const firstName = b.user?.firstName ?? "the client";
   const toCheck = b.leads.filter((l) => l.status === "suggested");
@@ -471,30 +586,57 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
   const kinds = new Set(ready.map((l) => l.action)).size;
   return (
     <>
-      <Card title="This week's brief" action={<Pill><Sparkle className="mr-1 size-3" aria-hidden /> Suggested</Pill>}>
+      <Card
+        title="This week's brief"
+        action={<Pill>Suggested</Pill>}
+        info={
+          fullService
+            ? `${firstName} is on full-service, so you engage from their account. Open each suggestion on LinkedIn to check it, adjust the text, then do it while signed in as them and mark it done. Each action is logged for ${firstName} to see.`
+            : `${firstName} is on self-serve. LinkedIn lets us post for them, nothing else. Open each suggestion on LinkedIn with your own account to check it, adjust the text, then send it to ${firstName} as a quick task. Each one takes seconds to do.`
+        }
+      >
         <div className="flex flex-col gap-4">
           <p className="text-body text-primary">
             Look for investors and bank partners talking about cross-border payments and the new mobile money report. Join conversations where {firstName} can add data. Skip anything on the off-limits list.
           </p>
-          <Banner tone="info" closeKey="engage-how">
-            LinkedIn lets us post for {firstName}, nothing else. Open each suggestion on LinkedIn with your own account to check it, adjust the text, then send them to {firstName} as quick tasks. Each one takes seconds to do.
-          </Banner>
         </div>
       </Card>
 
+      {/* One card at a time under the brief, picked from this row. Same tab card as the client sections row above (scrolls sideways on phones). */}
+      <div className="rounded-lg border border-border bg-card p-2">
+        <Tabs<EngageView>
+          label="Engagement sections"
+          value={view}
+          onChange={setView}
+          className="max-w-none w-full bg-neutral-50!"
+          tabs={[
+            { value: "check", label: "To check", count: toCheck.length },
+            { value: "add", label: "Add new" },
+            { value: "ready", label: fullService ? "To do" : "To send", count: ready.length },
+            ...(fullService ? [] : [{ value: "tasks" as const, label: "Quick tasks", count: b.tasks.filter((t) => !t.done).length }]),
+            { value: "closed", label: "Past items", count: closed.length },
+            { value: "progress", label: "Weekly progress" },
+          ]}
+        />
+      </div>
+
+      {view === "check" && (
       <Card title="To check" action={toCheck.length > 0 && <Pill>{plural(toCheck.length, "suggestion")}</Pill>}>
         {toCheck.length ? (
           <ul className="flex flex-col gap-3">
             {toCheck.map((l) => (
-              <LeadTile key={l.id} l={l} />
+              <LeadTile key={l.id} l={l} fullService={fullService} />
             ))}
           </ul>
         ) : (
-          <EmptyState title="All checked">New suggestions arrive as the field moves. Add your own below.</EmptyState>
+          <EmptyState title="All checked">New suggestions arrive as the field moves. Add your own in Add new.</EmptyState>
         )}
       </Card>
+      )}
 
-      <Card title="Add what you find">
+      {view === "add" && (
+      <Card title="Add what you find" info={`Paste a LinkedIn post or profile link and pick what ${firstName} should do. We draft any text in their voice and put it in ${fullService ? "To do" : "To send"}.`}>
+        {/* Link and action side by side (stacked on phones), then the button under a line. */}
         <form
           noValidate
           className="flex flex-col gap-4"
@@ -505,10 +647,16 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
             if (person && ["comment", "react", "reshare", "save"].includes(action)) return setUrlError(`To ${actionLabels[action].toLowerCase()}, paste a post link, not a profile.`);
             if (!person && ["follow", "message", "connect"].includes(action)) return setUrlError(`To ${actionLabels[action].toLowerCase()}, paste a profile or Page link, not a post.`);
             setUrlError(undefined);
-            if (await run("add", () => act.addLead(b.client!.id, url.trim(), action), "Added to Ready to send, with text in the client's voice. Adjust it if needed.")) setUrl("");
+            if (await run("add", () => act.addLead(b.client!.id, url.trim(), action), `Added to ${fullService ? "To do" : "To send"}, with text in ${firstName}'s voice. Adjust it if needed.`)) {
+              setUrl("");
+              setView("ready");
+            }
           }}
         >
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[10rem_1fr]">
+          <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-3">
+            <div className="sm:col-span-2">
+              <Input label="LinkedIn link" placeholder="https://www.linkedin.com/..." value={url} onChange={(e) => { setUrl(e.target.value); setUrlError(undefined); }} error={urlError} />
+            </div>
             <Select label="What to do" value={action} onChange={(e) => setAction(e.target.value as Lead["action"])}>
               {Object.entries(actionLabels).map(([k, v]) => (
                 <option key={k} value={k}>
@@ -516,24 +664,27 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
                 </option>
               ))}
             </Select>
-            <Input label="Post or profile link" placeholder="https://www.linkedin.com/..." value={url} onChange={(e) => { setUrl(e.target.value); setUrlError(undefined); }} error={urlError} />
           </div>
-          <Button type="submit" variant="secondary" className="self-start" loading={pending("add")}>
-            {pending("add") ? "Adding" : "Add"}
-          </Button>
+          <div className="border-t border-border pt-4">
+            <Button type="submit" loading={pending("add")}>
+              {pending("add") ? "Adding" : "Add"}
+            </Button>
+          </div>
         </form>
       </Card>
+      )}
 
+      {view === "ready" && (
       <Card title="Ready to send" action={ready.length > 0 && <Pill>{plural(ready.length, "item")}</Pill>}>
         <div className="flex flex-col gap-4">
           {ready.length ? (
             <ul className="flex flex-col gap-3">
               {ready.map((l) => (
-                <LeadTile key={l.id} l={l} />
+                <LeadTile key={l.id} l={l} fullService={fullService} />
               ))}
             </ul>
           ) : (
-            <EmptyState title="Nothing ready yet">Check suggestions above, or add what you find. They wait here until you send them.</EmptyState>
+            <EmptyState title="Nothing ready yet">Check suggestions in To check, or add your own in Add new. They wait here until you {fullService ? "do them" : "send them"}.</EmptyState>
           )}
           {ready.length > 0 && (
             <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-end sm:justify-between">
@@ -554,8 +705,9 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
           )}
         </div>
       </Card>
+      )}
 
-      {!fullService && (
+      {!fullService && view === "tasks" && (
       <Card title="Quick tasks for the client" action={b.tasks.length > 0 && <Pill>{b.tasks.filter((t) => t.done).length} of {b.tasks.length} done</Pill>}>
         {b.tasks.length ? (
           <ul className="flex flex-col gap-3">
@@ -575,7 +727,7 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
                       </span>
                     </span>
                     <TileFooter>
-                      <Meta icon={CalendarBlank}>Due {dayIn(t.dueAt)}</Meta>
+                      <Meta icon={Timer}>Due {dayTimeIn(t.dueAt)}</Meta>
                       <Badge status={t.done ? "success" : "info"}>{t.done ? (t.doneBy ? `Done by ${t.doneBy.split(" ")[0]}` : "Done") : helper ? `With ${helper.name.split(" ")[0]} (${helper.role})` : "With the client"}</Badge>
                     </TileFooter>
                   </Tile>
@@ -584,28 +736,30 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
             })}
           </ul>
         ) : (
-          <EmptyState title="No quick tasks yet">Send checked suggestions above and they show here with the client&apos;s progress.</EmptyState>
+          <EmptyState title="No quick tasks yet">Send checked suggestions from To send and they show here with the client&apos;s progress.</EmptyState>
         )}
       </Card>
       )}
 
-      {closed.length > 0 && (
-        <Card title="Sent, done and dropped" action={<TextButton onClick={() => setShowClosed(!showClosed)}>{showClosed ? "Hide" : `Show ${closed.length}`}</TextButton>}>
-          {showClosed ? (
+      {view === "closed" && (
+        <Card title={fullService ? "Done and dropped" : "Sent, done and dropped"} action={closed.length > 0 && <Pill>{plural(closed.length, "suggestion")}</Pill>}>
+          {closed.length ? (
             <ul className="flex flex-col gap-3">
               {closed.map((l) => (
-                <LeadTile key={l.id} l={l} />
+                <LeadTile key={l.id} l={l} fullService={fullService} />
               ))}
             </ul>
           ) : (
-            <p className="text-body-sm text-secondary">Suggestions already in quick tasks, done by the client, or dropped.</p>
+            <EmptyState title="Nothing here yet">{fullService ? "Suggestions you did on their account, or dropped, show here." : "Suggestions in quick tasks, done by the client, or dropped show here."}</EmptyState>
           )}
         </Card>
       )}
 
-      <Card title="Progress">
-        <Targets b={b} />
-      </Card>
+      {view === "progress" && (
+        <Card title="Progress">
+          <Targets b={b} />
+        </Card>
+      )}
     </>
   );
 }
@@ -619,15 +773,19 @@ function SignalList({ b, limit, removable }: { b: ClientBundle; limit?: number; 
   return (
     <Rows>
       {list.map((s) => (
-        <Row key={s.id} className="items-start">
-          <span className="flex min-w-0 flex-1 flex-col gap-1">
+        <Row key={s.id}>
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700">
+            <Newspaper className="size-5" aria-hidden />
+          </span>
+          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
             <a href={s.url} target="_blank" rel="noreferrer" className="rounded-sm text-body-sm font-medium text-primary hover:text-primary-700 hover:underline focus-visible:focus-ring">
               {s.title}
             </a>
-            <span className="text-caption text-secondary">
-              {s.source}, {agoIn(s.at)} · {s.topic}
+            <span className="text-body-sm text-secondary">
+              {s.source} · {agoIn(s.at)}
             </span>
           </span>
+          <Pill>{s.topic}</Pill>
           {removable && (
             <IconButton
               icon={Trash}
@@ -655,105 +813,138 @@ export function ListeningTab({ b }: { b: ClientBundle }) {
   const [topic, setTopic] = useState("");
   const [feed, setFeed] = useState("");
   const [feedError, setFeedError] = useState<string>();
+  const [topicError, setTopicError] = useState<string>();
   const [found, setFound] = useState("");
-  const topics = b.strategy?.topics.map((t) => t.name) ?? ["Their field", "Their company", "Their city"];
+  const topics: { name: string; why?: string }[] = b.strategy?.topics ?? [{ name: "Their field" }, { name: "Their company" }, { name: "Their city" }];
   return (
     <>
-      {!b.alerts.some((a) => a.working) && (
-        <Banner tone="warning" title="No working alerts">
-          The platform has nothing from this client&apos;s field yet. Create Google Alerts for the suggested topics and paste each feed link below.
-        </Banner>
-      )}
-      <Card title="Listening topics" action={<Pill>{plural(topics.length + (b.client?.country ? 1 : 0), "topic")}</Pill>}>
-        <div className="flex flex-col gap-3">
-          <ul className="flex flex-wrap gap-2">
-            {topics.map((t) => (
-              <li key={t}>
-                <Pill>{t}</Pill>
-              </li>
-            ))}
-            {b.client?.country && (
-              <li>
-                <Pill>
+      <Card
+        title="Listening topics"
+        info="Taken from the strategy topics, plus their industry and location. Set up a Google Alert for each one."
+        action={<Pill>{plural(topics.length + (b.client?.country ? 1 : 0), "topic")}</Pill>}
+      >
+        {/* As on the client's Strategy page (Your topics): numbered, name with the reason under it; location last with a pin. */}
+        <ol className="flex flex-col gap-3">
+          {topics.map((t, i) => (
+            <li key={t.name} className="flex gap-3">
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-50 text-caption text-primary-700">{i + 1}</span>
+              <span className="flex flex-col">
+                <span className="text-body font-medium text-primary">{t.name}</span>
+                {t.why && <span className="text-body-sm text-secondary">{t.why}</span>}
+              </span>
+            </li>
+          ))}
+          {b.client?.country && (
+            <li className="flex gap-3">
+              <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-700">
+                <MapPin className="size-4" aria-hidden />
+              </span>
+              <span className="flex flex-col">
+                <span className="text-body font-medium text-primary">
                   {b.client.industry} in {b.client.country}
-                </Pill>
-              </li>
-            )}
-          </ul>
-          <p className="flex items-center gap-1 text-caption text-secondary">
-            <Sparkle className="size-4 text-primary-600" aria-hidden /> Suggested from the strategy, including location. Edit any time.
-          </p>
+                </span>
+                <span className="text-body-sm text-secondary">Their industry and location</span>
+              </span>
+            </li>
+          )}
+        </ol>
+      </Card>
+      <Card
+        title="Google Alert feeds"
+        action={<Pill>{b.alerts.filter((a) => a.working).length} of {b.alerts.length} working</Pill>}
+      >
+        {/* Problem first, then the feeds. */}
+        <div className="flex flex-col gap-4">
+          {!b.alerts.some((a) => a.working) && (
+            <Banner tone="warning" title="No working feeds">
+              Nothing is coming in from this client&apos;s field yet. Add a feed for each topic in Add a feed.
+            </Banner>
+          )}
+          {b.alerts.length > 0 ? (
+            <Rows>
+              {b.alerts.map((a) => (
+                <Row key={a.id}>
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700">
+                    <LinkSimple className="size-5" aria-hidden />
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="truncate text-body-sm font-medium text-primary">{a.topic}</span>
+                    <span className="text-body-sm text-secondary">Last item {agoIn(a.lastItemAt)}</span>
+                  </span>
+                  <Badge status={a.working ? "success" : "danger"}>{a.working ? "Working" : "Not working"}</Badge>
+                  <IconButton
+                    icon={Trash}
+                    tone="danger"
+                    label={`Remove ${a.topic}`}
+                    onClick={() =>
+                      confirm({
+                        title: `Remove the "${a.topic}" feed?`,
+                        body: "The platform stops reading it. Signals already found are kept.",
+                        warning: "Delete the alert in Google Alerts too, or it keeps emailing you.",
+                        confirmLabel: "Remove feed",
+                        tone: "danger",
+                        action: () => act.removeAlert(a.id),
+                        success: "Feed removed.",
+                      })
+                    }
+                  />
+                </Row>
+              ))}
+            </Rows>
+          ) : (
+            <p className="text-body-sm text-secondary">No feeds yet. Add one in Add a feed.</p>
+          )}
         </div>
       </Card>
-      <Card title="Google Alert feeds" action={<Pill>{b.alerts.filter((a) => a.working).length} of {b.alerts.length} working</Pill>}>
-        <div className="flex flex-col gap-4">
-          {b.alerts.length > 0 && (
-          <Rows>
-            {b.alerts.map((a) => (
-              <Row key={a.id}>
-                <LinkSimple className="size-5 shrink-0 text-primary-600" aria-hidden />
-                <RowText title={a.topic} sub={`Last item ${agoIn(a.lastItemAt)}`} />
-                <Badge status={a.working ? "success" : "danger"}>{a.working ? "Working" : "Not working"}</Badge>
-                <IconButton
-                  icon={Trash}
-                  tone="danger"
-                  label={`Remove ${a.topic}`}
-                  onClick={() =>
-                    confirm({
-                      title: `Remove the "${a.topic}" feed?`,
-                      body: "The platform stops reading it. Signals already found are kept.",
-                      warning: "Delete the alert in Google Alerts too, or it keeps emailing you.",
-                      confirmLabel: "Remove feed",
-                      tone: "danger",
-                      action: () => act.removeAlert(a.id),
-                      success: "Feed removed.",
-                    })
-                  }
-                />
-              </Row>
-            ))}
-          </Rows>
-          )}
-          <form
-            className="flex flex-col gap-3 rounded-md bg-neutral-25 p-4"
-            onSubmit={async (e) => {
-              e.preventDefault();
-              if (!topic.trim()) return setFeedError("Add the alert topic.");
-              if (!/^https:\/\/www\.google\.com\/alerts\/feeds\//.test(feed.trim())) return setFeedError("Paste the feed link from Google Alerts. It starts with https://www.google.com/alerts/feeds/");
-              setFeedError(undefined);
-              if (await run("feed", () => act.addAlert(b.client!.id, topic.trim(), feed.trim()), "Feed added. We checked it and it is working.")) {
-                setTopic("");
-                setFeed("");
-              }
-            }}
-          >
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <Input label="Alert topic" placeholder="Lagos fintech" value={topic} onChange={(e) => setTopic(e.target.value)} />
+      <Card title="Add a feed" info="Create a Google Alert for the topic, choose RSS feed as the delivery, then paste the feed link here. We check it works.">
+        {/* Link and topic side by side (stacked on phones), then the button under a line, as in Add what you find. */}
+        <form
+          noValidate
+          className="flex flex-col gap-4"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!/^https:\/\/www\.google\.com\/alerts\/feeds\//.test(feed.trim())) return setFeedError("Paste the feed link from Google Alerts. It starts with https://www.google.com/alerts/feeds/");
+            if (!topic.trim()) return setTopicError("Add the alert topic.");
+            setFeedError(undefined);
+            setTopicError(undefined);
+            if (await run("feed", () => act.addAlert(b.client!.id, topic.trim(), feed.trim()), "Feed added. We checked it and it is working.")) {
+              setTopic("");
+              setFeed("");
+            }
+          }}
+        >
+          <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-3">
+            <div className="sm:col-span-2">
               <Input label="Feed link" placeholder="https://www.google.com/alerts/feeds/..." value={feed} onChange={(e) => { setFeed(e.target.value); setFeedError(undefined); }} error={feedError} />
             </div>
-            <Button type="submit" variant="secondary" className="self-start" loading={pending("feed")}>
+            <Input label="Alert topic" placeholder="Lagos fintech" value={topic} onChange={(e) => { setTopic(e.target.value); setTopicError(undefined); }} error={topicError} />
+          </div>
+          <div className="border-t border-border pt-4">
+            <Button type="submit" loading={pending("feed")}>
               {pending("feed") ? "Checking the feed" : "Add feed"}
             </Button>
-          </form>
-        </div>
+          </div>
+        </form>
       </Card>
-      <Card title="Add what I found">
+      <Card title="Latest signals" action={b.signals.length > 0 && <Pill>{plural(b.signals.length, "signal")}</Pill>}>
+        <SignalList b={b} removable />
+      </Card>
+      <Card title="Add what I found" info="A link or a short note from their field. It shapes the next post ideas.">
         <form
-          className="flex flex-col gap-3"
+          className="flex flex-col gap-4"
           onSubmit={async (e) => {
             e.preventDefault();
             if (!found.trim()) return;
             if (await run("found", () => act.addFinding(b.client!.id, found.trim()), "Added. It will shape the next ideas.")) setFound("");
           }}
         >
-          <Textarea label="A link, or a short note" rows={2} placeholder="3 founders in Lagos are debating instant settlement this week." value={found} onChange={(e) => setFound(e.target.value)} />
-          <Button type="submit" variant="secondary" className="self-start" loading={pending("found")}>
-            Add
-          </Button>
+          <Textarea label="A link, or a short note" rows={3} placeholder="3 founders in Lagos are debating instant settlement this week." value={found} onChange={(e) => setFound(e.target.value)} />
+          <div className="border-t border-border pt-4">
+            <Button type="submit" loading={pending("found")}>
+              Add
+            </Button>
+          </div>
         </form>
-      </Card>
-      <Card title="Latest signals" action={b.signals.length > 0 && <Pill>{plural(b.signals.length, "signal")}</Pill>}>
-        <SignalList b={b} removable />
       </Card>
     </>
   );
@@ -799,12 +990,32 @@ export function BrandTab({ b }: { b: ClientBundle }) {
         )}
       </Card>
       <Card title="Voice and off limits">
+        {/* As on the client's Your brand page: the voice, then green "use" and red "avoid" word chips, then off limits under a line. */}
         <div className="flex flex-col gap-4">
           <p className="text-body text-primary">{b.brand?.voice || "Not written yet."}</p>
-          <p className="text-body-sm text-secondary">
-            Uses: {b.brand?.wordsUse.join(", ") || "none"}. Avoids: {b.brand?.wordsAvoid.join(", ") || "none"}.
-          </p>
-          <OffLimitsBox b={b} />
+          {(
+            [
+              { label: "Words they use", words: b.brand?.wordsUse ?? [], bg: "bg-success-bg", icon: <CheckCircle className="size-4 shrink-0 text-success" aria-hidden /> },
+              { label: "Words they avoid", words: b.brand?.wordsAvoid ?? [], bg: "bg-danger-bg", icon: <XCircle className="size-4 shrink-0 text-danger" aria-hidden /> },
+            ] as const
+          ).map(({ label, words, bg, icon }) => (
+            <div key={label} className="flex flex-col gap-2">
+              <span className="text-caption text-secondary">{label}</span>
+              <ul className="flex flex-wrap gap-2">
+                {words.map((w) => (
+                  <li key={w} className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-body-sm text-primary ${bg}`}>
+                    {icon}
+                    {w}
+                  </li>
+                ))}
+                {!words.length && <li className="text-body-sm text-secondary">None yet</li>}
+              </ul>
+            </div>
+          ))}
+          <section className="flex flex-col gap-3 border-t border-border pt-4" aria-label="Off limits">
+            <h3 className="text-body font-semibold text-primary">Off limits</h3>
+            <OffLimitsBox b={b} />
+          </section>
         </div>
       </Card>
       <Card title="Files">
@@ -840,10 +1051,12 @@ export function CallsTab({ b }: { b: ClientBundle }) {
             <li key={c.id}>
               <Tile done={c.status === "cancelled"}>
                 <span className="flex flex-col gap-1">
-                  <span className="text-body font-medium text-primary">{callName[c.kind]}</span>
+                  <span className="flex items-center gap-2">
+                    <span className="text-body font-medium text-primary">{callName[c.kind]}</span>
+                    {c.summary && <InfoTip label={`Summary of the ${callName[c.kind].toLowerCase()}`}>{c.summary}</InfoTip>}
+                  </span>
                   <span className="text-body-sm text-secondary">{c.recording ? "Recorded, transcript in the notetaker." : "Not recorded. Written notes."}</span>
                 </span>
-                {c.summary && <Banner tone="neutral">{c.summary}</Banner>}
                 {c.prep && (
                   <ul className="flex list-disc flex-col gap-1 pl-5 text-body-sm text-primary">
                     {c.prep.map((p) => (
@@ -907,9 +1120,7 @@ export function UpdatesTab({ b }: { b: ClientBundle }) {
       {draft && (
         <Card title={`${draft.title}, ready to send`} action={<Badge status="info">Draft</Badge>}>
           <div className="flex flex-col gap-4">
-            <p className="flex items-center gap-1 text-caption text-secondary">
-              <Sparkle className="size-4" aria-hidden /> Drafted from this week&apos;s work. Check it, add your note, send.
-            </p>
+            <p className="text-caption text-secondary">Drafted from this week&apos;s work. Check it, add your note, send.</p>
             <p className="font-display text-display-lg text-primary">{draft.headline}</p>
             <Rows>
               {draft.did.map((d) => (

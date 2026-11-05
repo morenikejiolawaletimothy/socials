@@ -5,7 +5,7 @@ import Link from "next/link";
 import { kindLabels } from "@/components/client/Assistants";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Avatar, Banner, Button, buttonClass, Card, EmptyState, Meta, Pill, Tile, TileFooter, useConfirm } from "@/components/ui";
+import { Avatar, Button, buttonClass, Card, EmptyState, Meta, Pill, Tile, TileFooter, useConfirm } from "@/components/ui";
 import { plural } from "@/lib/format";
 import { act, useData, useMyClient, type Assistant } from "@/lib/mock";
 
@@ -20,12 +20,12 @@ export default function AssistantsPage() {
 
   return (
     <Columns {...rails.clientSettings}>
-      <Card title="Your assistants" action={assistants.length > 0 ? <Pill>{plural(assistants.length, "assistant")}</Pill> : undefined}>
+      <Card
+        title="Your assistants"
+        action={assistants.length > 0 ? <Pill>{plural(assistants.length, "assistant")}</Pill> : undefined}
+        info="Hand quick tasks to your executive or personal assistant. They get a private link to that one task by email or WhatsApp, with no account. They cannot see your posts, messages, strategy or billing, and cannot approve anything for you."
+      >
         <div className="flex flex-col gap-4">
-          <Banner tone="info">
-            Hand quick tasks to your executive or personal assistant. They get a private link to that one task by email or WhatsApp, with no account. They cannot see your posts, messages,
-            strategy or billing, and cannot approve anything for you.
-          </Banner>
 
           {assistants.length === 0 ? (
             <EmptyState title="No assistants yet">Add the person who handles things for you when you are busy.</EmptyState>

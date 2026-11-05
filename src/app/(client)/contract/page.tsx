@@ -1,18 +1,19 @@
 "use client";
 
-import { CircleNotch, CreditCard, DownloadSimple } from "@phosphor-icons/react";
+import { CalendarBlank, CreditCard, DownloadSimple, Gift, Receipt, Signature } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useState } from "react";
 import { PayDialog } from "@/components/client/PayDialog";
-import { VideoAddonCard, monthlyTotal } from "@/components/client/VideoAddon";
+import { VideoAddonCard, contractTotal } from "@/components/client/VideoAddon";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Avatar, Badge, Banner, Button, buttonClass, Card, Dialog, EmptyState, Pill, Textarea, Tile, TileIcon, useConfirm, useTask } from "@/components/ui";
-import { date, daysFrom, fullName, money } from "@/lib/format";
+import { Avatar, Badge, Banner, Button, buttonClass, Card, Dialog, EmptyState, IconButton, Pill, Row, Rows, Textarea, useConfirm, useTask } from "@/components/ui";
+import { date, dateTime, daysFrom, fullName, money } from "@/lib/format";
 import { act, useData, useMyClient } from "@/lib/mock";
+import { plans } from "@/lib/pricing";
 
 const contractBadge = {
-  free: { label: "Free 2 weeks", tone: "info" as const },
+  free: { label: "Free", tone: "info" as const },
   active: { label: "Active", tone: "success" as const },
   ending: { label: "Ending soon", tone: "warning" as const },
   paused: { label: "Paused", tone: "warning" as const },
@@ -47,23 +48,28 @@ export default function ContractPage() {
   }
 
   const b = contractBadge[contract.status];
+  // Plan name on each invoice: Starter (3 months), Standard (6) or Steady (12).
+  const tier = plans.find((p) => p.months === contract.months)?.tier ?? `${contract.months} months`;
   const changeRequest = db.changeRequests.find((r) => r.clientId === client.id && r.status === "open");
   const unpaid = !contract.paid && (contract.status === "free" || contract.status === "paused");
   const fs = client.fullService;
   const fsMonthly = fs ? db.settings.fullServiceCents + (fs.pageManagement ? db.settings.pageManagementCents : 0) : 0;
-  const rows: [string, string][] = [
-    ["Plan", `${contract.months} months, ${money(contract.monthlyCents)} a month`],
+  // Contracts are paid once, up front: the plan for all its months. Full-service add-ons are billed each month.
+  const planCents = contract.monthlyCents * contract.months;
+  const priceRows: [string, string][] = [
+    [`${tier} plan, ${contract.months} months`, `${money(planCents)} (${money(contract.monthlyCents)} a month)`],
     ...(fs ? ([["Full-service", `+${money(db.settings.fullServiceCents)} a month`]] as [string, string][]) : []),
     ...(fs?.pageManagement ? ([["Company Page management", `+${money(db.settings.pageManagementCents)} a month`]] as [string, string][]) : []),
-    ...(fs ? ([["Total a month", money(contract.monthlyCents + fsMonthly)]] as [string, string][]) : []),
-    ["Signed", `${date(contract.signedAt)} by ${contract.signedName}`],
-    ["Free 2 weeks", `Until ${date(contract.freeEndsAt)}`],
-    ["Contract", `${date(contract.startsAt)} to ${date(contract.endsAt)}`],
+  ];
+  const dateRows = [
+    { icon: Signature, label: "Signed", value: `${date(contract.signedAt)} by ${contract.signedName}` },
+    { icon: Gift, label: "Free 2 weeks", value: `Until ${date(contract.freeEndsAt)}` },
+    { icon: CalendarBlank, label: "Contract", value: `${date(contract.startsAt)} to ${date(contract.endsAt)}` },
   ];
 
   return (
     <Columns {...rails.clientSettings}>
-      <Card title="Your plan" action={<Badge status={b.tone}>{b.label}</Badge>}>
+      <Card title="Your plan" action={<Badge status={b.tone}>{b.label}</Badge>} info="You can pull out any time. We refund every paid month that has not started.">
         <div className="flex flex-col gap-6">
           {unpaid && (
             <Banner tone={contract.status === "paused" || daysFrom(contract.freeEndsAt) <= 5 ? "warning" : "info"} title={contract.status === "paused" ? "Your account is paused until you pay" : `Pay by ${date(contract.freeEndsAt)} to keep going`}>
@@ -96,22 +102,49 @@ export default function ContractPage() {
               Service runs to {date(contract.endsAt)}. Any refund is shown under Payments. Changed your mind? You can stay until then.
             </Banner>
           )}
-          {/* Question on the left, answer on the right, as in How you review. */}
-          <dl className="flex flex-col divide-y divide-border">
-            {rows.map(([k, v]) => (
-              <div key={k} className="flex flex-col gap-1 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          {/* What you pay: one bordered list, the total shaded at the bottom. */}
+          <dl className="flex flex-col overflow-hidden rounded-md border border-border">
+            {priceRows.map(([k, v]) => (
+              <div key={k} className="flex flex-col gap-1 border-b border-border px-4 py-3 last:border-b-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <dt className="text-body-sm text-secondary">{k}</dt>
                 <dd className="text-body-sm font-medium text-primary sm:text-right">{v}</dd>
               </div>
             ))}
+            <div className="flex items-center justify-between gap-4 border-b border-border bg-neutral-25 px-4 py-3 last:border-b-0">
+              <dt className="text-body font-semibold text-primary">Contract, paid once</dt>
+              <dd className="text-body font-semibold text-primary">{money(planCents)}</dd>
+            </div>
+            {fs && (
+              <div className="flex items-center justify-between gap-4 bg-neutral-25 px-4 py-3">
+                <dt className="text-body font-semibold text-primary">Add-ons a month</dt>
+                <dd className="text-body font-semibold text-primary">{money(fsMonthly)}</dd>
+              </div>
+            )}
           </dl>
           {unpaid && (
-            <Button className="self-start" onClick={() => setPaying(true)}>
-              Pay {money(contract.monthlyCents)}
-            </Button>
+            <div className="border-t border-border pt-6">
+              <Button onClick={() => setPaying(true)}>Pay {money(contractTotal(contract, addonCents))}</Button>
+            </div>
           )}
-          <Banner tone="info">You can pull out any time. We refund every paid month that has not started.</Banner>
         </div>
+      </Card>
+
+      <Card title="Contract dates">
+        <Rows>
+          {dateRows.map(({ icon: Icon, label, value }) => (
+            <Row key={label}>
+              <span className="flex min-w-0 flex-1 items-center gap-4">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700">
+                  <Icon className="size-5" aria-hidden />
+                </span>
+                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  <span className="text-body-sm text-secondary">{label}</span>
+                  <span className="text-body font-medium text-primary">{value}</span>
+                </span>
+              </span>
+            </Row>
+          ))}
+        </Rows>
       </Card>
 
       <VideoAddonCard clientId={client.id} contract={contract} priceCents={addonCents} />
@@ -160,55 +193,66 @@ export default function ContractPage() {
       )}
 
       <Card title="Payments" action={invoices.length > 0 && <Pill>{invoices.length === 1 ? "1 invoice" : `${invoices.length} invoices`}</Pill>}>
+        {/* Two sections under one line each: the card you pay with, then every invoice. */}
         <div className="flex flex-col gap-6">
-          <Tile>
-            <div className="flex items-center gap-3">
-              <TileIcon round>
-                <CreditCard className="size-6" aria-hidden />
-              </TileIcon>
-              <span className="flex min-w-0 flex-1 flex-col gap-1">
-                <span className="text-body font-medium text-primary">{contract.card ? `${contract.card.brand} ending ${contract.card.last4}` : "No card yet"}</span>
-                <span className="text-body-sm text-secondary">{contract.card ? "Used for your monthly payment." : "Add a card to pay each month."}</span>
-              </span>
-              <Button variant="secondary" size="sm" onClick={() => setPaying(true)}>
-                {contract.card ? "Update card" : "Add a card"}
-              </Button>
-            </div>
-          </Tile>
-          {invoices.length ? (
-            <div className="flex flex-col gap-2">
-              <h3 className="text-body font-medium text-primary">Invoices</h3>
-              <ul className="flex flex-col rounded-md border border-border">
+          <section className="flex flex-col gap-3" aria-labelledby="pay-card">
+            <h3 id="pay-card" className="text-body font-semibold text-primary">
+              Payment card
+            </h3>
+            <Rows>
+              <Row>
+                <span className="flex min-w-0 flex-1 items-center gap-4">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700">
+                    <CreditCard className="size-5" aria-hidden />
+                  </span>
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="text-body font-medium text-primary">{contract.card ? `${contract.card.brand} ending ${contract.card.last4}` : "No card yet"}</span>
+                    <span className="text-body-sm text-secondary">{contract.card ? "Used to pay for your contract." : "Add a card to pay for your contract."}</span>
+                  </span>
+                </span>
+                <Button variant="secondary" size="sm" onClick={() => setPaying(true)}>
+                  {contract.card ? "Update card" : "Add a card"}
+                </Button>
+              </Row>
+            </Rows>
+          </section>
+
+          <section className="flex flex-col gap-3 border-t border-border pt-6" aria-labelledby="pay-invoices">
+            <h3 id="pay-invoices" className="text-body font-semibold text-primary">
+              Invoices
+            </h3>
+            {invoices.length ? (
+              <Rows>
                 {invoices.map((i) => {
                   const ib = invoiceBadge[i.status];
                   return (
-                    <li key={i.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-border px-4 py-3 last:border-b-0">
-                      <span className="flex min-w-0 flex-1 flex-col gap-1">
-                        <span className="text-body-sm font-medium text-primary">{i.label}</span>
-                        <span className="text-caption text-secondary">
-                          {i.number} · {date(i.at)}
+                    <Row key={i.id}>
+                      <span className="flex min-w-0 flex-1 items-center gap-4">
+                        <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700">
+                          <Receipt className="size-5" aria-hidden />
+                        </span>
+                        <span className="min-w-0 flex-1 text-body text-secondary">
+                          {tier} · {i.number} · {dateTime(i.at)}
                         </span>
                       </span>
-                      <span className="text-body-sm font-medium text-primary">{money(i.amountCents)}</span>
-                      <Badge status={ib.tone}>{ib.label}</Badge>
-                      <button
-                        type="button"
-                        disabled={pending(i.id)}
-                        onClick={() => run(i.id, () => act.save(), `${i.number}.pdf downloaded.`)}
-                        aria-label={`Download invoice ${i.number}`}
-                        title="Download PDF"
-                        className="flex size-9 items-center justify-center rounded-full text-secondary transition-colors hover:bg-primary-50 hover:text-primary-700 focus-visible:focus-ring disabled:cursor-not-allowed"
-                      >
-                        {pending(i.id) ? <CircleNotch className="size-5 animate-spin" aria-hidden /> : <DownloadSimple className="size-5" aria-hidden />}
-                      </button>
-                    </li>
+                      <span className="flex items-center gap-3">
+                        <span className="text-body font-semibold text-primary">{money(i.amountCents)}</span>
+                        <Badge status={ib.tone}>{ib.label}</Badge>
+                        <IconButton
+                          icon={DownloadSimple}
+                          label={`Download invoice ${i.number}`}
+                          loading={pending(i.id)}
+                          onClick={() => run(i.id, () => act.save(), `${i.number}.pdf downloaded.`)}
+                        />
+                      </span>
+                    </Row>
                   );
                 })}
-              </ul>
-            </div>
-          ) : (
-            <p className="text-body-sm text-secondary">No payments yet. Receipts appear here.</p>
-          )}
+              </Rows>
+            ) : (
+              <p className="text-body-sm text-secondary">No payments yet. Receipts appear here.</p>
+            )}
+          </section>
         </div>
       </Card>
 
@@ -223,7 +267,7 @@ export default function ContractPage() {
         </Card>
       )}
 
-      <PayDialog open={paying} onClose={() => setPaying(false)} clientId={client.id} amountCents={monthlyTotal(contract, addonCents)} title={contract.card ? "Pay or update your card" : "Pay now"} />
+      <PayDialog open={paying} onClose={() => setPaying(false)} clientId={client.id} amountCents={contractTotal(contract, addonCents)} title={contract.card ? "Pay or update your card" : "Pay now"} />
 
       <Dialog open={changing} onClose={() => setChanging(false)} title="Ask for a different manager">
         <p className="text-body-sm text-secondary">The owner reads this and gets back to you within 1 working day. Your new manager receives a full handover, so nothing is lost.</p>

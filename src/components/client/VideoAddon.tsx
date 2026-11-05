@@ -1,8 +1,8 @@
 "use client";
 
 import { VideoCamera } from "@phosphor-icons/react";
-import { useState } from "react";
-import { Badge, Banner, Button, Card, useConfirm, useTask } from "@/components/ui";
+import { useId, useState } from "react";
+import { Badge, Button, Card, InfoTip, useConfirm, useTask } from "@/components/ui";
 import { date, money } from "@/lib/format";
 import { act, type Contract } from "@/lib/mock";
 
@@ -12,12 +12,6 @@ export const makerLabel: Record<Maker, string> = {
   client: "I will supply the videos",
   bluecut: "Bluecut makes the videos",
   both: "Both: I supply some, Bluecut makes some",
-};
-
-const makerHelp: Record<Maker, string> = {
-  client: "You record the clips, with a short guide from us each time on what to shoot. We plan, caption and post them.",
-  bluecut: "A separate video production service: we film with you in person, set up a content studio for you, or make the video with AI and video tools.",
-  both: "You supply some clips yourself, and Bluecut produces others as a separate service.",
 };
 
 /** Video production by Bluecut happens off the platform and is priced on its own, after the onboarding call. */
@@ -40,20 +34,25 @@ export const addonReady = (c: AddonChoice) => !c.on || !needsQuote(c.maker) || c
  */
 export function VideoAddonPicker({ value, priceCents, onChange }: { value: AddonChoice; priceCents: number; onChange: (v: AddonChoice) => void }) {
   const { on, maker, understood } = value;
+  const checkboxId = useId();
   return (
     <div className={`flex flex-col rounded-lg border bg-card transition-colors ${on ? "border-primary-600" : "border-border hover:border-primary-300"}`}>
-      <label className="flex cursor-pointer items-start gap-3 p-4">
-        <input type="checkbox" checked={on} onChange={(e) => onChange({ ...value, on: e.target.checked })} className="mt-3 size-4 shrink-0 accent-primary-600 focus-visible:focus-ring" />
+      {/* htmlFor ties the label to the checkbox, so the info button inside it does not take over the label. */}
+      <label htmlFor={checkboxId} className="flex cursor-pointer items-center gap-4 p-4">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700">
           <VideoCamera className="size-5" aria-hidden />
         </span>
-        <span className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-            <span className="text-body font-medium text-primary">Add video</span>
-            <span className="text-body-sm font-medium text-primary-700">{on ? priceTag(maker, priceCents) : `From ${money(priceCents)} a month`}</span>
+        <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="flex items-center gap-2 text-body font-medium text-primary">
+            Add video
+            <InfoTip label="About video production">
+              Video production is a separate service. {on && maker === "both" ? `The ${money(priceCents)} a month covers the videos you supply. ` : ""}
+              Bluecut making your videos is priced on its own. Your account manager talks it through with you on your onboarding call, then sends you a quote. You pay nothing for production until you agree to the quote.
+            </InfoTip>
           </span>
-          <span className="text-body-sm text-secondary">Short videos become part of your plan, chosen to serve your goal. You can add or remove this later in Contract.</span>
+          <span className="text-body-sm text-secondary">{on ? priceTag(maker, priceCents) : `From ${money(priceCents)} a month`}</span>
         </span>
+        <input id={checkboxId} type="checkbox" checked={on} onChange={(e) => onChange({ ...value, on: e.target.checked })} className="size-4 shrink-0 accent-primary-600 focus-visible:focus-ring" />
       </label>
       {on && (
         <div className="border-t border-border p-4">
@@ -63,20 +62,13 @@ export function VideoAddonPicker({ value, priceCents, onChange }: { value: Addon
               <label key={m} className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors ${maker === m ? "border-primary-600 bg-primary-50" : "border-border hover:border-primary-300"}`}>
                 <input type="radio" name="video-maker" checked={maker === m} onChange={() => onChange({ on: true, maker: m, understood: false })} className="mt-1 size-4 shrink-0 accent-primary-600 focus-visible:focus-ring" />
                 <span className="flex min-w-0 flex-1 flex-col gap-1">
-                  <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                    <span className="text-body font-medium text-primary">{makerLabel[m]}</span>
-                    <span className="text-body-sm font-medium text-primary-700">{priceTag(m, priceCents)}</span>
-                  </span>
-                  <span className="text-body-sm text-secondary">{makerHelp[m]}</span>
+                  <span className="text-body font-medium text-primary">{makerLabel[m]}</span>
+                  <span className="text-body-sm text-secondary">{priceTag(m, priceCents)}</span>
                 </span>
               </label>
             ))}
             {needsQuote(maker) && (
               <div className="mt-1 flex flex-col gap-3">
-                <Banner tone="warning" title="Video production is a separate service">
-                  {maker === "both" ? `The ${money(priceCents)} a month covers the videos you supply. ` : ""}
-                  Bluecut making your videos is priced on its own. Your account manager talks it through with you on your onboarding call, then sends you a quote. You pay nothing for production until you agree to the quote.
-                </Banner>
                 <label className="flex cursor-pointer items-start gap-3">
                   <input type="checkbox" checked={understood} onChange={(e) => onChange({ ...value, understood: e.target.checked })} className="mt-1 size-4 shrink-0 accent-primary-600 focus-visible:focus-ring" />
                   <span className="text-body-sm text-primary">I understand that video production by Bluecut is a separate service, quoted after my onboarding call.</span>
@@ -93,6 +85,9 @@ export function VideoAddonPicker({ value, priceCents, onChange }: { value: Addon
 /** What the client pays each month: the plan, plus the video add-on when it is on. */
 export const monthlyTotal = (contract: Pick<Contract, "monthlyCents" | "videoAddon">, priceCents: number) => contract.monthlyCents + (contract.videoAddon ? addonCents(contract.videoAddon.maker, priceCents) : 0);
 
+/** What the client pays for the whole contract, at once and up front: the monthly total times 3, 6 or 12 months. */
+export const contractTotal = (contract: Pick<Contract, "monthlyCents" | "videoAddon" | "months">, priceCents: number) => monthlyTotal(contract, priceCents) * contract.months;
+
 /** C13 Contract: the video add-on, on or off, who makes the videos, and the controls to change it. */
 export function VideoAddonCard({ clientId, contract, priceCents }: { clientId: string; contract: Contract; priceCents: number }) {
   const confirm = useConfirm();
@@ -103,7 +98,11 @@ export function VideoAddonCard({ clientId, contract, priceCents }: { clientId: s
   const ended = ["cancelled", "completed"].includes(contract.status);
 
   return (
-    <Card title="Video add-on" action={<Badge status={addon ? "success" : "neutral"}>{addon ? "On" : "Off"}</Badge>}>
+    <Card
+      title="Video add-on"
+      action={<Badge status={addon ? "success" : "neutral"}>{addon ? "On" : "Off"}</Badge>}
+      info={addon && needsQuote(addon.maker) && !editing ? "Your account manager agrees the video production with you and sends a quote. You pay nothing for production until you agree to it." : undefined}
+    >
       <div className="flex flex-col gap-4">
         {addon ? (
           <p className="text-body text-primary">
@@ -114,9 +113,6 @@ export function VideoAddonCard({ clientId, contract, priceCents }: { clientId: s
           <p className="text-body-sm text-secondary">
             Add short videos to your plan for {money(priceCents)} a month. You can always use your own clips in posts without it.
           </p>
-        )}
-        {addon && needsQuote(addon.maker) && !editing && (
-          <Banner tone="info">Your account manager agrees the video production with you and sends a quote. You pay nothing for production until you agree to it.</Banner>
         )}
         {editing && <VideoAddonPicker value={draft} priceCents={priceCents} onChange={setDraft} />}
         {!ended && (

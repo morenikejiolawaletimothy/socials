@@ -1,3 +1,4 @@
+import { weeklyToDates } from "../slots";
 import type { Client, Db, Permissions, ReviewSettings, Strategy, WeekProgress } from "./types";
 
 // Realistic dummy data. Names, companies and people are fictional. Photos are stock images from the landing page.
@@ -89,7 +90,7 @@ export function seed(): Db {
   });
 
   return {
-    version: 25,
+    version: 27,
     session: {
       role: "client",
       userIds: { client: "u-chidi", manager: "u-ada", owner: "u-fola" },
@@ -142,24 +143,24 @@ export function seed(): Db {
           ],
           approach: "I learn how you talk, then write like you on a good day. You get posts that sound like you, a clear plan each week, and honest advice on what is working.",
         },
-        maxClients: 10, industries: ["Fintech", "Health", "Energy"], slots: ["mon-morning", "tue-afternoon", "wed-morning", "thu-morning", "fri-afternoon"], stats: { onTime: 96, firstTimeApproval: 81, missed: 1, complaints: 0 } },
-      { id: "m-tunde", userId: "u-tunde", status: "active", intro: "I work with product and tech leaders in North America and the UK.", maxClients: 10, industries: ["Software", "Fintech", "Venture capital"], slots: ["mon-afternoon", "wed-afternoon", "thu-afternoon"], stats: { onTime: 88, firstTimeApproval: 72, missed: 4, complaints: 1 } },
+        maxClients: 10, industries: ["Fintech", "Health", "Energy"], slots: weeklyToDates(["mon-morning", "tue-afternoon", "wed-morning", "thu-morning", "fri-afternoon"], now), stats: { onTime: 96, firstTimeApproval: 81, missed: 1, complaints: 0 } },
+      { id: "m-tunde", userId: "u-tunde", status: "active", intro: "I work with product and tech leaders in North America and the UK.", maxClients: 10, industries: ["Software", "Fintech", "Venture capital"], slots: weeklyToDates(["mon-afternoon", "wed-afternoon", "thu-afternoon"], now), stats: { onTime: 88, firstTimeApproval: 72, missed: 4, complaints: 1 } },
       { id: "m-bisi", userId: "u-bisi", status: "invited", intro: "", maxClients: 10, industries: [], inviteToken: "demo-invite", inviteExpiresAt: new Date(now + 6 * DAY).toISOString(), stats: { onTime: 0, firstTimeApproval: 0, missed: 0, complaints: 0 } },
       { id: "m-kola", userId: "u-kola", status: "waiting-for-training", intro: "Former journalist. I write about law, policy and public life.", maxClients: 10, industries: ["Law", "Public sector"], trainingAt: at(2, 11), slots: ["tue-morning", "thu-afternoon"], stats: { onTime: 0, firstTimeApproval: 0, missed: 0, complaints: 0 } },
     ],
     notifications: [
-      { id: "n1", userId: "u-chidi", text: "3 posts are ready for your review. Due tomorrow at 5pm.", href: "/content/review", createdAt: hoursAgo(2), read: false },
+      { id: "n1", userId: "u-chidi", text: "3 posts are ready for your review. Due tomorrow at 5pm.", href: "/content/review", createdAt: hoursAgo(2), read: false, by: "Ada Obi (manager)" },
       { id: "n-msg-chidi", userId: "u-chidi", text: "New message from Ada Obi.", href: "/messages", createdAt: hoursAgo(5), read: false },
       { id: "n-msg-ada", userId: "u-ada", text: "New message from Zainab Bello.", href: "/manager/messages?client=c-zainab", createdAt: hoursAgo(1), read: false },
       { id: "n2", userId: "u-chidi", text: "Ada sent you 6 people to connect with this week.", href: "/tasks/t-chidi-connect", createdAt: hoursAgo(5), read: false },
       { id: "n3", userId: "u-chidi", text: "Your post on cross-border payments is live.", href: "/content?tab=live", createdAt: hoursAgo(20), read: false },
       { id: "n4", userId: "u-chidi", text: "Your weekly update is ready to read.", href: "/progress/u-chidi-w9", createdAt: hoursAgo(50), read: true },
       { id: "n5", userId: "u-chidi", text: "Ada asked to post on the Paystream company Page this week.", href: "/control", createdAt: hoursAgo(26), read: true },
-      { id: "n6", userId: "u-ada", text: "Zainab asked for a fix on a live post.", href: "/manager/clients/c-zainab/content", createdAt: hoursAgo(1), read: false },
+      { id: "n6", userId: "u-ada", text: "Zainab asked for a fix on a live post.", href: "/manager/clients/c-zainab/content", createdAt: hoursAgo(1), read: false, by: "Zainab Bello (client)" },
       { id: "n7", userId: "u-ada", text: "Chidi added a new Moment: Lagos Fintech Week.", href: "/manager/clients/c-chidi?tab=brand", createdAt: hoursAgo(4), read: false },
       { id: "n8", userId: "u-ada", text: "Sarah asked for changes on 1 post.", href: "/manager/clients/c-sarah/content", createdAt: hoursAgo(9), read: true },
       { id: "n9", userId: "u-fola", text: "David Adeyemi is waiting for a manager.", href: "/admin/clients", createdAt: hoursAgo(3), read: false },
-      { id: "n10", userId: "u-fola", text: "Musa Ibrahim pulled out. A refund of $3,200 needs your approval.", href: "/admin/money", createdAt: hoursAgo(7), read: false },
+      { id: "n10", userId: "u-fola", text: "Musa Ibrahim pulled out. A refund of $3,200 needs your approval.", href: "/admin/money", createdAt: hoursAgo(7), read: false, by: "Musa Ibrahim (client)" },
       { id: "n11", userId: "u-fola", text: "Tobi Akin raised a complaint about post quality.", href: "/admin/complaints", createdAt: hoursAgo(30), read: true },
     ],
 
@@ -461,15 +462,14 @@ export function seed(): Db {
       { id: "k-musa", clientId: "c-musa", months: 6, monthlyCents: 80000, signedAt: at(-40), signedName: "Musa Ibrahim", freeEndsAt: at(-26), startsAt: at(-26), endsAt: at(9), status: "cancelled", paid: true, card: { brand: "Visa", last4: "3301" } },
       { id: "k-tari", clientId: "c-tari", months: 12, monthlyCents: 80000, signedAt: at(-38), signedName: "Tari Briggs", freeEndsAt: at(-24), startsAt: at(-24), endsAt: at(341), status: "active", paid: true, card: { brand: "Mastercard", last4: "7782" } },
     ],
+    // Contracts are paid up front, so each contract has one invoice for its full amount.
     invoices: [
-      { id: "i1", clientId: "c-chidi", number: "BC-1042", amountCents: 80000, at: at(-49), status: "paid", label: "Month 1 of 6" },
-      { id: "i2", clientId: "c-chidi", number: "BC-1088", amountCents: 80000, at: at(-19), status: "paid", label: "Month 2 of 6" },
-      { id: "i3", clientId: "c-chidi", number: "BC-1131", amountCents: 80000, at: at(11), status: "due", label: "Month 3 of 6" },
-      { id: "i4", clientId: "c-kemi", number: "BC-1120", amountCents: 90000, at: at(-12), status: "failed", label: "Month 1 of 3" },
-      { id: "i5", clientId: "c-femi", number: "BC-1135", amountCents: 70000, at: at(-6), status: "paid", label: "Month 1 of 12" },
+      { id: "i1", clientId: "c-chidi", number: "BC-1042", amountCents: 480000, at: at(-49), status: "paid", label: "6 months, paid in full" },
+      { id: "i4", clientId: "c-kemi", number: "BC-1120", amountCents: 270000, at: at(-12), status: "failed", label: "3 months, paid in full" },
+      { id: "i5", clientId: "c-femi", number: "BC-1135", amountCents: 840000, at: at(-6), status: "paid", label: "12 months, paid in full" },
       { id: "i6", clientId: "c-musa", number: "BC-1101", amountCents: 480000, at: at(-26), status: "paid", label: "6 months, paid in full" },
-      { id: "i7", clientId: "c-tobi", number: "BC-1099", amountCents: 70000, at: at(-16), status: "paid", label: "Month 4 of 12" },
-      { id: "i8", clientId: "c-zainab", number: "BC-1112", amountCents: 80000, at: at(-21), status: "paid", label: "Month 3 of 6" },
+      { id: "i7", clientId: "c-tobi", number: "BC-1099", amountCents: 840000, at: at(-106), status: "paid", label: "12 months, paid in full" },
+      { id: "i8", clientId: "c-zainab", number: "BC-1112", amountCents: 480000, at: at(-81), status: "paid", label: "6 months, paid in full" },
     ],
     refunds: [
       { id: "rf1", clientId: "c-musa", amountCents: 320000, calc: "Paid 6 months in full ($4,800). Service runs to the end of month 2. Months 3 to 6 have not started: 4 x $800 = $3,200.", reason: "Not seeing results", at: hoursAgo(7), status: "waiting" },
@@ -578,6 +578,12 @@ export function seed(): Db {
     ],
     accessAlerts: [{ id: "al1", clientId: "c-tari", managerName: "Ada Obi", at: hoursAgo(5), kind: "security-page", detail: "Opened LinkedIn Sign-in & security during a session. Blocked automatically.", resolved: false }],
     assistants: [{ id: "as-amaka", clientId: "c-chidi", name: "Amaka Obi", role: "EA", email: "amaka@paystream.example", whatsapp: "+234 803 555 0142", auto: [] }],
-    outbox: [],
+    outbox: [
+      { id: "o1", to: "Chidi Okafor", userId: "u-chidi", channel: "email", address: "chidi@paystream.example", text: "3 posts are ready for your review. Due tomorrow at 5pm.", href: "/content/review", at: hoursAgo(2), by: "Ada Obi (manager)" },
+      { id: "o2", to: "Chidi Okafor", userId: "u-chidi", channel: "whatsapp", address: "+234 802 555 0110", text: "3 posts are ready for your review. Due tomorrow at 5pm.", href: "/content/review", at: hoursAgo(2), by: "Ada Obi (manager)" },
+      { id: "o3", to: "Fola Morenikeji", userId: "u-fola", channel: "email", address: "fola@bluecut.example", text: "Musa Ibrahim pulled out. A refund of $3,200 needs your approval.", href: "/admin/money", at: hoursAgo(7), by: "Musa Ibrahim (client)" },
+      { id: "o4", to: "Ada Obi", userId: "u-ada", channel: "email", address: "ada@bluecut.example", text: "Zainab asked for a fix on a live post.", href: "/manager/clients/c-zainab/content", at: hoursAgo(1), by: "Zainab Bello (client)" },
+      { id: "o5", to: "Chidi Okafor", userId: "u-chidi", channel: "email", address: "chidi@paystream.example", text: "Your weekly update is ready to read.", href: "/progress/u-chidi-w9", at: hoursAgo(50) },
+    ],
   };
 }

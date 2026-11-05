@@ -36,6 +36,11 @@ export function dayTimeIn(iso: string) {
   return `${dayIn(iso)} at ${time(iso)}`;
 }
 
+/** Always the date, never "Today": "Thu 6 Nov · 10am". For a call's date and time. */
+export function dateTime(iso: string) {
+  return `${new Date(iso).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })} · ${time(iso)}`;
+}
+
 /** "Tomorrow at 5pm". */
 export function dayTime(iso: string) {
   return `${day(iso)} at ${time(iso)}`;

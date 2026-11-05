@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarBlank, CalendarStar, Circle, Clock, Copy, GraduationCap, LinkedinLogo, LinkSimple, MapPin, PencilSimple } from "@phosphor-icons/react";
+import { CalendarStar, Circle, Clock, Copy, GraduationCap, LinkedinLogo, LinkSimple, MapPin, PencilSimple, Timer } from "@phosphor-icons/react";
 import Image from "next/image";
 import { use, useState, type ReactNode } from "react";
 import { eventLength } from "@/components/client/HomeCards";
@@ -11,7 +11,7 @@ import { EngageItemTile } from "@/components/client/EngageItemTile";
 import { engageKinds, isEngage, progressWord, taskProgress } from "@/lib/engage";
 import { VideoTask } from "@/components/client/VideoTask";
 import { Avatar, Badge, Banner, Breadcrumbs, Button, Card, EmptyState, Meta, ProgressBar, Textarea, TextButton, textActionClass, useTask, useToast } from "@/components/ui";
-import { agoIn, day, dayIn, time } from "@/lib/format";
+import { agoIn, day, dayIn, dayTimeIn, time } from "@/lib/format";
 import { act, useMyClient, type Person, type QuickTask } from "@/lib/mock";
 
 async function copy(text: string) {
@@ -42,7 +42,7 @@ function PersonRow({ task, person }: { task: QuickTask; person: Person }) {
     <li className={`flex flex-col rounded-md border border-border p-4 ${person.done ? "bg-neutral-25" : "bg-card"}`}>
       {/* Who: avatar, name and role, with Sent or Mark as sent on the right. */}
       <div className="flex items-center gap-4 border-b border-border pb-3">
-        <Avatar name={person.name} src={person.photo} size="md" />
+        <Avatar name={person.name} src={person.photo} size="lg" />
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="text-body font-medium text-primary">{person.name}</span>
           <span className="text-body-sm text-secondary">{person.role}</span>
@@ -200,26 +200,27 @@ export default function TaskPage({ params }: { params: Promise<{ id: string }> }
     <Columns {...rails.clientMain}>
       <Card
         title={task.title}
-        eyebrow={<Breadcrumbs items={[{ label: "Home", href: "/home" }, { label: "Quick tasks" }]} />}
+        eyebrow={<Breadcrumbs items={[{ label: "Home", href: "/home", back: true }, { label: "Quick tasks" }]} />}
         action={
-          <Meta icon={CalendarBlank}>
-            {task.kind === "event" && task.done && task.event ? `Starts ${dayIn(task.event.startsAt)}` : `${task.kind === "event" ? "Closing by" : "Due"} ${dayIn(task.dueAt)}`}
+          <Meta icon={Timer}>
+            {task.kind === "event" && task.done && task.event ? `Starts ${dayTimeIn(task.event.startsAt)}` : `${task.kind === "event" ? "Closing by" : "Due"} ${dayTimeIn(task.dueAt)}`}
           </Meta>
         }
+        info={[
+          task.kind === "video"
+            ? `${managerUser?.firstName ?? "Your manager"} would like a short video from you. Record it on your phone using the guide below, then upload it here. It goes to your manager and into Your brand.`
+            : task.kind === "event"
+              ? `${managerUser?.firstName ?? "Your manager"} picked this for you. Open the ${task.event?.type === "program" ? "program" : "event"} page, register, then mark it as registered here so we can plan posts around it.`
+              : `LinkedIn only lets you do this yourself, so ${managerUser?.firstName ?? "your manager"} has prepared everything.`,
+          task.kind === "connect" && "Open each profile, press Connect, then \u201cAdd a note\u201d, paste the note and send. Then mark it as sent here. About 30 seconds a person.",
+          task.kind === "profile" && "Copy the text, paste it where shown, then mark it as done. About a minute.",
+          engage?.steps,
+          (engage || task.kind === "connect") && "When all are done, the task leaves your list.",
+        ]
+          .filter(Boolean)
+          .join(" ")}
       >
         <div className="flex flex-col gap-4">
-          <Banner tone="info" closeKey={`task-note-${task.kind}`}>
-            {task.kind === "video"
-              ? `${managerUser?.firstName ?? "Your manager"} would like a short video from you. Record it on your phone using the guide below, then upload it here. It goes to your manager and into Your brand.`
-              : task.kind === "event"
-                ? `${managerUser?.firstName ?? "Your manager"} picked this for you. Open the ${task.event?.type === "program" ? "program" : "event"} page, register, then mark it as registered here so we can plan posts around it.`
-                : `LinkedIn only lets you do this yourself, so ${managerUser?.firstName ?? "your manager"} has prepared everything. `}
-            {task.kind === "connect" && "Open each profile, press Connect, then \u201cAdd a note\u201d, paste the note and send. Then mark it as sent here. About 30 seconds a person."}
-            {task.kind === "profile" && "Copy the text, paste it where shown, then mark it as done. About a minute."}
-            {engage?.steps}
-            {(engage || task.kind === "connect") && " When all are done, the task leaves your list."}
-          </Banner>
-
           <div className="flex flex-col gap-2">
             <span className="text-body-sm text-secondary">
               {task.kind === "video"

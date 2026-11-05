@@ -90,8 +90,7 @@ function ManagerMessages() {
         )}
       </Card>
 
-      <Dialog open={asking} onClose={() => setAsking(false)} title="Ask for a one-off permission">
-        <Banner tone="info">For something outside what {active?.u?.firstName ?? "the client"} lets you do. They approve or decline in Control.</Banner>
+      <Dialog open={asking} onClose={() => setAsking(false)} title="Ask for a one-off permission" info={`For something outside what ${active?.u?.firstName ?? "the client"} lets you do. They approve or decline in Control.`}>
         <Input label="What do you want to do?" placeholder="Post the Q3 update to the company Page" value={what} onChange={(e) => { setWhat(e.target.value); setError(undefined); }} error={error} />
         <Textarea label="Why" rows={2} value={why} onChange={(e) => setWhy(e.target.value)} />
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">

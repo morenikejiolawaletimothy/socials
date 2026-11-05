@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Clock, Sparkle, Trash } from "@phosphor-icons/react";
+import { Clock, Trash } from "@phosphor-icons/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, use, useState } from "react";
 import { PostAgainDialog } from "@/components/content/PostAgainDialog";
@@ -11,8 +11,8 @@ import { Columns } from "@/components/layout/Columns";
 import { PostMediaEditor, mediaChecks } from "@/components/manager/PostMediaEditor";
 import { OffLimitsBox } from "@/components/manager/ClientTabs";
 import { rails } from "@/components/rails";
-import { Badge, Banner, Breadcrumbs, Button, buttonClass, Card, Dialog, EmptyState, Input, Menu, Pill, Tabs, Textarea, Tile, TileFooter, useConfirm, useTask, useToast } from "@/components/ui";
-import { ago, agoIn, dayTime, dayTimeIn, fullName, time } from "@/lib/format";
+import { Badge, Banner, Breadcrumbs, Button, buttonClass, Card, Dialog, EmptyState, IconButton, InfoTip, Input, Menu, Meta, Pill, Rows, Tabs, Textarea, Tile, TileFooter, useConfirm, useTask, useToast } from "@/components/ui";
+import { ago, agoIn, dayTime, dayTimeIn, fullName, plural, time } from "@/lib/format";
 import { act, clientBundle, useMyManager, type ClientBundle, type Post } from "@/lib/mock";
 
 type Tab = "ideas" | "drafts" | "changes" | "client" | "schedule" | "scheduled" | "live";
@@ -53,17 +53,22 @@ function DraftEditor({ post, b }: { post: Post; b: ClientBundle }) {
   const first = b.user?.firstName ?? "the client";
 
   return (
+    // One post being written, in sections split by dividers: what it is, the draft, direction, media, checks, why, then the actions.
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span className="text-caption text-secondary">
-          {post.topic} · {post.format} · version {version}
-          {dirty && " · unsaved changes"}
+      <div className="flex items-start justify-between gap-3">
+        <span className="flex min-w-0 flex-col gap-1">
+          <span className="text-body font-medium text-primary">Version {version}</span>
+          <span className="text-body-sm capitalize text-secondary">
+            {post.topic} · {post.format}
+            {dirty && " · unsaved changes"}
+          </span>
         </span>
-        <span className="flex items-center gap-2">
-          <Badge status={blocked ? "warning" : "success"}>{blocked ? `${open.length} check${open.length > 1 ? "s" : ""} to clear` : "Checks clear"}</Badge>
-          <button
-            type="button"
-            aria-label="Delete draft"
+        <span className="flex shrink-0 items-center gap-2">
+          <Badge status={blocked ? "warning" : "success"}>{blocked ? `${open.length} check${open.length === 1 ? "" : "s"} to clear` : "Checks clear"}</Badge>
+          <IconButton
+            icon={Trash}
+            label="Delete draft"
+            tone="danger"
             onClick={() =>
               confirm({
                 title: "Delete this draft?",
@@ -75,24 +80,23 @@ function DraftEditor({ post, b }: { post: Post; b: ClientBundle }) {
                 success: "Draft deleted.",
               })
             }
-            className="flex size-9 items-center justify-center rounded-full text-secondary hover:bg-danger-bg hover:text-danger focus-visible:focus-ring"
-          >
-            <Trash className="size-4" aria-hidden />
-          </button>
+          />
         </span>
       </div>
 
-      <Textarea
-        label={post.repostOf?.reshare ? "New comment" : "Draft"}
-        rows={7}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        help={`${text.length} characters. LinkedIn shows about 210 before "See more".`}
-      />
-      <RepostNote post={post} />
+      <section className="flex flex-col gap-3 border-t border-border pt-4">
+        <Textarea
+          label={post.repostOf?.reshare ? "New comment" : "Draft"}
+          rows={7}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          help={`${text.length} characters. LinkedIn shows about 210 before "See more".`}
+        />
+        <RepostNote post={post} />
+      </section>
 
       <form
-        className="flex flex-col gap-2 sm:flex-row sm:items-end"
+        className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-end"
         onSubmit={async (e) => {
           e.preventDefault();
           if (!direction.trim()) return;
@@ -104,60 +108,54 @@ function DraftEditor({ post, b }: { post: Post; b: ClientBundle }) {
           setDirection("");
         }}
       >
-        <label className="flex flex-1 flex-col gap-2">
-          <span className="flex items-center gap-1 text-body font-semibold text-primary">
-            <Sparkle className="size-4 text-primary-600" aria-hidden /> Direct the draft
-          </span>
-          <input
-            value={direction}
-            onChange={(e) => setDirection(e.target.value)}
-            placeholder="Shorter. Open with the story. Less formal."
-            className="min-h-11 rounded-sm border border-border-strong bg-card px-4 py-3 text-body text-primary shadow-sm placeholder:text-neutral-400 focus-visible:border-primary-600 focus-visible:focus-ring"
-          />
-        </label>
+        <div className="flex-1">
+          <Input label="Direct the draft" value={direction} onChange={(e) => setDirection(e.target.value)} placeholder="Shorter. Open with the story. Less formal." />
+        </div>
         <Button type="submit" variant="secondary" loading={pending("rewrite")}>
           {pending("rewrite") ? "Rewriting" : "Rewrite"}
         </Button>
       </form>
 
-      <PostMediaEditor post={post} b={b} />
+      <section className="border-t border-border pt-4">
+        <PostMediaEditor post={post} b={b} />
+      </section>
 
       {(post.checks ?? []).length > 0 && (
-        <ul className="flex flex-col gap-2">
-          {post.checks!.map((k) => (
-            <li key={k.id}>
-              <Banner
-                tone={k.state !== "open" ? "success" : k.kind === "off-limits" ? "danger" : "warning"}
-                title={`${checkKind[k.kind]}${k.state === "dismissed" ? " (dismissed)" : k.state === "fixed" ? " (fixed)" : ""}`}
-                action={
-                  k.state === "open" && (
-                    <>
-                      {k.kind !== "off-limits" && (
-                        <Button variant="cancel" size="sm" onClick={() => setDismissing(k.id)}>
-                          Dismiss
+        <section className="flex flex-col gap-3 border-t border-border pt-4">
+          <span className="flex items-center gap-2">
+            <span className="text-body font-medium text-primary">Checks</span>
+            {open.some((k) => k.kind === "off-limits") && <InfoTip label="About off-limits checks">Off-limits flags cannot be dismissed. Change the draft, then mark it fixed.</InfoTip>}
+          </span>
+          <ul className="flex flex-col gap-2">
+            {post.checks!.map((k) => (
+              <li key={k.id}>
+                <Banner
+                  tone={k.state !== "open" ? "success" : k.kind === "off-limits" ? "danger" : "warning"}
+                  title={`${checkKind[k.kind]}${k.state === "dismissed" ? " (dismissed)" : k.state === "fixed" ? " (fixed)" : ""}`}
+                  action={
+                    k.state === "open" && (
+                      <>
+                        {k.kind !== "off-limits" && (
+                          <Button variant="cancel" size="sm" onClick={() => setDismissing(k.id)}>
+                            Dismiss
+                          </Button>
+                        )}
+                        <Button variant="secondary" size="sm" loading={pending(`fix-${k.id}`)} onClick={() => run(`fix-${k.id}`, () => act.setCheck(post.id, k.id, "fixed"), "Check cleared.")}>
+                          Fixed
                         </Button>
-                      )}
-                      <Button variant="secondary" size="sm" loading={pending(`fix-${k.id}`)} onClick={() => run(`fix-${k.id}`, () => act.setCheck(post.id, k.id, "fixed"), "Check cleared.")}>
-                        Fixed
-                      </Button>
-                    </>
-                  )
-                }
-              >
-                {k.label}
-              </Banner>
-            </li>
-          ))}
-          {open.some((k) => k.kind === "off-limits") && (
-            <li>
-              <Banner tone="neutral">Off-limits flags cannot be dismissed. Change the draft, then mark it fixed.</Banner>
-            </li>
-          )}
-        </ul>
+                      </>
+                    )
+                  }
+                >
+                  {k.label}
+                </Banner>
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
-      <Dialog open={!!dismissing} onClose={() => setDismissing(null)} title="Dismiss this check?">
-        <p className="text-body-sm text-secondary">Say why it does not apply. The reason is kept with the post and the owner can see it.</p>
-        <Textarea label="Reason" rows={2} value={dismissReason} onChange={(e) => setDismissReason(e.target.value)} />
+      <Dialog open={!!dismissing} onClose={() => setDismissing(null)} title="Dismiss this check?" info="The reason is kept with the post and the owner can see it.">
+        <Textarea label="Why it does not apply" rows={2} value={dismissReason} onChange={(e) => setDismissReason(e.target.value)} />
         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <Button variant="cancel" onClick={() => setDismissing(null)}>
             Cancel
@@ -177,9 +175,11 @@ function DraftEditor({ post, b }: { post: Post; b: ClientBundle }) {
         </div>
       </Dialog>
 
-      <Textarea label={`Why this post (${first} sees this)`} rows={2} value={why} onChange={(e) => setWhy(e.target.value)} />
+      <section className="border-t border-border pt-4">
+        <Textarea label={`Why this post (${first} sees this)`} rows={2} value={why} onChange={(e) => setWhy(e.target.value)} />
+      </section>
 
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row">
         <Button
           disabled={blocked}
           onClick={() =>
@@ -209,32 +209,43 @@ function ChangesEditor({ post, b }: { post: Post; b: ClientBundle }) {
   const items = ["Soften the opening line", "Do not suggest dashboards are bad", "Keep the point about nurses' time"];
   const [done, setDone] = useState<string[]>([]);
   return (
+    // The client's words first, then the changes as a bordered checklist, the draft, and Send back under a divider.
     <div className="flex flex-col gap-4">
       {latest && (
-        <blockquote className="rounded-md bg-warning-bg p-4 text-body-sm text-primary">
-          <span className="font-medium">{b.user?.firstName}: </span>&ldquo;{latest.text}&rdquo; <span className="text-secondary">({ago(latest.at)})</span>
-        </blockquote>
+        <Banner tone="warning" title={`${b.user?.firstName} asked for changes ${agoIn(latest.at)}`}>
+          &ldquo;{latest.text}&rdquo;
+        </Banner>
       )}
-      <div className="flex flex-col gap-2">
-        <span className="flex items-center gap-1 text-body font-semibold text-primary">
-          <Sparkle className="size-4 text-primary-600" aria-hidden /> Changes to make
+      <section className="flex flex-col gap-3">
+        <span className="flex items-center justify-between gap-3">
+          <span className="text-body font-medium text-primary">Changes to make</span>
+          <Pill>
+            {done.length} of {items.length} done
+          </Pill>
         </span>
-        {items.map((i) => (
-          <label key={i} className="flex cursor-pointer items-center gap-3 text-body-sm text-primary">
-            <input type="checkbox" checked={done.includes(i)} onChange={() => setDone((d) => (d.includes(i) ? d.filter((x) => x !== i) : [...d, i]))} className="size-4 accent-primary-600" />
-            <span className={done.includes(i) ? "text-secondary line-through" : ""}>{i}</span>
-          </label>
-        ))}
+        <Rows label="Changes to make">
+          {items.map((i) => (
+            <li key={i} className="border-b border-border last:border-b-0">
+              <label className="flex cursor-pointer items-center gap-3 px-4 py-3 text-body-sm text-primary hover:bg-primary-50">
+                <input type="checkbox" checked={done.includes(i)} onChange={() => setDone((d) => (d.includes(i) ? d.filter((x) => x !== i) : [...d, i]))} className="size-4 shrink-0 accent-primary-600" />
+                <span className={done.includes(i) ? "text-secondary line-through" : ""}>{i}</span>
+              </label>
+            </li>
+          ))}
+        </Rows>
+      </section>
+      <section className="border-t border-border pt-4">
+        <Textarea label="Draft" rows={4} defaultValue={post.text} />
+      </section>
+      <div className="border-t border-border pt-4">
+        <Button
+          disabled={done.length < items.length}
+          loading={pending("send")}
+          onClick={() => run("send", () => act.setPostStatus(post.id, "awaiting-client", { dueAt: new Date(Date.now() + 86_400_000).toISOString() }), `New version sent to ${b.user?.firstName}.`)}
+        >
+          {done.length < items.length ? `${items.length - done.length} changes left` : pending("send") ? "Sending" : "Send back"}
+        </Button>
       </div>
-      <Textarea label="Draft" rows={4} defaultValue={post.text} />
-      <Button
-        className="self-start"
-        disabled={done.length < items.length}
-        loading={pending("send")}
-        onClick={() => run("send", () => act.setPostStatus(post.id, "awaiting-client", { dueAt: new Date(Date.now() + 86_400_000).toISOString() }), `New version sent to ${b.user?.firstName}.`)}
-      >
-        {done.length < items.length ? `${items.length - done.length} changes left` : pending("send") ? "Sending" : "Send back"}
-      </Button>
     </div>
   );
 }
@@ -287,15 +298,26 @@ function Scheduler({ post, b }: { post: Post; b: ClientBundle }) {
   const schedule = async (iso: string) => {
     if (await run("schedule", () => act.setPostStatus(post.id, "scheduled", { scheduledFor: iso }), `Sent to ${b.user?.firstName ?? "the client"} to publish. Best time ${dayTimeIn(iso)}.`)) setChoosing(false);
   };
+  const tz = b.user?.timeZone.replace("_", " ");
   return (
-    <div className="flex flex-col gap-3 rounded-md bg-neutral-25 p-4">
-      <span className="flex items-center gap-2 text-body font-semibold text-primary">
-        <Clock className="size-5 text-primary-600" aria-hidden /> Suggested: {dayTime(suggested)}
-      </span>
-      <span className="text-caption text-secondary">
-        {time(suggested)} for {b.user?.firstName} ({b.user?.timeZone.replace("_", " ")}), {time(suggested)} for you. Weekday mornings do best for this audience.
-      </span>
-      <div className="flex gap-2">
+    // One bordered group: title with the reason in a tooltip, the time in both zones as two-sided rows, then the actions under a divider.
+    <div className="flex flex-col overflow-hidden rounded-md border border-border">
+      <div className="flex items-center gap-2 border-b border-border bg-neutral-25 px-4 py-3">
+        <span className="text-body font-medium text-primary">Suggested time</span>
+        <InfoTip label="About the suggested time">Weekday mornings do best for this audience. You can pick any other time.</InfoTip>
+      </div>
+      <ul className="flex flex-col">
+        {[
+          { label: `For ${b.user?.firstName}${tz ? ` (${tz})` : ""}`, value: dayTime(suggested) },
+          { label: "For you", value: time(suggested) },
+        ].map((r) => (
+          <li key={r.label} className="flex items-center justify-between gap-4 border-b border-border px-4 py-3">
+            <span className="min-w-0 text-body-sm text-secondary">{r.label}</span>
+            <Meta icon={Clock}>{r.value}</Meta>
+          </li>
+        ))}
+      </ul>
+      <div className="flex flex-wrap gap-2 px-4 py-3">
         <Button size="sm" loading={pending("schedule") && !choosing} onClick={() => schedule(suggested)}>
           Send to publish
         </Button>
@@ -609,120 +631,129 @@ function ContentWorkspace({ id }: { id: string }) {
     live: b.posts.filter((p) => ["published", "failed", "taken-down"].includes(p.status)),
   };
 
+  const stages = [
+    { value: "ideas" as Tab, label: "Ideas", count: ideas.length },
+    { value: "drafts" as Tab, label: "Drafts", count: groups.drafts.length },
+    { value: "changes" as Tab, label: "Changes asked", count: groups.changes.length },
+    { value: "client" as Tab, label: "With client", count: groups.client.length },
+    { value: "schedule" as Tab, label: "Set time", count: groups.schedule.length },
+    { value: "scheduled" as Tab, label: "To publish" },
+    { value: "live" as Tab, label: "Live", count: groups.live.filter((p) => p.request).length },
+  ];
+
+  const writing = tab === "ideas" || tab === "drafts" || tab === "changes";
+  const count = tab === "ideas" ? ideas.length : groups[tab].length;
+
   return (
     <Columns {...rails.managerMain}>
-      <Card
-        title="Content"
-        eyebrow={<Breadcrumbs items={[{ label: "Clients", href: "/manager/clients" }, { label: fullName(b.user), href: `/manager/clients/${id}` }, { label: "Content" }]} />}
-        action={<Pill>Reviews {b.client.review.frequency.replace("-", " ")}</Pill>}
-        padding="none"
-      >
-        <div className="flex flex-col gap-4 px-6 pt-4">
-          <OffLimitsBox b={b} />
-          <Tabs
-            label="Content stages"
-            value={tab}
-            onChange={goTo}
-            tabs={[
-              { value: "ideas", label: "Ideas", count: ideas.length },
-              { value: "drafts", label: "Drafts", count: groups.drafts.length },
-              { value: "changes", label: "Changes asked", count: groups.changes.length },
-              { value: "client", label: "With client", count: groups.client.length },
-              { value: "schedule", label: "Set time", count: groups.schedule.length },
-              { value: "scheduled", label: "To publish" },
-              { value: "live", label: "Live", count: groups.live.filter((p) => p.request).length },
-            ]}
-          />
-        </div>
+      <Breadcrumbs items={[{ label: "Clients", href: "/manager/clients" }, { label: fullName(b.user), href: `/manager/clients/${id}` }, { label: "Content" }]} />
+      {/* The tab row in its own card (as on the client page and the Overview), then the picked stage's card under it. */}
+      <div className="rounded-lg border border-border bg-card p-2">
+        <Tabs label="Content stages" value={tab} onChange={goTo} tabs={stages} className="max-w-none w-full bg-neutral-50!" />
+      </div>
 
+      {/* While writing (ideas, drafts, changes), what the client never wants mentioned sits in its own card above. */}
+      {writing && (
+        <Card title="Off limits" info={`${b.user.firstName} never wants these mentioned. Drafts that touch them are flagged and cannot be sent.`}>
+          <OffLimitsBox b={b} />
+        </Card>
+      )}
+
+      <Card
+        title={stages.find((s) => s.value === tab)?.label ?? "Content"}
+        action={<Pill>{tab === "ideas" ? plural(count, "idea") : plural(count, "post")}</Pill>}
+        info={
+          tab === "ideas"
+            ? "Proposed for next week. Nothing here touches the off-limits list. Pick, skip or ask for more."
+            : `${b.user.firstName} reviews ${b.client.review.frequency.replace("-", " ")}.`
+        }
+      >
         {tab === "ideas" ? (
-          <div className="flex flex-col gap-4 p-6">
-            <Banner tone="info" closeKey="manager-ideas-note">
-              Proposed for next week. Nothing here touches the off-limits list. Pick, skip or ask for more.
-            </Banner>
+          <div className="flex flex-col gap-4">
             <ul className="flex flex-col gap-3">
               {ideas.map((i) => (
                 <li key={i.title}>
                   <Tile>
-                  <span className="flex items-start justify-between gap-3">
-                    <span className="text-body font-medium text-primary">{i.title}</span>
-                    <Pill className="capitalize">{i.format}</Pill>
-                  </span>
-                  <Banner tone="info">Why: {i.reason}</Banner>
-                  <TileFooter>
-                  <span className="flex items-center gap-1 text-caption text-secondary">
-                    <Sparkle className="size-4 text-primary-600" aria-hidden /> Suggested
-                  </span>
-                  <span className="flex gap-2">
-                    <Button
-                      variant="cancel"
-                      size="sm"
-                      onClick={() => {
-                        setIdeas((list) => list.filter((x) => x.title !== i.title));
-                        toast("Skipped. The next ideas will avoid this.", "success", { action: { label: "Undo", onClick: () => setIdeas((list) => [...list, i]) } });
-                      }}
-                    >
-                      Skip
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      loading={pending(i.title)}
-                      onClick={async () => {
-                        const ok = await run(i.title, () => act.pickIdea(id, i.title, i.format, i.reason), {
-                          text: "A first draft is ready in the client's voice.",
-                          action: { label: "Open drafts", onClick: () => goTo("drafts") },
-                        });
-                        if (ok) setIdeas((list) => list.filter((x) => x.title !== i.title));
-                      }}
-                    >
-                      {pending(i.title) ? "Drafting" : "Pick"}
-                    </Button>
-                  </span>
-                  </TileFooter>
+                    <span className="flex items-start justify-between gap-3">
+                      <span className="text-body font-medium text-primary">{i.title}</span>
+                      <Pill className="capitalize">{i.format}</Pill>
+                    </span>
+                    <Banner tone="info">Why: {i.reason}</Banner>
+                    <TileFooter>
+                      <span className="text-body-sm text-secondary">Suggested</span>
+                      <span className="flex gap-2">
+                        <Button
+                          variant="cancel"
+                          size="sm"
+                          onClick={() => {
+                            setIdeas((list) => list.filter((x) => x.title !== i.title));
+                            toast("Skipped. The next ideas will avoid this.", "success", { action: { label: "Undo", onClick: () => setIdeas((list) => [...list, i]) } });
+                          }}
+                        >
+                          Skip
+                        </Button>
+                        <Button
+                          size="sm"
+                          loading={pending(i.title)}
+                          onClick={async () => {
+                            const ok = await run(i.title, () => act.pickIdea(id, i.title, i.format, i.reason), {
+                              text: "A first draft is ready in the client's voice.",
+                              action: { label: "Open drafts", onClick: () => goTo("drafts") },
+                            });
+                            if (ok) setIdeas((list) => list.filter((x) => x.title !== i.title));
+                          }}
+                        >
+                          {pending(i.title) ? "Drafting" : "Pick"}
+                        </Button>
+                      </span>
+                    </TileFooter>
                   </Tile>
                 </li>
               ))}
               {!ideas.length && <li className="text-body-sm text-secondary">No ideas left. Ask for more.</li>}
             </ul>
-            <Button
-              variant="secondary"
-              className="self-start"
-              loading={pending("more")}
-              onClick={async () => {
-                if (await run("more", () => act.save(), "2 more ideas added.")) setIdeas((list) => [...list, ...moreIdeas.filter((m) => !list.some((x) => x.title === m.title))]);
-              }}
-            >
-              {pending("more") ? "Finding ideas" : "More ideas"}
-            </Button>
+            <div className="border-t border-border pt-4">
+              <Button
+                variant="secondary"
+                loading={pending("more")}
+                onClick={async () => {
+                  if (await run("more", () => act.save(), "2 more ideas added.")) setIdeas((list) => [...list, ...moreIdeas.filter((m) => !list.some((x) => x.title === m.title))]);
+                }}
+              >
+                {pending("more") ? "Finding ideas" : "More ideas"}
+              </Button>
+            </div>
           </div>
+        ) : groups[tab].length === 0 ? (
+          <EmptyState title="Nothing here">Posts move here as they reach this stage.</EmptyState>
         ) : (
-          <ul className="flex flex-col gap-3 p-6">
-            {groups[tab].length === 0 && (
-              <li>
-                <EmptyState title="Nothing here">Posts move here as they reach this stage.</EmptyState>
-              </li>
-            )}
+          // One tile per post, 12px apart, as everywhere else.
+          <ul className="flex flex-col gap-3">
             {groups[tab].map((p) => (
-              <li key={p.id} className="flex flex-col gap-4 rounded-md border border-border bg-card p-4">
-                {tab === "drafts" && <DraftEditor post={p} b={b} />}
-                {tab === "changes" && <ChangesEditor post={p} b={b} />}
-                {tab !== "drafts" && tab !== "changes" && (
-                  <PostPreview post={p} author={author} meta={p.publishedAt ? ago(p.publishedAt) : p.scheduledFor ? dayTime(p.scheduledFor) : p.dueAt ? `Due ${dayTimeIn(p.dueAt)}` : "Approved"}>
-                    {tab === "client" && (
-                      <Banner tone={p.status === "on-hold" ? "warning" : "info"}>
-                        {p.status === "on-hold"
-                          ? `Held: ${p.heldReason} It shows in the weekly update as waiting on the client.`
-                          : b.client!.review.ifNoReply === "wait"
-                            ? "If there is no reply by the due time, it is held."
-                            : "If there is no reply in 24 hours, it is approved and scheduled automatically."}
-                      </Banner>
-                    )}
-                    {tab === "schedule" && <Scheduler post={p} b={b} />}
-                    {tab === "scheduled" && <ScheduledActions post={p} b={b} />}
-                    {tab === "live" && <LiveActions post={p} b={b} onDraft={() => goTo("drafts")} />}
-                  </PostPreview>
-                )}
+              <li key={p.id}>
+                <Tile>
+                  {tab === "drafts" && <DraftEditor post={p} b={b} />}
+                  {tab === "changes" && <ChangesEditor post={p} b={b} />}
+                  {tab !== "drafts" && tab !== "changes" && (
+                    <PostPreview post={p} author={author} meta={p.publishedAt ? ago(p.publishedAt) : p.scheduledFor ? dayTime(p.scheduledFor) : p.dueAt ? `Due ${dayTimeIn(p.dueAt)}` : "Approved"}>
+                      {/* What to do with the post sits under a divider, below the post itself. */}
+                      <div className="flex flex-col gap-3 border-t border-border pt-4">
+                        {tab === "client" && (
+                          <Banner tone={p.status === "on-hold" ? "warning" : "info"}>
+                            {p.status === "on-hold"
+                              ? `Held: ${p.heldReason} It shows in the weekly update as waiting on the client.`
+                              : b.client!.review.ifNoReply === "wait"
+                                ? "If there is no reply by the due time, it is held."
+                                : "If there is no reply in 24 hours, it is approved and scheduled automatically."}
+                          </Banner>
+                        )}
+                        {tab === "schedule" && <Scheduler post={p} b={b} />}
+                        {tab === "scheduled" && <ScheduledActions post={p} b={b} />}
+                        {tab === "live" && <LiveActions post={p} b={b} onDraft={() => goTo("drafts")} />}
+                      </div>
+                    </PostPreview>
+                  )}
+                </Tile>
               </li>
             ))}
           </ul>

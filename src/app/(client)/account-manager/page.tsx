@@ -33,7 +33,7 @@ export default function AccountManagerPage() {
 
   return (
     <Columns {...rails.clientManagerProfile}>
-      <Breadcrumbs items={[{ label: "Messages", href: "/messages" }, { label: name }]} />
+      <Breadcrumbs items={[{ label: "Messages", href: "/messages", back: true }, { label: name }]} />
 
       <Card padding="none" className="overflow-hidden">
         <div aria-hidden className="h-20 bg-primary-100" />

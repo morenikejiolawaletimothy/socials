@@ -2,7 +2,6 @@
 
 import { CheckCircle, Info, WarningCircle, X } from "@phosphor-icons/react";
 import { createContext, useCallback, useContext, useRef, useState } from "react";
-import { Banner } from "./Banner";
 import { Button } from "./Button";
 import { Dialog } from "./Dialog";
 
@@ -34,8 +33,10 @@ export type ConfirmOptions = {
   title: string;
   /** What will happen, in plain words. */
   body: React.ReactNode;
-  /** Shown in a warning box, for example "You cannot undo this." */
+  /** What cannot be undone, for example "You cannot undo this." Shown in the info tooltip after the title. */
   warning?: string;
+  /** Extra detail as an info icon after the title, with the text in a tooltip. */
+  info?: React.ReactNode;
   confirmLabel: string;
   cancelLabel?: string;
   tone?: "danger" | "primary";
@@ -92,11 +93,22 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       <ConfirmContext.Provider value={confirm}>
         {children}
 
-        <Dialog open={!!ask} onClose={() => !busy && close(false)} title={ask?.title ?? ""}>
+        {/* The warning (what cannot be undone) and any extra detail sit in the info tooltip after the title. */}
+        <Dialog
+          open={!!ask}
+          onClose={() => !busy && close(false)}
+          title={ask?.title ?? ""}
+          info={
+            ask?.warning || ask?.info ? (
+              <span className="flex flex-col gap-2">
+                {ask.warning && <span>{ask.warning}</span>}
+                {ask.info && <span>{ask.info}</span>}
+              </span>
+            ) : undefined
+          }
+        >
           {ask && (
             <>
-              {/* What cannot be undone comes first, right under the title, then the details, then the buttons on the right. */}
-              {ask.warning && <Banner tone={ask.tone === "danger" ? "danger" : "warning"}>{ask.warning}</Banner>}
               <div className="text-body text-secondary">{ask.body}</div>
               {error && <p className="text-body-sm text-danger">{error}</p>}
               <div className="flex flex-wrap justify-end gap-3">

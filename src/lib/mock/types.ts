@@ -179,6 +179,8 @@ export type Notification = {
   email?: boolean;
   /** Urgent items are shown first and always emailed. */
   urgent?: boolean;
+  /** Who did what made this notification (the signed-in person, as "Ada Obi (manager)"). Missing means the system. */
+  by?: string;
 };
 
 /* ---------- Content (C7, C8, M4, M5) ---------- */
@@ -364,11 +366,15 @@ export type OutboxItem = {
   id: string;
   /** Who it went to, as a name ("Chidi Okafor", "Amaka Obi (EA)"). */
   to: string;
+  /** The person's account, when it went to a user (not to an assistant). */
+  userId?: string;
   channel: "email" | "whatsapp";
   address: string;
   text: string;
   href: string;
   at: string;
+  /** Who did what sent this message (as on Notification). Missing means the system. */
+  by?: string;
 };
 
 /* ---------- Calls (C3, M10) ---------- */

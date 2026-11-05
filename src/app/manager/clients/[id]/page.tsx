@@ -1,5 +1,6 @@
 "use client";
 
+import { VideoCamera } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, use } from "react";
@@ -16,7 +17,7 @@ import {
   PlanTab,
   UpdatesTab,
 } from "@/components/manager/ClientTabs";
-import { Avatar, Badge, Breadcrumbs, buttonClass, Card, EmptyState, Pill, ProgressBar, Tabs, TextLink } from "@/components/ui";
+import { Avatar, Badge, Breadcrumbs, buttonClass, Card, EmptyState, Pill, ProgressBar, Tabs } from "@/components/ui";
 import { fullName } from "@/lib/format";
 import { clientBundle, useMyManager } from "@/lib/mock";
 import { statusBadge } from "@/lib/status";
@@ -53,48 +54,62 @@ function ClientPage({ id }: { id: string }) {
 
   return (
     <Columns {...rails.managerMain}>
-      <Breadcrumbs items={[{ label: "Clients", href: "/manager/clients" }, { label: fullName(b.user) }]} />
+      <Breadcrumbs items={[{ label: "Clients", href: "/manager/clients", back: true }, { label: fullName(b.user) }]} />
+      {/* Profile header, like LinkedIn: cover, photo, who they are, actions under a line, then the section tabs. */}
       <Card padding="none" className="overflow-hidden">
         <div aria-hidden className="h-16 bg-primary-100" />
-        <div className="-mt-10 flex flex-col gap-4 px-6 pb-2">
+        <div className="-mt-10 flex flex-col gap-4 px-6 pb-4">
           <Avatar name={fullName(b.user)} src={b.user.photo} size="xl" className="ring-4 ring-neutral-0" />
           <div className="flex flex-col gap-1">
-            <span className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
               <h1 className="font-display text-display-xl text-primary">{fullName(b.user)}</h1>
-              <Badge status={badge.tone}>{badge.label}</Badge>
-              {b.contract?.videoAddon && <Pill>Video add-on</Pill>}
+              <span className="flex flex-wrap items-center gap-2">
+                {b.contract?.videoAddon && (
+                  <Pill>
+                    <VideoCamera className="size-4" aria-hidden /> Video add-on
+                  </Pill>
+                )}
+                <Badge status={badge.tone}>{badge.label}</Badge>
+              </span>
+            </div>
+            <span className="text-body text-primary">
+              {b.user.title}
+              {b.client.company ? ` at ${b.client.company}` : ""}
             </span>
             <span className="text-body-sm text-secondary">
-              {b.user.title}. {b.client.industry}, {b.client.country}.
+              {b.client.industry} · {b.client.country}
             </span>
           </div>
           {b.client.status === "setting-up" && (
-            <div className="flex max-w-xs flex-col gap-2">
-              <span className="text-body-sm text-secondary">Setup {b.client.setupProgress}% done</span>
+            <div className="flex flex-col gap-2">
+              <span className="flex items-center justify-between gap-2 text-body-sm">
+                <span className="text-secondary">Setup</span>
+                <span className="font-medium text-primary">{b.client.setupProgress}% done</span>
+              </span>
               <ProgressBar value={b.client.setupProgress} />
             </div>
           )}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <Link href={`/manager/clients/${id}/content`} className={buttonClass("primary", "sm")}>
-              Open content
-            </Link>
-            <Link href={`/manager/messages?client=${id}`} className={buttonClass("secondary", "sm")}>
+          <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row">
+            <Link href={`/manager/messages?client=${id}`} className={buttonClass("primary", "sm")}>
               Message {b.user.firstName}
             </Link>
-            <TextLink href={`/manager/clients/${id}/onboard`} className="text-body-sm">
+            <Link href={`/manager/clients/${id}/onboard`} className={buttonClass("secondary", "sm")}>
               Onboarding and strategy
-            </TextLink>
+            </Link>
           </div>
         </div>
-        <div className="px-6">
-          <Tabs
-            label="Client sections"
-            value={tab}
-            onChange={(t) => router.replace(`/manager/clients/${id}?tab=${t}`, { scroll: false })}
-            tabs={tabs.map((t) => ({ ...t, count: t.value === "brand" ? newMoments : undefined }))}
-          />
-        </div>
       </Card>
+
+      {/* Section tabs in their own card that stays under the top bar, as on the client's Home. */}
+      <div className="sticky top-14 z-20 rounded-lg border border-border bg-card p-2">
+        <Tabs
+          label="Client sections"
+          value={tab}
+          onChange={(t) => router.replace(`/manager/clients/${id}?tab=${t}`, { scroll: false })}
+          tabs={tabs.map((t) => ({ ...t, count: t.value === "brand" ? newMoments : undefined }))}
+          className="max-w-none w-full bg-neutral-50!"
+        />
+      </div>
 
       {tab === "overview" && <OverviewTab b={b} />}
       {tab === "plan" && <PlanTab b={b} id={id} />}

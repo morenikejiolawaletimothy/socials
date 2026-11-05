@@ -109,7 +109,7 @@ export function LivePostActions({ post }: { post: Post }) {
       <p>
         {req.text} {req.kind === "fix" ? "Your manager will fix it today and tell you when it is done." : "Your manager will prepare it for your review."}
       </p>
-      <div className="mt-3 border-t border-primary-200 pt-3">
+      <div className="mt-3 border-t border-border pt-3">
         <TextButton
           onClick={() =>
             confirm({

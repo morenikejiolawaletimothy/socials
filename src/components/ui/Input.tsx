@@ -1,5 +1,4 @@
 import { useId, type InputHTMLAttributes } from "react";
-import { Banner } from "./Banner";
 
 export type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   label: string;
@@ -39,7 +38,7 @@ export function Input({ label, help, error, id, className = "", ...props }: Inpu
   );
 }
 
-/** Under a field: an error as red text (name the problem, then the fix), otherwise help as an information card. */
+/** Under a field: an error as red text (name the problem, then the fix), otherwise help as plain grey text. */
 export function FieldMessage({ id, error, help }: { id: string; error?: React.ReactNode; help?: React.ReactNode }) {
   if (error) {
     return (
@@ -50,8 +49,8 @@ export function FieldMessage({ id, error, help }: { id: string; error?: React.Re
   }
   if (!help) return null;
   return (
-    <div id={id}>
-      <Banner tone="info">{help}</Banner>
-    </div>
+    <span id={id} className="text-body-sm text-secondary">
+      {help}
+    </span>
   );
 }

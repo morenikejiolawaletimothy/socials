@@ -1,6 +1,6 @@
 import { CaretDown } from "@phosphor-icons/react/dist/ssr";
 import { useId, type SelectHTMLAttributes } from "react";
-import { Banner } from "./Banner";
+import { InfoTip } from "./InfoTip";
 
 /*
  * The caret sits on the same inset as the text (16px on md, 12px on sm), and the text stops a full
@@ -20,6 +20,8 @@ export type SelectProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, "size"> 
   /** Visible label above the field. Leave out only where the context names it, and pass aria-label. */
   label?: string;
   help?: React.ReactNode;
+  /** About the field: an info icon after the label, with the text in a tooltip. */
+  info?: React.ReactNode;
   size?: keyof typeof sizes;
   tone?: keyof typeof tones;
   /** Classes for the outer wrapper, such as width. */
@@ -27,7 +29,7 @@ export type SelectProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, "size"> 
 };
 
 /** Native select (keyboard and screen readers work as people expect) with the brand caret, evenly inset. */
-export function Select({ label, help, size = "md", tone = "light", id, wrapperClassName = "", className = "", children, ...props }: SelectProps) {
+export function Select({ label, help, info, size = "md", tone = "light", id, wrapperClassName = "", className = "", children, ...props }: SelectProps) {
   const autoId = useId();
   const selectId = id ?? autoId;
   const s = sizes[size];
@@ -48,14 +50,17 @@ export function Select({ label, help, size = "md", tone = "light", id, wrapperCl
   if (!label) return field;
   return (
     <div className={`flex flex-col gap-2 ${wrapperClassName}`}>
-      <label htmlFor={selectId} className="text-body-sm leading-5 font-medium text-primary">
-        {label}
-      </label>
+      <span className="flex items-center gap-1">
+        <label htmlFor={selectId} className="text-body-sm leading-5 font-medium text-primary">
+          {label}
+        </label>
+        {info && <InfoTip label={`About ${label}`}>{info}</InfoTip>}
+      </span>
       {field}
       {help && (
-        <div id={`${selectId}-help`}>
-          <Banner tone="info">{help}</Banner>
-        </div>
+        <span id={`${selectId}-help`} className="text-body-sm text-secondary">
+          {help}
+        </span>
       )}
     </div>
   );

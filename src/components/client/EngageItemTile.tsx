@@ -49,8 +49,8 @@ export function EngageItemTile({ task, item, by, showWhy = true }: { task: Quick
     <li>
       <Tile done={item.done}>
         <span className={`flex gap-4 ${item.role ? "items-start" : "items-center"}`}>
-          <Avatar name={item.name} src={item.photo} size="md" />
-          <span className="flex min-w-0 flex-1 flex-col gap-1">
+          <Avatar name={item.name} src={item.photo} size="lg" />
+          <span className={`flex min-w-0 flex-1 flex-col gap-1 ${item.role ? "pt-1" : ""}`}>
             <span className="text-body font-medium text-primary">{item.name}</span>
             <span className="text-body-sm text-secondary">{item.role}</span>
           </span>

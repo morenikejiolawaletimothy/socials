@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { PermissionsForm } from "@/components/client/PermissionsForm";
+import { PermissionsForm, permissionsNote } from "@/components/client/PermissionsForm";
 import { SetupFrame } from "@/components/client/SetupFrame";
-import { Banner, Button, useTask } from "@/components/ui";
+import { Button, useTask } from "@/components/ui";
 import { act, useMyClient } from "@/lib/mock";
 
 /** C2 (no API): choose what we prepare (self-serve) or do (full-service). No LinkedIn login or API involved here. */
@@ -16,10 +16,15 @@ export default function PermissionsPage() {
   const title = fullService ? "What we do for you" : "What we prepare for you";
 
   return (
-    <SetupFrame title={title} step={title} steps={[title]} current={0}>
+    <SetupFrame
+      title={title}
+      step={title}
+      steps={[title]}
+      current={0}
+      info={`${permissionsNote(fullService)} Change these any time in Control. Whether your posts need your approval first is set in the last setup step.`}
+    >
       <div className="flex flex-col gap-6">
-        <Banner tone="info">Change these any time in Control. Whether your posts need your approval first is set in the last setup step.</Banner>
-        <PermissionsForm client={client} />
+        <PermissionsForm client={client} note={false} />
         <Button
           className="self-start"
           loading={pending("save")}

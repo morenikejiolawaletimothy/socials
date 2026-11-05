@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Bell, CalendarBlank, Circle, Copy, DownloadSimple, PencilSimple, Trash, UserPlus } from "@phosphor-icons/react/dist/ssr";
+import { Bell, Circle, Copy, DownloadSimple, PencilSimple, Timer, Trash, UserPlus } from "@phosphor-icons/react/dist/ssr";
 import { Badge, Button, Card, CardText, CardTitle, IconButton, Input, Logo, Meta, Pill, ProgressBar, Row, Rows, RowText, Stepper, TextButton, TextLink, Tile, TileAction, TileFooter, TileIcon, Tooltip } from "@/components/ui";
 import { InteractiveComponents } from "./Interactive";
 
@@ -105,7 +105,7 @@ export default function DesignSystemPage() {
         <div className="flex flex-wrap items-center gap-4">
           <Pill>6 posts</Pill>
           <Pill>2 of 6 done</Pill>
-          <Meta icon={CalendarBlank}>Due Fri 6 Nov</Meta>
+          <Meta icon={Timer}>Due Fri 6 Nov at 5pm</Meta>
           <Badge status="success">Sent</Badge>
         </div>
       </Section>
@@ -128,7 +128,7 @@ export default function DesignSystemPage() {
                 </span>
               </span>
               <TileFooter>
-                <Meta icon={CalendarBlank}>Due Fri 6 Nov</Meta>
+                <Meta icon={Timer}>Due Fri 6 Nov at 5pm</Meta>
                 <TileAction>Continue</TileAction>
               </TileFooter>
             </Tile>
@@ -227,6 +227,12 @@ export default function DesignSystemPage() {
               <Bell className="size-6" aria-hidden />
             </button>
           </Tooltip>
+        </Card>
+      </Section>
+
+      <Section title="Card info">
+        <Card title="Account setup" info="Do it now or come back later. We save your progress and remind you by email.">
+          <CardText>Hover, focus or tap the info icon beside the title to read how the card works.</CardText>
         </Card>
       </Section>
 

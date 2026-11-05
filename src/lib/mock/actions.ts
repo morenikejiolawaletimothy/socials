@@ -38,10 +38,18 @@ export function channelsOf(user: User | undefined, client?: Client): Channels {
   return user?.channels ?? { email: client?.review.channels.email ?? true, whatsapp: false, timing: "now", quietNights: true };
 }
 
-/** Phase 1 only: records the email and WhatsApp messages the real app would send, for the demo bar. */
-function send(db: Db, to: string, address: string | undefined, channel: "email" | "whatsapp", text: string, href: string): Db {
+/** Who is doing the action right now: the signed-in person and their role, for the owner's message log. */
+function actorOf(db: Db): string | undefined {
+  const role = db.session?.role;
+  const user = role ? db.users.find((u) => u.id === db.session.userIds[role]) : undefined;
+  if (!user || !role) return undefined;
+  return `${nameOf(user)} (${role})`;
+}
+
+/** Phase 1 only: records the email and WhatsApp messages the real app would send, for the demo bar and the owner's message log. */
+function send(db: Db, to: string, address: string | undefined, channel: "email" | "whatsapp", text: string, href: string, userId?: string): Db {
   if (!address) return db;
-  return { ...db, outbox: [{ id: id("o"), to, address, channel, text, href, at: nowIso() }, ...(db.outbox ?? [])].slice(0, 40) };
+  return { ...db, outbox: [{ id: id("o"), to, userId, address, channel, text, href, at: nowIso(), by: actorOf(db) }, ...(db.outbox ?? [])].slice(0, 40) };
 }
 
 /**
@@ -50,13 +58,13 @@ function send(db: Db, to: string, address: string | undefined, channel: "email" 
  */
 function notify(db: Db, userId: string | undefined, text: string, href: string, opts: { email?: boolean; urgent?: boolean } = {}): Db {
   if (!userId) return db;
-  let next: Db = { ...db, notifications: [{ id: id("n"), userId, text, href, createdAt: nowIso(), read: false, email: opts.email ?? true, urgent: opts.urgent }, ...db.notifications] };
+  let next: Db = { ...db, notifications: [{ id: id("n"), userId, text, href, createdAt: nowIso(), read: false, email: opts.email ?? true, urgent: opts.urgent, by: actorOf(db) }, ...db.notifications] };
   if (opts.email === false && !opts.urgent) return next;
   const user = db.users.find((u) => u.id === userId);
   const ch = channelsOf(user, db.clients.find((c) => c.userId === userId));
   const name = nameOf(user);
-  if (ch.email || opts.urgent) next = send(next, name, user?.email, "email", text, href);
-  if (ch.whatsapp && user?.whatsapp?.confirmed) next = send(next, name, user.whatsapp.number, "whatsapp", text, href);
+  if (ch.email || opts.urgent) next = send(next, name, user?.email, "email", text, href, userId);
+  if (ch.whatsapp && user?.whatsapp?.confirmed) next = send(next, name, user.whatsapp.number, "whatsapp", text, href, userId);
   return next;
 }
 
@@ -1193,7 +1201,8 @@ export async function payNow(clientId: string) {
     let next: Db = {
       ...db,
       contracts: db.contracts.map((x) => (x.clientId === clientId ? { ...x, paid: true, card: { brand: "Visa", last4: "4242" }, status: x.status === "paused" ? "active" : x.status } : x)),
-      invoices: k ? [{ id: id("i"), clientId, number: `BC-${1200 + db.invoices.length}`, amountCents: k.monthlyCents, at: nowIso(), status: "paid", label: `Month 1 of ${k.months}` }, ...db.invoices] : db.invoices,
+      // Contracts are paid up front: one invoice for the whole contract.
+      invoices: k ? [{ id: id("i"), clientId, number: `BC-${1200 + db.invoices.length}`, amountCents: k.monthlyCents * k.months, at: nowIso(), status: "paid", label: `${k.months} months, paid in full` }, ...db.invoices] : db.invoices,
     };
     const c = next.clients.find((x) => x.id === clientId);
     if (c?.status === "paused") {
@@ -1772,4 +1781,13 @@ export async function extendContract(contractId: string, kind: "extend" | "credi
 /** Demo only: which client the "Client" view shows. */
 export function setDemoClient(userId: string) {
   update((db) => ({ ...db, session: { ...db.session, role: "client", userIds: { ...db.session.userIds, client: userId } } }));
+}
+
+/** Demo only: view the product as this person (their role and their account), so the owner can open the page a message sent them to. */
+export function viewAs(userId: string) {
+  update((db) => {
+    const user = db.users.find((u) => u.id === userId);
+    if (!user) return db;
+    return { ...db, session: { ...db.session, role: user.role, userIds: { ...db.session.userIds, [user.role]: userId } } };
+  });
 }

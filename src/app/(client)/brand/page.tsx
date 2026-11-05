@@ -1,12 +1,12 @@
 "use client";
 
-import { CheckCircle, FileText, PencilSimple, Plus, Sparkle, Trash, UploadSimple, X, XCircle } from "@phosphor-icons/react";
+import { CheckCircle, FileText, ImageSquare, PencilSimple, Plus, Trash, UploadSimple, X, XCircle } from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
-import { Badge, Banner, Button, buttonClass, Card, Dialog, fieldClass, Input, Select, Textarea, Tile, TileFooter, useConfirm, useTask, useToast } from "@/components/ui";
+import { Badge, Button, buttonClass, Card, Dialog, fieldClass, Input, Select, Textarea, Tile, TileFooter, useConfirm, useTask, useToast } from "@/components/ui";
 import { agoIn, date } from "@/lib/format";
 import { duration } from "@/lib/linkedin";
 import { prepareUpload, sectionRules } from "@/lib/upload";
@@ -173,11 +173,9 @@ export default function BrandPage() {
             <Plus className="size-4" aria-hidden /> Add a Moment
           </Link>
         }
+        info="Something you want a post about, like an event you spoke at or a milestone. Add a note with photos or videos. Your manager is told at once."
       >
         <div className="flex flex-col gap-4">
-          <Banner tone="info" closeKey="brand-moments">
-            Something you want a post about, like an event you spoke at or a milestone. Add a note with photos or videos. Your manager is told at once.
-          </Banner>
           <ul className="flex flex-col gap-4">
             {moments.map((m) => (
               <li key={m.id}>
@@ -228,11 +226,8 @@ export default function BrandPage() {
         </div>
       </Card>
 
-      <Card title="Off limits">
+      <Card title="Off limits" info="What we never post, comment on or engage with. We check every post and every comment against this list.">
         <div className="flex flex-col gap-4">
-          <Banner tone="info" closeKey="brand-off-limits">
-            What we never post, comment on or engage with. We check every post and every comment against this list.
-          </Banner>
           <ul className="flex flex-col">
             {brand.offLimits.map((o) => (
               <OffLimitRow key={o.id} clientId={client.id} item={o} />
@@ -331,7 +326,7 @@ export default function BrandPage() {
         )}
       </Card>
 
-      <Card title="Photos" action={<Upload clientId={client.id} section="photos" />}>
+      <Card title="Photos" action={<Upload clientId={client.id} section="photos" />} info={`${sectionRules.photos.label}.`}>
         {photos.length ? (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {photos.map((f) => (
@@ -351,10 +346,9 @@ export default function BrandPage() {
         ) : (
           <p className="text-body-sm text-secondary">Add headshots and photos of you at work. Your manager uses them in posts.</p>
         )}
-        <p className="pt-3 text-caption text-secondary">{sectionRules.photos.label}.</p>
       </Card>
 
-      <Card title="Videos" action={<Upload clientId={client.id} section="videos" />}>
+      <Card title="Videos" action={<Upload clientId={client.id} section="videos" />} info={`${sectionRules.videos.label}. LinkedIn's standard.`}>
         {videos.length ? (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {videos.map((f) => (
@@ -377,10 +371,9 @@ export default function BrandPage() {
         ) : (
           <p className="text-body-sm text-secondary">Clips of you talking, at events or at work. Your manager can use them in video posts.</p>
         )}
-        <p className="pt-3 text-caption text-secondary">{sectionRules.videos.label}. LinkedIn&apos;s standard.</p>
       </Card>
 
-      <Card title="Carousels" action={<Upload clientId={client.id} section="carousels" />}>
+      <Card title="Carousels" action={<Upload clientId={client.id} section="carousels" />} info={`${sectionRules.carousels.label}.`}>
         {carousels.length ? (
           <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {carousels.map((f) => (
@@ -401,7 +394,6 @@ export default function BrandPage() {
         ) : (
           <p className="text-body-sm text-secondary">Slides you already have, as a PDF, PowerPoint or Word file. LinkedIn shows them as pages people swipe.</p>
         )}
-        <p className="pt-3 text-caption text-secondary">{sectionRules.carousels.label}.</p>
       </Card>
 
       <Dialog open={!!playing} onClose={() => setPlaying(null)} title={playing?.name ?? "Video"}>
@@ -409,66 +401,87 @@ export default function BrandPage() {
       </Dialog>
 
       <Card title="Logos and colours" action={<Upload clientId={client.id} section="logos" />}>
-        <div className="flex flex-col gap-4">
-          {logos.map((f) => (
-            <div key={f.id} className="flex items-center gap-3">
-              <span className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-card">
-                {f.src ? <Image src={f.src} alt={f.name} fill sizes="48px" className="object-contain p-1" /> : <Sparkle className="size-6 text-primary-600" aria-hidden />}
-              </span>
-              <span className="flex flex-1 flex-col">
-                <span className="text-body font-medium text-primary">{f.name}</span>
-                <span className="text-body-sm text-secondary">{f.size}</span>
-              </span>
-              <button type="button" aria-label={`Remove ${f.name}`} onClick={() => removeFile(f)} className={iconButton}>
-                <Trash className="size-4" aria-hidden />
-              </button>
-            </div>
-          ))}
-          <ul className="flex flex-wrap gap-3" aria-label="Brand colours">
-            {brand.colours.map((c) => (
-              <li key={c} className="group flex flex-col items-center gap-1">
-                {/* Client brand colours are content, not design tokens. */}
-                <span className="relative size-10 rounded-full border border-border" style={{ background: c }}>
-                  <button
-                    type="button"
-                    aria-label={`Remove colour ${c}`}
-                    onClick={() =>
-                      confirm({
-                        title: `Remove ${c}?`,
-                        body: "Your manager will stop using this colour in visuals.",
-                        confirmLabel: "Remove",
-                        action: () => act.setColours(client.id, brand.colours.filter((x) => x !== c)),
-                        success: "Colour removed.",
-                      })
-                    }
-                    className="absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full bg-card text-secondary shadow-sm hover:text-danger focus-visible:focus-ring sm:opacity-0 sm:group-hover:opacity-100"
-                  >
-                    <X className="size-3" aria-hidden />
-                  </button>
-                </span>
-                <span className="font-mono text-caption text-secondary">{c}</span>
-              </li>
-            ))}
-          </ul>
-          <form
-            noValidate
-            className="flex flex-col gap-2 sm:flex-row sm:items-start"
-            onSubmit={async (e) => {
-              e.preventDefault();
-              const v = colour.trim().startsWith("#") ? colour.trim() : `#${colour.trim()}`;
-              if (!/^#[0-9a-f]{6}$/i.test(v)) return setColourError("Enter a colour code like #224cd5.");
-              if (brand.colours.includes(v.toLowerCase())) return setColourError("That colour is already added.");
-              setColourError(undefined);
-              if (await run("colour", () => act.setColours(client.id, [...brand.colours, v.toLowerCase()]), "Colour added.")) setColour("");
-            }}
-          >
-            <div className="flex-1">
-              <Input label="Add a colour" placeholder="#224cd5" value={colour} onChange={(e) => { setColour(e.target.value); setColourError(undefined); }} error={colourError} />
-            </div>
-            <Button type="submit" className="sm:mt-7" loading={pending("colour")}>
-              {pending("colour") ? "Adding" : "Add"}
-            </Button>
-          </form>
+        {/* Two sections: logos as a list of rows, then colours as chips with the add field under them. */}
+        <div className="flex flex-col gap-6">
+          <section className="flex flex-col gap-3" aria-labelledby="brand-logos">
+            <h3 id="brand-logos" className="text-body font-semibold text-primary">
+              Logos
+            </h3>
+            {logos.length ? (
+              <ul className="flex flex-col rounded-md border border-border">
+                {logos.map((f) => (
+                  <li key={f.id} className="flex items-center gap-4 border-b border-border px-4 py-3 last:border-b-0">
+                    <span className="relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-card">
+                      {f.src ? <Image src={f.src} alt={f.name} fill sizes="48px" className="object-contain p-1" /> : <ImageSquare className="size-6 text-primary-600" aria-hidden />}
+                    </span>
+                    <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <span className="truncate text-body font-medium text-primary">{f.name}</span>
+                      <span className="text-body-sm text-secondary">{f.size}</span>
+                    </span>
+                    <button type="button" aria-label={`Remove ${f.name}`} onClick={() => removeFile(f)} className={iconButton}>
+                      <Trash className="size-4" aria-hidden />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-body-sm text-secondary">No logo yet. Upload your personal or company logo.</p>
+            )}
+          </section>
+
+          <section className="flex flex-col gap-4 border-t border-border pt-6" aria-labelledby="brand-colours">
+            <h3 id="brand-colours" className="text-body font-semibold text-primary">
+              Colours
+            </h3>
+            {brand.colours.length ? (
+              <ul className="flex flex-wrap gap-2" aria-label="Brand colours">
+                {brand.colours.map((c) => (
+                  <li key={c} className="flex items-center gap-2 rounded-full border border-border py-1 pl-1 pr-2">
+                    {/* Client brand colours are content, not design tokens. */}
+                    <span className="size-7 shrink-0 rounded-full border border-border" style={{ background: c }} aria-hidden />
+                    <span className="font-mono text-body-sm text-primary">{c}</span>
+                    <button
+                      type="button"
+                      aria-label={`Remove colour ${c}`}
+                      onClick={() =>
+                        confirm({
+                          title: `Remove ${c}?`,
+                          body: "Your manager will stop using this colour in visuals.",
+                          confirmLabel: "Remove",
+                          action: () => act.setColours(client.id, brand.colours.filter((x) => x !== c)),
+                          success: "Colour removed.",
+                        })
+                      }
+                      className="flex size-6 items-center justify-center rounded-full text-secondary hover:bg-danger-bg hover:text-danger focus-visible:focus-ring"
+                    >
+                      <X className="size-3.5" aria-hidden />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-body-sm text-secondary">No colours yet. Add the colour codes from your brand.</p>
+            )}
+            <form
+              noValidate
+              className="flex flex-col gap-3 sm:flex-row sm:items-start"
+              onSubmit={async (e) => {
+                e.preventDefault();
+                const v = colour.trim().startsWith("#") ? colour.trim() : `#${colour.trim()}`;
+                if (!/^#[0-9a-f]{6}$/i.test(v)) return setColourError("Enter a colour code like #224cd5.");
+                if (brand.colours.includes(v.toLowerCase())) return setColourError("That colour is already added.");
+                setColourError(undefined);
+                if (await run("colour", () => act.setColours(client.id, [...brand.colours, v.toLowerCase()]), "Colour added.")) setColour("");
+              }}
+            >
+              <div className="flex-1">
+                <Input label="Add a colour" placeholder="#224cd5" value={colour} onChange={(e) => { setColour(e.target.value); setColourError(undefined); }} error={colourError} />
+              </div>
+              <Button type="submit" className="sm:mt-7" loading={pending("colour")}>
+                {pending("colour") ? "Adding" : "Add"}
+              </Button>
+            </form>
+          </section>
         </div>
       </Card>
 
