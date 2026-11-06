@@ -590,10 +590,9 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
   const [url, setUrl] = useState("");
   const [action, setAction] = useState<Lead["action"]>("comment");
   const [urlError, setUrlError] = useState<string>();
-  const [view, setView] = useState<EngageView>("check");
+  const [view, setView] = useState<EngageView>("add");
   const [due, setDue] = useState(() => dueOptions()[1].value);
   const firstName = b.user?.firstName ?? "the client";
-  const toCheck = b.leads.filter((l) => l.status === "suggested");
   const ready = b.leads.filter((l) => l.status === "kept");
   const closed = b.leads.filter((l) => l.status === "sent" || l.status === "done" || l.status === "dropped");
   const kinds = new Set(ready.map((l) => l.action)).size;
@@ -604,13 +603,13 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
         action={<Pill>Suggested</Pill>}
         info={
           fullService
-            ? `${firstName} is on full-service, so you engage from their account. Open each suggestion on LinkedIn to check it, adjust the text, then do it while signed in as them and mark it done. Each action is logged for ${firstName} to see.`
-            : `${firstName} is on self-serve. LinkedIn lets us post for them, nothing else. Open each suggestion on LinkedIn with your own account to check it, adjust the text, then send it to ${firstName} as a quick task. Each one takes seconds to do.`
+            ? `${firstName} is on full-service, so you engage from their account. Use these topics to guide your own research on LinkedIn, bring what you find into Add what you find and we grade it, then do it while signed in as them and mark it done. Each action is logged for ${firstName} to see.`
+            : `${firstName} is on self-serve. Use these topics to guide your research on LinkedIn with your own account, bring what you find into Add what you find and we grade it, then send it to ${firstName} as a quick task.`
         }
       >
         <div className="flex flex-col gap-4">
           <p className="text-body text-primary">
-            Look for investors and bank partners talking about cross-border payments and the new mobile money report. Join conversations where {firstName} can add data. Skip anything on the off-limits list.
+            Topics and signals to guide your research: investors and bank partners talking about cross-border payments and the new mobile money report. Join conversations where {firstName} can add data. Skip anything on the off-limits list.
           </p>
         </div>
       </Card>
@@ -623,7 +622,6 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
           onChange={setView}
           className="max-w-none w-full bg-neutral-50!"
           tabs={[
-            { value: "check", label: "To check", count: toCheck.length },
             { value: "add", label: "Add new" },
             { value: "ready", label: fullService ? "To do" : "To send", count: ready.length },
             ...(fullService ? [] : [{ value: "tasks" as const, label: "Quick tasks", count: b.tasks.filter((t) => !t.done).length }]),
@@ -632,20 +630,6 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
           ]}
         />
       </div>
-
-      {view === "check" && (
-      <Card title="To check" action={toCheck.length > 0 && <Pill>{plural(toCheck.length, "suggestion")}</Pill>}>
-        {toCheck.length ? (
-          <ul className="flex flex-col gap-3">
-            {toCheck.map((l) => (
-              <LeadTile key={l.id} l={l} fullService={fullService} />
-            ))}
-          </ul>
-        ) : (
-          <EmptyState title="All checked">New suggestions arrive as the field moves. Add your own in Add new.</EmptyState>
-        )}
-      </Card>
-      )}
 
       {view === "add" && (
       <Card title="Add what you find" info={`Paste a LinkedIn post or profile link and pick what ${firstName} should do. We draft any text in their voice and put it in ${fullService ? "To do" : "To send"}.`}>
@@ -697,7 +681,7 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
               ))}
             </ul>
           ) : (
-            <EmptyState title="Nothing ready yet">Check suggestions in To check, or add your own in Add new. They wait here until you {fullService ? "do them" : "send them"}.</EmptyState>
+            <EmptyState title="Nothing ready yet">Bring what you find into Add new. It waits here until you {fullService ? "do it" : "send it"}.</EmptyState>
           )}
           {ready.length > 0 && (
             <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-end sm:justify-between">
