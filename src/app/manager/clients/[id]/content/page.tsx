@@ -358,8 +358,26 @@ function ScheduledActions({ post, b }: { post: Post; b: ClientBundle }) {
   const [choosing, setChoosing] = useState(false);
   const [editing, setEditing] = useState(false);
   const first = b.user?.firstName;
+  // #45: on full-service, the AM posts it on the client's LinkedIn and marks it done (self-serve clients publish it themselves).
+  const fullService = b.client?.service === "full-service";
   return (
     <div className="flex flex-wrap gap-2">
+      {fullService && (
+        <Button
+          size="sm"
+          onClick={() =>
+            confirm({
+              title: "Mark as posted?",
+              body: `You have posted this on ${first}'s LinkedIn. It moves to Live and is recorded in their account log.`,
+              confirmLabel: "Mark as posted",
+              action: () => act.markPosted(post.id, fullName(b.managerUser)),
+              success: "Marked as posted. It is logged for the client.",
+            })
+          }
+        >
+          Mark as posted
+        </Button>
+      )}
       <Button size="sm" variant="secondary" onClick={() => setEditing(true)}>
         Edit
       </Button>

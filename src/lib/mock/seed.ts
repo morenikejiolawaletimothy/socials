@@ -195,6 +195,9 @@ export function seed(): Db {
         text: "How to pick a payments partner for West Africa, in 5 questions. A short guide for founders who are about to choose.", why: "A practical post for founders on your target list." },
       { id: "p-c5", clientId: "c-chidi", status: "scheduled", scheduledAt: hoursAgo(6), scheduledFor: at(5, 8, 30), topic: "Team", format: "story",
         text: "Our first engineer joined Paystream from a bank queue. Literally. Here is the story.", why: "A team story to support hiring next quarter.", image: { src: IMG.desk, alt: "A Paystream engineer at her desk" } },
+      // Tari (full-service): a scheduled post the account team posts and marks done
+      { id: "p-tari-1", clientId: "c-tari", status: "scheduled", scheduledAt: hoursAgo(4), scheduledFor: at(2, 9), topic: "Commercial real estate", format: "opinion",
+        text: "Institutional capital is finally looking hard at West African commercial real estate. Here is what the smart money asks before it commits, in 4 points.", why: "Ties to your goal of attracting institutional investors." },
       // Chidi: live
       { id: "p-c6", clientId: "c-chidi", status: "published", publishedAt: hoursAgo(20), topic: "Cross-border payments", format: "opinion",
         text: "Cross-border payments in Africa are not slow because of technology. They are slow because of rules written for a different decade.\n\nThree changes regulators could make this year:\n\n1. One licence that works across ECOWAS, not fifteen.\n2. Shared rules for checking who sent the money.\n3. Settlement in local currency by default.\n\nThe @[Central Bank of Nigeria] report on mobile money says the same. Worth a read: https://www.cbn.gov.ng/reports\n\n#Payments #Africa #Fintech",
