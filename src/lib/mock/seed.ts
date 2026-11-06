@@ -1,3 +1,4 @@
+import { AGREEMENT_VERSION } from "../amAgreement";
 import { weeklyToDates } from "../slots";
 import type { Client, Db, Permissions, ReviewSettings, Scorecard, ScoreLine, Strategy, WeekProgress } from "./types";
 
@@ -103,7 +104,7 @@ export function seed(): Db {
   });
 
   return {
-    version: 28,
+    version: 29,
     session: {
       role: "client",
       userIds: { client: "u-chidi", manager: "u-ada", owner: "u-fola" },
@@ -159,10 +160,10 @@ export function seed(): Db {
           ],
           approach: "I learn how you talk, then write like you on a good day. You get posts that sound like you, a clear plan each week, and honest advice on what is working.",
         },
-        maxClients: 10, industries: ["Fintech", "Health", "Energy"], slots: weeklyToDates(["mon-morning", "tue-afternoon", "wed-morning", "thu-morning", "fri-afternoon"], now), stats: { onTime: 96, firstTimeApproval: 81, missed: 1, complaints: 0, avgGrade: "very good", responseHours: 3, strikes: 0 } },
-      { id: "m-tunde", userId: "u-tunde", status: "active", intro: "I work with product and tech leaders in North America and the UK.", maxClients: 10, industries: ["Software", "Fintech", "Venture capital"], slots: weeklyToDates(["mon-afternoon", "wed-afternoon", "thu-afternoon"], now), stats: { onTime: 88, firstTimeApproval: 72, missed: 4, complaints: 1, avgGrade: "good", responseHours: 6, strikes: 1 } },
+        maxClients: 10, agreement: { fullName: "Ada Obi", signedAt: at(-200), version: AGREEMENT_VERSION }, industries: ["Fintech", "Health", "Energy"], slots: weeklyToDates(["mon-morning", "tue-afternoon", "wed-morning", "thu-morning", "fri-afternoon"], now), stats: { onTime: 96, firstTimeApproval: 81, missed: 1, complaints: 0, avgGrade: "very good", responseHours: 3, strikes: 0 } },
+      { id: "m-tunde", userId: "u-tunde", status: "active", intro: "I work with product and tech leaders in North America and the UK.", maxClients: 10, agreement: { fullName: "Tunde Bakare", signedAt: at(-260), version: AGREEMENT_VERSION }, industries: ["Software", "Fintech", "Venture capital"], slots: weeklyToDates(["mon-afternoon", "wed-afternoon", "thu-afternoon"], now), stats: { onTime: 88, firstTimeApproval: 72, missed: 4, complaints: 1, avgGrade: "good", responseHours: 6, strikes: 1 } },
       { id: "m-bisi", userId: "u-bisi", status: "invited", intro: "", maxClients: 10, industries: [], inviteToken: "demo-invite", inviteExpiresAt: new Date(now + 6 * DAY).toISOString(), stats: { onTime: 0, firstTimeApproval: 0, missed: 0, complaints: 0 } },
-      { id: "m-kola", userId: "u-kola", status: "waiting-for-training", intro: "Former journalist. I write about law, policy and public life.", maxClients: 10, industries: ["Law", "Public sector"], trainingAt: at(2, 11), slots: ["tue-morning", "thu-afternoon"], stats: { onTime: 0, firstTimeApproval: 0, missed: 0, complaints: 0 } },
+      { id: "m-kola", userId: "u-kola", status: "waiting-for-training", intro: "Former journalist. I write about law, policy and public life.", maxClients: 10, agreement: { fullName: "Kola Daniels", signedAt: at(-3), version: AGREEMENT_VERSION }, industries: ["Law", "Public sector"], trainingAt: at(2, 11), slots: ["tue-morning", "thu-afternoon"], stats: { onTime: 0, firstTimeApproval: 0, missed: 0, complaints: 0 } },
     ],
     notifications: [
       { id: "n1", userId: "u-chidi", text: "3 posts are ready for your review. Due tomorrow at 5pm.", href: "/content/review", createdAt: hoursAgo(2), read: false, by: "Ada Obi (manager)" },

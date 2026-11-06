@@ -1,5 +1,6 @@
 "use client";
 
+import { AGREEMENT_VERSION } from "../amAgreement";
 import { delay, getDb, update } from "./store";
 import type { Db, Role } from "./types";
 
@@ -157,18 +158,33 @@ export function findInvite(token: string, db: Db = getDb()) {
   return manager && user && !expired ? { manager, user } : null;
 }
 
-export async function acceptInvite(token: string, profile: { intro: string; slots: string[] }) {
+export async function acceptInvite(token: string, profile: { intro: string; slots: string[]; signedName: string }) {
   await delay(600);
   const invite = findInvite(token);
   if (!invite) return { ok: false as const, message: "This invite link has been used or has expired. Ask the owner for a new one." };
+  const signedAt = new Date().toISOString();
+  const who = `${invite.user.firstName} ${invite.user.lastName}`;
   update((db) => ({
     ...db,
     users: db.users.map((u) => (u.id === invite.user.id ? { ...u, twoStep: true } : u)),
     managers: db.managers.map((m) =>
       m.id === invite.manager.id
-        ? { ...m, status: "waiting-for-training", intro: profile.intro, inviteToken: undefined, slots: profile.slots }
+        ? {
+            ...m,
+            status: "waiting-for-training",
+            intro: profile.intro,
+            inviteToken: undefined,
+            slots: profile.slots,
+            // #48 Record the signed agreement so it can be downloaded later.
+            agreement: { fullName: profile.signedName, signedAt, version: AGREEMENT_VERSION },
+          }
         : m,
     ),
+    // #48 The signing is logged like any owner-visible event.
+    audit: [
+      { id: `au-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, who, action: `Signed the account manager agreement (v${AGREEMENT_VERSION})`, target: who, at: signedAt, kind: "account" as const },
+      ...db.audit,
+    ],
   }));
   signInAs(invite.user.id, "manager");
   return { ok: true as const };

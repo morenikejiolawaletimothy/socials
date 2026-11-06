@@ -160,6 +160,8 @@ export type Manager = {
     approach: string;
   };
   maxClients: number;
+  /** #48 The account manager agreement, signed with their full name at onboarding. */
+  agreement?: { fullName: string; signedAt: string; version: string };
   /** Open call slots, as "mon-morning" style keys. */
   slots?: string[];
   trainingAt?: string;

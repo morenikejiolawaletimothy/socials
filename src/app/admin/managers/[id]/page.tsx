@@ -7,6 +7,7 @@ import { use, useState } from "react";
 import { ClientCell, StatTile, managerName, managerStatus } from "@/components/admin/parts";
 import { Badge, Banner, Button, Card, EmptyState, Meta, PageHeader, Pill, ProgressBar, Row, Rows, Tabs, Tile, TileAction, TileFooter, buttonClass, useConfirm, useToast } from "@/components/ui";
 import { day, dayTime, dayTimeIn, fullName, plural, time } from "@/lib/format";
+import { downloadAgreement } from "@/lib/amAgreement";
 import { act, useData, type Db } from "@/lib/mock";
 import { slotTimes } from "@/lib/slots";
 import { statusBadge } from "@/lib/status";
@@ -245,6 +246,29 @@ export default function ManagerPage({ params }: { params: Promise<{ id: string }
             </ul>
           ) : (
             <p className="text-body-sm text-secondary">No complaints.</p>
+          )}
+        </Card>
+      )}
+
+      {section === "access" && (
+        <Card
+          title="Agreement"
+          info="The account manager agreement, signed with their full name at onboarding and logged in the audit log."
+        >
+          {m.agreement ? (
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <dl className="flex flex-col gap-1">
+                <dt className="text-body-sm text-secondary">Signed by {m.agreement.fullName}</dt>
+                <dd className="text-body font-medium text-primary">
+                  {day(m.agreement.signedAt)} · version {m.agreement.version}
+                </dd>
+              </dl>
+              <Button variant="secondary" size="sm" onClick={() => downloadAgreement(m.agreement!, { name: fullName(u), email: u?.email ?? "" })}>
+                Download signed terms
+              </Button>
+            </div>
+          ) : (
+            <p className="text-body-sm text-secondary">Not signed yet. They sign the agreement when they set up their account.</p>
           )}
         </Card>
       )}
