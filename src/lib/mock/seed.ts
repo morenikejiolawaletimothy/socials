@@ -1,5 +1,5 @@
 import { weeklyToDates } from "../slots";
-import type { Client, Db, Permissions, ReviewSettings, Strategy, WeekProgress } from "./types";
+import type { Client, Db, Permissions, ReviewSettings, Scorecard, ScoreLine, Strategy, WeekProgress } from "./types";
 
 // Realistic dummy data. Names, companies and people are fictional. Photos are stock images from the landing page.
 
@@ -80,12 +80,25 @@ export function seed(): Db {
     frameworkVersion: "v3",
   });
 
-  const week = (clientId: string, p: [number, number], c: [number, number], k: [number, number], held: string[] = []): WeekProgress => ({
+  const line = (v: [number, number]): ScoreLine => ({ target: v[0], done: v[1] });
+  const week = (
+    clientId: string,
+    p: [number, number],
+    c: [number, number],
+    k: [number, number],
+    held: string[] = [],
+    extra: Partial<{ reactions: [number, number]; follows: [number, number]; saves: [number, number]; profileTasks: [number, number]; page: Scorecard }> = {},
+  ): WeekProgress => ({
     clientId,
     weekOf: at(-((new Date(now).getDay() + 6) % 7)),
-    posts: { target: p[0], done: p[1] },
-    comments: { target: c[0], done: c[1] },
-    connections: { target: k[0], done: k[1] },
+    posts: line(p),
+    comments: line(c),
+    connections: line(k),
+    reactions: line(extra.reactions ?? [0, 0]),
+    follows: line(extra.follows ?? [0, 0]),
+    saves: line(extra.saves ?? [0, 0]),
+    profileTasks: line(extra.profileTasks ?? [0, 0]),
+    page: extra.page,
     held,
   });
 
@@ -328,12 +341,18 @@ export function seed(): Db {
     ],
 
     progress: [
-      week("c-chidi", [3, 1], [15, 11], [15, 6], ["3 posts waiting for your review, due tomorrow 5pm", "1 post held last week: not reviewed in time"]),
+      week("c-chidi", [3, 1], [15, 11], [15, 6], ["3 posts waiting for your review, due tomorrow 5pm", "1 post held last week: not reviewed in time"], { reactions: [20, 14], follows: [5, 3], saves: [5, 4], profileTasks: [1, 1] }),
       week("c-sarah", [2, 0], [10, 4], [15, 0], ["1 post waiting for your review"]),
       week("c-zainab", [3, 1], [15, 13], [10, 10], ["2 posts held, waiting for review"]),
       week("c-tobi", [3, 2], [15, 9], [10, 7]),
       week("c-musa", [2, 2], [10, 10], [10, 4]),
-      week("c-tari", [2, 2], [12, 12], [8, 8]),
+      week("c-tari", [2, 2], [12, 12], [8, 8], [], {
+        reactions: [15, 15],
+        follows: [4, 4],
+        saves: [3, 2],
+        profileTasks: [1, 1],
+        page: { posts: { target: 2, done: 2 }, comments: { target: 8, done: 6 }, reactions: { target: 10, done: 10 }, follows: { target: 3, done: 3 }, connections: { target: 5, done: 4 }, saves: { target: 2, done: 1 } },
+      }),
     ],
 
     updates: [

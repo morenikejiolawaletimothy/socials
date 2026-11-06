@@ -7,6 +7,7 @@ import { AssignDialog, suggest } from "@/components/admin/AssignDialog";
 import { Avatar, Badge, Button, Card, PageHeader, Pill, ProgressBar, Row, Rows, Select, textActionClass } from "@/components/ui";
 import { daysFrom, fullName, plural } from "@/lib/format";
 import { useData, type Client } from "@/lib/mock";
+import { scoreTotals } from "@/lib/scorecard";
 import { statusBadge } from "@/lib/status";
 
 function ClientsPage() {
@@ -83,8 +84,9 @@ function ClientsPage() {
             {list.map((c) => {
               const b = statusBadge[c.status];
               const w = db.progress.find((p) => p.clientId === c.id);
-              const d = w ? w.posts.done + w.comments.done + w.connections.done : 0;
-              const t = w ? w.posts.target + w.comments.target + w.connections.target : 0;
+              const totals = w ? scoreTotals(w) : { done: 0, target: 0 };
+              const d = totals.done;
+              const t = totals.target;
               return (
                 <tr key={c.id}>
                   <td className={tdFlush}>

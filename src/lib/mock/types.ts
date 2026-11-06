@@ -419,13 +419,32 @@ export type Strategy = {
   frameworkVersion: string;
 };
 
-/** This week's numbers against the strategy (C9, M6). */
+/** One line on a scorecard: the weekly target and how many are done. */
+export type ScoreLine = { target: number; done: number };
+
+/** The activities tracked on a scorecard. `profileTasks` is only on the personal profile, not the company Page (#45). */
+export type Scorecard = {
+  posts: ScoreLine;
+  comments: ScoreLine;
+  reactions: ScoreLine;
+  follows: ScoreLine;
+  connections: ScoreLine;
+  saves: ScoreLine;
+  profileTasks?: ScoreLine;
+};
+
+/** This week's numbers against the strategy (C9, M6). The flat fields are the personal-profile scorecard; `page` is the company-Page scorecard when the add-on is on (#45). */
 export type WeekProgress = {
   clientId: string;
   weekOf: string;
-  posts: { target: number; done: number };
-  comments: { target: number; done: number };
-  connections: { target: number; done: number };
+  posts: ScoreLine;
+  comments: ScoreLine;
+  reactions: ScoreLine;
+  follows: ScoreLine;
+  connections: ScoreLine;
+  saves: ScoreLine;
+  profileTasks: ScoreLine;
+  page?: Scorecard;
   held: string[];
 };
 

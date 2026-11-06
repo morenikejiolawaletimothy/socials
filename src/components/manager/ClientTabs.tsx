@@ -12,18 +12,14 @@ import { duration } from "@/lib/linkedin";
 import { act, type ClientBundle, type Lead, type LinkedInReaction, type Update } from "@/lib/mock";
 import { ReactionLabel } from "@/components/client/EngageItemTile";
 import { progressWord, reactions, taskProgress } from "@/lib/engage";
+import { pageScore, profileScore, type ScoreRow } from "@/lib/scorecard";
 
 
-function Targets({ b }: { b: ClientBundle }) {
-  if (!b.week) return <p className="text-body-sm text-secondary">Targets start once the strategy is approved.</p>;
+function ScoreLines({ rows }: { rows: ScoreRow[] }) {
   return (
     <ul className="flex flex-col gap-4">
-      {[
-        { label: "Posts", ...b.week.posts },
-        { label: "Comments", ...b.week.comments },
-        { label: "Connection requests", ...b.week.connections },
-      ].map((r) => (
-        <li key={r.label} className="flex flex-col gap-2">
+      {rows.map((r) => (
+        <li key={r.key} className="flex flex-col gap-2">
           <span className="flex justify-between text-body-sm">
             <span className="text-primary">{r.label}</span>
             <span className="text-secondary">
@@ -34,6 +30,23 @@ function Targets({ b }: { b: ClientBundle }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+function Targets({ b }: { b: ClientBundle }) {
+  if (!b.week) return <p className="text-body-sm text-secondary">Targets start once the strategy is approved.</p>;
+  const page = pageScore(b.week);
+  return (
+    <div className="flex flex-col gap-4">
+      {page.length > 0 && <span className="text-caption font-medium text-secondary">Profile</span>}
+      <ScoreLines rows={profileScore(b.week)} />
+      {page.length > 0 && (
+        <div className="flex flex-col gap-4 border-t border-border pt-4">
+          <span className="text-caption font-medium text-secondary">Company Page</span>
+          <ScoreLines rows={page} />
+        </div>
+      )}
+    </div>
   );
 }
 
