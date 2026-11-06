@@ -166,7 +166,18 @@ export type Manager = {
   /** Google Calendar: booked calls go in, busy times close slots. */
   calendarConnected?: boolean;
   industries: string[];
-  stats: { onTime: number; firstTimeApproval: number; missed: number; complaints: number };
+  stats: {
+    onTime: number;
+    firstTimeApproval: number;
+    missed: number;
+    complaints: number;
+    /** #46: the average content grade across their clients' drafts (word, staff-only). */
+    avgGrade?: "very bad" | "not so good" | "good" | "very good" | "perfect";
+    /** #46: median hours to answer a client request (fix, take-down, question). */
+    responseHours?: number;
+    /** #46: out-of-access attempts in the two-strike escalation (0, 1 = warned, 2 = barred). */
+    strikes?: number;
+  };
 };
 
 export type Notification = {

@@ -128,6 +128,20 @@ export default function ManagerPage({ params }: { params: Promise<{ id: string }
               </li>
             ))}
           </ul>
+          {active && (
+            <dl className="flex flex-col gap-3 border-t border-border pt-6">
+              {[
+                { label: "Average content grade", value: m.stats.avgGrade ?? "—", danger: false },
+                { label: "Responds to clients in", value: m.stats.responseHours != null ? `${m.stats.responseHours}h` : "—", danger: (m.stats.responseHours ?? 0) > 24 },
+                { label: "Access strikes", value: `${m.stats.strikes ?? 0} of 2`, danger: (m.stats.strikes ?? 0) >= 2 },
+              ].map((r) => (
+                <div key={r.label} className="flex items-center justify-between gap-3 text-body-sm">
+                  <dt className="text-secondary">{r.label}</dt>
+                  <dd className={`font-medium ${r.danger ? "text-danger" : "text-primary"}`}>{r.value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
         </section>
 
         <StatTile icon={Users} label="Places free" value={Math.max(m.maxClients - clients.length, 0)} />
