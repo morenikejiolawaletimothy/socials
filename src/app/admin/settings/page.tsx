@@ -41,12 +41,6 @@ export default function SettingsPage() {
               help={`Now ${money(s.autoRefundLimitCents)}. Larger refunds wait for you.`}
             />
             <Input
-              label="Video add-on, a month (USD)"
-              value={String(s.videoAddonCents / 100)}
-              onChange={(e) => setS({ ...s, videoAddonCents: (Number(e.target.value) || 0) * 100 })}
-              help={`Now ${money(s.videoAddonCents)} on top of the plan. Applies to new add-ons.`}
-            />
-            <Input
               label="Full-service, a month (USD)"
               value={String(s.fullServiceCents / 100)}
               onChange={(e) => setS({ ...s, fullServiceCents: (Number(e.target.value) || 0) * 100 })}

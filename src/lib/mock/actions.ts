@@ -1100,22 +1100,6 @@ export async function submitVideo(taskId: string, fileId: string) {
   });
 }
 
-/** C4 and C13: turns the video add-on on (with who makes the videos) or off. Billed with the plan. */
-export async function setVideoAddon(clientId: string, maker: "client" | "bluecut" | "both" | null) {
-  await delay(700);
-  update((db) => {
-    let next: Db = { ...db, contracts: db.contracts.map((k) => (k.clientId === clientId ? { ...k, videoAddon: maker ? { maker, since: k.videoAddon?.since ?? nowIso() } : undefined } : k)) };
-    const who = nameOf(clientUser(db, clientId));
-    const what = maker
-      ? `added the video add-on (${maker === "client" ? "they supply the videos" : maker === "bluecut" ? "Bluecut makes the videos: agree the production and send a quote" : "both: agree the production and send a quote"})`
-      : "removed the video add-on";
-    next = notify(next, managerUserOf(db, clientId)?.id, `${who} ${what}.`, `/manager/clients/${clientId}`, { email: true });
-    next = notify(next, OWNER, `${who} ${what}.`, `/admin/clients/${clientId}`);
-    next = log(next, clientId, "you", "account", maker ? "Added the video add-on" : "Removed the video add-on");
-    return audit(next, maker ? "Added the video add-on" : "Removed the video add-on", who, "account", who);
-  });
-}
-
 /* ---------- Client: setup (C2 to C6) ---------- */
 
 /** The setup steps for a client, in order. Full-service adds a secure-access step; neither uses the LinkedIn API. */
@@ -1163,7 +1147,7 @@ export async function bookCall(clientId: string, kind: "goals" | "strategy", at:
   await completeSetupStep(clientId, kind === "goals" ? "goals-call" : "strategy-call");
 }
 
-export async function signContract(clientId: string, months: 3 | 6 | 12, monthlyCents: number, signedName: string, videoAddon?: NonNullable<Db["contracts"][number]["videoAddon"]>["maker"]) {
+export async function signContract(clientId: string, months: 3 | 6 | 12, monthlyCents: number, signedName: string) {
   await delay(700);
   const DAY = 86_400_000;
   const now = Date.now();
@@ -1184,13 +1168,10 @@ export async function signContract(clientId: string, months: 3 | 6 | 12, monthly
           endsAt: new Date(now + 14 * DAY + months * 30 * DAY).toISOString(),
           status: "free",
           paid: false,
-          videoAddon: videoAddon ? { maker: videoAddon, since: nowIso() } : undefined,
         },
       ],
     };
-    const signed = notify(next, clientUser(db, clientId)?.id, `Your contract is signed. Your free 2 weeks have started.`, "/contract");
-    // The manager plans the video conversation for the goals call.
-    return videoAddon ? notify(signed, managerUserOf(db, clientId)?.id, `${nameOf(clientUser(db, clientId))} added the video add-on${videoAddon === "client" ? "" : " with Bluecut-made video"}. Talk about video on the goals call${videoAddon === "client" ? "" : ", then send a quote for production"}.`, `/manager/clients/${clientId}`) : signed;
+    return notify(next, clientUser(db, clientId)?.id, `Your contract is signed. Your free 2 weeks have started.`, "/contract");
   });
 }
 

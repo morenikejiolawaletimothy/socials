@@ -4,7 +4,6 @@ import { CalendarBlank, CreditCard, DownloadSimple, Gift, Receipt, Signature } f
 import Link from "next/link";
 import { useState } from "react";
 import { PayDialog } from "@/components/client/PayDialog";
-import { VideoAddonCard, contractTotal } from "@/components/client/VideoAddon";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
 import { Avatar, Badge, Banner, Button, buttonClass, Card, Dialog, EmptyState, IconButton, Pill, Row, Rows, Textarea, useConfirm, useTask } from "@/components/ui";
@@ -26,7 +25,6 @@ const invoiceBadge = { paid: { label: "Paid", tone: "success" as const }, due: {
 export default function ContractPage() {
   const { client, contract, invoices, managerUser, manager } = useMyClient();
   const db = useData();
-  const addonCents = db.settings.videoAddonCents;
   const confirm = useConfirm();
   const { run, pending } = useTask();
   const [paying, setPaying] = useState(false);
@@ -123,7 +121,7 @@ export default function ContractPage() {
           </dl>
           {unpaid && (
             <div className="border-t border-border pt-6">
-              <Button onClick={() => setPaying(true)}>Pay {money(contractTotal(contract, addonCents))}</Button>
+              <Button onClick={() => setPaying(true)}>Pay {money(planCents)}</Button>
             </div>
           )}
         </div>
@@ -146,8 +144,6 @@ export default function ContractPage() {
           ))}
         </Rows>
       </Card>
-
-      <VideoAddonCard clientId={client.id} contract={contract} priceCents={addonCents} />
 
       {manager && managerUser && (
         <Card title="Your account manager">
@@ -267,7 +263,7 @@ export default function ContractPage() {
         </Card>
       )}
 
-      <PayDialog open={paying} onClose={() => setPaying(false)} clientId={client.id} amountCents={contractTotal(contract, addonCents)} title={contract.card ? "Pay or update your card" : "Pay now"} />
+      <PayDialog open={paying} onClose={() => setPaying(false)} clientId={client.id} amountCents={planCents} title={contract.card ? "Pay or update your card" : "Pay now"} />
 
       <Dialog open={changing} onClose={() => setChanging(false)} title="Ask for a different manager">
         <p className="text-body-sm text-secondary">The owner reads this and gets back to you within 1 working day. Your new manager receives a full handover, so nothing is lost.</p>

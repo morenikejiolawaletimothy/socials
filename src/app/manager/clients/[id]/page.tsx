@@ -1,6 +1,5 @@
 "use client";
 
-import { VideoCamera } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, use } from "react";
@@ -17,7 +16,7 @@ import {
   PlanTab,
   UpdatesTab,
 } from "@/components/manager/ClientTabs";
-import { Avatar, Badge, Breadcrumbs, buttonClass, Card, EmptyState, Pill, ProgressBar, Tabs } from "@/components/ui";
+import { Avatar, Badge, Breadcrumbs, buttonClass, Card, EmptyState, ProgressBar, Tabs } from "@/components/ui";
 import { fullName } from "@/lib/format";
 import { clientBundle, useMyManager } from "@/lib/mock";
 import { statusBadge } from "@/lib/status";
@@ -64,11 +63,6 @@ function ClientPage({ id }: { id: string }) {
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
               <h1 className="font-display text-display-xl text-primary">{fullName(b.user)}</h1>
               <span className="flex flex-wrap items-center gap-2">
-                {b.contract?.videoAddon && (
-                  <Pill>
-                    <VideoCamera className="size-4" aria-hidden /> Video add-on
-                  </Pill>
-                )}
                 <Badge status={badge.tone}>{badge.label}</Badge>
               </span>
             </div>

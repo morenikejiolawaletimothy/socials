@@ -118,12 +118,6 @@ export default function OwnerClientPage({ params }: { params: Promise<{ id: stri
                         value: b.contract.paid ? `${money(b.contract.monthlyCents * b.contract.months)} up front` : "Not paid yet",
                       },
                       { label: "Dates", value: `${date(b.contract.startsAt)} to ${date(b.contract.endsAt)}` },
-                      {
-                        label: "Video add-on",
-                        value: b.contract.videoAddon
-                          ? { client: `On, ${money(db.settings.videoAddonCents)} a month. Client supplies the videos`, bluecut: "On. Bluecut makes the videos, production quoted separately", both: `On, ${money(db.settings.videoAddonCents)} a month, plus production quoted separately` }[b.contract.videoAddon.maker]
-                          : "Off",
-                      },
                     ]
                   : []),
               ].map((r) => (

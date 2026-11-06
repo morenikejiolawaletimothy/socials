@@ -452,7 +452,7 @@ export function seed(): Db {
     ],
 
     contracts: [
-      { id: "k-chidi", clientId: "c-chidi", months: 6, videoAddon: { maker: "both", since: at(-49) }, monthlyCents: 80000, signedAt: at(-63), signedName: "Chidi Okeke", freeEndsAt: at(-49), startsAt: at(-49), endsAt: at(133), status: "active", paid: true, card: { brand: "Visa", last4: "4242" } },
+      { id: "k-chidi", clientId: "c-chidi", months: 6, monthlyCents: 80000, signedAt: at(-63), signedName: "Chidi Okeke", freeEndsAt: at(-49), startsAt: at(-49), endsAt: at(133), status: "active", paid: true, card: { brand: "Visa", last4: "4242" } },
       { id: "k-sarah", clientId: "c-sarah", months: 3, monthlyCents: 90000, signedAt: at(-10), signedName: "Sarah Mensah", freeEndsAt: at(4), startsAt: at(4), endsAt: at(95), status: "free", paid: false },
       { id: "k-ngozi", clientId: "c-ngozi", months: 3, monthlyCents: 90000, signedAt: at(-2), signedName: "Ngozi Eze", freeEndsAt: at(12), startsAt: at(12), endsAt: at(103), status: "free", paid: false },
       { id: "k-femi", clientId: "c-femi", months: 12, monthlyCents: 70000, signedAt: at(-6), signedName: "Femi Lawal", freeEndsAt: at(8), startsAt: at(8), endsAt: at(373), status: "free", paid: true, card: { brand: "Mastercard", last4: "8810" } },
@@ -569,7 +569,7 @@ export function seed(): Db {
       { id: "po3", managerId: "m-ada", period: "Last month", clients: 4, amountCents: 100000, status: "paid" },
       { id: "po4", managerId: "m-tunde", period: "Last month", clients: 3, amountCents: 75000, status: "paid" },
     ],
-    settings: { freeDays: 14, autoRefundLimitCents: 100000, reminderDays: [5, 3, 0], pauseWarningDays: 15, removalDays: 30, goAheadHours: 24, maxClientsPerManager: 10, daysBetweenCalls: 3, sessionTimeoutMinutes: 60, videoAddonCents: 30000, fullServiceCents: 80000, pageManagementCents: 40000 },
+    settings: { freeDays: 14, autoRefundLimitCents: 100000, reminderDays: [5, 3, 0], pauseWarningDays: 15, removalDays: 30, goAheadHours: 24, maxClientsPerManager: 10, daysBetweenCalls: 3, sessionTimeoutMinutes: 60, fullServiceCents: 80000, pageManagementCents: 40000 },
     changeRequests: [{ id: "cr1", clientId: "c-zainab", reason: "I would like a manager with a health background.", at: at(-1, 16), status: "open" }],
     accessLog: [
       { id: "ac1", clientId: "c-tari", who: "Ada Obi", at: hoursAgo(6), action: "Posted your approved update and replied to comments on your Page", minutes: 25 },

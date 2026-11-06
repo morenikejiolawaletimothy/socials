@@ -12,10 +12,9 @@ import { Avatar, Badge, Banner, Button, buttonClass, Card, Meta, Pill, ProgressB
 import { isOverdue } from "@/lib/status";
 import { isEngage, progressWord, taskProgress } from "@/lib/engage";
 import { ago, agoIn, date, dateTime, day, dayIn, dayTimeIn, daysFrom, fullName, money, plural, time } from "@/lib/format";
-import { useData, type ClientBundle, type Post, type QuickTask, type TaskEvent } from "@/lib/mock";
+import { type ClientBundle, type Post, type QuickTask, type TaskEvent } from "@/lib/mock";
 import { LivePostActions } from "./LivePostActions";
 import { PayDialog } from "./PayDialog";
-import { contractTotal } from "./VideoAddon";
 import { reportActivity } from "./reportActivity";
 import { nextSetupStep, stepsFor } from "./setup";
 
@@ -28,7 +27,6 @@ const buttonLink = (primary: boolean) => `self-start ${buttonClass(primary ? "pr
 export function PausedCard({ b }: { b: ClientBundle }) {
   const toast = useToast();
   const [paying, setPaying] = useState(false);
-  const addonCents = useData().settings.videoAddonCents;
   const { client, contract, posts } = b;
   if (client?.status !== "paused") return null;
   const daysPaused = client.pausedAt ? -daysFrom(client.pausedAt) : 0;
@@ -37,7 +35,7 @@ export function PausedCard({ b }: { b: ClientBundle }) {
   const facts = [
     { label: "Paused for", value: plural(daysPaused, "day") },
     { label: "Waiting for you", value: waiting ? plural(waiting, "post") : "Nothing" },
-    ...(contract ? [{ label: "Amount due", value: `${money(contractTotal(contract, addonCents))} for ${contract.months} months` }] : []),
+    ...(contract ? [{ label: "Amount due", value: `${money(contract.monthlyCents * contract.months)} for ${contract.months} months` }] : []),
   ];
 
   return (
@@ -77,7 +75,7 @@ export function PausedCard({ b }: { b: ClientBundle }) {
           onClose={() => setPaying(false)}
           onPaid={() => toast("Your account is active again. Scheduled posts are back on.")}
           clientId={client.id}
-          amountCents={contractTotal(contract, addonCents)}
+          amountCents={contract.monthlyCents * contract.months}
         />
       )}
     </Card>
@@ -104,12 +102,11 @@ export function StateBanners({ b }: { b: ClientBundle }) {
 
 /** C1: the free period ends in 5 days or less and nothing is paid. Laid out like Account paused: what happens, the facts, then Pay. */
 function FreeEndingCard({ b }: { b: ClientBundle }) {
-  const addonCents = useData().settings.videoAddonCents;
   const { contract } = b;
   if (!contract) return null;
   const facts = [
     { label: "Free until", value: date(contract.freeEndsAt) },
-    { label: "Amount due", value: `${money(contractTotal(contract, addonCents))} for ${contract.months} months` },
+    { label: "Amount due", value: `${money(contract.monthlyCents * contract.months)} for ${contract.months} months` },
   ];
   return (
     <Card

@@ -574,8 +574,6 @@ export type Contract = {
   startsAt: string;
   endsAt: string;
   status: "free" | "active" | "ending" | "paused" | "completed" | "cancelled";
-  /** Video add-on: paid on top of the plan. Who makes the videos was agreed at onboarding. */
-  videoAddon?: { maker: "client" | "bluecut" | "both"; since: string };
   /** The status before the client pulled out, so they can change their mind. */
   cancelledFrom?: Exclude<Contract["status"], "cancelled">;
   paid: boolean;
@@ -699,8 +697,6 @@ export type Settings = {
   maxClientsPerManager: number;
   daysBetweenCalls: number;
   sessionTimeoutMinutes: number;
-  /** Video add-on price, a month, on top of the plan (USD cents). */
-  videoAddonCents: number;
   /** Full-service done-for-you tier, a month, on top of the plan (USD cents). */
   fullServiceCents: number;
   /** Company Page management add-on, a month (USD cents). Full-service only. */
