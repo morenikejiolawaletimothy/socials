@@ -79,7 +79,7 @@ function Onboard({ id }: { id: string }) {
   const [direction, setDirection] = useState("");
   const [directions, setDirections] = useState<string[]>([]);
   const [summary, setSummary] = useState(() => ({
-    notes: b.client?.onboarding?.notes ?? b.calls.find((c) => c.kind === "goals")?.summary ?? "",
+    notes: b.client?.onboarding?.notes ?? b.calls.find((c) => c.kind === "goals")?.insights ?? "",
     goal: b.client?.goal ?? "",
     audience: b.client?.onboarding?.audience ?? b.strategy?.audience ?? "Distribution partners, retail buyers and food journalists in Lagos and Abuja.",
     tone: b.client?.onboarding?.tone ?? b.strategy?.tone ?? "Warm, practical, proud of local sourcing.",
@@ -111,7 +111,7 @@ function Onboard({ id }: { id: string }) {
             <Step>
               <StepHead
                 title="Prep sheet for the goals call"
-                info={goals ? (goals.recording ? "Recorded with consent. The summary is drafted from the transcript." : "Not recorded. You write the notes after the call.") : undefined}
+                info={goals ? (goals.recording ? "Recorded with the client's consent, on your own notetaker. You paste the transcript and insights after the call." : "Not recorded. You write what you heard after the call.") : undefined}
               >
                 {goals && (
                   <Meta icon={Clock}>
@@ -155,10 +155,10 @@ function Onboard({ id }: { id: string }) {
             <Step>
               <StepHead
                 title="After the goals call"
-                info={goals?.recording ? "The transcript has arrived. The summary below is drafted from it. Correct anything, then confirm." : "The call was not recorded. Write what you heard; the summary fills in from your notes."}
+                info={goals?.recording ? "Paste the insights from your own notetaker, then confirm. These shape the strategy." : "Write what you heard, then confirm. These shape the strategy."}
               />
               {!goals?.recording && <Textarea label="Your notes" rows={4} {...field("notes")} />}
-              <Section title="Summary">
+              <Section title="Insights">
                 <div className="flex flex-col gap-4">
                   <Textarea label="Goals" rows={2} {...field("goal")} error={summaryError} />
                   <Textarea label="Audience" rows={2} {...field("audience")} />
@@ -189,7 +189,7 @@ function Onboard({ id }: { id: string }) {
                     }
                   }}
                 >
-                  Confirm summary
+                  Confirm insights
                 </Button>
               </StepFooter>
             </Step>
@@ -354,9 +354,9 @@ function Onboard({ id }: { id: string }) {
                   </Meta>
                 )}
               </StepHead>
-              {stratCall?.summary && (
-                <Section title="Call summary">
-                  <Banner tone="neutral">{stratCall.summary}</Banner>
+              {stratCall?.insights && (
+                <Section title="Call insights">
+                  <Banner tone="neutral" icon={false}>{stratCall.insights}</Banner>
                 </Section>
               )}
               <Section title="What we agreed">

@@ -268,7 +268,7 @@ export function CallsCard({ b }: { b: ClientBundle }) {
                             </Badge>
                           ))}
                       </span>
-                      <span className="text-body-sm text-secondary">{c.status === "done" ? c.summary : callInfo[c.kind].covers}</span>
+                      <span className="text-body-sm text-secondary">{c.status === "done" ? (c.sharedAt && c.insights ? c.insights : "Your account manager will share the notes soon.") : callInfo[c.kind].covers}</span>
                     </div>
                   </div>
                   <TileFooter>

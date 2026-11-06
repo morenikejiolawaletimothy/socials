@@ -44,7 +44,17 @@ export default function CallsPage() {
                   <span className="text-body font-medium text-primary">{callTitle(c)}</span>
                   <span className="text-caption text-secondary">{c.status === "cancelled" ? "Cancelled" : `${date(c.at)}, ${time(c.at)}`}</span>
                 </span>
-                {c.summary && <p className="text-body-sm text-secondary">{c.summary}</p>}
+                {c.sharedAt && c.insights && (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-body-sm text-secondary">{c.insights}</p>
+                    {c.transcript && (
+                      <details className="text-body-sm">
+                        <summary className="cursor-pointer font-medium text-primary-700 hover:underline focus-visible:focus-ring">Read transcript</summary>
+                        <p className="mt-2 whitespace-pre-line rounded-md bg-neutral-25 p-3 text-secondary">{c.transcript}</p>
+                      </details>
+                    )}
+                  </div>
+                )}
               </li>
             ))}
           </ul>

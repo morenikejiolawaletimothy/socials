@@ -1206,6 +1206,25 @@ export async function bookCall(clientId: string, kind: "goals" | "strategy", at:
   await completeSetupStep(clientId, kind === "goals" ? "goals-call" : "strategy-call");
 }
 
+/** #42: the AM saves the call's transcript (only if it was recorded) and insights as a draft. */
+export async function saveCallNotes(callId: string, notes: { transcript?: string; insights: string }) {
+  await delay(500);
+  update((db) => ({ ...db, calls: db.calls.map((c) => (c.id === callId ? { ...c, transcript: notes.transcript?.trim() || undefined, insights: notes.insights.trim() || undefined } : c)) }));
+}
+
+/** #42: the AM shares the transcript and insights with the client. The client sees them only after this. */
+export async function shareCallNotes(callId: string) {
+  await delay(500);
+  update((db) => {
+    const call = db.calls.find((c) => c.id === callId);
+    if (!call) return db;
+    const name = call.kind === "check-in" ? "check-in call" : `${call.kind} call`;
+    let next: Db = { ...db, calls: db.calls.map((c) => (c.id === callId ? { ...c, sharedAt: nowIso() } : c)) };
+    next = log(next, call.clientId, "team", "setting", `Shared the ${name} notes`);
+    return notify(next, clientUser(db, call.clientId)?.id, `${managerUserOf(db, call.clientId)?.firstName ?? "Your account manager"} shared the notes from your ${name}.`, "/calls", { email: true });
+  });
+}
+
 export async function signContract(clientId: string, months: 3 | 6 | 12, monthlyCents: number, signedName: string) {
   await delay(700);
   const DAY = 86_400_000;

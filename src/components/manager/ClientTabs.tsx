@@ -1042,6 +1042,51 @@ export function BrandTab({ b }: { b: ClientBundle }) {
 
 const callName = { goals: "Goals call", strategy: "Strategy call", "check-in": "Check-in" };
 
+/** #42: after a call, the AM pastes the transcript (only if recorded) and the insights, then shares them with the client. */
+function CallNoteEditor({ call }: { call: ClientBundle["calls"][number] }) {
+  const { run, pending } = useTask();
+  const [transcript, setTranscript] = useState(call.transcript ?? "");
+  const [insights, setInsights] = useState(call.insights ?? "");
+  const [error, setError] = useState<string>();
+  const dirty = transcript !== (call.transcript ?? "") || insights !== (call.insights ?? "");
+  const shared = !!call.sharedAt;
+  const saveNotes = () => act.saveCallNotes(call.id, { transcript: call.recording ? transcript : undefined, insights });
+  return (
+    <div className="flex flex-col gap-4 border-t border-border pt-4">
+      {call.recording ? (
+        <Textarea label="Transcript" help="Paste the raw transcript from your own notetaker. The client can read it." rows={4} value={transcript} onChange={(e) => { setTranscript(e.target.value); setError(undefined); }} />
+      ) : (
+        <Banner tone="neutral" icon={false}>
+          This call was not recorded, so there is no transcript. Share the insights only.
+        </Banner>
+      )}
+      <Textarea label="Insights" help="The key points, synthesized. These shape the strategy, and the client reads them." rows={4} value={insights} onChange={(e) => { setInsights(e.target.value); setError(undefined); }} error={error} />
+      <div className="flex flex-wrap items-center gap-3">
+        <Button size="sm" variant="secondary" disabled={!dirty} loading={pending("save")} onClick={() => run("save", saveNotes, "Notes saved.")}>
+          Save
+        </Button>
+        <Button
+          size="sm"
+          disabled={!insights.trim()}
+          loading={pending("share")}
+          onClick={async () => {
+            if (!insights.trim()) return setError("Add the insights before you share.");
+            await run("save", saveNotes, undefined);
+            await run("share", () => act.shareCallNotes(call.id), shared ? "Updated notes shared with the client." : "Notes shared with the client.");
+          }}
+        >
+          {shared ? "Share again" : "Share with client"}
+        </Button>
+        {shared && (
+          <span className="flex items-center gap-1 text-caption text-success">
+            <CheckCircle className="size-4" aria-hidden /> Shared {agoIn(call.sharedAt!)}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function CallsTab({ b }: { b: ClientBundle }) {
   return (
     <Card title="Calls and notes" action={b.calls.length > 0 && <Pill>{plural(b.calls.length, "call")}</Pill>}>
@@ -1051,11 +1096,8 @@ export function CallsTab({ b }: { b: ClientBundle }) {
             <li key={c.id}>
               <Tile done={c.status === "cancelled"}>
                 <span className="flex flex-col gap-1">
-                  <span className="flex items-center gap-2">
-                    <span className="text-body font-medium text-primary">{callName[c.kind]}</span>
-                    {c.summary && <InfoTip label={`Summary of the ${callName[c.kind].toLowerCase()}`}>{c.summary}</InfoTip>}
-                  </span>
-                  <span className="text-body-sm text-secondary">{c.recording ? "Recorded, transcript in the notetaker." : "Not recorded. Written notes."}</span>
+                  <span className="text-body font-medium text-primary">{callName[c.kind]}</span>
+                  <span className="text-body-sm text-secondary">{c.recording ? "Recorded with the client's consent (your own notetaker)." : "Not recorded. Write what you heard."}</span>
                 </span>
                 {c.prep && (
                   <ul className="flex list-disc flex-col gap-1 pl-5 text-body-sm text-primary">
@@ -1068,6 +1110,7 @@ export function CallsTab({ b }: { b: ClientBundle }) {
                   <Meta icon={Clock}>{dayTime(c.at)} · {c.minutes} min</Meta>
                   <Badge status={c.status === "done" ? "success" : c.status === "cancelled" ? "neutral" : "info"}>{c.status === "done" ? "Done" : c.status === "cancelled" ? "Cancelled" : "Booked"}</Badge>
                 </TileFooter>
+                {c.status === "done" && <CallNoteEditor call={c} />}
               </Tile>
             </li>
           ))}

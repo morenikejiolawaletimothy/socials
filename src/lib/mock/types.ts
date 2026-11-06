@@ -390,7 +390,12 @@ export type Call = {
   meetUrl: string;
   recording: boolean;
   status: "booked" | "done" | "cancelled";
-  summary?: string;
+  /** #42: the raw call transcript, only present when the call was recorded (the AM's own notetaker, with consent). */
+  transcript?: string;
+  /** #42: the synthesized insights the AM writes from the call. Feeds the strategy. */
+  insights?: string;
+  /** #42: set when the AM shares the transcript and insights with the client. The client sees them only after this. */
+  sharedAt?: string;
   prep?: string[];
 };
 
