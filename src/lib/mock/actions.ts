@@ -2,6 +2,7 @@
 
 import { engageKinds, isEngage } from "../engage";
 import { dayTimeIn, money, plural } from "../format";
+import { extractLinkedIn } from "./auth";
 import { delay, getDb, update } from "./store";
 import type { Activity, Assistant, Channels, Client, Db, EngageAction, Handoff, Message, Permissions, PostStatus, Reaction, ReviewSettings, SetupStep, User } from "./types";
 
@@ -1321,9 +1322,21 @@ export async function cancelManagerChange(requestId: string) {
   update((db) => ({ ...db, changeRequests: db.changeRequests.filter((r) => r.id !== requestId) }));
 }
 
-export async function saveProfile(userId: string, patch: { firstName?: string; lastName?: string; timeZone?: string; title?: string }) {
+export async function saveProfile(userId: string, patch: { firstName?: string; lastName?: string; timeZone?: string; title?: string; linkedinUrl?: string }) {
   await delay();
   update((db) => ({ ...db, users: db.users.map((u) => (u.id === userId ? { ...u, ...patch } : u)) }));
+}
+
+/** #43: re-read the name/photo from the person's stored LinkedIn URL, on demand (the client, or the AM/admin for a client). */
+export async function syncLinkedIn(userId: string) {
+  await delay(900);
+  update((db) => {
+    const user = db.users.find((u) => u.id === userId);
+    if (!user?.linkedinUrl) return db;
+    const prof = extractLinkedIn(user.linkedinUrl);
+    if (!prof || prof.kind !== "person") return db;
+    return { ...db, users: db.users.map((u) => (u.id === userId ? { ...u, firstName: prof.firstName, lastName: prof.lastName } : u)) };
+  });
 }
 
 export async function setTwoStep(userId: string, on: boolean) {

@@ -16,10 +16,20 @@ import {
   PlanTab,
   UpdatesTab,
 } from "@/components/manager/ClientTabs";
-import { Avatar, Badge, Breadcrumbs, buttonClass, Card, EmptyState, ProgressBar, Tabs } from "@/components/ui";
+import { Avatar, Badge, Breadcrumbs, Button, buttonClass, Card, EmptyState, ProgressBar, Tabs, useTask } from "@/components/ui";
 import { fullName } from "@/lib/format";
-import { clientBundle, useMyManager } from "@/lib/mock";
+import { act, clientBundle, useMyManager } from "@/lib/mock";
 import { statusBadge } from "@/lib/status";
+
+/** #43: re-read the client's name/photo from their stored LinkedIn URL, on demand. */
+function SyncProfileButton({ userId }: { userId: string }) {
+  const { run, pending } = useTask();
+  return (
+    <Button variant="secondary" size="sm" loading={pending("sync")} onClick={() => run("sync", () => act.syncLinkedIn(userId), "Client profile updated from LinkedIn.")}>
+      Update profile
+    </Button>
+  );
+}
 
 const tabs = [
   { value: "overview", label: "Overview" },
@@ -90,6 +100,7 @@ function ClientPage({ id }: { id: string }) {
             <Link href={`/manager/clients/${id}/onboard`} className={buttonClass("secondary", "sm")}>
               Onboarding and strategy
             </Link>
+            {b.user.linkedinUrl && <SyncProfileButton userId={b.user.id} />}
           </div>
         </div>
       </Card>

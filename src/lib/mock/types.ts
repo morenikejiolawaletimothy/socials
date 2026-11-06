@@ -16,6 +16,8 @@ export type User = {
   twoStep: boolean;
   /** Profile photo, as a small data URL until Phase 2 stores files. */
   photo?: string;
+  /** #43: the LinkedIn profile URL we extract name/photo from, and re-sync on demand. */
+  linkedinUrl?: string;
   /** Email and alert choices, by key. Missing keys use the default for that key. */
   prefs?: Record<string, boolean>;
   /** Session ids the person signed out of (Account, "Where you are signed in"). */
