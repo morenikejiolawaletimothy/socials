@@ -1,12 +1,12 @@
 "use client";
 
-import { CalendarBlank, CalendarPlus, CheckCircle, Globe } from "@phosphor-icons/react";
+import { CalendarBlank, CheckCircle, Globe } from "@phosphor-icons/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
+import { AddToCalendar } from "@/components/calls/AddToCalendar";
 import { SetupFrame } from "@/components/client/SetupFrame";
-import { Avatar, Banner, Button, Meta, TextButton, Tile, TileFooter, useTask, useToast } from "@/components/ui";
+import { Avatar, Banner, Button, Meta, Tile, TileFooter, useTask } from "@/components/ui";
 import { day, dayTime, dayTimeIn, fullName, time } from "@/lib/format";
-import { downloadCall } from "@/lib/calendar";
 import { act, useData, useMyClient } from "@/lib/mock";
 import { slotTimes } from "@/lib/slots";
 
@@ -72,7 +72,6 @@ function BookCalls() {
   const [strategy, setStrategy] = useState<string | null>(null);
   const [error, setError] = useState<string>();
   const { run, pending } = useTask();
-  const toast = useToast();
   const [now] = useState(() => Date.now());
   const times = useMemo(() => openTimes(m.slots ?? [], now), [m.slots, now]);
   const gap = db.settings.daysBetweenCalls;
@@ -195,15 +194,12 @@ function BookCalls() {
                   </div>
                   <TileFooter>
                     {c.at && <Meta icon={CalendarBlank}>{dayTime(c.at)}</Meta>}
-                    <TextButton
-                      onClick={() => {
-                        if (!c.at) return;
-                        downloadCall({ title: `${c.name} with ${mu ? fullName(mu) : "your manager"}`, start: c.at, minutes: 30, url: "https://meet.google.com/", description: "Bluecut Socials. The Google Meet link is in your email." });
-                        toast(`${c.name} downloaded. Open the file to add it to your calendar.`);
-                      }}
-                    >
-                      <CalendarPlus className="size-4" aria-hidden /> Add to calendar
-                    </TextButton>
+                    {c.at && (
+                      <AddToCalendar
+                        align="end"
+                        event={{ title: `${c.name} with ${mu ? fullName(mu) : "your manager"}`, start: c.at, minutes: 30, description: "Bluecut Socials. Your account manager shares the Google Meet link before the call, and we email it to you." }}
+                      />
+                    )}
                   </TileFooter>
                 </Tile>
               </li>

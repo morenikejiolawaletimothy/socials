@@ -1,5 +1,6 @@
 "use client";
 
+import { AddToCalendar } from "@/components/calls/AddToCalendar";
 import { Columns } from "@/components/layout/Columns";
 import { ManagerCard } from "@/components/rails/ManagerCard";
 import { CallRow, callTitle, upcomingCalls } from "@/components/rails/NextCallCard";
@@ -22,6 +23,9 @@ export default function CallsPage() {
               <li key={c.id}>
                 <Tile>
                   <CallRow call={c} />
+                  <div className="mt-3 border-t border-border pt-3">
+                    <AddToCalendar event={{ title: callTitle(c), start: c.at, minutes: c.minutes, url: c.meetUrl, description: "Bluecut Socials." }} />
+                  </div>
                 </Tile>
               </li>
             ))}
