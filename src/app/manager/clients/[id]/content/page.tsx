@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Clock, Trash } from "@phosphor-icons/react";
+import { CheckCircle, Clock, Sparkle, Trash, WarningCircle } from "@phosphor-icons/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, use, useState } from "react";
 import { PostAgainDialog } from "@/components/content/PostAgainDialog";
@@ -14,6 +14,7 @@ import { rails } from "@/components/rails";
 import { Badge, Banner, Breadcrumbs, Button, buttonClass, Card, Dialog, EmptyState, IconButton, InfoTip, Input, Menu, Meta, Pill, Rows, Tabs, Textarea, Tile, TileFooter, useConfirm, useTask, useToast } from "@/components/ui";
 import { ago, agoIn, dayTime, dayTimeIn, fullName, plural, time } from "@/lib/format";
 import { act, clientBundle, useMyManager, type ClientBundle, type Post } from "@/lib/mock";
+import { gradeTone, vetContent } from "@/lib/vet";
 
 type Tab = "ideas" | "drafts" | "changes" | "client" | "schedule" | "scheduled" | "live";
 
@@ -51,6 +52,7 @@ function DraftEditor({ post, b }: { post: Post; b: ClientBundle }) {
   const blocked = open.length > 0 || mediaChecks(post).length > 0;
   const dirty = text !== post.text || why !== post.why;
   const first = b.user?.firstName ?? "the client";
+  const vet = vetContent(text, { offLimits: (b.brand?.offLimits ?? []).map((o) => o.text), goal: b.strategy?.goal ?? b.client?.goal ?? "" });
 
   return (
     // One post being written, in sections split by dividers: what it is, the draft, direction, media, checks, why, then the actions.
@@ -174,6 +176,25 @@ function DraftEditor({ post, b }: { post: Post; b: ClientBundle }) {
           </Button>
         </div>
       </Dialog>
+
+      <section className="flex flex-col gap-3 border-t border-border pt-4">
+        <span className="flex flex-wrap items-center gap-2">
+          <Sparkle className="size-4 text-primary-600" aria-hidden />
+          <span className="text-body font-medium text-primary">Suggested grade</span>
+          <Badge status={gradeTone(vet.grade)}>{vet.grade}</Badge>
+          <InfoTip label="About the grade">We rate the draft against the goal, LinkedIn best practice, the client&apos;s off limits and what is happening in the field. Only you see this. Adjust until it reads well.</InfoTip>
+        </span>
+        <ul className="flex flex-col gap-2">
+          {vet.criteria.map((c) => (
+            <li key={c.label} className="flex items-start gap-2 text-body-sm">
+              {c.ok ? <CheckCircle className="mt-0.5 size-4 shrink-0 text-success" aria-hidden /> : <WarningCircle className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden />}
+              <span>
+                <span className="font-medium text-primary">{c.label}.</span> <span className="text-secondary">{c.note}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <section className="border-t border-border pt-4">
         <Textarea label={`Why this post (${first} sees this)`} rows={2} value={why} onChange={(e) => setWhy(e.target.value)} />
