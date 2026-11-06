@@ -1,6 +1,10 @@
 # Bluecut Socials — implementation plan, round 2 (Phase 1 refinements)
 
-**Status: DRAFT, pending Fola's sign-off. No build starts until this is approved.**
+**Status: APPROVED and in build on branch `plan/round2-implementation`.**
+- **R2.1** (video billing removed · services catalog · Company Page pro-rated add-on) — built and signed off.
+- **R2.2** (add-to-calendar · vault trust + InfoTip · call transcript + insights · LinkedIn-URL signup) — built and signed off.
+- **R2.3** (AM operating model) — next.
+- **R2.4**, **R2.5** — not started.
 
 Source: the Nov 2026 ideation round, captured as to-do items #41–#51 (and #25 retired as superseded). This plan sequences those eleven items into five batches (R2.1–R2.5). It slots into `docs/implementation-plan.md` after Phase 1; everything here is Phase 1 (frontend on mock data), with Phase 2 follow-ups listed at the end.
 
