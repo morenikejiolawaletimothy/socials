@@ -1,11 +1,13 @@
 # Bluecut Socials — implementation plan, round 2 (Phase 1 refinements)
 
-**Status: APPROVED and in build on branch `plan/round2-implementation`.**
+**Status: all five batches built on branch `plan/round2-implementation`; R2.1–R2.4 signed off, R2.5 awaiting sign-off.**
 - **R2.1** (video billing removed · services catalog · Company Page pro-rated add-on) — built and signed off.
 - **R2.2** (add-to-calendar · vault trust + InfoTip · call transcript + insights · LinkedIn-URL signup) — built and signed off.
-- **R2.3** (AM operating model: scorecards profile+Page · platform vetting word-grades · approval → do/complete lifecycle · engagement rework) — built.
-- **R2.4** (intelligence + tracking) — next.
-- **R2.5** — not started.
+- **R2.3** (AM operating model: scorecards profile+Page · platform vetting word-grades · approval → do/complete lifecycle · engagement rework) — built and signed off.
+- **R2.4** (intelligence + tracking) — built and signed off.
+- **R2.5** (admin roles & access #49 · AM contract signing #48 · AM performance report, no on-platform pay #47) — built; screenshots shared, awaiting sign-off.
+
+All eleven ideation items (#41–#51) are now built.
 
 Source: the Nov 2026 ideation round, captured as to-do items #41–#51 (and #25 retired as superseded). This plan sequences those eleven items into five batches (R2.1–R2.5). It slots into `docs/implementation-plan.md` after Phase 1; everything here is Phase 1 (frontend on mock data), with Phase 2 follow-ups listed at the end.
 
@@ -126,6 +128,11 @@ Define the engine; make "expected / done / left / next" clear on all three sides
 **Open decisions:** the exact admin area list + default access per role; whether admins sign the same ToS as AMs; report period default + file format(s) + exact fields.
 
 **Exit:** owner can create/edit/remove roles and assign them; access correctly gates every admin screen; an AM signs a downloadable, logged contract during setup; the owner can download an AM performance report with no payment recorded. Signed off.
+
+**Built (awaiting sign-off):**
+- **#49** — 9 admin areas (none/view/manage), 5 default roles (protected Owner) + custom, multi-role additive, `/admin/roles` team + roles management, invite/change-roles/deactivate, last-Owner guards, audit-logged. `src/lib/access.ts` (`effectiveAccess`, `can()`); the per-screen gating pass is wired via the helper but server-enforced in Phase 2.
+- **#48** — "Agreement" step added to `invite/[token]` (full-name signature; order Password → Two-step → Profile → **Agreement** → Call slots). `src/lib/amAgreement.ts` holds the versioned terms + download; profile card + owner access-tab record both download; signing audit-logged. Removed the invite screen's demo-help strings.
+- **#47** — on-platform payouts removed end to end (Payouts tab, `approvePayout`, `Payout` type/seed/Db field). New "Pay" tab on Managers (off-platform note + per-manager performance table + Download report) and a "Download performance report" button on each manager's page. `src/lib/amReport.ts` builds a plain-text report (workload, delivery, quality, conduct). No period selector in Phase 1; report is `.txt` (PDF/CSV in Phase 2).
 
 ---
 
