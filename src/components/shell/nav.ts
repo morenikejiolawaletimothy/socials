@@ -1,5 +1,6 @@
 import {
   BookOpen,
+  Briefcase,
   ChatCircle,
   CurrencyCircleDollar,
   Gear,
@@ -39,6 +40,7 @@ export const profileNav: Record<Exclude<Role, "owner">, { label: string; href: s
     { label: "Full-service", href: "/full-service", description: "Hand the work to us, or manage your team access" },
     { label: "Control", href: "/control", description: "What we do for you, how you review, activity" },
     { label: "Contract", href: "/contract", description: "Your plan, payments and invoices" },
+    { label: "Services", href: "/services", description: "What comes with your plan, and more you can add" },
     { label: "Assistants", href: "/assistants", description: "Hand quick tasks to your EA or PA" },
     { label: "Account", href: "/account", description: "Profile, sign-in and notifications" },
   ],
@@ -56,6 +58,7 @@ export const ownerNav: NavItem[] = [
   { label: "Clients", href: "/admin/clients", icon: Users },
   { label: "Managers", href: "/admin/managers", icon: IdentificationBadge },
   { label: "Framework", href: "/admin/framework", icon: BookOpen },
+  { label: "Services", href: "/admin/services", icon: Briefcase },
   { label: "Money", href: "/admin/money", icon: CurrencyCircleDollar },
   { label: "Complaints", href: "/admin/complaints", icon: WarningCircle },
   { label: "Settings", href: "/admin/settings", icon: Gear },
@@ -97,6 +100,7 @@ const pageNames: [RegExp, string][] = [
   [/^\/control$/, "Control"],
   [/^\/contract\/cancel$/, "Pull out of your contract"],
   [/^\/contract$/, "Contract"],
+  [/^\/services$/, "Services"],
   [/^\/account$/, "Account"],
   [/^\/assistants$/, "Assistants"],
   [/^\/calls$/, "Calls"],
@@ -124,6 +128,9 @@ const pageNames: [RegExp, string][] = [
   [/^\/admin\/managers\/[^/]+$/, "Manager"],
   [/^\/admin\/complaints\/[^/]+$/, "Complaint"],
   [/^\/admin\/notifications$/, "Notifications"],
+  [/^\/admin\/services\/new$/, "Add a service"],
+  [/^\/admin\/services\/[^/]+$/, "Service"],
+  [/^\/admin\/services$/, "Services"],
 ];
 
 export function pageName(pathname: string) {

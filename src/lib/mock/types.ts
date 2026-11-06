@@ -687,6 +687,16 @@ export type AccessAlert = { id: string; clientId: string; managerName: string; a
 
 export type Payout = { id: string; managerId: string; period: string; clients: number; amountCents: number; status: "to-approve" | "approved" | "paid" };
 
+/**
+ * A service Bluecut offers. "included" services come free with every plan and are delivered as normal work.
+ * "extra" services are quoted and billed off the platform; the platform only offers them and captures a request.
+ * Owner-managed in the catalog.
+ */
+export type Service = { id: string; name: string; description: string; bucket: "included" | "extra"; active: boolean };
+
+/** A client's request for an extra service. Captured and handed to the owner, who follows up and bills off the platform. No status is kept. */
+export type ServiceRequest = { id: string; clientId: string; serviceId: string; serviceName: string; note?: string; at: string };
+
 export type Settings = {
   freeDays: number;
   autoRefundLimitCents: number;
@@ -752,4 +762,6 @@ export type Db = {
   outbox: OutboxItem[];
   accessLog: AccessLog[];
   accessAlerts: AccessAlert[];
+  services: Service[];
+  serviceRequests: ServiceRequest[];
 };

@@ -1100,6 +1100,51 @@ export async function submitVideo(taskId: string, fileId: string) {
   });
 }
 
+/* ---------- Services catalog (#50) ---------- */
+
+/** A client asks about an extra service. Captured and handed to the owner, who follows up and bills off the platform. No status is kept. */
+export async function requestService(clientId: string, serviceId: string, note?: string) {
+  await delay(700);
+  update((db) => {
+    const service = (db.services ?? []).find((s) => s.id === serviceId);
+    if (!service) return db;
+    const req = { id: id("sr"), clientId, serviceId, serviceName: service.name, note: note?.trim() || undefined, at: nowIso() };
+    let next: Db = { ...db, serviceRequests: [req, ...(db.serviceRequests ?? [])] };
+    const who = nameOf(clientUser(db, clientId));
+    next = notify(next, OWNER, `${who} is interested in ${service.name}.${req.note ? ` “${req.note}”` : ""}`, `/admin/clients/${clientId}`, { email: true });
+    return log(next, clientId, "you", "account", `Asked about ${service.name}`);
+  });
+}
+
+/** Owner: add a service to the catalog. */
+export async function addService(data: { name: string; description: string; bucket: "included" | "extra" }) {
+  await delay(500);
+  update((db) => {
+    const svc = { id: id("sv"), name: data.name.trim(), description: data.description.trim(), bucket: data.bucket, active: true };
+    const next: Db = { ...db, services: [...(db.services ?? []), svc] };
+    return audit(next, `Added the service “${svc.name}” (${svc.bucket === "included" ? "included" : "extra, billed off the platform"})`, svc.name, "setting");
+  });
+}
+
+/** Owner: edit a service in the catalog. */
+export async function editService(serviceId: string, data: { name: string; description: string; bucket: "included" | "extra"; active: boolean }) {
+  await delay(500);
+  update((db) => {
+    const next: Db = { ...db, services: (db.services ?? []).map((s) => (s.id === serviceId ? { ...s, name: data.name.trim(), description: data.description.trim(), bucket: data.bucket, active: data.active } : s)) };
+    return audit(next, `Edited the service “${data.name.trim()}”`, data.name.trim(), "setting");
+  });
+}
+
+/** Owner: remove a service from the catalog. */
+export async function removeService(serviceId: string) {
+  await delay(500);
+  update((db) => {
+    const svc = (db.services ?? []).find((s) => s.id === serviceId);
+    const next: Db = { ...db, services: (db.services ?? []).filter((s) => s.id !== serviceId) };
+    return audit(next, `Removed the service “${svc?.name ?? serviceId}”`, svc?.name ?? serviceId, "setting");
+  });
+}
+
 /* ---------- Client: setup (C2 to C6) ---------- */
 
 /** The setup steps for a client, in order. Full-service adds a secure-access step; neither uses the LinkedIn API. */
