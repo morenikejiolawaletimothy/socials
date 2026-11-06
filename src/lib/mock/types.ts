@@ -752,7 +752,6 @@ export type AccessLog = { id: string; clientId: string; who: string; at: string;
 /** D: a breach signal on a full-service client's delegated access, for admins (insider-threat monitoring). */
 export type AccessAlert = { id: string; clientId: string; managerName: string; at: string; kind: "no-notify" | "security-page" | "off-hours" | "bulk" | "devtools"; detail: string; resolved?: boolean };
 
-export type Payout = { id: string; managerId: string; period: string; clients: number; amountCents: number; status: "to-approve" | "approved" | "paid" };
 
 /**
  * A service Bluecut offers. "included" services come free with every plan and are delivered as normal work.
@@ -822,7 +821,6 @@ export type Db = {
   framework: FrameworkItem[];
   frameworkVersions: FrameworkVersion[];
   audit: AuditEntry[];
-  payouts: Payout[];
   settings: Settings;
   changeRequests: ManagerChangeRequest[];
   assistants: Assistant[];

@@ -1864,11 +1864,6 @@ export async function reinstateManager(managerId: string) {
   });
 }
 
-export async function approvePayout(payoutId: string) {
-  await delay();
-  update((db) => audit({ ...db, payouts: db.payouts.map((p) => (p.id === payoutId ? { ...p, status: "approved" } : p)) }, "Approved a payout", "Payouts", "refund"));
-}
-
 export async function saveSettings(settings: Db["settings"]) {
   await delay(700);
   update((db) => audit({ ...db, settings }, "Changed settings", "Settings", "setting"));

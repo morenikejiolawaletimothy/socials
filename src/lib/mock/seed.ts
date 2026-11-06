@@ -104,7 +104,7 @@ export function seed(): Db {
   });
 
   return {
-    version: 29,
+    version: 30,
     session: {
       role: "client",
       userIds: { client: "u-chidi", manager: "u-ada", owner: "u-fola" },
@@ -588,12 +588,6 @@ export function seed(): Db {
       { id: "au7", who: "Fola Morenikeji", action: "Published framework v3", target: "Framework", at: at(-5, 9), kind: "setting" },
       { id: "au8", who: "Fola Morenikeji", action: "Invited Bisi Adebayo as a manager", target: "Managers", at: at(-1, 12), kind: "account" },
       { id: "au9", who: "Ada Obi", action: "Took down a post at the client's request", target: "Zainab Bello", at: at(-20, 9), kind: "content" },
-    ],
-    payouts: [
-      { id: "po1", managerId: "m-ada", period: "This month", clients: 5, amountCents: 125000, status: "to-approve" },
-      { id: "po2", managerId: "m-tunde", period: "This month", clients: 3, amountCents: 75000, status: "to-approve" },
-      { id: "po3", managerId: "m-ada", period: "Last month", clients: 4, amountCents: 100000, status: "paid" },
-      { id: "po4", managerId: "m-tunde", period: "Last month", clients: 3, amountCents: 75000, status: "paid" },
     ],
     settings: { freeDays: 14, autoRefundLimitCents: 100000, reminderDays: [5, 3, 0], pauseWarningDays: 15, removalDays: 30, goAheadHours: 24, maxClientsPerManager: 10, daysBetweenCalls: 3, sessionTimeoutMinutes: 60, fullServiceCents: 80000, pageManagementCents: 40000 },
     changeRequests: [{ id: "cr1", clientId: "c-zainab", reason: "I would like a manager with a health background.", at: at(-1, 16), status: "open" }],

@@ -4,24 +4,25 @@ import { Timer } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useState } from "react";
 import { Table, managerName, managerStatus, td } from "@/components/admin/parts";
-import { Avatar, Badge, Button, buttonClass, Card, Meta, PageHeader, Pill, Tabs, Tile, TileFooter, useConfirm, useTask } from "@/components/ui";
-import { dayTimeIn, money, plural } from "@/lib/format";
+import { Avatar, Badge, Banner, Button, buttonClass, Card, Meta, PageHeader, Pill, Tabs, Tile, TileFooter, useConfirm, useTask } from "@/components/ui";
+import { dayTimeIn, plural } from "@/lib/format";
+import { downloadManagerReport } from "@/lib/amReport";
 import { act, useData } from "@/lib/mock";
 
-type Section = "team" | "invites" | "payouts";
+type Section = "team" | "invites" | "pay";
 
-/** A3 Managers: status, load, delivery and quality. Invite, train, pay. */
+/** A3 Managers: status, load, delivery and quality. Invite, train, and download pay guidance. */
 export default function ManagersPage() {
   const db = useData();
   const confirm = useConfirm();
   const { run, pending } = useTask();
   const invited = db.managers.filter((m) => m.status === "invited");
-  const toApprove = db.payouts.filter((p) => p.status === "to-approve").length;
+  const active = db.managers.filter((m) => m.status === "active");
   // Sections as tabs. If the open tab goes away, the first tab opens.
   const sections: { value: Section; label: string; count?: number }[] = [
     { value: "team", label: "Your team", count: db.managers.length },
     { value: "invites", label: "Invites", count: invited.length },
-    { value: "payouts", label: "Payouts", count: toApprove },
+    { value: "pay", label: "Pay" },
   ];
   const [picked, setPicked] = useState<Section | null>(null);
   const section = sections.find((s) => s.value === picked)?.value ?? sections[0].value;
@@ -130,40 +131,39 @@ export default function ManagersPage() {
         </Card>
       )}
 
-      {section === "payouts" && (
-      <Card title="Payouts" action={<Pill>{toApprove} to approve</Pill>}>
-        <Table label="Payouts" head={["Manager", "Period", "Active clients", "Amount", ""]}>
-          {db.payouts.map((p) => (
-            <tr key={p.id}>
-              <td className={td}>{managerName(db, p.managerId)}</td>
-              <td className={td}>{p.period}</td>
-              <td className={td}>{p.clients}</td>
-              <td className={td}>{money(p.amountCents)}</td>
-              <td className={`${td} text-right`}>
-                {p.status === "to-approve" ? (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() =>
-                      confirm({
-                        title: `Approve ${money(p.amountCents)} for ${managerName(db, p.managerId)}?`,
-                        body: `${p.period}, ${p.clients} active clients. It is paid on Friday.`,
-                        warning: "Once paid, a payout cannot be taken back.",
-                        confirmLabel: "Approve payout",
-                        action: () => act.approvePayout(p.id),
-                        success: "Payout approved. It is paid on Friday.",
-                      })
-                    }
-                  >
-                    Approve
-                  </Button>
-                ) : (
-                  <Badge status={p.status === "paid" ? "success" : "info"}>{p.status === "paid" ? "Paid" : "Approved"}</Badge>
-                )}
-              </td>
-            </tr>
-          ))}
-        </Table>
+      {section === "pay" && (
+      <Card title="Pay" info="Managers are paid off the platform. Download a performance report to guide what you pay each one. Bluecut does not record manager payments.">
+        <div className="flex flex-col gap-4">
+          <Banner tone="neutral">Pay is handled off the platform. These reports gather the performance numbers we track, as a guide for what to pay.</Banner>
+          {active.length ? (
+            <Table label="Performance reports" head={["Manager", "Clients", "On time", "Approved first time", "Grade", ""]}>
+              {active.map((m) => {
+                const load = db.clients.filter((c) => c.managerId === m.id).length;
+                return (
+                  <tr key={m.id}>
+                    <td className={td}>
+                      <Link href={`/admin/managers/${m.id}`} className="flex items-center gap-3 rounded-sm hover:text-primary-700 focus-visible:focus-ring">
+                        <Avatar name={managerName(db, m.id)} size="md" />
+                        <span className="font-medium text-primary">{managerName(db, m.id)}</span>
+                      </Link>
+                    </td>
+                    <td className={td}>{load} of {m.maxClients}</td>
+                    <td className={td}>{m.stats.onTime}%</td>
+                    <td className={td}>{m.stats.firstTimeApproval}%</td>
+                    <td className={td}>{m.stats.avgGrade ?? "—"}</td>
+                    <td className={`${td} text-right`}>
+                      <Button variant="secondary" size="sm" onClick={() => downloadManagerReport(m, { name: managerName(db, m.id), clients: load })}>
+                        Download report
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </Table>
+          ) : (
+            <p className="text-body-sm text-secondary">No active managers yet.</p>
+          )}
+        </div>
       </Card>
       )}
 

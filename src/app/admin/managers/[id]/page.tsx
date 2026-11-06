@@ -8,6 +8,7 @@ import { ClientCell, StatTile, managerName, managerStatus } from "@/components/a
 import { Badge, Banner, Button, Card, EmptyState, Meta, PageHeader, Pill, ProgressBar, Row, Rows, Tabs, Tile, TileAction, TileFooter, buttonClass, useConfirm, useToast } from "@/components/ui";
 import { day, dayTime, dayTimeIn, fullName, plural, time } from "@/lib/format";
 import { downloadAgreement } from "@/lib/amAgreement";
+import { downloadManagerReport } from "@/lib/amReport";
 import { act, useData, type Db } from "@/lib/mock";
 import { slotTimes } from "@/lib/slots";
 import { statusBadge } from "@/lib/status";
@@ -142,6 +143,16 @@ export default function ManagerPage({ params }: { params: Promise<{ id: string }
                 </div>
               ))}
             </dl>
+          )}
+          {active && (
+            <Button
+              variant="secondary"
+              size="sm"
+              className="self-start"
+              onClick={() => downloadManagerReport(m, { name: fullName(u), clients: clients.length })}
+            >
+              Download performance report
+            </Button>
           )}
         </section>
 
