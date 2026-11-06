@@ -122,7 +122,7 @@ function FullServiceCard({ b }: { b: ClientBundle }) {
           </section>
         )}
 
-        {fs.pageManagement && (
+        {b.client?.companyPage && (
           <section className={`flex flex-col gap-3 ${canSignIn ? "border-t border-border pt-6" : ""}`} aria-labelledby="fs-page">
             <h3 id="fs-page" className="text-body font-semibold text-primary">
               Company Page
@@ -132,8 +132,8 @@ function FullServiceCard({ b }: { b: ClientBundle }) {
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700">
                   <Buildings className="size-5" aria-hidden />
                 </span>
-                <span className="min-w-0 flex-1 text-body-sm text-secondary">{fs.pageGrant === "granted" ? "Admin access granted" : "Waiting for the client to add us as a Page admin"}</span>
-                <Badge status={fs.pageGrant === "granted" ? "success" : "warning"}>{fs.pageGrant === "granted" ? "Admin" : "Waiting"}</Badge>
+                <span className="min-w-0 flex-1 text-body-sm text-secondary">You manage their company Page through their delegated access.</span>
+                <Badge status="success">On</Badge>
               </Row>
             </Rows>
           </section>
@@ -141,7 +141,7 @@ function FullServiceCard({ b }: { b: ClientBundle }) {
 
         {!fs.paused && (
           <form
-            className={`flex flex-col gap-4 ${canSignIn || fs.pageManagement ? "border-t border-border pt-6" : ""}`}
+            className={`flex flex-col gap-4 ${canSignIn || b.client?.companyPage ? "border-t border-border pt-6" : ""}`}
             aria-labelledby="fs-log"
             onSubmit={async (e) => {
               e.preventDefault();

@@ -1,7 +1,7 @@
 "use client";
 
 import { engageKinds, isEngage } from "../engage";
-import { dayTimeIn, plural } from "../format";
+import { dayTimeIn, money, plural } from "../format";
 import { delay, getDb, update } from "./store";
 import type { Activity, Assistant, Channels, Client, Db, EngageAction, Handoff, Message, Permissions, PostStatus, Reaction, ReviewSettings, SetupStep, User } from "./types";
 
@@ -711,34 +711,48 @@ function access(db: Db, clientId: string, who: string, action: string, minutes?:
   return { ...db, accessLog: [{ id: id("ac"), clientId, who, at: nowIso(), action, minutes }, ...(db.accessLog ?? [])] };
 }
 
-/** C20: turn on full-service (also reachable from onboarding). Default access is set up next (Page admin, delegated login). */
-export async function activateFullService(clientId: string, pageManagement: boolean) {
+/** C20: turn on full-service (also reachable from onboarding). Default access (delegated login) is set up next. */
+export async function activateFullService(clientId: string) {
   await delay(600);
   update((db) => {
-    let next = patchClient(db, clientId, (c) => ({ service: "full-service" as const, fullService: { since: nowIso(), pageManagement, pageGrant: pageManagement ? ("pending" as const) : undefined, access: { credentials: "none" as const, twoFactor: false } }, permissions: { ...c.permissions, companyPage: pageManagement } }));
+    let next = patchClient(db, clientId, () => ({ service: "full-service" as const, fullService: { since: nowIso(), access: { credentials: "none" as const, twoFactor: false } } }));
     next = log(next, clientId, "you", "setting", "Turned on full-service");
     next = audit(next, "Client turned on full-service", clientUser(db, clientId)?.firstName ?? "Client", "account");
     return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} turned on full-service. Follow their permission contract exactly; you cannot change their settings.`, `/manager/clients/${clientId}`, { urgent: true });
   });
 }
 
-/** C20: add or remove company Page management (official Page admin delegation). */
-export async function setPageManagement(clientId: string, on: boolean) {
-  await delay(400);
-  update((db) => {
-    let next = patchClient(db, clientId, (c) => ({ fullService: c.fullService && { ...c.fullService, pageManagement: on, pageGrant: on ? ("pending" as const) : undefined }, permissions: { ...c.permissions, companyPage: on } }));
-    next = log(next, clientId, "you", "setting", `Turned ${on ? "on" : "off"} company Page management`);
-    return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} turned ${on ? "on" : "off"} company Page management.`, `/manager/clients/${clientId}`, { email: false });
-  });
+/** #41: months left on the contract, rounded up, for pro-rating the company Page add-on. 0 if there is no contract yet. */
+function remainingMonths(db: Db, clientId: string): number {
+  const k = db.contracts.find((x) => x.clientId === clientId);
+  if (!k) return 0;
+  return Math.max(0, Math.ceil((new Date(k.endsAt).getTime() - Date.now()) / (30 * 86_400_000)));
 }
 
-/** C20: the client confirms they added Bluecut as an admin on their LinkedIn Page (official delegation). */
-export async function confirmPageGrant(clientId: string) {
-  await delay(500);
+/**
+ * #41: add or remove the company Page add-on. Works on either tier (full-service manages it through delegated access;
+ * self-serve gets it as tasks). Pro-rated: added mid-contract charges the rest of the contract; removed mid-contract
+ * refunds the unused Page fee only (owner approves).
+ */
+export async function setCompanyPage(clientId: string, on: boolean) {
+  await delay(400);
   update((db) => {
-    let next = patchClient(db, clientId, (c) => ({ fullService: c.fullService && { ...c.fullService, pageGrant: "granted" as const } }));
-    next = log(next, clientId, "you", "setting", "Added Bluecut as a Page admin");
-    return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} added Bluecut as a Page admin. You can manage it now.`, `/manager/clients/${clientId}`, { email: false });
+    const months = remainingMonths(db, clientId);
+    const prorated = db.settings.pageManagementCents * months;
+    const who = nameOf(clientUser(db, clientId));
+    let next = patchClient(db, clientId, (c) => ({ companyPage: on ? { since: c.companyPage?.since ?? nowIso() } : undefined, permissions: { ...c.permissions, companyPage: on } }));
+    if (on) {
+      next = log(next, clientId, "you", "setting", "Added the company Page add-on");
+      next = notify(next, managerUserOf(db, clientId)?.id, `${who} added the company Page add-on.`, `/manager/clients/${clientId}`, { email: false });
+      return notify(next, clientUser(db, clientId)?.id, months > 0 ? `Company Page added. You pay ${money(prorated)} for the rest of your contract.` : "Company Page added to your plan.", "/contract");
+    }
+    if (prorated > 0) {
+      next = { ...next, refunds: [{ id: id("rf"), clientId, amountCents: prorated, calc: `${money(db.settings.pageManagementCents)} a month × ${months} month${months === 1 ? "" : "s"} left`, reason: "Company Page add-on removed mid-contract", at: nowIso(), status: "waiting" as const }, ...next.refunds] };
+      next = notify(next, OWNER, `${who} removed the company Page add-on. A refund of ${money(prorated)} (unused Page fee) needs your approval.`, "/admin/money", { urgent: true });
+    }
+    next = log(next, clientId, "you", "setting", "Removed the company Page add-on");
+    next = notify(next, managerUserOf(db, clientId)?.id, `${who} removed the company Page add-on.`, `/manager/clients/${clientId}`, { email: false });
+    return notify(next, clientUser(db, clientId)?.id, prorated > 0 ? `Company Page removed. We will refund the unused Page fee, ${money(prorated)}.` : "Company Page removed.", "/contract");
   });
 }
 
@@ -763,15 +777,15 @@ export async function resumeFullServiceAccess(clientId: string) {
   });
 }
 
-/** C20: the client ends full-service and goes back to self-serve. Vaulted login is cleared, Page admin removed. */
+/** C20: the client ends full-service and goes back to self-serve. The vaulted login is cleared; any company Page add-on stays on and is delivered as tasks. */
 export async function endFullService(clientId: string) {
   await delay(500);
   update((db) => {
-    let next = patchClient(db, clientId, (c) => ({ service: "self-serve" as const, fullService: undefined, permissions: { ...c.permissions, companyPage: false } }));
+    let next = patchClient(db, clientId, () => ({ service: "self-serve" as const, fullService: undefined }));
     next = access(next, clientId, clientUser(db, clientId)?.firstName ?? "Client", "Ended full-service and removed all access");
     next = log(next, clientId, "you", "setting", "Ended full-service");
     next = audit(next, "Client ended full-service", clientUser(db, clientId)?.firstName ?? "Client", "account");
-    return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} ended full-service and is back on self-serve. Remove your Page admin access.`, `/manager/clients/${clientId}`, { urgent: true });
+    return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} ended full-service and is back on self-serve. Stop any account sign-ins.`, `/manager/clients/${clientId}`, { urgent: true });
   });
 }
 

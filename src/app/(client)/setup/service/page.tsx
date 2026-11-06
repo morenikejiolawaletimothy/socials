@@ -1,11 +1,12 @@
 "use client";
 
-import { CheckCircle } from "@phosphor-icons/react";
+import { Buildings, CheckCircle } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SetupFrame } from "@/components/client/SetupFrame";
 import { Button, useTask } from "@/components/ui";
-import { act, useMyClient } from "@/lib/mock";
+import { money } from "@/lib/format";
+import { act, useData, useMyClient } from "@/lib/mock";
 
 type Service = "self-serve" | "full-service";
 
@@ -31,7 +32,7 @@ const options: { value: Service; label: string; title: string; lead: string; not
     note: "Your manager sets this up with you. We never need your password.",
     points: [
       "Done for you",
-      "Company Page too",
+      "Secure access",
       "No task list",
       "Pause any time",
     ],
@@ -43,8 +44,23 @@ export default function ServicePage() {
   const router = useRouter();
   const { client } = useMyClient();
   const { run, pending } = useTask();
+  const db = useData();
   const [choice, setChoice] = useState<Service>(client?.service ?? "self-serve");
+  const [pageOn, setPageOn] = useState(!!client?.companyPage);
   if (!client) return null;
+  const pagePrice = money(db.settings.pageManagementCents);
+
+  const saveAndContinue = async () => {
+    const ok = await run(
+      "save",
+      async () => {
+        await act.setService(client.id, choice);
+        await act.setCompanyPage(client.id, pageOn);
+      },
+      choice === "full-service" ? "Full-service chosen. Next, choose what we do for you." : "Self-serve chosen. Next, choose what we prepare for you.",
+    );
+    if (ok) router.push("/setup/permissions");
+  };
 
   return (
     <SetupFrame title="How can we help you?" step="How can we help you?" steps={["How can we help you?"]} current={0}>
@@ -65,13 +81,7 @@ export default function ServicePage() {
                 </div>
 
                 {on ? (
-                  <Button
-                    fullWidth
-                    loading={pending("save")}
-                    onClick={async () => {
-                      if (await run("save", () => act.setService(client.id, choice), choice === "full-service" ? "Full-service chosen. Next, choose what we do for you." : "Self-serve chosen. Next, choose what we prepare for you.")) router.push("/setup/permissions");
-                    }}
-                  >
+                  <Button fullWidth loading={pending("save")} onClick={saveAndContinue}>
                     {pending("save") ? "Saving" : "Save and continue"}
                   </Button>
                 ) : (
@@ -104,6 +114,20 @@ export default function ServicePage() {
               </div>
             );
           })}
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <p className="text-body-sm font-medium text-primary">Add-on</p>
+          <label className={`flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors ${pageOn ? "border-primary-600 bg-primary-50" : "border-border bg-card hover:border-primary-300"}`}>
+            <span className={`flex size-10 shrink-0 items-center justify-center rounded-md text-primary-700 ${pageOn ? "bg-card" : "bg-primary-50"}`}>
+              <Buildings className="size-5" aria-hidden />
+            </span>
+            <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+              <span className="text-body font-medium text-primary">Manage my company Page too</span>
+              <span className="text-body-sm text-secondary">+{pagePrice} a month · Posts, comments and replies on your company Page. You can change this later in Contract.</span>
+            </span>
+            <input type="checkbox" checked={pageOn} onChange={(e) => setPageOn(e.target.checked)} className="size-4 shrink-0 accent-primary-600 focus-visible:focus-ring" />
+          </label>
         </div>
       </div>
     </SetupFrame>

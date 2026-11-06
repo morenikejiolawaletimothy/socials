@@ -90,6 +90,8 @@ export type Client = {
   service?: "self-serve" | "full-service";
   /** Set when the client is on full-service (C20). */
   fullService?: FullService;
+  /** #41: the company Page add-on (either tier). Presence means it is on. Billed pro-rated, on top of the plan. */
+  companyPage?: { since: string };
 };
 
 /**
@@ -101,9 +103,6 @@ export type Client = {
  */
 export type FullService = {
   since: string;
-  /** We run their company Page too, via official LinkedIn Page admin delegation. A paid add-on. */
-  pageManagement: boolean;
-  pageGrant?: "granted" | "pending" | "not-granted";
   /** Delegated profile access (D): the client's secured login we operate with their per-session approval. */
   access?: DelegatedAccess;
   /** The client paused all our work from their side. We stop at once until they resume. */
@@ -709,7 +708,7 @@ export type Settings = {
   sessionTimeoutMinutes: number;
   /** Full-service done-for-you tier, a month, on top of the plan (USD cents). */
   fullServiceCents: number;
-  /** Company Page management add-on, a month (USD cents). Full-service only. */
+  /** Company Page add-on, a month (USD cents). Available on either tier. */
   pageManagementCents: number;
 };
 
