@@ -103,7 +103,7 @@ export function seed(): Db {
   });
 
   return {
-    version: 27,
+    version: 28,
     session: {
       role: "client",
       userIds: { client: "u-chidi", manager: "u-ada", owner: "u-fola" },
@@ -111,6 +111,9 @@ export function seed(): Db {
     },
     users: [
       { id: "u-fola", role: "owner", firstName: "Fola", lastName: "Morenikeji", email: "fola@bluecut.example", title: "Founder", timeZone: "Africa/Lagos", twoStep: true },
+      { id: "u-ngozi", role: "owner", firstName: "Ngozi", lastName: "Umeh", email: "ngozi@bluecut.example", title: "Operations lead", timeZone: "Africa/Lagos", twoStep: true },
+      { id: "u-dayo", role: "owner", firstName: "Dayo", lastName: "Cole", email: "dayo@bluecut.example", title: "Finance", timeZone: "Africa/Lagos", twoStep: true },
+      { id: "u-sam", role: "owner", firstName: "Sam", lastName: "Idris", email: "sam@bluecut.example", title: "Content and quality", timeZone: "Africa/Lagos", twoStep: false },
       { id: "u-ada", role: "manager", firstName: "Ada", lastName: "Obi", email: "ada@bluecut.example", title: "Account manager", photo: "/landing/leaders/05.jpg", timeZone: "Africa/Lagos", twoStep: true },
       { id: "u-tunde", role: "manager", firstName: "Tunde", lastName: "Bakare", email: "tunde@bluecut.example", title: "Account manager", timeZone: "Europe/London", twoStep: true },
       { id: "u-bisi", role: "manager", firstName: "Bisi", lastName: "Adebayo", email: "bisi@bluecut.example", title: "Account manager", timeZone: "Africa/Lagos", twoStep: false },
@@ -617,6 +620,19 @@ export function seed(): Db {
       { id: "sv-digital-products", name: "Digital products", description: "We help you design and package a lead magnet, guide or other digital product.", bucket: "extra", active: true },
     ],
     serviceRequests: [],
+    adminRoles: [
+      { id: "ar-owner", name: "Owner", description: "Full access to everything, including roles, team, money and settings.", owner: true, access: { clients: "manage", managers: "manage", framework: "manage", services: "manage", money: "manage", complaints: "manage", settings: "manage", audit: "manage", roles: "manage" } },
+      { id: "ar-ops", name: "Operations lead", description: "Runs the account managers and their clients.", access: { clients: "manage", managers: "manage", framework: "view", services: "view", money: "none", complaints: "view", settings: "none", audit: "view", roles: "none" } },
+      { id: "ar-finance", name: "Finance", description: "Payments, refunds, and manager performance for pay.", access: { clients: "view", managers: "view", framework: "none", services: "none", money: "manage", complaints: "none", settings: "view", audit: "view", roles: "none" } },
+      { id: "ar-care", name: "Client care", description: "Complaints and client issues.", access: { clients: "view", managers: "view", framework: "none", services: "none", money: "none", complaints: "manage", settings: "none", audit: "none", roles: "none" } },
+      { id: "ar-content", name: "Content / Quality", description: "The strategy framework and the services catalogue.", access: { clients: "view", managers: "none", framework: "manage", services: "manage", money: "none", complaints: "none", settings: "none", audit: "none", roles: "none" } },
+    ],
+    adminMembers: [
+      { id: "am-fola", userId: "u-fola", roleIds: ["ar-owner"], status: "active" },
+      { id: "am-ngozi", userId: "u-ngozi", roleIds: ["ar-ops"], status: "active" },
+      { id: "am-dayo", userId: "u-dayo", roleIds: ["ar-finance", "ar-care"], status: "active" },
+      { id: "am-sam", userId: "u-sam", roleIds: ["ar-content"], status: "invited", invitedAt: hoursAgo(20) },
+    ],
     outbox: [
       { id: "o1", to: "Chidi Okafor", userId: "u-chidi", channel: "email", address: "chidi@paystream.example", text: "3 posts are ready for your review. Due tomorrow at 5pm.", href: "/content/review", at: hoursAgo(2), by: "Ada Obi (manager)" },
       { id: "o2", to: "Chidi Okafor", userId: "u-chidi", channel: "whatsapp", address: "+234 802 555 0110", text: "3 posts are ready for your review. Due tomorrow at 5pm.", href: "/content/review", at: hoursAgo(2), by: "Ada Obi (manager)" },

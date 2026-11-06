@@ -8,6 +8,7 @@ import {
   IdentificationBadge,
   ListChecks,
   Megaphone,
+  ShieldCheck,
   SquaresFour,
   UserCircle,
   Users,
@@ -62,6 +63,7 @@ export const ownerNav: NavItem[] = [
   { label: "Money", href: "/admin/money", icon: CurrencyCircleDollar },
   { label: "Complaints", href: "/admin/complaints", icon: WarningCircle },
   { label: "Settings", href: "/admin/settings", icon: Gear },
+  { label: "Roles & team", href: "/admin/roles", icon: ShieldCheck },
   { label: "Audit log", href: "/admin/audit-log", icon: ListChecks },
 ];
 
@@ -131,6 +133,10 @@ const pageNames: [RegExp, string][] = [
   [/^\/admin\/services\/new$/, "Add a service"],
   [/^\/admin\/services\/[^/]+$/, "Service"],
   [/^\/admin\/services$/, "Services"],
+  [/^\/admin\/roles\/new$/, "Add a role"],
+  [/^\/admin\/roles\/invite$/, "Invite an admin"],
+  [/^\/admin\/roles\/[^/]+$/, "Role"],
+  [/^\/admin\/roles$/, "Roles & team"],
 ];
 
 export function pageName(pathname: string) {

@@ -4,7 +4,7 @@ import { engageKinds, isEngage } from "../engage";
 import { dayTimeIn, money, plural } from "../format";
 import { extractLinkedIn } from "./auth";
 import { delay, getDb, update } from "./store";
-import type { Activity, Assistant, Channels, Client, Db, EngageAction, Handoff, Message, Permissions, PostStatus, Reaction, ReviewSettings, SetupStep, User } from "./types";
+import type { Activity, AdminMember, AdminRole, Assistant, Channels, Client, Db, EngageAction, Handoff, Message, Permissions, PostStatus, Reaction, ReviewSettings, SetupStep, User } from "./types";
 
 /*
  * Every change a screen can make. Phase 2 swaps each body for an API call; screens keep calling the same names.
@@ -1157,6 +1157,76 @@ export async function removeService(serviceId: string) {
     const svc = (db.services ?? []).find((s) => s.id === serviceId);
     const next: Db = { ...db, services: (db.services ?? []).filter((s) => s.id !== serviceId) };
     return audit(next, `Removed the service “${svc?.name ?? serviceId}”`, svc?.name ?? serviceId, "setting");
+  });
+}
+
+/* ---------- Admin roles and team (#49) ---------- */
+
+/** Owner: add a custom admin role. */
+export async function addRole(data: { name: string; description?: string; access: AdminRole["access"] }) {
+  await delay(500);
+  update((db) => {
+    const role: AdminRole = { id: id("ar"), name: data.name.trim(), description: data.description?.trim() || undefined, access: data.access };
+    return audit({ ...db, adminRoles: [...(db.adminRoles ?? []), role] }, `Added the admin role “${role.name}”`, role.name, "setting");
+  });
+}
+
+/** Owner: edit a role. The built-in Owner role cannot be edited. */
+export async function editRole(roleId: string, data: { name: string; description?: string; access: AdminRole["access"] }) {
+  await delay(500);
+  update((db) => {
+    if ((db.adminRoles ?? []).find((r) => r.id === roleId)?.owner) return db;
+    const next = { ...db, adminRoles: (db.adminRoles ?? []).map((r) => (r.id === roleId ? { ...r, name: data.name.trim(), description: data.description?.trim() || undefined, access: data.access } : r)) };
+    return audit(next, `Edited the admin role “${data.name.trim()}”`, data.name.trim(), "setting");
+  });
+}
+
+/** Owner: remove a role (not the Owner role). Anyone holding it loses it. */
+export async function removeRole(roleId: string) {
+  await delay(500);
+  update((db) => {
+    const role = (db.adminRoles ?? []).find((r) => r.id === roleId);
+    if (!role || role.owner) return db;
+    const next: Db = { ...db, adminRoles: (db.adminRoles ?? []).filter((r) => r.id !== roleId), adminMembers: (db.adminMembers ?? []).map((m) => ({ ...m, roleIds: m.roleIds.filter((x) => x !== roleId) })) };
+    return audit(next, `Removed the admin role “${role.name}”`, role.name, "setting");
+  });
+}
+
+/** Owner: invite an admin and assign their roles. */
+export async function inviteAdmin(firstName: string, lastName: string, email: string, roleIds: string[]) {
+  await delay(600);
+  update((db) => {
+    const uid = id("u");
+    const next: Db = {
+      ...db,
+      users: [...db.users, { id: uid, role: "owner", firstName: firstName.trim(), lastName: lastName.trim(), email: email.trim(), title: "", timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, twoStep: false }],
+      adminMembers: [...(db.adminMembers ?? []), { id: id("am"), userId: uid, roleIds, status: "invited" as const, invitedAt: nowIso() }],
+    };
+    return audit(next, `Invited ${firstName.trim()} ${lastName.trim()} as an admin`, `${firstName.trim()} ${lastName.trim()}`, "account");
+  });
+}
+
+/** Owner: change an admin's roles. */
+export async function setMemberRoles(memberId: string, roleIds: string[]) {
+  await delay(400);
+  update((db) => {
+    const next = { ...db, adminMembers: (db.adminMembers ?? []).map((m) => (m.id === memberId ? { ...m, roleIds } : m)) };
+    const who = nameOf(db.users.find((u) => u.id === next.adminMembers.find((x) => x.id === memberId)?.userId));
+    return audit(next, `Changed ${who}'s admin roles`, who, "setting");
+  });
+}
+
+/** Owner: deactivate or reactivate an admin. The last active Owner cannot be deactivated. */
+export async function setAdminStatus(memberId: string, status: "active" | "deactivated") {
+  await delay(400);
+  update((db) => {
+    const ownerRoleIds = new Set((db.adminRoles ?? []).filter((r) => r.owner).map((r) => r.id));
+    const isOwner = (m: AdminMember) => m.roleIds.some((r) => ownerRoleIds.has(r));
+    const target = (db.adminMembers ?? []).find((x) => x.id === memberId);
+    if (status === "deactivated" && target && isOwner(target) && (db.adminMembers ?? []).filter((m) => m.status === "active" && isOwner(m)).length <= 1) return db;
+    const next = { ...db, adminMembers: (db.adminMembers ?? []).map((m) => (m.id === memberId ? { ...m, status } : m)) };
+    const who = nameOf(db.users.find((u) => u.id === target?.userId));
+    return audit(next, status === "deactivated" ? `Deactivated the admin ${who}` : `Reactivated the admin ${who}`, who, "account");
   });
 }
 

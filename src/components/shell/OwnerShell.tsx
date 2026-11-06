@@ -17,7 +17,7 @@ import { isActive, ownerNav, pageName } from "./nav";
 const navGroups: string[][] = [
   ["/admin", "/admin/clients", "/admin/managers", "/admin/money"],
   ["/admin/framework", "/admin/services", "/admin/complaints"],
-  ["/admin/settings", "/admin/audit-log"],
+  ["/admin/settings", "/admin/roles", "/admin/audit-log"],
 ];
 
 function NavList({ onNavigate }: { onNavigate?: () => void }) {

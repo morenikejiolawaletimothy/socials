@@ -715,6 +715,35 @@ export type FrameworkVersion = { version: string; at: string; note: string };
 
 export type AuditEntry = { id: string; who: string; action: string; target: string; at: string; kind: "assignment" | "refund" | "setting" | "account" | "content" | "step-in" };
 
+/* ---------- Admin roles and access (#49) ---------- */
+
+/** The admin areas access can be scoped to. */
+export type AdminArea = "clients" | "managers" | "framework" | "services" | "money" | "complaints" | "settings" | "audit" | "roles";
+
+/** Access level to an area: nothing, read-only, or act. */
+export type AdminAccess = "none" | "view" | "manage";
+
+/**
+ * #49: an admin role. `owner` marks the built-in Owner/Super admin: full access, cannot be edited or removed, and only
+ * an Owner can grant it. All other roles are owner-creatable with per-area none/view/manage access.
+ */
+export type AdminRole = {
+  id: string;
+  name: string;
+  description?: string;
+  owner?: boolean;
+  access: Record<AdminArea, AdminAccess>;
+};
+
+/** #49: an admin on the team. Holds one or more roles; effective access is the most permissive across them. */
+export type AdminMember = {
+  id: string;
+  userId: string;
+  roleIds: string[];
+  status: "active" | "invited" | "deactivated";
+  invitedAt?: string;
+};
+
 /** C20: a record of the account team working on a full-service client's account, shown to the client. */
 export type AccessLog = { id: string; clientId: string; who: string; at: string; action: string; minutes?: number };
 
@@ -800,4 +829,6 @@ export type Db = {
   accessAlerts: AccessAlert[];
   services: Service[];
   serviceRequests: ServiceRequest[];
+  adminRoles: AdminRole[];
+  adminMembers: AdminMember[];
 };
