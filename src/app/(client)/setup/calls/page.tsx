@@ -1,91 +1,52 @@
 "use client";
 
-import { CalendarBlank, CalendarPlus, CheckCircle, Globe } from "@phosphor-icons/react";
+import { CheckCircle, Globe, Timer } from "@phosphor-icons/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
+import { availableTimes, takenTimes, TimePicker } from "@/components/calls/TimePicker";
 import { SetupFrame } from "@/components/client/SetupFrame";
-import { Avatar, Banner, Button, Meta, TextButton, Tile, TileFooter, useTask, useToast } from "@/components/ui";
-import { day, dayTime, dayTimeIn, fullName, time } from "@/lib/format";
-import { downloadCall } from "@/lib/calendar";
+import { Avatar, Banner, Button, Meta, Tile, useTask } from "@/components/ui";
+import { dayTimeIn, fullName } from "@/lib/format";
 import { act, useData, useMyClient } from "@/lib/mock";
-import { slotTimes } from "@/lib/slots";
 
 const DAY = 86_400_000;
-
-/** Bookable times for the next two weeks, from the manager's open slots (M10). */
-const openTimes = (slots: string[], from: number) => slotTimes(slots, from, 14);
-
-/** Times grouped by day: one bordered group, a row per day with the day on the left and its times in an even grid. */
-function TimePicker({ times, value, onChange }: { times: string[]; value: string | null; onChange: (t: string) => void }) {
-  const days = times.reduce<Record<string, string[]>>((acc, t) => {
-    const k = day(t);
-    (acc[k] ??= []).push(t);
-    return acc;
-  }, {});
-  return (
-    <div className="flex flex-col divide-y divide-border rounded-md border border-border">
-      {Object.entries(days)
-        .slice(0, 6)
-        .map(([d, ts]) => (
-          <div key={d} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:gap-6">
-            <span className="text-body-sm font-medium text-primary sm:w-28 sm:shrink-0 sm:pt-3">{d}</span>
-            <div className="grid flex-1 grid-cols-3 gap-2 sm:grid-cols-4">
-              {ts.map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  aria-pressed={value === t}
-                  onClick={() => onChange(t)}
-                  className={`min-h-11 w-full rounded-md border px-3 text-body-sm font-medium transition-colors focus-visible:focus-ring ${
-                    value === t ? "border-primary-600 bg-primary-600 text-inverse" : "border-border-strong bg-card text-primary-700 hover:border-primary-300 hover:bg-primary-50"
-                  }`}
-                >
-                  {time(t)}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-    </div>
-  );
-}
 
 /** Buttons at the foot of a step: the main action first, Back beside it, under a divider. */
 function StepFooter({ children }: { children: React.ReactNode }) {
   return <div className="flex flex-col gap-3 border-t border-border pt-6 sm:flex-row">{children}</div>;
 }
 
-/** C3 Book your two calls: why each call matters, consent to record, two times at least 3 days apart. */
+/** C3 Book your two calls: offer times for each; your manager confirms the time and sends the link. */
 function BookCalls() {
   const router = useRouter();
   const startAt = useSearchParams().get("step") === "2" ? 2 : 0;
   const { client, user, manager, managerUser, calls } = useMyClient();
   const db = useData();
-  // A client without a confirmed manager books into the suggested manager's open times (A2), but never sees their name:
-  // the owner may still override the suggestion. The name shows once the owner confirms.
   const m = manager ?? db.managers.find((x) => x.id === "m-ada")!;
   const mu = managerUser;
-  const goalsBooked = calls.find((c) => c.kind === "goals" && c.status !== "cancelled");
-  const [step, setStep] = useState(startAt && goalsBooked ? 2 : 0);
+  const discoveryCall = calls.find((c) => c.kind === "discovery" && c.status !== "cancelled");
+  const [step, setStep] = useState(startAt && discoveryCall ? 2 : 0);
   const [record, setRecord] = useState<boolean | null>(null);
-  const [goals, setGoals] = useState<string | null>(goalsBooked?.at ?? null);
-  const [strategy, setStrategy] = useState<string | null>(null);
+  const [discovery, setDiscovery] = useState<string[]>(discoveryCall ? (discoveryCall.pending?.options ?? [discoveryCall.at]) : []);
+  const [strategy, setStrategy] = useState<string[]>([]);
   const [error, setError] = useState<string>();
   const { run, pending } = useTask();
-  const toast = useToast();
   const [now] = useState(() => Date.now());
-  const times = useMemo(() => openTimes(m.slots ?? [], now), [m.slots, now]);
+  const open = useMemo(() => availableTimes(m.slots ?? [], now, takenTimes(db.calls, m.id)), [m, db.calls, now]);
   const gap = db.settings.daysBetweenCalls;
-  const strategyTimes = goals ? times.filter((t) => new Date(t).getTime() >= new Date(goals).getTime() + gap * DAY) : [];
+  // Strategy times must be at least the gap after the earliest time the client offered for discovery.
+  const earliestDiscovery = discovery.length ? Math.min(...discovery.map((t) => new Date(t).getTime())) : now;
+  const strategyOpen = discovery.length ? open.filter((t) => new Date(t).getTime() >= earliestDiscovery + gap * DAY) : [];
+  const toggle = (list: string[], set: (v: string[]) => void, t: string) => set(list.includes(t) ? list.filter((x) => x !== t) : [...list, t]);
   if (!client || !user) return null;
 
   return (
     <SetupFrame
       title="Book your two calls"
       step="Book your calls"
-      steps={["Your calls", "Goals call", "Strategy call", "Booked"]}
+      steps={["Your calls", "Discovery call", "Strategy call", "Requested"]}
       current={step}
-      info={`${mu && manager ? "" : "We are matching you with an account manager. You will see who it is before your goals call. "}We remind you by email the day before and 1 hour before each call.`}
+      info={`${mu && manager ? "" : "We are matching you with an account manager. You will see who it is before your discovery call. "}Offer a few times that suit you. Your manager confirms one and sends the Google Meet link.`}
     >
       {step === 0 && (
         <div className="flex flex-col gap-6">
@@ -100,20 +61,20 @@ function BookCalls() {
           )}
           <ul className="flex flex-col gap-4">
             <li className="flex flex-col gap-1">
-              <span className="text-body font-medium text-primary">1. Goals call, 30 minutes</span>
-              <span className="text-body-sm text-secondary">We agree what you want from LinkedIn. We will ask who you want to reach, what you want to be known for, and what is off limits, so you can think ahead.</span>
+              <span className="text-body font-medium text-primary">1. Discovery call, 30 minutes</span>
+              <span className="text-body-sm text-secondary">We get to know you and your goals: who you want to reach, what you want to be known for, and what is off limits.</span>
             </li>
             <li className="flex flex-col gap-1">
               <span className="text-body font-medium text-primary">2. Strategy call, 30 minutes</span>
-              <span className="text-body-sm text-secondary">We walk you through your strategy and content plan, and agree it. At least {gap} days after the first call, so your manager has time to prepare.</span>
+              <span className="text-body-sm text-secondary">We present your strategy and content plan and agree it. At least {gap} days after the first call, so your manager can prepare.</span>
             </li>
           </ul>
           <fieldset className="flex flex-col gap-2">
-            <legend className="mb-2 text-body font-medium text-primary">Can we record both calls?</legend>
-            <p className="mb-2 text-body-sm text-secondary">A notetaker joins and records, so nothing you say is missed. Saying no is fine: your manager takes notes instead.</p>
+            <legend className="mb-2 text-body font-medium text-primary">Can the notetaker bot join both calls?</legend>
+            <p className="mb-2 text-body-sm text-secondary">The bot joins and takes notes, so nothing you say is missed. Saying no is fine: your manager takes notes instead.</p>
             {[
-              { v: true, label: "Yes, record the calls" },
-              { v: false, label: "No, do not record" },
+              { v: true, label: "Yes, let the bot join" },
+              { v: false, label: "No, do not add the bot" },
             ].map((o) => (
               <label key={o.label} className={`flex cursor-pointer items-center gap-3 rounded-md border p-3 ${record === o.v ? "border-primary-600 bg-primary-50" : "border-border hover:border-primary-300"}`}>
                 <input type="radio" name="record" checked={record === o.v} onChange={() => { setRecord(o.v); setError(undefined); }} className="size-4 accent-primary-600" />
@@ -123,25 +84,25 @@ function BookCalls() {
             {error && <p className="text-body-sm text-danger">{error}</p>}
           </fieldset>
           <Button className="self-start" onClick={() => (record === null ? setError("Choose yes or no. Either is fine.") : setStep(1))}>
-            Pick a time
+            Pick times
           </Button>
         </div>
       )}
 
       {step === 1 && (
         <div className="flex flex-col gap-6">
-          <Meta icon={Globe}>Times are in your time zone ({user.timeZone.replace("_", " ")})</Meta>
-          <TimePicker times={times} value={goals} onChange={(t) => { setGoals(t); setError(undefined); }} />
+          <Meta icon={Globe}>Offer one or more times, in your time zone ({user.timeZone.replace("_", " ")})</Meta>
+          <TimePicker times={open} selected={discovery} onChange={(t) => { toggle(discovery, setDiscovery, t); setError(undefined); }} />
           {error && <p className="text-body-sm text-danger">{error}</p>}
           <StepFooter>
             <Button
-              loading={pending("goals")}
+              loading={pending("discovery")}
               onClick={async () => {
-                if (!goals) return setError("Pick a time for your goals call.");
-                if (await run("goals", () => act.bookCall(client.id, "goals", goals, record ?? true), `Goals call booked: ${dayTimeIn(goals)}.`)) setStep(2);
+                if (!discovery.length) return setError("Offer at least one time for your discovery call.");
+                if (await run("discovery", () => act.requestCall(client.id, { kind: "discovery", times: discovery, recording: record ?? true }), "Discovery call requested.")) setStep(2);
               }}
             >
-              {pending("goals") ? "Booking" : "Book goals call"}
+              {pending("discovery") ? "Requesting" : "Request discovery call"}
             </Button>
             <Button variant="ghost" onClick={() => setStep(0)}>
               Back
@@ -152,9 +113,9 @@ function BookCalls() {
 
       {step === 2 && (
         <div className="flex flex-col gap-6">
-          {goals && <Banner tone="neutral">Goals call: {dayTimeIn(goals)}. These times are at least {gap} days later.</Banner>}
-          {strategyTimes.length ? (
-            <TimePicker times={strategyTimes} value={strategy} onChange={(t) => { setStrategy(t); setError(undefined); }} />
+          <Banner tone="neutral">Discovery call requested. These times are at least {gap} days later, so your manager has time to prepare.</Banner>
+          {strategyOpen.length ? (
+            <TimePicker times={strategyOpen} selected={strategy} onChange={(t) => { toggle(strategy, setStrategy, t); setError(undefined); }} />
           ) : (
             <Banner tone="info">No times are open yet. Your manager will open more soon, and we will remind you.</Banner>
           )}
@@ -163,11 +124,11 @@ function BookCalls() {
             <Button
               loading={pending("strategy")}
               onClick={async () => {
-                if (!strategy) return setError("Pick a time for your strategy call.");
-                if (await run("strategy", () => act.bookCall(client.id, "strategy", strategy, record ?? true), "Strategy call booked. Calendar invites are on their way.")) setStep(3);
+                if (!strategy.length) return setError("Offer at least one time for your strategy call.");
+                if (await run("strategy", () => act.requestCall(client.id, { kind: "strategy", times: strategy, recording: record ?? true }), "Strategy call requested.")) setStep(3);
               }}
             >
-              {pending("strategy") ? "Booking" : "Book strategy call"}
+              {pending("strategy") ? "Requesting" : "Request strategy call"}
             </Button>
             <Button variant="ghost" onClick={() => setStep(1)}>
               Back
@@ -179,32 +140,21 @@ function BookCalls() {
       {step === 3 && (
         <div className="flex flex-col gap-6">
           <div className="flex items-center justify-center gap-3 text-center">
-            <p className="font-display text-display-lg text-primary">Both calls are booked</p>
+            <p className="font-display text-display-lg text-primary">Both calls requested</p>
             <CheckCircle className="size-8 shrink-0 text-success" aria-hidden />
           </div>
+          <Banner tone="info">{mu ? mu.firstName : "Your manager"} confirms a time for each and sends the Google Meet link. You will see it on your Calls page, and you can change the times there any time.</Banner>
           <ul className="flex flex-col gap-3">
             {[
-              { name: "Goals call", at: goals },
-              { name: "Strategy call", at: strategy },
+              { name: "Discovery call", times: discovery },
+              { name: "Strategy call", times: strategy },
             ].map((c) => (
               <li key={c.name}>
                 <Tile>
                   <div className="flex flex-col gap-1">
                     <span className="text-body font-medium text-primary">{c.name}</span>
-                    <span className="text-body-sm text-secondary">30 minutes · Google Meet link sent by email</span>
+                    <Meta icon={Timer}>{c.times.map(dayTimeIn).join(" · ")}</Meta>
                   </div>
-                  <TileFooter>
-                    {c.at && <Meta icon={CalendarBlank}>{dayTime(c.at)}</Meta>}
-                    <TextButton
-                      onClick={() => {
-                        if (!c.at) return;
-                        downloadCall({ title: `${c.name} with ${mu ? fullName(mu) : "your manager"}`, start: c.at, minutes: 30, url: "https://meet.google.com/", description: "Bluecut Socials. The Google Meet link is in your email." });
-                        toast(`${c.name} downloaded. Open the file to add it to your calendar.`);
-                      }}
-                    >
-                      <CalendarPlus className="size-4" aria-hidden /> Add to calendar
-                    </TextButton>
-                  </TileFooter>
                 </Tile>
               </li>
             ))}

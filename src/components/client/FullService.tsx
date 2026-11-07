@@ -1,74 +1,12 @@
 "use client";
 
-import { Buildings, ChatsCircle, CheckCircle, Clock, PencilSimpleLine, UsersThree } from "@phosphor-icons/react";
+import { ChatsCircle, CheckCircle, Clock, PencilSimpleLine, UsersThree } from "@phosphor-icons/react";
 import Link from "next/link";
-import { useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
 import { Badge, Banner, Button, buttonClass, Card, Pill, Row, Rows, TextLink, useConfirm, useTask } from "@/components/ui";
 import { agoIn, dayIn, money, plural } from "@/lib/format";
 import { act, useData, useMyClient } from "@/lib/mock";
-
-/** C2: company Page delegation through LinkedIn's official Page admin roles (never a login). */
-function PageCard() {
-  const { client } = useMyClient();
-  const { run, pending } = useTask();
-  const confirm = useConfirm();
-  const db = useData();
-  const fs = client?.fullService;
-  if (!client || !fs) return null;
-  const price = money(db.settings.pageManagementCents);
-
-  if (!fs.pageManagement) {
-    return (
-      <Card title="Company Page" action={<Pill>{price} a month</Pill>}>
-        <div className="flex flex-col gap-4">
-          <p className="text-body-sm text-secondary">Let us run your company Page too: posts, comments and replies. You add us as an admin on LinkedIn, so we never need your login.</p>
-          <Button className="self-start" variant="secondary" loading={pending("add")} onClick={() => run("add", () => act.setPageManagement(client.id, true), "Company Page management added. Next, add us as a Page admin.")}>
-            Add Page management
-          </Button>
-        </div>
-      </Card>
-    );
-  }
-
-  return (
-    <Card title="Company Page" action={<Badge status={fs.pageGrant === "granted" ? "success" : "warning"}>{fs.pageGrant === "granted" ? "Managed by your team" : "Waiting for admin access"}</Badge>}>
-      <div className="flex flex-col gap-4">
-        {fs.pageGrant === "granted" ? (
-          <p className="text-body text-primary">Your team manages your Page as an official admin. Remove the access any time from your Page settings on LinkedIn.</p>
-        ) : (
-          <p className="text-body text-primary">
-            On LinkedIn, open your Page, go to Settings, then Manage admins, and add Bluecut Socials as a Content admin. Then confirm here. No password is ever shared.
-          </p>
-        )}
-        <div className="flex flex-wrap gap-3">
-          {fs.pageGrant !== "granted" && (
-            <Button loading={pending("grant")} onClick={() => run("grant", () => act.confirmPageGrant(client.id), "Thank you. Your team can manage your Page now.")}>
-              I have added them
-            </Button>
-          )}
-          <Button
-            variant="remove"
-            loading={pending("remove")}
-            onClick={() =>
-              confirm({
-                title: "Remove company Page management?",
-                body: "We will stop managing your Page. You can keep managing it yourself on LinkedIn.",
-                confirmLabel: "Remove",
-                tone: "danger",
-                action: () => act.setPageManagement(client.id, false),
-                success: "Company Page management removed.",
-              })
-            }
-          >
-            Remove page management
-          </Button>
-        </div>
-      </div>
-    </Card>
-  );
-}
 
 const included = [
   { text: "We write, schedule and publish everything you approve.", icon: PencilSimpleLine },
@@ -213,19 +151,17 @@ export function FullServiceHub() {
   const db = useData();
   const confirm = useConfirm();
   const { run, pending } = useTask();
-  const [pageOn, setPageOn] = useState(true);
   if (!client) return null;
   const fs = client.fullService;
   const fullServicePrice = money(db.settings.fullServiceCents);
-  const pagePrice = money(db.settings.pageManagementCents);
 
   // Not on full-service: explain and turn on (also reachable for self-serve clients who want to upgrade).
   if (client.service !== "full-service" || !fs) {
-    const total = db.settings.fullServiceCents + (pageOn ? db.settings.pageManagementCents : 0);
+    const total = db.settings.fullServiceCents;
     return (
       <Columns {...rails.clientSettings}>
         <Card title="Full-service" action={<span className="shrink-0 whitespace-nowrap text-body font-semibold text-primary-600">From {fullServicePrice} a month</span>} info="Hand the work to us. You keep your login, your settings and full control. We never see your password.">
-          {/* Sections top to bottom, each under a line: what you get, the Page add-on, the price, then the button. */}
+          {/* Sections top to bottom, each under a line: what you get, the price, then the button. */}
           <div className="flex flex-col gap-6">
             <section className="flex flex-col gap-3" aria-labelledby="fs-included">
               <h3 id="fs-included" className="text-body font-semibold text-primary">
@@ -243,22 +179,6 @@ export function FullServiceHub() {
               </ul>
             </section>
 
-            <section className="flex flex-col gap-3 border-t border-border pt-6" aria-labelledby="fs-addon">
-              <h3 id="fs-addon" className="text-body font-semibold text-primary">
-                Add-on
-              </h3>
-              <label className={`flex cursor-pointer items-center gap-4 rounded-lg border p-4 transition-colors ${pageOn ? "border-primary-600 bg-primary-50" : "border-border hover:border-primary-300"}`}>
-                <span className={`flex size-10 shrink-0 items-center justify-center rounded-md text-primary-700 ${pageOn ? "bg-card" : "bg-primary-50"}`}>
-                  <Buildings className="size-5" aria-hidden />
-                </span>
-                <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className="text-body font-medium text-primary">Manage my company Page too</span>
-                  <span className="text-body-sm text-secondary">+{pagePrice} a month · Posts, comments and replies on your Page</span>
-                </span>
-                <input type="checkbox" checked={pageOn} onChange={(e) => setPageOn(e.target.checked)} className="size-4 shrink-0 accent-primary-600 focus-visible:focus-ring" />
-              </label>
-            </section>
-
             <section className="flex flex-col gap-3 border-t border-border pt-6" aria-labelledby="fs-price">
               <h3 id="fs-price" className="text-body font-semibold text-primary">
                 What you pay
@@ -268,12 +188,6 @@ export function FullServiceHub() {
                   <dt className="text-body-sm text-secondary">Full-service</dt>
                   <dd className="text-body-sm font-medium text-primary">{fullServicePrice} a month</dd>
                 </div>
-                {pageOn && (
-                  <div className="flex items-center justify-between gap-4 border-b border-border px-4 py-3">
-                    <dt className="text-body-sm text-secondary">Company Page management</dt>
-                    <dd className="text-body-sm font-medium text-primary">{pagePrice} a month</dd>
-                  </div>
-                )}
                 <div className="flex items-center justify-between gap-4 bg-neutral-25 px-4 py-3">
                   <dt className="text-body font-semibold text-primary">On top of your plan</dt>
                   <dd className="text-body font-semibold text-primary">{money(total)} a month</dd>
@@ -287,9 +201,9 @@ export function FullServiceHub() {
                 onClick={() =>
                   confirm({
                     title: "Turn on full-service?",
-                    body: `We take on the day-to-day. This adds ${money(total)} a month to your plan${pageOn ? ", including company Page management" : ""}. You keep full control and can pause or end this any time.`,
+                    body: `We take on the day-to-day. This adds ${money(total)} a month to your plan. You keep full control and can pause or end this any time.`,
                     confirmLabel: "Turn on full-service",
-                    action: () => act.activateFullService(client.id, pageOn),
+                    action: () => act.activateFullService(client.id),
                     success: "Full-service is on. Next, set up your access.",
                   })
                 }
@@ -304,7 +218,7 @@ export function FullServiceHub() {
   }
 
   // On full-service: manage it.
-  const monthly = db.settings.fullServiceCents + (fs.pageManagement ? db.settings.pageManagementCents : 0);
+  const monthly = db.settings.fullServiceCents + (client.companyPage ? db.settings.pageManagementCents : 0);
   return (
     <Columns {...rails.clientSettings}>
       <Card
@@ -315,7 +229,7 @@ export function FullServiceHub() {
         <div className="flex flex-col gap-4">
           {fs.paused && <Banner tone="warning" title="Your team's access is paused">We have stopped all work on your account. Resume when you are ready and we will pick up where we left off.</Banner>}
           <p className="text-body text-primary">
-            {money(monthly)} a month on top of your plan{fs.pageManagement ? ", including company Page management" : ""}. See <TextLink href="/contract">Contract</TextLink>.
+            {money(monthly)} a month on top of your plan{client.companyPage ? ", including company Page management" : ""}. See <TextLink href="/contract">Contract</TextLink>.
           </p>
           <div className="flex flex-wrap gap-3">
             {fs.paused ? (
@@ -346,7 +260,7 @@ export function FullServiceHub() {
                 confirm({
                   title: "End full-service?",
                   body: "You go back to self-serve: you do the LinkedIn actions yourself, with us preparing them.",
-                  info: "Your team stops managing your account, your stored login is cleared, and any Page admin access is removed. You can turn full-service back on later.",
+                  info: "Your team stops managing your account and your stored login is cleared. A company Page add-on, if on, stays and is prepared for you as tasks. You can turn full-service back on later.",
                   confirmLabel: "End full-service",
                   tone: "danger",
                   action: () => act.endFullService(client.id),
@@ -361,8 +275,6 @@ export function FullServiceHub() {
       </Card>
 
       <DelegatedAccessCard />
-
-      <PageCard />
 
       <Contract />
 

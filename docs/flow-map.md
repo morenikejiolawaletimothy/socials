@@ -38,7 +38,7 @@ These rules apply to every flow below.
 | Set up | Sees setup progress on Home. Connects LinkedIn, chooses what we do, books both calls, chooses a plan and signs (paying now is optional), sets how they review | Is assigned. The client books inside the manager's open slots | Confirms the manager the platform suggests, or picks another |
 | First 2 weeks (free) | Full service. Payment reminders 5 days and 3 days before the end, and on the last day | | |
 | End of free 2 weeks | Pays, or the account pauses until they pay. Paying reactivates it automatically | Nothing to do while paused | Sees paused accounts |
-| Goals call (30 min) | Meets their account manager. A notetaker records, if they agreed | Runs the call, then research, audit and strategy draft (AI-assisted, in-house) | |
+| Discovery call (30 min) | Meets their account manager. A notetaker records, if they agreed | Runs the call, then research, audit and strategy draft (AI-assisted, in-house) | |
 | Strategy call (30 min) | Reviews strategy and content plan, approves "What we agreed" | Runs the call, finalises the plan | |
 | First posts | Reviews the first week of posts | Drafts, schedules, engages | |
 | Week 3 onward (paid contract) | | | Sees the contract run |
@@ -151,7 +151,7 @@ These rules apply to every flow below.
 - **While setting up:** a setup card at the top with a percentage and these steps, done in one sitting or over several visits:
   1. Choose how we help you
   2. Choose what we do for you
-  3. Book your goals call
+  3. Book your discovery call
   4. Book your strategy call
   5. Choose your plan and sign
   6. Set how you review
@@ -177,16 +177,29 @@ There is **no Connect LinkedIn step** and no LinkedIn OAuth anywhere: self-serve
 
 ### C3. Book your two calls
 
-- **Goal:** the client books both calls at times that suit them, knowing why each call matters and who they will meet.
+- **Goal:** the client offers times for both onboarding calls; the manager confirms each with a link. (The whole process is onboarding; the **first call is the Discovery call**, where we learn the client's goals, challenges and what is off limits — the input that feeds the profile audit, research and the strategy we present on the second call.)
 - **Steps:**
   1. **Your two calls:** why we need them, in plain words.
-     - Goals call (30 minutes): we agree what you want from LinkedIn. What we will ask, so you can think ahead.
-     - Strategy call (30 minutes): we walk you through your strategy and content plan and agree it.
-     - You will meet your account manager, the expert who runs your account (name, photo, short intro). A notetaker joins and records both calls so nothing is missed. Before booking we ask for your consent to record. Saying no is fine.
-  2. **Pick a time for your goals call.** Times come from your manager's open slots, shown in your time zone.
-  3. **Pick a time for your strategy call.** Only times at least 3 days after the goals call are offered, so your manager has time to prepare.
-  4. **Booked:** both dates, Google Meet links, add to calendar. Reminders by email the day before and 1 hour before.
-- **States:** reschedule, cancel, recording declined (the call goes ahead without the notetaker), manager rescheduled (you are notified and pick a new time).
+     - Discovery call (30 minutes): we get to know you and your goals — who you want to reach, what you want to be known for, and what is off limits.
+     - Strategy call (30 minutes): we present your strategy and content plan and agree it.
+     - You will meet your account manager (name, photo, short intro). The notetaker bot joins both calls so nothing is missed; before booking we ask consent. Saying no is fine.
+  2. **Offer one or more times for your discovery call,** from the manager's open slots.
+  3. **Offer one or more times for your strategy call,** at least 3 days after the discovery call so the manager can prepare.
+  4. **Requested:** the manager confirms a time for each and sends the Google Meet link. You see it on your Calls page and can change the times there.
+- **Same lifecycle as ad-hoc calls (C3b):** discovery and strategy calls are agreed by the same negotiation — accept a time, or suggest other times with a reason; the manager confirms with the link; either side can change the time up to 30 minutes before. Nothing is booked until both agree. After each call the manager records the outcome (held, with transcript/insights that feed the strategy, or did not hold).
+
+### C3b. Ongoing calls (ad-hoc, after onboarding) — Built
+
+- **Goal:** beyond the two fixed onboarding calls, either side arranges a call whenever something needs discussing. Unlike goals/strategy (fixed purpose, tied to onboarding), an ad-hoc call carries its own purpose and description, and is agreed by negotiation.
+- **Two moves only, for both sides.** You **accept** a time, or you **suggest other times** — and suggesting *always* needs a short **reason plus one or more alternative times**. There is no bare cancel or decline: turning a time down means proposing other times with a reason. The same rule covers rescheduling a booked call.
+- **Times come from the manager's availability.** The manager picks from their own open slots; the client, who has no calendar, also picks from the manager's open slots. Either can offer several times at once.
+- **Not booked until both agree.** Each suggestion notifies the other side; it ping-pongs until they agree on one time **and the manager has attached the Google Meet link** (only the manager makes the link). Then both can add it to their calendar. A held or booked time disappears from everyone's picker (no double-booking).
+- **Client books the manager (Flow A):** on **Calls → Book a call** the client gives a **purpose**, a **description**, one or more **open times**, and whether the **notetaker bot** joins → the manager **confirms one time with a link** or **suggests other times**.
+- **Manager books the client (Flow B):** after agreeing a time in **messages**, the manager offers one or more times (link optional until one is chosen); the client **accepts one** or **suggests others**.
+- **Reschedule window:** either side can change a booked call up to **30 minutes before** it starts; inside 30 minutes the time is locked.
+- **Navigation:** the manager's Calls page is tabbed **Requests · Booked · Open slots**; the client's is **Upcoming · Requests · Past**. Long notes stay out of the card behind **View details**.
+- **After the call:** once the time passes, the manager records the outcome — **it held** (transcript from the bot if it joined, plus insights that feed the strategy, shared with the client) or **did not hold** (with a short note).
+- **States:** pending (awaiting one side, carrying the reason and the offered times), booked (agreed + link), done (outcome recorded: held or missed).
 
 ### C4. Choose a plan, sign, pay now or later
 
@@ -290,7 +303,7 @@ There is **no Connect LinkedIn step** and no LinkedIn OAuth anywhere: self-serve
   - **Logos and colours:** for you or your company.
   - **Your voice:** how you like to sound, words you use or avoid, past posts or writing you like.
   - **Your brand documents:** any personal brand strategy or guide you already have.
-  - **Off limits:** what you never want us to do or talk about. Topics to avoid, people or companies not to engage with, things your employer or profession does not allow, kinds of interaction to skip (for example "never comment on politics", "do not mention my employer's clients"). Captured on the goals call and editable here any time. We check every post and every engagement against it.
+  - **Off limits:** what you never want us to do or talk about. Topics to avoid, people or companies not to engage with, things your employer or profession does not allow, kinds of interaction to skip (for example "never comment on politics", "do not mention my employer's clients"). Captured on the discovery call and editable here any time. We check every post and every engagement against it.
   - **Moments:** something you want a post about, such as an event you attended. Add photos and a short note ("I spoke at this event, I want a post about it"). Your manager is notified at once and replies in Messages.
 - **States:** file too large or wrong type (inline message with the allowed types and size), empty sections with a short prompt.
 
@@ -400,15 +413,15 @@ A premium tier chosen at onboarding. Only built on compliant mechanisms (PRD Epi
 
 ### M3. Onboard a client
 
-- **Goal:** from goals call to approved strategy in about 1 week, with the platform doing the heavy research.
+- **Goal:** from discovery call to approved strategy in about 1 week, with the platform doing the heavy research.
 - **Steps (Stepper):**
-  1. **Before the goals call:** a prep sheet. A summary of the client's current LinkedIn profile and questions to ask.
-  2. **After the goals call:** the transcript arrives, or the manager writes up the notes if the client declined recording. The AI summarises goals, audience, tone and **off limits** (topics, people, companies and interactions the client does not want). The manager corrects and confirms. Off limits are saved to the client's Your brand, where the client can see and edit them.
+  1. **Before the discovery call:** a prep sheet. A summary of the client's current LinkedIn profile and questions to ask.
+  2. **After the discovery call:** the transcript arrives, or the manager writes up the notes if the client declined recording. The AI summarises goals, audience, tone and **off limits** (topics, people, companies and interactions the client does not want). The manager corrects and confirms. Off limits are saved to the client's Your brand, where the client can see and edit them.
   3. **Set up listening:** the AI suggests topics and keywords (including location). The manager creates the Google Alerts and pastes each alert's feed link in. See M7.
   4. **Research, audit and strategy:** the AI researches the field (with sources), audits the profile and drafts the strategy. The manager directs ("make topic 2 about X", "the tone is too formal") until it is right, then shares it with the client before the strategy call.
   5. **After the strategy call:** the client may have changes or corrections from the call. The manager adjusts the strategy first, then sends it as "What we agreed" for the client to approve. Nothing is implemented until the client approves.
   6. **Approved:** the approved strategy creates the content plan and the weekly targets. Work starts.
-- **The strategy is detailed and measurable.** It sets out how we reach the goal from the goals call, in numbers both sides can track. For example: weeks 1 to 2, 2 posts a week (1 story post, 1 opinion post), 10 comments a week on posts from target people, 15 connection requests a week; from week 3, 3 posts a week and 1 article a month. These targets drive the manager's weekly work (M1), engagement (M6), what the client sees as done vs promised (C9), and the weekly update (M8).
+- **The strategy is detailed and measurable.** It sets out how we reach the goal from the discovery call, in numbers both sides can track. For example: weeks 1 to 2, 2 posts a week (1 story post, 1 opinion post), 10 comments a week on posts from target people, 15 connection requests a week; from week 3, 3 posts a week and 1 article a month. These targets drive the manager's weekly work (M1), engagement (M6), what the client sees as done vs promised (C9), and the weekly update (M8).
 
 ### M4. Plan and draft content
 
@@ -588,7 +601,7 @@ Once approved, these will be written into `docs/prd.md`.
 | --- | --- | --- |
 | Plans | Separate plans page | Terms shown on the landing page; plan chosen at contract time |
 | Sign up | Name, email, password, country, time zone | Google, or name, email and password. Location from LinkedIn, time zone from the browser |
-| Intake form | Long guided form before call 1 | Removed. Goals are gathered on the goals call by the notetaker |
+| Intake form | Long guided form before call 1 | Removed. Goals are gathered on the discovery call by the notetaker |
 | Calls | 90 and 60 minutes, call 2 booked later | 30 minutes each, both booked during setup at times the client picks |
 | Trial | 2-week trial, no card, pay at the end | Never called a trial. Client signs during setup, before the free 2 weeks start. Paying then is optional. Reminders before the end. Unpaid at the end: the account pauses until payment, then reactivates automatically |
 | Contract end | Access revoked, manager unassigned | Account pauses. Renewing reactivates it automatically |
@@ -604,7 +617,7 @@ Once approved, these will be written into `docs/prd.md`.
 | Manager changes | Admin reassigns as needed | Same manager for the life of the account, including renewals. Changes only on client request, a complaint about the manager, or a no-show |
 | Paused accounts | Data kept 30 days after trial end | Reminders, a warning at 15 days, removal and full data deletion at 30 days. Coming back means starting again |
 | Strategy | Pillars, tone and cadence | Detailed and measurable: weekly targets by period, tracked by client and manager. Adjusted after the strategy call before the client approves |
-| Off limits | Topics to avoid in the intake form | A dedicated Off limits list in Your brand, captured on the goals call, checked against every post and engagement |
+| Off limits | Topics to avoid in the intake form | A dedicated Off limits list in Your brand, captured on the discovery call, checked against every post and engagement |
 | Call slots | From manager availability | Managers open slots when they join; clients book inside them; managers must attend or reschedule from their side |
 | Assigning managers | Admin assigns | Platform suggests a manager by capacity and experience; the owner confirms or picks someone else |
 | Manager tasks | Task queue | Feed grouped by Urgent, Tasks, Due time, Calls today, Waiting; filter by client |

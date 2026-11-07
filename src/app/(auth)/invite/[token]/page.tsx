@@ -2,11 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { use, useState } from "react";
-import { Avatar, Banner, Button, CodeInput, PasswordInput, Stepper, TextLink } from "@/components/ui";
+import { Avatar, Banner, Button, CodeInput, Input, PasswordInput, Stepper, TextLink } from "@/components/ui";
 import { auth, useDb } from "@/lib/mock";
+import { agreementSections, AGREEMENT_VERSION } from "@/lib/amAgreement";
 import { AuthScreen } from "../../AuthScreen";
 
-const steps = ["Password", "Two-step", "Profile", "Call slots"];
+const steps = ["Password", "Two-step", "Profile", "Agreement", "Call slots"];
 const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const parts = [
   { key: "morning", label: "Morning", time: "8am to 12pm" },
@@ -25,6 +26,7 @@ export default function InvitePage({ params }: { params: Promise<{ token: string
   const [pw, setPw] = useState("");
   const [code, setCode] = useState("");
   const [intro, setIntro] = useState("");
+  const [signName, setSignName] = useState("");
   const [slots, setSlots] = useState<string[]>(["mon-morning", "wed-morning", "fri-afternoon"]);
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -48,10 +50,13 @@ export default function InvitePage({ params }: { params: Promise<{ token: string
     if (step === 0 && pw.length < 12) return setError("Use at least 12 characters, so client accounts stay safe.");
     if (step === 1 && code.length !== 6) return setError("Enter the 6-digit code from your authenticator app.");
     if (step === 2 && intro.trim().length < 20) return setError("Write a short intro (at least 20 characters). Clients see it when they book a call.");
-    if (step === 3) {
+    if (step === 3 && signName.trim().toLowerCase() !== name.toLowerCase()) {
+      return setError(`Type your full name, ${name}, to sign the agreement.`);
+    }
+    if (step === 4) {
       if (!slots.length) return setError("Open at least one slot, so clients can book their calls.");
       setBusy(true);
-      const res = await auth.acceptInvite(token, { intro, slots });
+      const res = await auth.acceptInvite(token, { intro, slots, signedName: signName.trim() });
       setBusy(false);
       if (!res.ok) return setError(res.message);
       router.push("/manager");
@@ -64,6 +69,7 @@ export default function InvitePage({ params }: { params: Promise<{ token: string
     { t: `Welcome, ${invite.user.firstName}`, d: "You have been invited to join Bluecut as an account manager. Set up your account in 4 short steps." },
     { t: "Set up two-step sign-in", d: "Required for everyone who works on client accounts. Scan the code with an authenticator app, then enter the 6-digit code it shows." },
     { t: "Your profile", d: "Clients see your photo and intro when they book their calls with you." },
+    { t: "Account manager agreement", d: "Please read these terms. You sign with your full name to agree before you are given clients." },
     { t: "Your call slots", d: "Choose when clients can book their 30-minute calls with you. Once a client books, you are committed to attend." },
   ];
 
@@ -87,7 +93,7 @@ export default function InvitePage({ params }: { params: Promise<{ token: string
                   Or enter this key: <span className="font-mono text-primary">BLCT 4F7Q 9KZ2 M8XA</span>
                 </p>
               </div>
-              <CodeInput label="Code from your app" value={code} onChange={(v) => { setCode(v); setError(undefined); }} error={error} help="Demo: any 6 digits work." />
+              <CodeInput label="Code from your app" value={code} onChange={(v) => { setCode(v); setError(undefined); }} error={error} />
               <div className="flex flex-col gap-2">
                 <p className="text-body font-semibold text-primary">Your backup codes</p>
                 <p className="text-body-sm text-secondary">Save these somewhere safe. Each one gets you in once if you lose your phone.</p>
@@ -127,6 +133,33 @@ export default function InvitePage({ params }: { params: Promise<{ token: string
           )}
 
           {step === 3 && (
+            <>
+              <div className="flex max-h-72 flex-col gap-4 overflow-y-auto rounded-md border border-border bg-neutral-25 p-5">
+                <p className="text-body-sm text-secondary">Version {AGREEMENT_VERSION}</p>
+                {agreementSections.map((sct, i) => (
+                  <div key={sct.title} className="flex flex-col gap-1">
+                    <p className="text-body font-semibold text-primary">
+                      {i + 1}. {sct.title}
+                    </p>
+                    <p className="text-body-sm text-secondary">{sct.body}</p>
+                  </div>
+                ))}
+              </div>
+              <Input
+                label="Sign with your full name"
+                value={signName}
+                onChange={(e) => { setSignName(e.target.value); setError(undefined); }}
+                placeholder={name}
+                help="Type your name exactly as shown above. This is your signature."
+                error={error}
+              />
+              <p className="text-caption text-secondary">
+                You can download your signed copy from your profile after you finish.
+              </p>
+            </>
+          )}
+
+          {step === 4 && (
             <>
               <p className="text-body-sm text-secondary">Times are in your time zone ({invite.user.timeZone.replace("_", " ")}). You can change them any time.</p>
               <p className="text-caption text-secondary">Morning is 8am to 12pm. Afternoon is 12pm to 5pm. Evening is 5pm to 8pm.</p>
@@ -169,12 +202,11 @@ export default function InvitePage({ params }: { params: Promise<{ token: string
               <span />
             )}
             <Button type="submit" loading={busy}>
-              {step === 3 ? (busy ? "Finishing" : "Finish setup") : "Continue"}
+              {step === 4 ? (busy ? "Finishing" : "Finish setup") : step === 3 ? "Agree and continue" : "Continue"}
             </Button>
           </div>
         </form>
       </AuthScreen>
-      <p className="mt-8 text-center text-caption text-secondary">Demo: this invite is for Bisi Adebayo. Reset the demo to use it again.</p>
     </>
   );
 }

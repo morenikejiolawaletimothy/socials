@@ -5,6 +5,7 @@ import { rails } from "@/components/rails";
 import { Avatar, Badge, Card, Pill, ProgressBar, Tile } from "@/components/ui";
 import { fullName } from "@/lib/format";
 import { useMyManager } from "@/lib/mock";
+import { scoreTotals } from "@/lib/scorecard";
 import { statusBadge } from "@/lib/status";
 
 /**
@@ -30,8 +31,9 @@ export default function ClientsPage() {
             const u = db.users.find((x) => x.id === c.userId);
             const b = statusBadge[c.status];
             const week = db.progress.find((p) => p.clientId === c.id);
-            const done = week ? week.posts.done + week.comments.done + week.connections.done : 0;
-            const target = week ? week.posts.target + week.comments.target + week.connections.target : 0;
+            const totals = week ? scoreTotals(week) : { done: 0, target: 0 };
+            const done = totals.done;
+            const target = totals.target;
             const p = pace(done, target);
             return (
               <li key={c.id}>

@@ -16,6 +16,8 @@ export type User = {
   twoStep: boolean;
   /** Profile photo, as a small data URL until Phase 2 stores files. */
   photo?: string;
+  /** #43: the LinkedIn profile URL we extract name/photo from, and re-sync on demand. */
+  linkedinUrl?: string;
   /** Email and alert choices, by key. Missing keys use the default for that key. */
   prefs?: Record<string, boolean>;
   /** Session ids the person signed out of (Account, "Where you are signed in"). */
@@ -58,7 +60,7 @@ export type ReviewSettings = {
 };
 
 /** C1: the six setup steps, in order. */
-export type SetupStep = "service" | "permissions" | "access" | "goals-call" | "strategy-call" | "plan" | "review";
+export type SetupStep = "service" | "permissions" | "access" | "discovery-call" | "strategy-call" | "plan" | "review";
 
 export type Client = {
   id: string;
@@ -80,7 +82,7 @@ export type Client = {
   postingPaused: boolean;
   permissions: Permissions;
   review: ReviewSettings;
-  /** What the manager confirmed after the goals call (M3). */
+  /** What the manager confirmed after the discovery call (M3). */
   onboarding?: { audience: string; tone: string; notes?: string; confirmedAt: string };
   /** Where the client is in onboarding, after setup. */
   stage: "setup" | "calls" | "strategy" | "running";
@@ -90,6 +92,8 @@ export type Client = {
   service?: "self-serve" | "full-service";
   /** Set when the client is on full-service (C20). */
   fullService?: FullService;
+  /** #41: the company Page add-on (either tier). Presence means it is on. Billed pro-rated, on top of the plan. */
+  companyPage?: { since: string };
 };
 
 /**
@@ -101,9 +105,6 @@ export type Client = {
  */
 export type FullService = {
   since: string;
-  /** We run their company Page too, via official LinkedIn Page admin delegation. A paid add-on. */
-  pageManagement: boolean;
-  pageGrant?: "granted" | "pending" | "not-granted";
   /** Delegated profile access (D): the client's secured login we operate with their per-session approval. */
   access?: DelegatedAccess;
   /** The client paused all our work from their side. We stop at once until they resume. */
@@ -159,13 +160,26 @@ export type Manager = {
     approach: string;
   };
   maxClients: number;
+  /** #48 The account manager agreement, signed with their full name at onboarding. */
+  agreement?: { fullName: string; signedAt: string; version: string };
   /** Open call slots, as "mon-morning" style keys. */
   slots?: string[];
   trainingAt?: string;
   /** Google Calendar: booked calls go in, busy times close slots. */
   calendarConnected?: boolean;
   industries: string[];
-  stats: { onTime: number; firstTimeApproval: number; missed: number; complaints: number };
+  stats: {
+    onTime: number;
+    firstTimeApproval: number;
+    missed: number;
+    complaints: number;
+    /** #46: the average content grade across their clients' drafts (word, staff-only). */
+    avgGrade?: "very bad" | "not so good" | "good" | "very good" | "perfect";
+    /** #46: median hours to answer a client request (fix, take-down, question). */
+    responseHours?: number;
+    /** #46: out-of-access attempts in the two-strike escalation (0, 1 = warned, 2 = barred). */
+    strikes?: number;
+  };
 };
 
 export type Notification = {
@@ -383,15 +397,42 @@ export type Call = {
   id: string;
   clientId: string;
   managerId: string;
-  kind: "goals" | "strategy" | "check-in";
+  kind: "discovery" | "strategy" | "check-in";
   /** The call's name as the client sees it ("Onboarding call", "Quarterly review"). Falls back to a name for its kind. */
   title?: string;
+  /** Ad-hoc check-in calls: what the client wants to discuss. */
+  agenda?: string;
+  /** Who started the call. Ad-hoc only; onboarding calls leave it unset. */
+  openedBy?: "client" | "manager";
+  /** The time currently on the table (the agreed time once booked, or the latest proposed time while pending). */
   at: string;
   minutes: number;
+  /** The Google Meet link. Empty until the account manager adds it when approving or creating the call. */
   meetUrl: string;
+  /** Whether the account manager's notetaker bot joins the call. */
   recording: boolean;
-  status: "booked" | "done" | "cancelled";
-  summary?: string;
+  /**
+   * booked = both agreed on one time and the link is set; pending = being negotiated (awaiting one party);
+   * done = the time has passed and the outcome is recorded; cancelled = an onboarding call sent back to re-book.
+   */
+  status: "booked" | "pending" | "done" | "cancelled";
+  /**
+   * While pending: whose turn it is, who made the current proposal, their reason note, and the one-or-more
+   * times they offered (all drawn from the manager's open availability).
+   */
+  pending?: { awaiting: "client" | "manager"; by: "client" | "manager"; note?: string; options: string[] };
+  /** Post-call: whether the call actually happened. Set when the manager records the outcome. */
+  outcome?: "held" | "missed";
+  /** Reason the call did not hold (when outcome is "missed"). */
+  outcomeNote?: string;
+  /** Legacy reason kept for onboarding reschedules. */
+  cancelReason?: string;
+  /** #42: the raw call transcript, only present when the call was recorded (the AM's own notetaker, with consent). */
+  transcript?: string;
+  /** #42: the synthesized insights the AM writes from the call. Feeds the strategy. */
+  insights?: string;
+  /** #42: set when the AM shares the transcript and insights with the client. The client sees them only after this. */
+  sharedAt?: string;
   prep?: string[];
 };
 
@@ -413,13 +454,32 @@ export type Strategy = {
   frameworkVersion: string;
 };
 
-/** This week's numbers against the strategy (C9, M6). */
+/** One line on a scorecard: the weekly target and how many are done. */
+export type ScoreLine = { target: number; done: number };
+
+/** The activities tracked on a scorecard. `profileTasks` is only on the personal profile, not the company Page (#45). */
+export type Scorecard = {
+  posts: ScoreLine;
+  comments: ScoreLine;
+  reactions: ScoreLine;
+  follows: ScoreLine;
+  connections: ScoreLine;
+  saves: ScoreLine;
+  profileTasks?: ScoreLine;
+};
+
+/** This week's numbers against the strategy (C9, M6). The flat fields are the personal-profile scorecard; `page` is the company-Page scorecard when the add-on is on (#45). */
 export type WeekProgress = {
   clientId: string;
   weekOf: string;
-  posts: { target: number; done: number };
-  comments: { target: number; done: number };
-  connections: { target: number; done: number };
+  posts: ScoreLine;
+  comments: ScoreLine;
+  reactions: ScoreLine;
+  follows: ScoreLine;
+  connections: ScoreLine;
+  saves: ScoreLine;
+  profileTasks: ScoreLine;
+  page?: Scorecard;
   held: string[];
 };
 
@@ -574,8 +634,6 @@ export type Contract = {
   startsAt: string;
   endsAt: string;
   status: "free" | "active" | "ending" | "paused" | "completed" | "cancelled";
-  /** Video add-on: paid on top of the plan. Who makes the videos was agreed at onboarding. */
-  videoAddon?: { maker: "client" | "bluecut" | "both"; since: string };
   /** The status before the client pulled out, so they can change their mind. */
   cancelledFrom?: Exclude<Contract["status"], "cancelled">;
   paid: boolean;
@@ -681,13 +739,51 @@ export type FrameworkVersion = { version: string; at: string; note: string };
 
 export type AuditEntry = { id: string; who: string; action: string; target: string; at: string; kind: "assignment" | "refund" | "setting" | "account" | "content" | "step-in" };
 
+/* ---------- Admin roles and access (#49) ---------- */
+
+/** The admin areas access can be scoped to. */
+export type AdminArea = "clients" | "managers" | "framework" | "services" | "money" | "complaints" | "settings" | "audit" | "roles";
+
+/** Access level to an area: nothing, read-only, or act. */
+export type AdminAccess = "none" | "view" | "manage";
+
+/**
+ * #49: an admin role. `owner` marks the built-in Owner/Super admin: full access, cannot be edited or removed, and only
+ * an Owner can grant it. All other roles are owner-creatable with per-area none/view/manage access.
+ */
+export type AdminRole = {
+  id: string;
+  name: string;
+  description?: string;
+  owner?: boolean;
+  access: Record<AdminArea, AdminAccess>;
+};
+
+/** #49: an admin on the team. Holds one or more roles; effective access is the most permissive across them. */
+export type AdminMember = {
+  id: string;
+  userId: string;
+  roleIds: string[];
+  status: "active" | "invited" | "deactivated";
+  invitedAt?: string;
+};
+
 /** C20: a record of the account team working on a full-service client's account, shown to the client. */
 export type AccessLog = { id: string; clientId: string; who: string; at: string; action: string; minutes?: number };
 
 /** D: a breach signal on a full-service client's delegated access, for admins (insider-threat monitoring). */
 export type AccessAlert = { id: string; clientId: string; managerName: string; at: string; kind: "no-notify" | "security-page" | "off-hours" | "bulk" | "devtools"; detail: string; resolved?: boolean };
 
-export type Payout = { id: string; managerId: string; period: string; clients: number; amountCents: number; status: "to-approve" | "approved" | "paid" };
+
+/**
+ * A service Bluecut offers. "included" services come free with every plan and are delivered as normal work.
+ * "extra" services are quoted and billed off the platform; the platform only offers them and captures a request.
+ * Owner-managed in the catalog.
+ */
+export type Service = { id: string; name: string; description: string; bucket: "included" | "extra"; active: boolean };
+
+/** A client's request for an extra service. Captured and handed to the owner, who follows up and bills off the platform. No status is kept. */
+export type ServiceRequest = { id: string; clientId: string; serviceId: string; serviceName: string; note?: string; at: string };
 
 export type Settings = {
   freeDays: number;
@@ -699,11 +795,9 @@ export type Settings = {
   maxClientsPerManager: number;
   daysBetweenCalls: number;
   sessionTimeoutMinutes: number;
-  /** Video add-on price, a month, on top of the plan (USD cents). */
-  videoAddonCents: number;
   /** Full-service done-for-you tier, a month, on top of the plan (USD cents). */
   fullServiceCents: number;
-  /** Company Page management add-on, a month (USD cents). Full-service only. */
+  /** Company Page add-on, a month (USD cents). Available on either tier. */
   pageManagementCents: number;
 };
 
@@ -749,11 +843,14 @@ export type Db = {
   framework: FrameworkItem[];
   frameworkVersions: FrameworkVersion[];
   audit: AuditEntry[];
-  payouts: Payout[];
   settings: Settings;
   changeRequests: ManagerChangeRequest[];
   assistants: Assistant[];
   outbox: OutboxItem[];
   accessLog: AccessLog[];
   accessAlerts: AccessAlert[];
+  services: Service[];
+  serviceRequests: ServiceRequest[];
+  adminRoles: AdminRole[];
+  adminMembers: AdminMember[];
 };

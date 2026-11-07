@@ -26,9 +26,9 @@ export function DelegatedAccessSetup({ inSetup = false }: { inSetup?: boolean })
   return (
     <Columns {...rails.clientSettings}>
       <Card
-        title="Set up delegated access"
-        info={step === 1 ? "This is what keeps you in control: every sign-in needs your approval on your phone, so no one can use your login without you." : undefined}
-        eyebrow={<Breadcrumbs items={inSetup ? [{ label: "Home", href: "/home" }, { label: "Set up", href: "/home#setup" }, { label: "Secure access" }] : [{ label: "Full-service", href: "/full-service" }, { label: "Delegated access" }]} />}
+        title="Set up secure access"
+        info="Your LinkedIn login is kept in an encrypted vault that Bluecut and your account manager can never read. You turn on your own authenticator 2FA, so every sign-in needs your approval on your phone. We can never change your account security, and you can pause or remove access in one click, any time."
+        eyebrow={<Breadcrumbs items={inSetup ? [{ label: "Home", href: "/home" }, { label: "Set up", href: "/home#setup" }, { label: "Secure access" }] : [{ label: "Full-service", href: "/full-service" }, { label: "Secure access" }]} />}
       >
         <div className="flex flex-col gap-6">
           <Stepper steps={steps} current={step} />
@@ -121,8 +121,22 @@ export function DelegatedAccessSetup({ inSetup = false }: { inSetup?: boolean })
                   <Lock className="mt-0.5 size-4 shrink-0 text-success" aria-hidden /> Your login is encrypted in the vault the moment you save it. Your account manager and Bluecut never see it.
                 </span>
               </Banner>
-              <Input label="LinkedIn email" type="email" autoComplete="off" value={email} onChange={(e) => { setEmail(e.target.value); setError(undefined); }} error={error} />
-              <PasswordInput label="LinkedIn password" autoComplete="off" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <div className="flex flex-col gap-4 rounded-lg border border-border-strong bg-neutral-25 p-4">
+                <div className="flex items-center gap-2">
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-success-bg text-success">
+                    <Lock className="size-4" aria-hidden />
+                  </span>
+                  <span className="text-body-sm font-medium text-primary">Encrypted vault</span>
+                  <span className="ml-auto flex items-center gap-1 text-caption font-medium text-success">
+                    <ShieldCheck className="size-4" aria-hidden /> Encrypted
+                  </span>
+                </div>
+                <Input label="LinkedIn email" type="email" autoComplete="off" value={email} onChange={(e) => { setEmail(e.target.value); setError(undefined); }} error={error} />
+                <PasswordInput label="LinkedIn password" autoComplete="off" value={password} onChange={(e) => setPassword(e.target.value)} />
+                <p className="flex items-start gap-2 text-caption text-secondary">
+                  <Lock className="mt-0.5 size-3.5 shrink-0" aria-hidden /> Stored encrypted the moment you save it. Never shown to anyone, including your account manager and Bluecut.
+                </p>
+              </div>
               <p className="text-body-sm text-secondary">You can remove this any time from Full-service. Because 2FA is on, your login cannot be used without your approval on your phone.</p>
               <div className="flex flex-wrap gap-3">
                 <Button type="submit" loading={pending("save")}>

@@ -1,9 +1,10 @@
 "use client";
 
 import { engageKinds, isEngage } from "../engage";
-import { dayTimeIn, plural } from "../format";
+import { dayTimeIn, money, plural } from "../format";
+import { extractLinkedIn } from "./auth";
 import { delay, getDb, update } from "./store";
-import type { Activity, Assistant, Channels, Client, Db, EngageAction, Handoff, Message, Permissions, PostStatus, Reaction, ReviewSettings, SetupStep, User } from "./types";
+import type { Activity, AdminMember, AdminRole, Assistant, Call, Channels, Client, Db, EngageAction, Handoff, Message, Permissions, PostStatus, Reaction, ReviewSettings, SetupStep, User } from "./types";
 
 /*
  * Every change a screen can make. Phase 2 swaps each body for an API call; screens keep calling the same names.
@@ -711,34 +712,48 @@ function access(db: Db, clientId: string, who: string, action: string, minutes?:
   return { ...db, accessLog: [{ id: id("ac"), clientId, who, at: nowIso(), action, minutes }, ...(db.accessLog ?? [])] };
 }
 
-/** C20: turn on full-service (also reachable from onboarding). Default access is set up next (Page admin, delegated login). */
-export async function activateFullService(clientId: string, pageManagement: boolean) {
+/** C20: turn on full-service (also reachable from onboarding). Default access (delegated login) is set up next. */
+export async function activateFullService(clientId: string) {
   await delay(600);
   update((db) => {
-    let next = patchClient(db, clientId, (c) => ({ service: "full-service" as const, fullService: { since: nowIso(), pageManagement, pageGrant: pageManagement ? ("pending" as const) : undefined, access: { credentials: "none" as const, twoFactor: false } }, permissions: { ...c.permissions, companyPage: pageManagement } }));
+    let next = patchClient(db, clientId, () => ({ service: "full-service" as const, fullService: { since: nowIso(), access: { credentials: "none" as const, twoFactor: false } } }));
     next = log(next, clientId, "you", "setting", "Turned on full-service");
     next = audit(next, "Client turned on full-service", clientUser(db, clientId)?.firstName ?? "Client", "account");
     return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} turned on full-service. Follow their permission contract exactly; you cannot change their settings.`, `/manager/clients/${clientId}`, { urgent: true });
   });
 }
 
-/** C20: add or remove company Page management (official Page admin delegation). */
-export async function setPageManagement(clientId: string, on: boolean) {
-  await delay(400);
-  update((db) => {
-    let next = patchClient(db, clientId, (c) => ({ fullService: c.fullService && { ...c.fullService, pageManagement: on, pageGrant: on ? ("pending" as const) : undefined }, permissions: { ...c.permissions, companyPage: on } }));
-    next = log(next, clientId, "you", "setting", `Turned ${on ? "on" : "off"} company Page management`);
-    return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} turned ${on ? "on" : "off"} company Page management.`, `/manager/clients/${clientId}`, { email: false });
-  });
+/** #41: months left on the contract, rounded up, for pro-rating the company Page add-on. 0 if there is no contract yet. */
+function remainingMonths(db: Db, clientId: string): number {
+  const k = db.contracts.find((x) => x.clientId === clientId);
+  if (!k) return 0;
+  return Math.max(0, Math.ceil((new Date(k.endsAt).getTime() - Date.now()) / (30 * 86_400_000)));
 }
 
-/** C20: the client confirms they added Bluecut as an admin on their LinkedIn Page (official delegation). */
-export async function confirmPageGrant(clientId: string) {
-  await delay(500);
+/**
+ * #41: add or remove the company Page add-on. Works on either tier (full-service manages it through delegated access;
+ * self-serve gets it as tasks). Pro-rated: added mid-contract charges the rest of the contract; removed mid-contract
+ * refunds the unused Page fee only (owner approves).
+ */
+export async function setCompanyPage(clientId: string, on: boolean) {
+  await delay(400);
   update((db) => {
-    let next = patchClient(db, clientId, (c) => ({ fullService: c.fullService && { ...c.fullService, pageGrant: "granted" as const } }));
-    next = log(next, clientId, "you", "setting", "Added Bluecut as a Page admin");
-    return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} added Bluecut as a Page admin. You can manage it now.`, `/manager/clients/${clientId}`, { email: false });
+    const months = remainingMonths(db, clientId);
+    const prorated = db.settings.pageManagementCents * months;
+    const who = nameOf(clientUser(db, clientId));
+    let next = patchClient(db, clientId, (c) => ({ companyPage: on ? { since: c.companyPage?.since ?? nowIso() } : undefined, permissions: { ...c.permissions, companyPage: on } }));
+    if (on) {
+      next = log(next, clientId, "you", "setting", "Added the company Page add-on");
+      next = notify(next, managerUserOf(db, clientId)?.id, `${who} added the company Page add-on.`, `/manager/clients/${clientId}`, { email: false });
+      return notify(next, clientUser(db, clientId)?.id, months > 0 ? `Company Page added. You pay ${money(prorated)} for the rest of your contract.` : "Company Page added to your plan.", "/contract");
+    }
+    if (prorated > 0) {
+      next = { ...next, refunds: [{ id: id("rf"), clientId, amountCents: prorated, calc: `${money(db.settings.pageManagementCents)} a month × ${months} month${months === 1 ? "" : "s"} left`, reason: "Company Page add-on removed mid-contract", at: nowIso(), status: "waiting" as const }, ...next.refunds] };
+      next = notify(next, OWNER, `${who} removed the company Page add-on. A refund of ${money(prorated)} (unused Page fee) needs your approval.`, "/admin/money", { urgent: true });
+    }
+    next = log(next, clientId, "you", "setting", "Removed the company Page add-on");
+    next = notify(next, managerUserOf(db, clientId)?.id, `${who} removed the company Page add-on.`, `/manager/clients/${clientId}`, { email: false });
+    return notify(next, clientUser(db, clientId)?.id, prorated > 0 ? `Company Page removed. We will refund the unused Page fee, ${money(prorated)}.` : "Company Page removed.", "/contract");
   });
 }
 
@@ -763,15 +778,15 @@ export async function resumeFullServiceAccess(clientId: string) {
   });
 }
 
-/** C20: the client ends full-service and goes back to self-serve. Vaulted login is cleared, Page admin removed. */
+/** C20: the client ends full-service and goes back to self-serve. The vaulted login is cleared; any company Page add-on stays on and is delivered as tasks. */
 export async function endFullService(clientId: string) {
   await delay(500);
   update((db) => {
-    let next = patchClient(db, clientId, (c) => ({ service: "self-serve" as const, fullService: undefined, permissions: { ...c.permissions, companyPage: false } }));
+    let next = patchClient(db, clientId, () => ({ service: "self-serve" as const, fullService: undefined }));
     next = access(next, clientId, clientUser(db, clientId)?.firstName ?? "Client", "Ended full-service and removed all access");
     next = log(next, clientId, "you", "setting", "Ended full-service");
     next = audit(next, "Client ended full-service", clientUser(db, clientId)?.firstName ?? "Client", "account");
-    return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} ended full-service and is back on self-serve. Remove your Page admin access.`, `/manager/clients/${clientId}`, { urgent: true });
+    return notify(next, managerUserOf(db, clientId)?.id, `${clientUser(db, clientId)?.firstName} ended full-service and is back on self-serve. Stop any account sign-ins.`, `/manager/clients/${clientId}`, { urgent: true });
   });
 }
 
@@ -1100,26 +1115,125 @@ export async function submitVideo(taskId: string, fileId: string) {
   });
 }
 
-/** C4 and C13: turns the video add-on on (with who makes the videos) or off. Billed with the plan. */
-export async function setVideoAddon(clientId: string, maker: "client" | "bluecut" | "both" | null) {
+/* ---------- Services catalog (#50) ---------- */
+
+/** A client asks about an extra service. Captured and handed to the owner, who follows up and bills off the platform. No status is kept. */
+export async function requestService(clientId: string, serviceId: string, note?: string) {
   await delay(700);
   update((db) => {
-    let next: Db = { ...db, contracts: db.contracts.map((k) => (k.clientId === clientId ? { ...k, videoAddon: maker ? { maker, since: k.videoAddon?.since ?? nowIso() } : undefined } : k)) };
+    const service = (db.services ?? []).find((s) => s.id === serviceId);
+    if (!service) return db;
+    const req = { id: id("sr"), clientId, serviceId, serviceName: service.name, note: note?.trim() || undefined, at: nowIso() };
+    let next: Db = { ...db, serviceRequests: [req, ...(db.serviceRequests ?? [])] };
     const who = nameOf(clientUser(db, clientId));
-    const what = maker
-      ? `added the video add-on (${maker === "client" ? "they supply the videos" : maker === "bluecut" ? "Bluecut makes the videos: agree the production and send a quote" : "both: agree the production and send a quote"})`
-      : "removed the video add-on";
-    next = notify(next, managerUserOf(db, clientId)?.id, `${who} ${what}.`, `/manager/clients/${clientId}`, { email: true });
-    next = notify(next, OWNER, `${who} ${what}.`, `/admin/clients/${clientId}`);
-    next = log(next, clientId, "you", "account", maker ? "Added the video add-on" : "Removed the video add-on");
-    return audit(next, maker ? "Added the video add-on" : "Removed the video add-on", who, "account", who);
+    next = notify(next, OWNER, `${who} is interested in ${service.name}.${req.note ? ` “${req.note}”` : ""}`, `/admin/clients/${clientId}`, { email: true });
+    return log(next, clientId, "you", "account", `Asked about ${service.name}`);
+  });
+}
+
+/** Owner: add a service to the catalog. */
+export async function addService(data: { name: string; description: string; bucket: "included" | "extra" }) {
+  await delay(500);
+  update((db) => {
+    const svc = { id: id("sv"), name: data.name.trim(), description: data.description.trim(), bucket: data.bucket, active: true };
+    const next: Db = { ...db, services: [...(db.services ?? []), svc] };
+    return audit(next, `Added the service “${svc.name}” (${svc.bucket === "included" ? "included" : "extra, billed off the platform"})`, svc.name, "setting");
+  });
+}
+
+/** Owner: edit a service in the catalog. */
+export async function editService(serviceId: string, data: { name: string; description: string; bucket: "included" | "extra"; active: boolean }) {
+  await delay(500);
+  update((db) => {
+    const next: Db = { ...db, services: (db.services ?? []).map((s) => (s.id === serviceId ? { ...s, name: data.name.trim(), description: data.description.trim(), bucket: data.bucket, active: data.active } : s)) };
+    return audit(next, `Edited the service “${data.name.trim()}”`, data.name.trim(), "setting");
+  });
+}
+
+/** Owner: remove a service from the catalog. */
+export async function removeService(serviceId: string) {
+  await delay(500);
+  update((db) => {
+    const svc = (db.services ?? []).find((s) => s.id === serviceId);
+    const next: Db = { ...db, services: (db.services ?? []).filter((s) => s.id !== serviceId) };
+    return audit(next, `Removed the service “${svc?.name ?? serviceId}”`, svc?.name ?? serviceId, "setting");
+  });
+}
+
+/* ---------- Admin roles and team (#49) ---------- */
+
+/** Owner: add a custom admin role. */
+export async function addRole(data: { name: string; description?: string; access: AdminRole["access"] }) {
+  await delay(500);
+  update((db) => {
+    const role: AdminRole = { id: id("ar"), name: data.name.trim(), description: data.description?.trim() || undefined, access: data.access };
+    return audit({ ...db, adminRoles: [...(db.adminRoles ?? []), role] }, `Added the admin role “${role.name}”`, role.name, "setting");
+  });
+}
+
+/** Owner: edit a role. The built-in Owner role cannot be edited. */
+export async function editRole(roleId: string, data: { name: string; description?: string; access: AdminRole["access"] }) {
+  await delay(500);
+  update((db) => {
+    if ((db.adminRoles ?? []).find((r) => r.id === roleId)?.owner) return db;
+    const next = { ...db, adminRoles: (db.adminRoles ?? []).map((r) => (r.id === roleId ? { ...r, name: data.name.trim(), description: data.description?.trim() || undefined, access: data.access } : r)) };
+    return audit(next, `Edited the admin role “${data.name.trim()}”`, data.name.trim(), "setting");
+  });
+}
+
+/** Owner: remove a role (not the Owner role). Anyone holding it loses it. */
+export async function removeRole(roleId: string) {
+  await delay(500);
+  update((db) => {
+    const role = (db.adminRoles ?? []).find((r) => r.id === roleId);
+    if (!role || role.owner) return db;
+    const next: Db = { ...db, adminRoles: (db.adminRoles ?? []).filter((r) => r.id !== roleId), adminMembers: (db.adminMembers ?? []).map((m) => ({ ...m, roleIds: m.roleIds.filter((x) => x !== roleId) })) };
+    return audit(next, `Removed the admin role “${role.name}”`, role.name, "setting");
+  });
+}
+
+/** Owner: invite an admin and assign their roles. */
+export async function inviteAdmin(firstName: string, lastName: string, email: string, roleIds: string[]) {
+  await delay(600);
+  update((db) => {
+    const uid = id("u");
+    const next: Db = {
+      ...db,
+      users: [...db.users, { id: uid, role: "owner", firstName: firstName.trim(), lastName: lastName.trim(), email: email.trim(), title: "", timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone, twoStep: false }],
+      adminMembers: [...(db.adminMembers ?? []), { id: id("am"), userId: uid, roleIds, status: "invited" as const, invitedAt: nowIso() }],
+    };
+    return audit(next, `Invited ${firstName.trim()} ${lastName.trim()} as an admin`, `${firstName.trim()} ${lastName.trim()}`, "account");
+  });
+}
+
+/** Owner: change an admin's roles. */
+export async function setMemberRoles(memberId: string, roleIds: string[]) {
+  await delay(400);
+  update((db) => {
+    const next = { ...db, adminMembers: (db.adminMembers ?? []).map((m) => (m.id === memberId ? { ...m, roleIds } : m)) };
+    const who = nameOf(db.users.find((u) => u.id === next.adminMembers.find((x) => x.id === memberId)?.userId));
+    return audit(next, `Changed ${who}'s admin roles`, who, "setting");
+  });
+}
+
+/** Owner: deactivate or reactivate an admin. The last active Owner cannot be deactivated. */
+export async function setAdminStatus(memberId: string, status: "active" | "deactivated") {
+  await delay(400);
+  update((db) => {
+    const ownerRoleIds = new Set((db.adminRoles ?? []).filter((r) => r.owner).map((r) => r.id));
+    const isOwner = (m: AdminMember) => m.roleIds.some((r) => ownerRoleIds.has(r));
+    const target = (db.adminMembers ?? []).find((x) => x.id === memberId);
+    if (status === "deactivated" && target && isOwner(target) && (db.adminMembers ?? []).filter((m) => m.status === "active" && isOwner(m)).length <= 1) return db;
+    const next = { ...db, adminMembers: (db.adminMembers ?? []).map((m) => (m.id === memberId ? { ...m, status } : m)) };
+    const who = nameOf(db.users.find((u) => u.id === target?.userId));
+    return audit(next, status === "deactivated" ? `Deactivated the admin ${who}` : `Reactivated the admin ${who}`, who, "account");
   });
 }
 
 /* ---------- Client: setup (C2 to C6) ---------- */
 
 /** The setup steps for a client, in order. Full-service adds a secure-access step; neither uses the LinkedIn API. */
-const setupOrder = (service?: Client["service"]): SetupStep[] => ["service", "permissions", ...(service === "full-service" ? ["access" as const] : []), "goals-call", "strategy-call", "plan", "review"];
+const setupOrder = (service?: Client["service"]): SetupStep[] => ["service", "permissions", ...(service === "full-service" ? ["access" as const] : []), "discovery-call", "strategy-call", "plan", "review"];
 
 /** B: the client chooses their service at onboarding: self-serve (hands-on) or full-service (done-for-you). */
 export async function setService(clientId: string, service: "self-serve" | "full-service") {
@@ -1150,7 +1264,7 @@ export async function completeSetupStep(clientId: string, step: SetupStep) {
   });
 }
 
-export async function bookCall(clientId: string, kind: "goals" | "strategy", at: string, recording: boolean) {
+export async function bookCall(clientId: string, kind: "discovery" | "strategy", at: string, recording: boolean) {
   await delay(600);
   update((db) => {
     const c = clientOf(db, clientId);
@@ -1160,10 +1274,130 @@ export async function bookCall(clientId: string, kind: "goals" | "strategy", at:
     const mu = db.users.find((u) => u.id === db.managers.find((m) => m.id === managerId)?.userId);
     return notify(next, mu?.id, `${nameOf(clientUser(db, clientId))} booked their ${kind} call.`, "/manager/calls");
   });
-  await completeSetupStep(clientId, kind === "goals" ? "goals-call" : "strategy-call");
+  await completeSetupStep(clientId, kind === "discovery" ? "discovery-call" : "strategy-call");
 }
 
-export async function signContract(clientId: string, months: 3 | 6 | 12, monthlyCents: number, signedName: string, videoAddon?: NonNullable<Db["contracts"][number]["videoAddon"]>["maker"]) {
+// ---------- Ad-hoc check-in call lifecycle ----------
+// A check-in call is agreed between client and manager before it is confirmed. The manager always
+// provides the Google Meet link. A call is only "booked" once both sides agree a time and a link exists.
+
+const callTitleOf = (call: { title?: string }) => call.title?.trim() || "your call";
+const otherSide = (by: "client" | "manager") => (by === "manager" ? ("client" as const) : ("manager" as const));
+const sideName = (db: Db, clientId: string, side: "client" | "manager") => (side === "manager" ? nameOf(managerUserOf(db, clientId)) : nameOf(clientUser(db, clientId)));
+const sideUser = (db: Db, clientId: string, side: "client" | "manager") => (side === "manager" ? managerUserOf(db, clientId)?.id : clientUser(db, clientId)?.id);
+const sideHref = (side: "client" | "manager") => (side === "manager" ? "/manager/calls" : "/calls");
+
+const kindTitle = { discovery: "Discovery call", strategy: "Strategy call", "check-in": "Check-in call" } as const;
+
+/**
+ * Flow A: the client offers one or more times from the manager's open slots. Held, pending the manager, who
+ * confirms one with a link. Used for ad-hoc check-ins and for the two onboarding calls (discovery, strategy).
+ */
+export async function requestCall(clientId: string, data: { kind?: Call["kind"]; title?: string; agenda?: string; times: string[]; recording: boolean }) {
+  await delay(600);
+  const kind = data.kind ?? "check-in";
+  update((db) => {
+    const managerId = clientOf(db, clientId)?.managerId ?? "m-ada";
+    const call: Db["calls"][number] = {
+      id: id("cl"), clientId, managerId, kind, openedBy: "client",
+      title: data.title?.trim() || (kind === "check-in" ? undefined : kindTitle[kind]), agenda: data.agenda?.trim() || undefined, at: data.times[0], minutes: 30, meetUrl: "",
+      recording: data.recording, status: "pending", pending: { awaiting: "manager", by: "client", options: data.times },
+    };
+    const next: Db = { ...db, calls: [...db.calls, call] };
+    return notify(next, managerUserOf(db, clientId)?.id, `${nameOf(clientUser(db, clientId))} asked to book a call: “${call.title ?? kindTitle[kind]}”.`, "/manager/calls", { email: true });
+  });
+  // The two onboarding calls advance setup once requested; the manager confirms the time and link next.
+  if (kind === "discovery" || kind === "strategy") await completeSetupStep(clientId, kind === "discovery" ? "discovery-call" : "strategy-call");
+}
+
+/** Flow B: the manager offers the client one or more times (agreed in chat first). Pending the client's acceptance. */
+export async function createCallForClient(clientId: string, data: { title: string; agenda?: string; times: string[]; meetUrl?: string; recording: boolean }) {
+  await delay(600);
+  update((db) => {
+    const managerId = clientOf(db, clientId)?.managerId ?? "m-ada";
+    const call: Db["calls"][number] = {
+      id: id("cl"), clientId, managerId, kind: "check-in", openedBy: "manager",
+      title: data.title.trim(), agenda: data.agenda?.trim() || undefined, at: data.times[0], minutes: 30, meetUrl: data.meetUrl?.trim() ?? "",
+      recording: data.recording, status: "pending", pending: { awaiting: "client", by: "manager", options: data.times },
+    };
+    const next: Db = { ...db, calls: [...db.calls, call] };
+    return notify(next, clientUser(db, clientId)?.id, `${nameOf(managerUserOf(db, clientId))} proposed a call: “${call.title}”. Accept a time or suggest another.`, "/calls", { email: true });
+  });
+}
+
+/**
+ * Decline-and-suggest: the only way to turn down a time. Requires a reason and one or more alternative
+ * times (from the manager's open slots). The other side must accept one or suggest again — the call is not
+ * booked until both agree. Also used to reschedule a booked call.
+ */
+export async function proposeTimes(callId: string, by: "client" | "manager", times: string[], note: string) {
+  await delay(500);
+  update((db) => {
+    const call = db.calls.find((c) => c.id === callId);
+    if (!call) return db;
+    const awaiting = otherSide(by);
+    // A new time is on the table, so any old link no longer applies until the manager confirms again.
+    const next: Db = { ...db, calls: db.calls.map((c) => (c.id === callId ? { ...c, at: times[0], status: "pending" as const, meetUrl: "", pending: { awaiting, by, note: note.trim() || undefined, options: times } } : c)) };
+    return notify(next, sideUser(db, call.clientId, awaiting), `${sideName(db, call.clientId, by)} suggested ${times.length > 1 ? `${times.length} new times` : "a new time"} for “${callTitleOf(call)}”.`, sideHref(awaiting), { email: true });
+  });
+}
+
+/** The manager confirms a time and adds the Meet link. The call becomes booked. */
+export async function confirmCall(callId: string, chosenAt: string, meetUrl: string) {
+  await delay(500);
+  update((db) => {
+    const call = db.calls.find((c) => c.id === callId);
+    if (!call) return db;
+    let next: Db = { ...db, calls: db.calls.map((c) => (c.id === callId ? { ...c, at: chosenAt, status: "booked" as const, meetUrl: meetUrl.trim(), pending: undefined } : c)) };
+    next = log(next, call.clientId, "team", "setting", `Confirmed the call “${callTitleOf(call)}”`);
+    return notify(next, clientUser(db, call.clientId)?.id, `${nameOf(managerUserOf(db, call.clientId))} confirmed “${callTitleOf(call)}” for ${dayTimeIn(chosenAt)}. The meeting link is ready.`, "/calls", { email: true });
+  });
+}
+
+/** The client accepts one of the manager's offered times. The manager then adds the link to confirm. */
+export async function acceptTime(callId: string, chosenAt: string) {
+  await delay(500);
+  update((db) => {
+    const call = db.calls.find((c) => c.id === callId);
+    if (!call) return db;
+    const next: Db = { ...db, calls: db.calls.map((c) => (c.id === callId ? { ...c, at: chosenAt, status: "pending" as const, pending: { awaiting: "manager" as const, by: "client" as const, options: [chosenAt] } } : c)) };
+    return notify(next, managerUserOf(db, call.clientId)?.id, `${nameOf(clientUser(db, call.clientId))} agreed ${dayTimeIn(chosenAt)} for “${callTitleOf(call)}”. Add the meeting link to confirm.`, "/manager/calls", { email: true });
+  });
+}
+
+/** Post-call: the manager records whether the call held and the feedback (transcript/insight), or that it did not hold. Feeds the strategy. */
+export async function recordCallOutcome(callId: string, data: { held: boolean; transcript?: string; insights?: string; note?: string }) {
+  await delay(500);
+  update((db) => {
+    const call = db.calls.find((c) => c.id === callId);
+    if (!call) return db;
+    const patch = data.held
+      ? { status: "done" as const, outcome: "held" as const, transcript: data.transcript?.trim() || undefined, insights: data.insights?.trim() || undefined }
+      : { status: "done" as const, outcome: "missed" as const, outcomeNote: data.note?.trim() || undefined };
+    return { ...db, calls: db.calls.map((c) => (c.id === callId ? { ...c, ...patch } : c)) };
+  });
+}
+
+/** #42: the AM saves the call's transcript (only if it was recorded) and insights as a draft. */
+export async function saveCallNotes(callId: string, notes: { transcript?: string; insights: string }) {
+  await delay(500);
+  update((db) => ({ ...db, calls: db.calls.map((c) => (c.id === callId ? { ...c, transcript: notes.transcript?.trim() || undefined, insights: notes.insights.trim() || undefined } : c)) }));
+}
+
+/** #42: the AM shares the transcript and insights with the client. The client sees them only after this. */
+export async function shareCallNotes(callId: string) {
+  await delay(500);
+  update((db) => {
+    const call = db.calls.find((c) => c.id === callId);
+    if (!call) return db;
+    const name = call.kind === "check-in" ? "check-in call" : `${call.kind} call`;
+    let next: Db = { ...db, calls: db.calls.map((c) => (c.id === callId ? { ...c, sharedAt: nowIso() } : c)) };
+    next = log(next, call.clientId, "team", "setting", `Shared the ${name} notes`);
+    return notify(next, clientUser(db, call.clientId)?.id, `${managerUserOf(db, call.clientId)?.firstName ?? "Your account manager"} shared the notes from your ${name}.`, "/calls", { email: true });
+  });
+}
+
+export async function signContract(clientId: string, months: 3 | 6 | 12, monthlyCents: number, signedName: string) {
   await delay(700);
   const DAY = 86_400_000;
   const now = Date.now();
@@ -1184,13 +1418,10 @@ export async function signContract(clientId: string, months: 3 | 6 | 12, monthly
           endsAt: new Date(now + 14 * DAY + months * 30 * DAY).toISOString(),
           status: "free",
           paid: false,
-          videoAddon: videoAddon ? { maker: videoAddon, since: nowIso() } : undefined,
         },
       ],
     };
-    const signed = notify(next, clientUser(db, clientId)?.id, `Your contract is signed. Your free 2 weeks have started.`, "/contract");
-    // The manager plans the video conversation for the goals call.
-    return videoAddon ? notify(signed, managerUserOf(db, clientId)?.id, `${nameOf(clientUser(db, clientId))} added the video add-on${videoAddon === "client" ? "" : " with Bluecut-made video"}. Talk about video on the goals call${videoAddon === "client" ? "" : ", then send a quote for production"}.`, `/manager/clients/${clientId}`) : signed;
+    return notify(next, clientUser(db, clientId)?.id, `Your contract is signed. Your free 2 weeks have started.`, "/contract");
   });
 }
 
@@ -1262,9 +1493,21 @@ export async function cancelManagerChange(requestId: string) {
   update((db) => ({ ...db, changeRequests: db.changeRequests.filter((r) => r.id !== requestId) }));
 }
 
-export async function saveProfile(userId: string, patch: { firstName?: string; lastName?: string; timeZone?: string; title?: string }) {
+export async function saveProfile(userId: string, patch: { firstName?: string; lastName?: string; timeZone?: string; title?: string; linkedinUrl?: string }) {
   await delay();
   update((db) => ({ ...db, users: db.users.map((u) => (u.id === userId ? { ...u, ...patch } : u)) }));
+}
+
+/** #43: re-read the name/photo from the person's stored LinkedIn URL, on demand (the client, or the AM/admin for a client). */
+export async function syncLinkedIn(userId: string) {
+  await delay(900);
+  update((db) => {
+    const user = db.users.find((u) => u.id === userId);
+    if (!user?.linkedinUrl) return db;
+    const prof = extractLinkedIn(user.linkedinUrl);
+    if (!prof || prof.kind !== "person") return db;
+    return { ...db, users: db.users.map((u) => (u.id === userId ? { ...u, firstName: prof.firstName, lastName: prof.lastName } : u)) };
+  });
 }
 
 export async function setTwoStep(userId: string, on: boolean) {
@@ -1348,7 +1591,7 @@ export async function askToMoveCall(callId: string) {
   update((db) => {
     const c = db.calls.find((x) => x.id === callId);
     if (!c) return db;
-    const name = c.title?.toLowerCase() ?? { goals: "goals call", strategy: "strategy call", "check-in": "check-in call" }[c.kind];
+    const name = c.title?.toLowerCase() ?? { discovery: "discovery call", strategy: "strategy call", "check-in": "check-in call" }[c.kind];
     return notify(db, managerUserOf(db, c.clientId)?.id, `${nameOf(clientUser(db, c.clientId))} asked to move their ${name}. Offer a new time.`, "/manager/calls", { email: true });
   });
 }
@@ -1401,7 +1644,7 @@ export async function sendMissedReason(taskId: string, reason: string) {
   });
 }
 
-/** M3: the manager confirms what was agreed on the goals call. New off-limits items go to the client's Brand. */
+/** M3: the manager confirms what was agreed on the discovery call. New off-limits items go to the client's Brand. */
 export async function confirmGoalsSummary(clientId: string, summary: { goal: string; audience: string; tone: string; notes?: string; offLimit?: string }) {
   await delay(700);
   update((db) => {
@@ -1411,7 +1654,7 @@ export async function confirmGoalsSummary(clientId: string, summary: { goal: str
       next = { ...next, brands: withBrand(next, clientId).map((b) => (b.clientId === clientId ? { ...b, offLimits: [...b.offLimits, { id: id("o"), kind: "topic" as const, text: summary.offLimit! }] } : b)) };
       next = notify(next, clientUser(db, clientId)?.id, `Added to your off limits after the call: ${summary.offLimit}`, "/brand");
     }
-    return log(next, clientId, "team", "setting", "Confirmed the goals call summary");
+    return log(next, clientId, "team", "setting", "Confirmed the discovery call summary");
   });
 }
 
@@ -1720,11 +1963,6 @@ export async function reinstateManager(managerId: string) {
     const next = audit({ ...db, managers: db.managers.map((m) => (m.id === managerId ? { ...m, status: "active" } : m)) }, `Reinstated ${nameOf(mu)}`, nameOf(mu), "account");
     return notify(next, mu?.id, "Your access is back. Sign in to see your training and clients.", "/manager", { email: true });
   });
-}
-
-export async function approvePayout(payoutId: string) {
-  await delay();
-  update((db) => audit({ ...db, payouts: db.payouts.map((p) => (p.id === payoutId ? { ...p, status: "approved" } : p)) }, "Approved a payout", "Payouts", "refund"));
 }
 
 export async function saveSettings(settings: Db["settings"]) {

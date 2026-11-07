@@ -159,7 +159,7 @@ export default function ManagerHome() {
               {!calls.length && <EmptyState title="No calls today">Booked calls show here on the day.</EmptyState>}
               <ul className="flex flex-col gap-3">
                 {calls.map((c) => {
-                  const callName = c.kind === "goals" ? "Goals call" : c.kind === "strategy" ? "Strategy call" : "Check-in";
+                  const callName = c.kind === "discovery" ? "Discovery call" : c.kind === "strategy" ? "Strategy call" : "Check-in";
                   return (
                   <li key={c.id}>
                     {/* As on the Calls page: the whole tile opens the Meet link (a covering link); the footer actions sit above it. */}

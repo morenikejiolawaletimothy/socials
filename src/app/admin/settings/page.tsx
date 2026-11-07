@@ -41,22 +41,16 @@ export default function SettingsPage() {
               help={`Now ${money(s.autoRefundLimitCents)}. Larger refunds wait for you.`}
             />
             <Input
-              label="Video add-on, a month (USD)"
-              value={String(s.videoAddonCents / 100)}
-              onChange={(e) => setS({ ...s, videoAddonCents: (Number(e.target.value) || 0) * 100 })}
-              help={`Now ${money(s.videoAddonCents)} on top of the plan. Applies to new add-ons.`}
-            />
-            <Input
               label="Full-service, a month (USD)"
               value={String(s.fullServiceCents / 100)}
               onChange={(e) => setS({ ...s, fullServiceCents: (Number(e.target.value) || 0) * 100 })}
               help={`Now ${money(s.fullServiceCents)} on top of the plan. Done-for-you tier.`}
             />
             <Input
-              label="Company Page management, a month (USD)"
+              label="Company Page add-on, a month (USD)"
               value={String(s.pageManagementCents / 100)}
               onChange={(e) => setS({ ...s, pageManagementCents: (Number(e.target.value) || 0) * 100 })}
-              help={`Now ${money(s.pageManagementCents)} on top of the plan. Full-service add-on.`}
+              help={`Now ${money(s.pageManagementCents)} on top of the plan. Available on either tier.`}
             />
             <Input label="Free period (days)" value={String(s.freeDays)} onChange={num("freeDays")} />
             <Input
