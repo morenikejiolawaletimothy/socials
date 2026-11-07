@@ -306,7 +306,7 @@ export function PlanTab({ b, id }: { b: ClientBundle; id: string }) {
     return (
       <Card title="Plan">
         <div className="flex flex-col gap-4">
-          <Banner tone="info">No strategy yet. It is drafted after the goals call.</Banner>
+          <Banner tone="info">No strategy yet. It is drafted after the discovery call.</Banner>
           <Link href={`/manager/clients/${id}/onboard`} className={`${buttonClass("primary")} self-start`}>
             Open onboarding
           </Link>
@@ -1038,7 +1038,7 @@ export function BrandTab({ b }: { b: ClientBundle }) {
 
 /* ---------- Calls and notes ---------- */
 
-const callName = { goals: "Goals call", strategy: "Strategy call", "check-in": "Check-in" };
+const callName = { discovery: "Discovery call", strategy: "Strategy call", "check-in": "Check-in" };
 
 export function CallsTab({ b }: { b: ClientBundle }) {
   const callStatus = (c: ClientBundle["calls"][number]) =>

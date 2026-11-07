@@ -8,7 +8,7 @@ import { ClientCallActions } from "@/components/calls/ClientCallActions";
 import { availableTimes, takenTimes } from "@/components/calls/TimePicker";
 import { Columns } from "@/components/layout/Columns";
 import { ManagerCard } from "@/components/rails/ManagerCard";
-import { CallRow, callTitle, upcomingCalls } from "@/components/rails/NextCallCard";
+import { callTitle, upcomingCalls } from "@/components/rails/NextCallCard";
 import { Badge, Card, Meta, Segmented, TextLink, textActionClass, Tile } from "@/components/ui";
 import { date, dayTimeIn, time } from "@/lib/format";
 import { useData, useMyClient, type Call } from "@/lib/mock";
@@ -59,24 +59,18 @@ export default function CallsPage() {
               {upcoming.map((c) => (
                 <li key={c.id}>
                   <Tile>
-                    {c.kind === "check-in" ? (
-                      <div className="flex flex-col gap-2">
-                        <span className="text-body font-medium text-primary">{callTitle(c)}</span>
-                        <Meta icon={Timer}>{dayTimeIn(c.at)} · {c.minutes} min</Meta>
-                        {c.agenda && <p className="line-clamp-1 text-body-sm text-secondary">{c.agenda}</p>}
-                        {botLine(c)}
-                      </div>
-                    ) : (
-                      <CallRow call={c} />
-                    )}
+                    <div className="flex flex-col gap-2">
+                      <span className="text-body font-medium text-primary">{callTitle(c)}</span>
+                      <Meta icon={Timer}>{dayTimeIn(c.at)} · {c.minutes} min</Meta>
+                      {c.agenda && <p className="line-clamp-1 text-body-sm text-secondary">{c.agenda}</p>}
+                      {botLine(c)}
+                    </div>
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
                       <AddToCalendar event={{ title: callTitle(c), start: c.at, minutes: c.minutes, url: c.meetUrl, description: "Bluecut Socials." }} />
-                      {c.kind === "check-in" && (
-                        <span className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                          {c.meetUrl && <a href={c.meetUrl} target="_blank" rel="noreferrer" className={textActionClass}>Join call</a>}
-                          <ClientCallActions call={c} times={times} managerName={mgrFirst} />
-                        </span>
-                      )}
+                      <span className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                        {c.meetUrl && <a href={c.meetUrl} target="_blank" rel="noreferrer" className={textActionClass}>Join call</a>}
+                        <ClientCallActions call={c} times={times} managerName={mgrFirst} />
+                      </span>
                     </div>
                   </Tile>
                 </li>

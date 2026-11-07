@@ -60,7 +60,7 @@ const story: { title: string; caption: string; body: React.ReactNode }[] = [
     caption: "Two 30-minute calls with your manager, at times that suit you.",
     body: (
       <>
-        <Row icon={CalendarBlank} label="Goals call, Mon 10am">
+        <Row icon={CalendarBlank} label="Discovery call, Mon 10am">
           <Pill tone="done">Booked</Pill>
         </Row>
         <Row icon={CalendarBlank} label="Strategy call, Thu 10am" last>

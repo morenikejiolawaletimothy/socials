@@ -302,7 +302,7 @@ export default function BrandPage() {
           </form>
         ) : (
           <div className="flex flex-col gap-4">
-            <p className="text-body text-primary">{brand.voice || "Not written yet. Your manager fills this in after your goals call, and you can change it."}</p>
+            <p className="text-body text-primary">{brand.voice || "Not written yet. Your manager fills this in after your discovery call, and you can change it."}</p>
             {(
               [
                 { label: "Words you use", words: brand.wordsUse, bg: "bg-success-bg", icon: <CheckCircle className="size-4 shrink-0 text-success" aria-hidden /> },

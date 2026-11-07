@@ -4,7 +4,7 @@ import { engageKinds, isEngage } from "../engage";
 import { dayTimeIn, money, plural } from "../format";
 import { extractLinkedIn } from "./auth";
 import { delay, getDb, update } from "./store";
-import type { Activity, AdminMember, AdminRole, Assistant, Channels, Client, Db, EngageAction, Handoff, Message, Permissions, PostStatus, Reaction, ReviewSettings, SetupStep, User } from "./types";
+import type { Activity, AdminMember, AdminRole, Assistant, Call, Channels, Client, Db, EngageAction, Handoff, Message, Permissions, PostStatus, Reaction, ReviewSettings, SetupStep, User } from "./types";
 
 /*
  * Every change a screen can make. Phase 2 swaps each body for an API call; screens keep calling the same names.
@@ -1233,7 +1233,7 @@ export async function setAdminStatus(memberId: string, status: "active" | "deact
 /* ---------- Client: setup (C2 to C6) ---------- */
 
 /** The setup steps for a client, in order. Full-service adds a secure-access step; neither uses the LinkedIn API. */
-const setupOrder = (service?: Client["service"]): SetupStep[] => ["service", "permissions", ...(service === "full-service" ? ["access" as const] : []), "goals-call", "strategy-call", "plan", "review"];
+const setupOrder = (service?: Client["service"]): SetupStep[] => ["service", "permissions", ...(service === "full-service" ? ["access" as const] : []), "discovery-call", "strategy-call", "plan", "review"];
 
 /** B: the client chooses their service at onboarding: self-serve (hands-on) or full-service (done-for-you). */
 export async function setService(clientId: string, service: "self-serve" | "full-service") {
@@ -1264,7 +1264,7 @@ export async function completeSetupStep(clientId: string, step: SetupStep) {
   });
 }
 
-export async function bookCall(clientId: string, kind: "goals" | "strategy", at: string, recording: boolean) {
+export async function bookCall(clientId: string, kind: "discovery" | "strategy", at: string, recording: boolean) {
   await delay(600);
   update((db) => {
     const c = clientOf(db, clientId);
@@ -1274,7 +1274,7 @@ export async function bookCall(clientId: string, kind: "goals" | "strategy", at:
     const mu = db.users.find((u) => u.id === db.managers.find((m) => m.id === managerId)?.userId);
     return notify(next, mu?.id, `${nameOf(clientUser(db, clientId))} booked their ${kind} call.`, "/manager/calls");
   });
-  await completeSetupStep(clientId, kind === "goals" ? "goals-call" : "strategy-call");
+  await completeSetupStep(clientId, kind === "discovery" ? "discovery-call" : "strategy-call");
 }
 
 // ---------- Ad-hoc check-in call lifecycle ----------
@@ -1287,19 +1287,27 @@ const sideName = (db: Db, clientId: string, side: "client" | "manager") => (side
 const sideUser = (db: Db, clientId: string, side: "client" | "manager") => (side === "manager" ? managerUserOf(db, clientId)?.id : clientUser(db, clientId)?.id);
 const sideHref = (side: "client" | "manager") => (side === "manager" ? "/manager/calls" : "/calls");
 
-/** Flow A: the client asks to meet, offering one or more times from the manager's open slots. Held, pending the manager. */
-export async function requestCall(clientId: string, data: { title: string; agenda: string; times: string[]; recording: boolean }) {
+const kindTitle = { discovery: "Discovery call", strategy: "Strategy call", "check-in": "Check-in call" } as const;
+
+/**
+ * Flow A: the client offers one or more times from the manager's open slots. Held, pending the manager, who
+ * confirms one with a link. Used for ad-hoc check-ins and for the two onboarding calls (discovery, strategy).
+ */
+export async function requestCall(clientId: string, data: { kind?: Call["kind"]; title?: string; agenda?: string; times: string[]; recording: boolean }) {
   await delay(600);
+  const kind = data.kind ?? "check-in";
   update((db) => {
     const managerId = clientOf(db, clientId)?.managerId ?? "m-ada";
     const call: Db["calls"][number] = {
-      id: id("cl"), clientId, managerId, kind: "check-in", openedBy: "client",
-      title: data.title.trim(), agenda: data.agenda.trim(), at: data.times[0], minutes: 30, meetUrl: "",
+      id: id("cl"), clientId, managerId, kind, openedBy: "client",
+      title: data.title?.trim() || (kind === "check-in" ? undefined : kindTitle[kind]), agenda: data.agenda?.trim() || undefined, at: data.times[0], minutes: 30, meetUrl: "",
       recording: data.recording, status: "pending", pending: { awaiting: "manager", by: "client", options: data.times },
     };
     const next: Db = { ...db, calls: [...db.calls, call] };
-    return notify(next, managerUserOf(db, clientId)?.id, `${nameOf(clientUser(db, clientId))} asked to book a call: “${call.title}”.`, "/manager/calls", { email: true });
+    return notify(next, managerUserOf(db, clientId)?.id, `${nameOf(clientUser(db, clientId))} asked to book a call: “${call.title ?? kindTitle[kind]}”.`, "/manager/calls", { email: true });
   });
+  // The two onboarding calls advance setup once requested; the manager confirms the time and link next.
+  if (kind === "discovery" || kind === "strategy") await completeSetupStep(clientId, kind === "discovery" ? "discovery-call" : "strategy-call");
 }
 
 /** Flow B: the manager offers the client one or more times (agreed in chat first). Pending the client's acceptance. */
@@ -1583,7 +1591,7 @@ export async function askToMoveCall(callId: string) {
   update((db) => {
     const c = db.calls.find((x) => x.id === callId);
     if (!c) return db;
-    const name = c.title?.toLowerCase() ?? { goals: "goals call", strategy: "strategy call", "check-in": "check-in call" }[c.kind];
+    const name = c.title?.toLowerCase() ?? { discovery: "discovery call", strategy: "strategy call", "check-in": "check-in call" }[c.kind];
     return notify(db, managerUserOf(db, c.clientId)?.id, `${nameOf(clientUser(db, c.clientId))} asked to move their ${name}. Offer a new time.`, "/manager/calls", { email: true });
   });
 }
@@ -1636,7 +1644,7 @@ export async function sendMissedReason(taskId: string, reason: string) {
   });
 }
 
-/** M3: the manager confirms what was agreed on the goals call. New off-limits items go to the client's Brand. */
+/** M3: the manager confirms what was agreed on the discovery call. New off-limits items go to the client's Brand. */
 export async function confirmGoalsSummary(clientId: string, summary: { goal: string; audience: string; tone: string; notes?: string; offLimit?: string }) {
   await delay(700);
   update((db) => {
@@ -1646,7 +1654,7 @@ export async function confirmGoalsSummary(clientId: string, summary: { goal: str
       next = { ...next, brands: withBrand(next, clientId).map((b) => (b.clientId === clientId ? { ...b, offLimits: [...b.offLimits, { id: id("o"), kind: "topic" as const, text: summary.offLimit! }] } : b)) };
       next = notify(next, clientUser(db, clientId)?.id, `Added to your off limits after the call: ${summary.offLimit}`, "/brand");
     }
-    return log(next, clientId, "team", "setting", "Confirmed the goals call summary");
+    return log(next, clientId, "team", "setting", "Confirmed the discovery call summary");
   });
 }
 

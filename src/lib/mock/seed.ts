@@ -50,7 +50,7 @@ export function seed(): Db {
     managerId: null,
     service: "self-serve",
     setupProgress: 100,
-    setupDone: ["service", "permissions", "goals-call", "strategy-call", "plan", "review"],
+    setupDone: ["service", "permissions", "discovery-call", "strategy-call", "plan", "review"],
     linkedin: "connected",
     postingPaused: false,
     permissions: allOn,
@@ -104,7 +104,7 @@ export function seed(): Db {
   });
 
   return {
-    version: 32,
+    version: 33,
     session: {
       role: "client",
       userIds: { client: "u-chidi", manager: "u-ada", owner: "u-fola" },
@@ -140,7 +140,7 @@ export function seed(): Db {
       client({ id: "c-kemi", userId: "u-kemi", managerId: "m-tunde", company: "Northwind", role: "Head of product", country: "Canada", industry: "Software", status: "paused", pausedReason: "unpaid", pausedAt: at(-12), goal: "Grow visibility for a move into a VP role.", joinedAt: at(-26), atRisk: "Paused for 12 days, unpaid" }),
       client({ id: "c-tobi", userId: "u-tobi", managerId: "m-tunde", company: "Ledgerly", role: "CTO", country: "United Kingdom", industry: "Fintech", status: "active", goal: "Hire senior engineers and be known for engineering culture.", joinedAt: at(-120), atRisk: "Open complaint about post quality" }),
       client({ id: "c-musa", userId: "u-musa", managerId: "m-tunde", company: "Sahel Ventures", role: "Partner", country: "Nigeria", industry: "Venture capital", status: "active", goal: "Attract strong founders in the Sahel to pitch.", joinedAt: at(-40) }),
-      client({ id: "c-tari", userId: "u-tari", managerId: "m-ada", company: "Delmont Group", role: "CEO", country: "Nigeria", industry: "Real estate", status: "active", service: "full-service", setupDone: ["service", "permissions", "access", "goals-call", "strategy-call", "plan", "review"], permissions: { ...allOn, companyPage: true }, companyPage: { since: at(-30) }, fullService: { since: at(-30), access: { credentials: "set", twoFactor: true } }, goal: "Be the best-known name in West African commercial real estate and attract institutional investors.", joinedAt: at(-38) }),
+      client({ id: "c-tari", userId: "u-tari", managerId: "m-ada", company: "Delmont Group", role: "CEO", country: "Nigeria", industry: "Real estate", status: "active", service: "full-service", setupDone: ["service", "permissions", "access", "discovery-call", "strategy-call", "plan", "review"], permissions: { ...allOn, companyPage: true }, companyPage: { since: at(-30) }, fullService: { since: at(-30), access: { credentials: "set", twoFactor: true } }, goal: "Be the best-known name in West African commercial real estate and attract institutional investors.", joinedAt: at(-38) }),
     ],
     managers: [
       { id: "m-ada", userId: "u-ada", status: "active", intro: "I help founders in fintech and health tell their story on LinkedIn. Six years in communications, based in Lagos.",
@@ -308,7 +308,7 @@ export function seed(): Db {
     ],
 
     calls: [
-      { id: "cl-chidi-1", clientId: "c-chidi", managerId: "m-ada", kind: "goals", at: at(-60, 10), minutes: 30, meetUrl: "https://meet.google.com/example-abc", recording: true, status: "done", transcript: "AM: What do you most want to be known for?\nChidi: Payments across West Africa, and I want investors to notice me before we raise.\nAM: Who matters most to reach?\nChidi: Investors, a few bank partners, and the fintech press.", insights: "Goal: be known for payments in West Africa and open investor conversations before the Series A. Audience: investors, bank partners, fintech press.", sharedAt: at(-60, 11) },
+      { id: "cl-chidi-1", clientId: "c-chidi", managerId: "m-ada", kind: "discovery", at: at(-60, 10), minutes: 30, meetUrl: "https://meet.google.com/example-abc", recording: true, status: "done", transcript: "AM: What do you most want to be known for?\nChidi: Payments across West Africa, and I want investors to notice me before we raise.\nAM: Who matters most to reach?\nChidi: Investors, a few bank partners, and the fintech press.", insights: "Goal: be known for payments in West Africa and open investor conversations before the Series A. Audience: investors, bank partners, fintech press.", sharedAt: at(-60, 11) },
       { id: "cl-chidi-2", clientId: "c-chidi", managerId: "m-ada", kind: "strategy", at: at(-56, 10), minutes: 30, meetUrl: "https://meet.google.com/example-def", recording: true, status: "done", transcript: "AM: We'll run three topics, start at two posts a week for two weeks, then move to three.\nChidi: Good. One thing, keep FirstBank off limits for now.", insights: "Agreed 3 topics, 2 posts a week for 2 weeks, then 3. Added FirstBank to off limits.", sharedAt: at(-56, 11) },
       { id: "cl-chidi-3", clientId: "c-chidi", managerId: "m-ada", kind: "check-in", at: at(6, 11), minutes: 30, meetUrl: "https://meet.google.com/example-ghi", recording: true, status: "booked" },
       { id: "cl-chidi-4", clientId: "c-chidi", managerId: "m-ada", kind: "check-in", title: "Monthly review", at: at(20, 14, 30), minutes: 30, meetUrl: "https://meet.google.com/example-yza", recording: true, status: "booked" },
@@ -318,10 +318,10 @@ export function seed(): Db {
       { id: "cl-chidi-prop", clientId: "c-chidi", managerId: "m-ada", kind: "check-in", openedBy: "manager", title: "Catch-up on investor posts", agenda: "Plan the next run of posts aimed at investors.", at: at(7, 15), minutes: 30, meetUrl: "", recording: false, status: "pending", pending: { awaiting: "client", by: "manager", note: "Moved us later so we have the fresh week's numbers. Either of these work for me.", options: [at(7, 15), at(8, 11)] } },
       // A past check-in that still needs the manager's feedback (held or did not hold).
       { id: "cl-chidi-past", clientId: "c-chidi", managerId: "m-ada", kind: "check-in", openedBy: "client", title: "Quick question on a post", agenda: "Wanted a fast read on the cross-border draft before it went out.", at: at(-2, 11), minutes: 30, meetUrl: "https://meet.google.com/example-past", recording: true, status: "booked" },
-      { id: "cl-ngozi-1", clientId: "c-ngozi", managerId: "m-ada", kind: "goals", at: at(0, 15), minutes: 30, meetUrl: "https://meet.google.com/example-jkl", recording: true, status: "booked",
+      { id: "cl-ngozi-1", clientId: "c-ngozi", managerId: "m-ada", kind: "discovery", at: at(0, 15), minutes: 30, meetUrl: "https://meet.google.com/example-jkl", recording: true, status: "booked",
         prep: ["Her headline still says \"Founder\" only. Ask what she wants to be known for.", "Last post was 8 months ago, a product launch with 40 reactions.", "Ask about distribution partners she would most like to reach.", "Ask what is off limits: competitors, suppliers, politics."] },
       { id: "cl-ngozi-2", clientId: "c-ngozi", managerId: "m-ada", kind: "strategy", at: at(4, 10), minutes: 30, meetUrl: "https://meet.google.com/example-mno", recording: true, status: "booked" },
-      { id: "cl-femi-1", clientId: "c-femi", managerId: "m-ada", kind: "goals", at: at(-4, 11), minutes: 30, meetUrl: "https://meet.google.com/example-pqr", recording: false, status: "done", insights: "Goal: Series A in 9 months. Wants to be the voice on off-grid solar.", sharedAt: at(-4, 12) },
+      { id: "cl-femi-1", clientId: "c-femi", managerId: "m-ada", kind: "discovery", at: at(-4, 11), minutes: 30, meetUrl: "https://meet.google.com/example-pqr", recording: false, status: "done", insights: "Goal: Series A in 9 months. Wants to be the voice on off-grid solar.", sharedAt: at(-4, 12) },
       { id: "cl-femi-2", clientId: "c-femi", managerId: "m-ada", kind: "strategy", at: at(-1, 11), minutes: 30, meetUrl: "https://meet.google.com/example-stu", recording: false, status: "done", insights: "Femi asked to make topic 3 about the team, not fundraising, and to start with 2 posts a week.", sharedAt: at(-1, 12) },
       { id: "cl-sarah-3", clientId: "c-sarah", managerId: "m-ada", kind: "check-in", at: at(0, 17, 30), minutes: 30, meetUrl: "https://meet.google.com/example-vwx", recording: true, status: "booked", prep: ["First week review: 1 post approved, 1 changed.", "Ask about the image for the team post."] },
     ],

@@ -215,7 +215,7 @@ export function SetupCard({ b }: { b: ClientBundle }) {
 /* ---------- Before the calls ---------- */
 
 const callInfo = {
-  goals: { name: "Goals call", covers: "We agree what you want from LinkedIn: who you want to reach and what success looks like." },
+  discovery: { name: "Discovery call", covers: "We agree what you want from LinkedIn: who you want to reach and what success looks like." },
   strategy: { name: "Strategy call", covers: "We walk you through your strategy and content plan, and agree it together." },
   "check-in": { name: "Check-in call", covers: "How things are going, and what to change." },
 };

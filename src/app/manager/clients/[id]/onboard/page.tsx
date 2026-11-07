@@ -10,7 +10,7 @@ import { Badge, Banner, Breadcrumbs, Button, buttonClass, Card, EmptyState, Info
 import { dateTime, fullName } from "@/lib/format";
 import { act, clientBundle, useMyManager, type ClientBundle } from "@/lib/mock";
 
-const steps = ["Prep", "Goals call", "Listening", "Strategy", "What we agreed", "Approved"];
+const steps = ["Prep", "Discovery call", "Listening", "Strategy", "What we agreed", "Approved"];
 
 /** One step's body: under a line below the Stepper, with 24px between sections. */
 function Step({ children }: { children: React.ReactNode }) {
@@ -61,7 +61,7 @@ function StepFooter({ onBack, children }: { onBack?: () => void; children: React
 }
 
 function currentStep(b: ClientBundle) {
-  const goals = b.calls.find((c) => c.kind === "goals");
+  const goals = b.calls.find((c) => c.kind === "discovery");
   if (!goals || goals.status !== "done") return 0;
   if (b.strategy?.status === "approved") return 5;
   if (b.strategy?.status === "agreed-sent" || b.strategy?.status === "change-asked") return 4;
@@ -69,7 +69,7 @@ function currentStep(b: ClientBundle) {
   return 3;
 }
 
-/** M3 Onboard a client: from goals call to approved strategy in about a week, with the research done for you. */
+/** M3 Onboard a client: from discovery call to approved strategy in about a week, with the research done for you. */
 function Onboard({ id }: { id: string }) {
   const confirm = useConfirm();
   const { run, pending } = useTask();
@@ -79,7 +79,7 @@ function Onboard({ id }: { id: string }) {
   const [direction, setDirection] = useState("");
   const [directions, setDirections] = useState<string[]>([]);
   const [summary, setSummary] = useState(() => ({
-    notes: b.client?.onboarding?.notes ?? b.calls.find((c) => c.kind === "goals")?.insights ?? "",
+    notes: b.client?.onboarding?.notes ?? b.calls.find((c) => c.kind === "discovery")?.insights ?? "",
     goal: b.client?.goal ?? "",
     audience: b.client?.onboarding?.audience ?? b.strategy?.audience ?? "Distribution partners, retail buyers and food journalists in Lagos and Abuja.",
     tone: b.client?.onboarding?.tone ?? b.strategy?.tone ?? "Warm, practical, proud of local sourcing.",
@@ -89,7 +89,7 @@ function Onboard({ id }: { id: string }) {
   const field = (k: keyof typeof summary) => ({ value: summary[k], onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => { setSummary({ ...summary, [k]: e.target.value }); setSummaryError(undefined); } });
   if (!b.client || !b.user) return <EmptyState title="Client not found" action={<Link href="/manager/clients" className={buttonClass("secondary")}>Go to Clients</Link>}>This client is not on your list.</EmptyState>;
 
-  const goals = b.calls.find((c) => c.kind === "goals");
+  const goals = b.calls.find((c) => c.kind === "discovery");
   const stratCall = b.calls.find((c) => c.kind === "strategy");
   const s = b.strategy;
   const first = b.user.firstName;
@@ -110,7 +110,7 @@ function Onboard({ id }: { id: string }) {
           {step === 0 && (
             <Step>
               <StepHead
-                title="Prep sheet for the goals call"
+                title="Prep sheet for the discovery call"
                 info={goals ? (goals.recording ? "Recorded with the client's consent, on your own notetaker. You paste the transcript and insights after the call." : "Not recorded. You write what you heard after the call.") : undefined}
               >
                 {goals && (
@@ -154,7 +154,7 @@ function Onboard({ id }: { id: string }) {
           {step === 1 && (
             <Step>
               <StepHead
-                title="After the goals call"
+                title="After the discovery call"
                 info={goals?.recording ? "Paste the insights from your own notetaker, then confirm. These shape the strategy." : "Write what you heard, then confirm. These shape the strategy."}
               />
               {!goals?.recording && <Textarea label="Your notes" rows={4} {...field("notes")} />}

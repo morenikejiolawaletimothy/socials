@@ -60,7 +60,7 @@ export type ReviewSettings = {
 };
 
 /** C1: the six setup steps, in order. */
-export type SetupStep = "service" | "permissions" | "access" | "goals-call" | "strategy-call" | "plan" | "review";
+export type SetupStep = "service" | "permissions" | "access" | "discovery-call" | "strategy-call" | "plan" | "review";
 
 export type Client = {
   id: string;
@@ -82,7 +82,7 @@ export type Client = {
   postingPaused: boolean;
   permissions: Permissions;
   review: ReviewSettings;
-  /** What the manager confirmed after the goals call (M3). */
+  /** What the manager confirmed after the discovery call (M3). */
   onboarding?: { audience: string; tone: string; notes?: string; confirmedAt: string };
   /** Where the client is in onboarding, after setup. */
   stage: "setup" | "calls" | "strategy" | "running";
@@ -397,7 +397,7 @@ export type Call = {
   id: string;
   clientId: string;
   managerId: string;
-  kind: "goals" | "strategy" | "check-in";
+  kind: "discovery" | "strategy" | "check-in";
   /** The call's name as the client sees it ("Onboarding call", "Quarterly review"). Falls back to a name for its kind. */
   title?: string;
   /** Ad-hoc check-in calls: what the client wants to discuss. */

@@ -8,7 +8,7 @@ import { day, time } from "@/lib/format";
 import { useMyClient, type Call } from "@/lib/mock";
 
 /** Fallback names when a call has no title of its own. */
-const callName = { goals: "Goals call", strategy: "Strategy call", "check-in": "Check-in call" };
+const callName = { discovery: "Discovery call", strategy: "Strategy call", "check-in": "Check-in call" };
 export const callTitle = (c: Call) => c.title ?? callName[c.kind];
 
 export const quietLink = "rounded-sm text-body-sm font-medium text-secondary hover:text-primary hover:underline focus-visible:focus-ring";
@@ -38,8 +38,8 @@ export function CallRow({ call: c }: { call: Call }) {
             Join call
           </a>
         )}
-        {/* Check-ins are rescheduled on the Calls page (pick a new open time); onboarding calls re-run their booking step. */}
-        <Link href={c.kind === "check-in" ? "/calls" : `/setup/calls${c.kind === "strategy" ? "?step=2" : ""}`} className={quietLink}>
+        {/* All calls are rescheduled on the Calls page: change the time (with a reason), the other side agrees. */}
+        <Link href="/calls" className={quietLink}>
           Reschedule
         </Link>
       </span>

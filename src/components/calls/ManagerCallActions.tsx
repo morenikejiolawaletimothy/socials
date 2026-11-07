@@ -44,7 +44,7 @@ export function ManagerCallActions({ call, times, clientName }: { call: Call; ti
         </>
       )}
 
-      {booked && call.kind === "check-in" && (locked ? (
+      {booked && (locked ? (
         <span className="text-body-sm text-secondary">Starts soon — the time is locked.</span>
       ) : (
         <TextButton onClick={() => setSuggesting(true)}>Change time</TextButton>

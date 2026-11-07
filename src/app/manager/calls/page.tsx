@@ -10,7 +10,7 @@ import { CallDetails } from "@/components/calls/CallDetails";
 import { CallFeedback } from "@/components/calls/CallFeedback";
 import { ManagerCallActions } from "@/components/calls/ManagerCallActions";
 import { availableTimes, takenTimes } from "@/components/calls/TimePicker";
-import { Avatar, Badge, Banner, Button, Card, EmptyState, IconButton, Meta, Pill, Segmented, TextButton, textActionClass, Tile, TileFooter, useConfirm, useTask } from "@/components/ui";
+import { Avatar, Badge, Banner, Button, Card, EmptyState, IconButton, Meta, Pill, Segmented, TextButton, textActionClass, Tile, TileFooter, useTask } from "@/components/ui";
 import { dateTime, day, fullName, plural } from "@/lib/format";
 import { act, useMyManager, type Call } from "@/lib/mock";
 import { dateKey, dayParts, slotKey, weeklyToDates } from "@/lib/slots";
@@ -19,7 +19,7 @@ const weekHeads = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 /** How far ahead a manager can open times: 8 weeks. */
 const AHEAD = 56;
 const DAY = 86_400_000;
-const kind = { goals: "Goals call", strategy: "Strategy call", "check-in": "Check-in" };
+const kind = { discovery: "Discovery call", strategy: "Strategy call", "check-in": "Check-in" };
 
 const fromKey = (k: string) => {
   const [y, m, d] = k.split("-").map(Number);
@@ -172,7 +172,6 @@ function OpenSlots({ slots, setSlots }: { slots: string[]; setSlots: React.Dispa
 /** M10 Calls and availability: booked calls by day, open slots like a calendar, and rescheduling from your side. */
 export default function CallsPage() {
   const { db, manager, user } = useMyManager();
-  const confirm = useConfirm();
   const { run, pending } = useTask();
   // Open times as calendar slots ("2026-11-12T10"). A weekly pattern from sign-up is spread over the next 8 weeks.
   const [saved, setSaved] = useState<string[]>(() => weeklyToDates(manager?.slots ?? [], Date.now(), AHEAD));
@@ -185,7 +184,7 @@ export default function CallsPage() {
   }, {});
   const clientName = (c: Call) => fullName(db.users.find((u) => u.id === db.clients.find((x) => x.id === c.clientId)?.userId));
   // Ad-hoc check-in calls still being agreed with a client.
-  const pendingCalls = db.calls.filter((c) => c.managerId === manager?.id && c.status === "pending" && c.kind === "check-in").sort((a, b) => a.at.localeCompare(b.at));
+  const pendingCalls = db.calls.filter((c) => c.managerId === manager?.id && c.status === "pending").sort((a, b) => a.at.localeCompare(b.at));
   const needsMe = pendingCalls.filter((c) => c.pending?.awaiting === "manager");
   const times = manager ? availableTimes(manager.slots ?? [], Date.now(), takenTimes(db.calls, manager.id)) : [];
   const view = viewPick ?? (needsMe.length ? "requests" : "booked");
@@ -282,31 +281,12 @@ export default function CallsPage() {
                             <a href={c.meetUrl} target="_blank" rel="noreferrer" className={textActionClass}>
                               Join call
                             </a>
-                            {c.kind === "check-in" ? (
-                              <ManagerCallActions call={c} times={times} clientName={clientName(c)} />
-                            ) : (
-                              <>
-                                <Link href={`/manager/clients/${c.clientId}/onboard`} className={quietLink}>
-                                  Prep notes
-                                </Link>
-                                <button
-                                  type="button"
-                                  className={quietLink}
-                                  onClick={() =>
-                                    confirm({
-                                      title: "Reschedule this call?",
-                                      body: `${clientName(c)} is told at once and picks a new time from your open slots.`,
-                                      warning: "Only reschedule when you really have to. Clients plan around these calls, and it counts on your record.",
-                                      confirmLabel: "Ask client to pick a new time",
-                                      action: () => act.rescheduleCall(c.id),
-                                      success: `${clientName(c)} has been asked to pick a new time.`,
-                                    })
-                                  }
-                                >
-                                  Reschedule
-                                </button>
-                              </>
+                            {c.kind !== "check-in" && (
+                              <Link href={`/manager/clients/${c.clientId}/onboard`} className={quietLink}>
+                                Prep notes
+                              </Link>
                             )}
+                            <ManagerCallActions call={c} times={times} clientName={clientName(c)} />
                           </span>
                           )}
                         </TileFooter>
