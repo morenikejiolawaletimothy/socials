@@ -1264,17 +1264,20 @@ export async function completeSetupStep(clientId: string, step: SetupStep) {
   });
 }
 
-export async function bookCall(clientId: string, kind: "goals" | "strategy", at: string, recording: boolean) {
+export async function bookCall(clientId: string, kind: "goals" | "strategy" | "check-in", at: string, recording: boolean) {
   await delay(600);
   update((db) => {
     const c = clientOf(db, clientId);
     const managerId = c?.managerId ?? "m-ada";
-    const calls = db.calls.filter((x) => !(x.clientId === clientId && x.kind === kind && x.status === "booked"));
+    // Goals and strategy are one-each (re-booking replaces the old one); check-ins can stack, so keep every booked one.
+    const calls = kind === "check-in" ? db.calls : db.calls.filter((x) => !(x.clientId === clientId && x.kind === kind && x.status === "booked"));
     const next: Db = { ...db, calls: [...calls, { id: id("cl"), clientId, managerId, kind, at, minutes: 30, meetUrl: "https://meet.google.com/example-new", recording, status: "booked" }] };
     const mu = db.users.find((u) => u.id === db.managers.find((m) => m.id === managerId)?.userId);
-    return notify(next, mu?.id, `${nameOf(clientUser(db, clientId))} booked their ${kind} call.`, "/manager/calls");
+    const label = kind === "check-in" ? "a check-in" : `their ${kind}`;
+    return notify(next, mu?.id, `${nameOf(clientUser(db, clientId))} booked ${label} call.`, "/manager/calls");
   });
-  await completeSetupStep(clientId, kind === "goals" ? "goals-call" : "strategy-call");
+  // Only the two onboarding calls advance setup; check-ins are ongoing and have no setup step.
+  if (kind === "goals" || kind === "strategy") await completeSetupStep(clientId, kind === "goals" ? "goals-call" : "strategy-call");
 }
 
 /** #42: the AM saves the call's transcript (only if it was recorded) and insights as a draft. */

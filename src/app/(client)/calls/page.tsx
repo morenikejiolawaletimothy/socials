@@ -4,7 +4,7 @@ import { AddToCalendar } from "@/components/calls/AddToCalendar";
 import { Columns } from "@/components/layout/Columns";
 import { ManagerCard } from "@/components/rails/ManagerCard";
 import { CallRow, callTitle, upcomingCalls } from "@/components/rails/NextCallCard";
-import { Card, Tile } from "@/components/ui";
+import { Card, TextLink, Tile } from "@/components/ui";
 import { date, time } from "@/lib/format";
 import { useMyClient } from "@/lib/mock";
 
@@ -16,7 +16,7 @@ export default function CallsPage() {
 
   return (
     <Columns right={<ManagerCard />} rightLabel="Your manager">
-      <Card title="Upcoming calls">
+      <Card title="Upcoming calls" action={<TextLink href="/calls/book">Book a call</TextLink>}>
         {upcoming.length ? (
           <ul className="flex flex-col gap-3">
             {upcoming.map((c) => (
@@ -31,7 +31,7 @@ export default function CallsPage() {
             ))}
           </ul>
         ) : (
-          <p className="text-body-sm text-secondary">No calls booked. When your account manager books a call with you, it shows here.</p>
+          <p className="text-body-sm text-secondary">No calls booked yet. Book a check-in with your account manager whenever you need one.</p>
         )}
       </Card>
 

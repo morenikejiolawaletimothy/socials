@@ -4,51 +4,13 @@ import { CalendarBlank, CheckCircle, Globe } from "@phosphor-icons/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useMemo, useState } from "react";
 import { AddToCalendar } from "@/components/calls/AddToCalendar";
+import { openTimes, TimePicker } from "@/components/calls/TimePicker";
 import { SetupFrame } from "@/components/client/SetupFrame";
 import { Avatar, Banner, Button, Meta, Tile, TileFooter, useTask } from "@/components/ui";
-import { day, dayTime, dayTimeIn, fullName, time } from "@/lib/format";
+import { dayTime, dayTimeIn, fullName } from "@/lib/format";
 import { act, useData, useMyClient } from "@/lib/mock";
-import { slotTimes } from "@/lib/slots";
 
 const DAY = 86_400_000;
-
-/** Bookable times for the next two weeks, from the manager's open slots (M10). */
-const openTimes = (slots: string[], from: number) => slotTimes(slots, from, 14);
-
-/** Times grouped by day: one bordered group, a row per day with the day on the left and its times in an even grid. */
-function TimePicker({ times, value, onChange }: { times: string[]; value: string | null; onChange: (t: string) => void }) {
-  const days = times.reduce<Record<string, string[]>>((acc, t) => {
-    const k = day(t);
-    (acc[k] ??= []).push(t);
-    return acc;
-  }, {});
-  return (
-    <div className="flex flex-col divide-y divide-border rounded-md border border-border">
-      {Object.entries(days)
-        .slice(0, 6)
-        .map(([d, ts]) => (
-          <div key={d} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:gap-6">
-            <span className="text-body-sm font-medium text-primary sm:w-28 sm:shrink-0 sm:pt-3">{d}</span>
-            <div className="grid flex-1 grid-cols-3 gap-2 sm:grid-cols-4">
-              {ts.map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  aria-pressed={value === t}
-                  onClick={() => onChange(t)}
-                  className={`min-h-11 w-full rounded-md border px-3 text-body-sm font-medium transition-colors focus-visible:focus-ring ${
-                    value === t ? "border-primary-600 bg-primary-600 text-inverse" : "border-border-strong bg-card text-primary-700 hover:border-primary-300 hover:bg-primary-50"
-                  }`}
-                >
-                  {time(t)}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
-    </div>
-  );
-}
 
 /** Buttons at the foot of a step: the main action first, Back beside it, under a divider. */
 function StepFooter({ children }: { children: React.ReactNode }) {

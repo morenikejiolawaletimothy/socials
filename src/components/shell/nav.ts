@@ -105,6 +105,7 @@ const pageNames: [RegExp, string][] = [
   [/^\/services$/, "Services"],
   [/^\/account$/, "Account"],
   [/^\/assistants$/, "Assistants"],
+  [/^\/calls\/book$/, "Book a call"],
   [/^\/calls$/, "Calls"],
   [/^\/full-service$/, "Full-service"],
   [/^\/account-manager$/, "Your account manager"],
