@@ -1085,16 +1085,24 @@ function CallNoteEditor({ call }: { call: ClientBundle["calls"][number] }) {
 }
 
 export function CallsTab({ b }: { b: ClientBundle }) {
+  const callStatus = (c: ClientBundle["calls"][number]) =>
+    c.status === "done" ? { tone: "success" as const, label: "Done" }
+    : c.status === "cancelled" ? { tone: "neutral" as const, label: "Cancelled" }
+    : c.status === "pending" ? (c.pending?.awaiting === "manager" ? { tone: "warning" as const, label: "Needs you" } : { tone: "info" as const, label: "Waiting on client" })
+    : { tone: "info" as const, label: "Booked" };
   return (
-    <Card title="Calls and notes" action={b.calls.length > 0 && <Pill>{plural(b.calls.length, "call")}</Pill>}>
+    <Card title="Calls and notes" action={b.client && <TextLink href={`/manager/clients/${b.client.id}/book-call`}>Book a call</TextLink>}>
       {b.calls.length ? (
         <ul className="flex flex-col gap-3">
-          {b.calls.map((c) => (
+          {b.calls.map((c) => {
+            const s = callStatus(c);
+            return (
             <li key={c.id}>
               <Tile done={c.status === "cancelled"}>
                 <span className="flex flex-col gap-1">
-                  <span className="text-body font-medium text-primary">{callName[c.kind]}</span>
-                  <span className="text-body-sm text-secondary">{c.recording ? "Recorded with the client's consent (your own notetaker)." : "Not recorded. Write what you heard."}</span>
+                  <span className="text-body font-medium text-primary">{c.kind === "check-in" ? c.title ?? callName[c.kind] : callName[c.kind]}</span>
+                  {c.agenda && <span className="text-body-sm text-secondary">{c.agenda}</span>}
+                  <span className="text-body-sm text-secondary">{c.recording ? "Notetaker bot joins (with the client's consent)." : "No bot. Write what you heard."}</span>
                 </span>
                 {c.prep && (
                   <ul className="flex list-disc flex-col gap-1 pl-5 text-body-sm text-primary">
@@ -1105,15 +1113,16 @@ export function CallsTab({ b }: { b: ClientBundle }) {
                 )}
                 <TileFooter>
                   <Meta icon={Clock}>{dayTime(c.at)} · {c.minutes} min</Meta>
-                  <Badge status={c.status === "done" ? "success" : c.status === "cancelled" ? "neutral" : "info"}>{c.status === "done" ? "Done" : c.status === "cancelled" ? "Cancelled" : "Booked"}</Badge>
+                  <Badge status={s.tone}>{s.label}</Badge>
                 </TileFooter>
                 {c.status === "done" && <CallNoteEditor call={c} />}
               </Tile>
             </li>
-          ))}
+            );
+          })}
         </ul>
       ) : (
-        <p className="text-body-sm text-secondary">No calls booked yet.</p>
+        <p className="text-body-sm text-secondary">No calls yet. Book one with {b.user?.firstName ?? "the client"} after you agree a time in messages.</p>
       )}
     </Card>
   );

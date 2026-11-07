@@ -1,10 +1,23 @@
 "use client";
 
 import { day, time } from "@/lib/format";
+import type { Call } from "@/lib/mock";
 import { slotTimes } from "@/lib/slots";
 
 /** Bookable times for the next `days` days, from the manager's open slots (M10). */
 export const openTimes = (slots: string[], from: number, days = 14) => slotTimes(slots, from, days);
+
+/** Times already held by a manager's live calls (pending or booked), so no two clients take the same slot. */
+export const takenTimes = (calls: Call[], managerId: string, exceptCallId?: string) =>
+  new Set(
+    calls
+      .filter((c) => c.managerId === managerId && (c.status === "booked" || c.status === "pending") && c.id !== exceptCallId)
+      .map((c) => c.at),
+  );
+
+/** Open times for the next `days` days with the manager's held times removed. */
+export const availableTimes = (slots: string[], from: number, taken: Set<string>, days = 14) =>
+  openTimes(slots, from, days).filter((t) => !taken.has(t));
 
 /**
  * Times grouped by day: one bordered group, a row per day with the day on the left and its

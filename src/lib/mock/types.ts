@@ -400,11 +400,26 @@ export type Call = {
   kind: "goals" | "strategy" | "check-in";
   /** The call's name as the client sees it ("Onboarding call", "Quarterly review"). Falls back to a name for its kind. */
   title?: string;
+  /** Ad-hoc check-in calls: what the client wants to discuss. */
+  agenda?: string;
+  /** Who started the call. Ad-hoc only; onboarding calls leave it unset. */
+  openedBy?: "client" | "manager";
+  /** The time currently on the table (the agreed time once booked, or the latest proposed time while pending). */
   at: string;
   minutes: number;
+  /** The Google Meet link. Empty until the account manager adds it when approving or creating the call. */
   meetUrl: string;
+  /** Whether the account manager's notetaker bot joins the call. */
   recording: boolean;
-  status: "booked" | "done" | "cancelled";
+  /**
+   * booked = agreed by both sides with a link; pending = awaiting the other party (request, proposal or reschedule);
+   * done = happened; cancelled = called off or declined.
+   */
+  status: "booked" | "pending" | "done" | "cancelled";
+  /** While pending: whose turn it is to act, and who made the current proposal. */
+  pending?: { awaiting: "client" | "manager"; by: "client" | "manager"; note?: string };
+  /** Why a call was declined or cancelled, shown to the other party. */
+  cancelReason?: string;
   /** #42: the raw call transcript, only present when the call was recorded (the AM's own notetaker, with consent). */
   transcript?: string;
   /** #42: the synthesized insights the AM writes from the call. Feeds the strategy. */

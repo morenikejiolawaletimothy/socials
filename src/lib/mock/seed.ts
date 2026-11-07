@@ -104,7 +104,7 @@ export function seed(): Db {
   });
 
   return {
-    version: 30,
+    version: 31,
     session: {
       role: "client",
       userIds: { client: "u-chidi", manager: "u-ada", owner: "u-fola" },
@@ -312,6 +312,10 @@ export function seed(): Db {
       { id: "cl-chidi-2", clientId: "c-chidi", managerId: "m-ada", kind: "strategy", at: at(-56, 10), minutes: 30, meetUrl: "https://meet.google.com/example-def", recording: true, status: "done", transcript: "AM: We'll run three topics, start at two posts a week for two weeks, then move to three.\nChidi: Good. One thing, keep FirstBank off limits for now.", insights: "Agreed 3 topics, 2 posts a week for 2 weeks, then 3. Added FirstBank to off limits.", sharedAt: at(-56, 11) },
       { id: "cl-chidi-3", clientId: "c-chidi", managerId: "m-ada", kind: "check-in", at: at(6, 11), minutes: 30, meetUrl: "https://meet.google.com/example-ghi", recording: true, status: "booked" },
       { id: "cl-chidi-4", clientId: "c-chidi", managerId: "m-ada", kind: "check-in", title: "Monthly review", at: at(20, 14, 30), minutes: 30, meetUrl: "https://meet.google.com/example-yza", recording: true, status: "booked" },
+      // Client asked to meet; waiting on Ada to confirm a time and add the link.
+      { id: "cl-chidi-req", clientId: "c-chidi", managerId: "m-ada", kind: "check-in", openedBy: "client", title: "Last week's engagement dip", agenda: "Reactions dropped on the last two posts. I'd like to understand why and adjust the plan.", at: at(4, 10), minutes: 30, meetUrl: "", recording: true, status: "pending", pending: { awaiting: "manager", by: "client" } },
+      // Ada proposed a time; waiting on Chidi to accept.
+      { id: "cl-chidi-prop", clientId: "c-chidi", managerId: "m-ada", kind: "check-in", openedBy: "manager", title: "Catch-up on investor posts", agenda: "Plan the next run of posts aimed at investors.", at: at(7, 15), minutes: 30, meetUrl: "https://meet.google.com/example-prop", recording: false, status: "pending", pending: { awaiting: "client", by: "manager", note: "Moved us to Thursday so we have the fresh week's numbers." } },
       { id: "cl-ngozi-1", clientId: "c-ngozi", managerId: "m-ada", kind: "goals", at: at(0, 15), minutes: 30, meetUrl: "https://meet.google.com/example-jkl", recording: true, status: "booked",
         prep: ["Her headline still says \"Founder\" only. Ask what she wants to be known for.", "Last post was 8 months ago, a product launch with 40 reactions.", "Ask about distribution partners she would most like to reach.", "Ask what is off limits: competitors, suppliers, politics."] },
       { id: "cl-ngozi-2", clientId: "c-ngozi", managerId: "m-ada", kind: "strategy", at: at(4, 10), minutes: 30, meetUrl: "https://meet.google.com/example-mno", recording: true, status: "booked" },

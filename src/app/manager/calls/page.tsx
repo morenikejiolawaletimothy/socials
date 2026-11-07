@@ -6,6 +6,8 @@ import { useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
 import { quietLink } from "@/components/rails/NextCallCard";
+import { ManagerCallActions } from "@/components/calls/ManagerCallActions";
+import { availableTimes, takenTimes } from "@/components/calls/TimePicker";
 import { Avatar, Badge, Banner, Button, Card, EmptyState, IconButton, Meta, Pill, Segmented, TextButton, textActionClass, Tile, TileFooter, useConfirm, useTask } from "@/components/ui";
 import { dateTime, day, fullName, plural } from "@/lib/format";
 import { act, useMyManager, type Call } from "@/lib/mock";
@@ -180,9 +182,42 @@ export default function CallsPage() {
     return acc;
   }, {});
   const clientName = (c: Call) => fullName(db.users.find((u) => u.id === db.clients.find((x) => x.id === c.clientId)?.userId));
+  // Ad-hoc check-in calls still being agreed with a client.
+  const pendingCalls = db.calls.filter((c) => c.managerId === manager?.id && c.status === "pending" && c.kind === "check-in").sort((a, b) => a.at.localeCompare(b.at));
+  const needsMe = pendingCalls.filter((c) => c.pending?.awaiting === "manager");
+  const times = manager ? availableTimes(manager.slots ?? [], Date.now(), takenTimes(db.calls, manager.id)) : [];
 
   return (
     <Columns {...rails.managerSettings}>
+      {pendingCalls.length > 0 && (
+        <Card title="Call requests" action={<Pill>{needsMe.length} to confirm</Pill>} info="Clients ask to meet here. Confirm a time with a Google Meet link, propose another time, or decline.">
+          <ul className="flex flex-col gap-3">
+            {pendingCalls.map((c) => (
+              <li key={c.id}>
+                <Tile>
+                  <div className="flex items-start gap-4">
+                    <Avatar name={clientName(c)} size="md" />
+                    <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      <span className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-body font-medium text-primary">{c.title ?? "Check-in"} · {clientName(c)}</span>
+                        <Badge status={c.pending?.awaiting === "manager" ? "warning" : "info"}>{c.pending?.awaiting === "manager" ? "Needs you" : "Waiting on client"}</Badge>
+                      </span>
+                      {c.agenda && <span className="text-body-sm text-secondary">{c.agenda}</span>}
+                    </div>
+                  </div>
+                  <TileFooter>
+                    <Meta icon={Clock}>{dateTime(c.at)} · {c.recording ? "bot joins" : "no bot"}</Meta>
+                  </TileFooter>
+                  <div className="mt-3 border-t border-border pt-3">
+                    <ManagerCallActions call={c} times={times} clientName={clientName(c)} />
+                  </div>
+                </Tile>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
       {/* Same switch as the manager home (Feed / Board): one card at a time. */}
       <Card padding="sm">
         <div className="p-2">
@@ -243,25 +278,31 @@ export default function CallsPage() {
                             <a href={c.meetUrl} target="_blank" rel="noreferrer" className={textActionClass}>
                               Join call
                             </a>
-                            <Link href={`/manager/clients/${c.clientId}/onboard`} className={quietLink}>
-                              Prep notes
-                            </Link>
-                            <button
-                              type="button"
-                              className={quietLink}
-                              onClick={() =>
-                                confirm({
-                                  title: "Reschedule this call?",
-                                  body: `${clientName(c)} is told at once and picks a new time from your open slots.`,
-                                  warning: "Only reschedule when you really have to. Clients plan around these calls, and it counts on your record.",
-                                  confirmLabel: "Ask client to pick a new time",
-                                  action: () => act.rescheduleCall(c.id),
-                                  success: `${clientName(c)} has been asked to pick a new time.`,
-                                })
-                              }
-                            >
-                              Reschedule
-                            </button>
+                            {c.kind === "check-in" ? (
+                              <ManagerCallActions call={c} times={times} clientName={clientName(c)} />
+                            ) : (
+                              <>
+                                <Link href={`/manager/clients/${c.clientId}/onboard`} className={quietLink}>
+                                  Prep notes
+                                </Link>
+                                <button
+                                  type="button"
+                                  className={quietLink}
+                                  onClick={() =>
+                                    confirm({
+                                      title: "Reschedule this call?",
+                                      body: `${clientName(c)} is told at once and picks a new time from your open slots.`,
+                                      warning: "Only reschedule when you really have to. Clients plan around these calls, and it counts on your record.",
+                                      confirmLabel: "Ask client to pick a new time",
+                                      action: () => act.rescheduleCall(c.id),
+                                      success: `${clientName(c)} has been asked to pick a new time.`,
+                                    })
+                                  }
+                                >
+                                  Reschedule
+                                </button>
+                              </>
+                            )}
                           </span>
                         </TileFooter>
                       </Tile>

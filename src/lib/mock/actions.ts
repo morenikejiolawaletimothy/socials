@@ -1264,20 +1264,108 @@ export async function completeSetupStep(clientId: string, step: SetupStep) {
   });
 }
 
-export async function bookCall(clientId: string, kind: "goals" | "strategy" | "check-in", at: string, recording: boolean) {
+export async function bookCall(clientId: string, kind: "goals" | "strategy", at: string, recording: boolean) {
   await delay(600);
   update((db) => {
     const c = clientOf(db, clientId);
     const managerId = c?.managerId ?? "m-ada";
-    // Goals and strategy are one-each (re-booking replaces the old one); check-ins can stack, so keep every booked one.
-    const calls = kind === "check-in" ? db.calls : db.calls.filter((x) => !(x.clientId === clientId && x.kind === kind && x.status === "booked"));
+    const calls = db.calls.filter((x) => !(x.clientId === clientId && x.kind === kind && x.status === "booked"));
     const next: Db = { ...db, calls: [...calls, { id: id("cl"), clientId, managerId, kind, at, minutes: 30, meetUrl: "https://meet.google.com/example-new", recording, status: "booked" }] };
     const mu = db.users.find((u) => u.id === db.managers.find((m) => m.id === managerId)?.userId);
-    const label = kind === "check-in" ? "a check-in" : `their ${kind}`;
-    return notify(next, mu?.id, `${nameOf(clientUser(db, clientId))} booked ${label} call.`, "/manager/calls");
+    return notify(next, mu?.id, `${nameOf(clientUser(db, clientId))} booked their ${kind} call.`, "/manager/calls");
   });
-  // Only the two onboarding calls advance setup; check-ins are ongoing and have no setup step.
-  if (kind === "goals" || kind === "strategy") await completeSetupStep(clientId, kind === "goals" ? "goals-call" : "strategy-call");
+  await completeSetupStep(clientId, kind === "goals" ? "goals-call" : "strategy-call");
+}
+
+// ---------- Ad-hoc check-in call lifecycle ----------
+// A check-in call is agreed between client and manager before it is confirmed. The manager always
+// provides the Google Meet link. A call is only "booked" once both sides agree a time and a link exists.
+
+const callTitleOf = (call: { title?: string }) => call.title?.trim() || "your call";
+
+/** Flow A: the client asks to book a time on the manager's calendar. Held, pending the manager's confirmation. */
+export async function requestCall(clientId: string, data: { title: string; agenda: string; at: string; recording: boolean }) {
+  await delay(600);
+  update((db) => {
+    const managerId = clientOf(db, clientId)?.managerId ?? "m-ada";
+    const call: Db["calls"][number] = {
+      id: id("cl"), clientId, managerId, kind: "check-in", openedBy: "client",
+      title: data.title.trim(), agenda: data.agenda.trim(), at: data.at, minutes: 30, meetUrl: "",
+      recording: data.recording, status: "pending", pending: { awaiting: "manager", by: "client" },
+    };
+    const next: Db = { ...db, calls: [...db.calls, call] };
+    return notify(next, managerUserOf(db, clientId)?.id, `${nameOf(clientUser(db, clientId))} asked to book a call: “${call.title}”.`, "/manager/calls", { email: true });
+  });
+}
+
+/** Flow B: the manager books a time with the client (after agreeing it in chat), with the link ready. Pending the client's acceptance. */
+export async function createCallForClient(clientId: string, data: { title: string; agenda?: string; at: string; meetUrl: string; recording: boolean }) {
+  await delay(600);
+  update((db) => {
+    const managerId = clientOf(db, clientId)?.managerId ?? "m-ada";
+    const call: Db["calls"][number] = {
+      id: id("cl"), clientId, managerId, kind: "check-in", openedBy: "manager",
+      title: data.title.trim(), agenda: data.agenda?.trim() || undefined, at: data.at, minutes: 30, meetUrl: data.meetUrl.trim(),
+      recording: data.recording, status: "pending", pending: { awaiting: "client", by: "manager" },
+    };
+    const next: Db = { ...db, calls: [...db.calls, call] };
+    return notify(next, clientUser(db, clientId)?.id, `${nameOf(managerUserOf(db, clientId))} proposed a call: “${call.title}”. Accept to confirm.`, "/calls", { email: true });
+  });
+}
+
+/** The manager confirms the time on the table and adds the Meet link. The call becomes booked. */
+export async function approveCall(callId: string, meetUrl: string) {
+  await delay(500);
+  update((db) => {
+    const call = db.calls.find((c) => c.id === callId);
+    if (!call) return db;
+    let next: Db = { ...db, calls: db.calls.map((c) => (c.id === callId ? { ...c, status: "booked" as const, meetUrl: meetUrl.trim(), pending: undefined } : c)) };
+    next = log(next, call.clientId, "team", "setting", `Confirmed the call “${callTitleOf(call)}”`);
+    return notify(next, clientUser(db, call.clientId)?.id, `${nameOf(managerUserOf(db, call.clientId))} confirmed “${callTitleOf(call)}” for ${dayTimeIn(call.at)}. The meeting link is ready.`, "/calls", { email: true });
+  });
+}
+
+/** The client accepts the time currently on the table. Booked if a link is ready, else it goes to the manager to add one. */
+export async function acceptCall(callId: string) {
+  await delay(500);
+  update((db) => {
+    const call = db.calls.find((c) => c.id === callId);
+    if (!call) return db;
+    if (call.meetUrl) {
+      const next: Db = { ...db, calls: db.calls.map((c) => (c.id === callId ? { ...c, status: "booked" as const, pending: undefined } : c)) };
+      return notify(next, managerUserOf(db, call.clientId)?.id, `${nameOf(clientUser(db, call.clientId))} accepted “${callTitleOf(call)}” for ${dayTimeIn(call.at)}.`, "/manager/calls", { email: true });
+    }
+    const next: Db = { ...db, calls: db.calls.map((c) => (c.id === callId ? { ...c, pending: { awaiting: "manager" as const, by: "client" as const } } : c)) };
+    return notify(next, managerUserOf(db, call.clientId)?.id, `${nameOf(clientUser(db, call.clientId))} agreed ${dayTimeIn(call.at)} for “${callTitleOf(call)}”. Add the meeting link to confirm.`, "/manager/calls", { email: true });
+  });
+}
+
+/** Either side proposes a different time (negotiation, or rescheduling a booked call). The other side must confirm. */
+export async function proposeCallTime(callId: string, by: "client" | "manager", at: string, opts: { note?: string; meetUrl?: string } = {}) {
+  await delay(500);
+  update((db) => {
+    const call = db.calls.find((c) => c.id === callId);
+    if (!call) return db;
+    const awaiting = by === "manager" ? ("client" as const) : ("manager" as const);
+    const meetUrl = opts.meetUrl !== undefined ? opts.meetUrl.trim() : call.meetUrl;
+    const next: Db = { ...db, calls: db.calls.map((c) => (c.id === callId ? { ...c, at, status: "pending" as const, meetUrl, pending: { awaiting, by, note: opts.note?.trim() || undefined } } : c)) };
+    const who = by === "manager" ? nameOf(managerUserOf(db, call.clientId)) : nameOf(clientUser(db, call.clientId));
+    const toUser = awaiting === "manager" ? managerUserOf(db, call.clientId)?.id : clientUser(db, call.clientId)?.id;
+    return notify(next, toUser, `${who} proposed a new time for “${callTitleOf(call)}”: ${dayTimeIn(at)}.`, awaiting === "manager" ? "/manager/calls" : "/calls", { email: true });
+  });
+}
+
+/** Either side calls off a pending or booked check-in call. The slot is freed. */
+export async function declineCall(callId: string, by: "client" | "manager", note: string) {
+  await delay(500);
+  update((db) => {
+    const call = db.calls.find((c) => c.id === callId);
+    if (!call) return db;
+    const next: Db = { ...db, calls: db.calls.map((c) => (c.id === callId ? { ...c, status: "cancelled" as const, pending: undefined, cancelReason: note.trim() || undefined } : c)) };
+    const toUser = by === "manager" ? clientUser(db, call.clientId)?.id : managerUserOf(db, call.clientId)?.id;
+    const who = by === "manager" ? nameOf(managerUserOf(db, call.clientId)) : nameOf(clientUser(db, call.clientId));
+    return notify(next, toUser, `${who} called off “${callTitleOf(call)}”${note.trim() ? `: ${note.trim()}` : "."}`, by === "manager" ? "/calls" : "/manager/calls", { email: true });
+  });
 }
 
 /** #42: the AM saves the call's transcript (only if it was recorded) and insights as a draft. */

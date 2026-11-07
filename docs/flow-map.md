@@ -188,6 +188,16 @@ There is **no Connect LinkedIn step** and no LinkedIn OAuth anywhere: self-serve
   4. **Booked:** both dates, Google Meet links, add to calendar. Reminders by email the day before and 1 hour before.
 - **States:** reschedule, cancel, recording declined (the call goes ahead without the notetaker), manager rescheduled (you are notified and pick a new time).
 
+### C3b. Ongoing calls (ad-hoc, after onboarding) — Built
+
+- **Goal:** beyond the two fixed onboarding calls, either side can arrange a call whenever something needs discussing. Unlike goals/strategy (fixed purpose, tied to onboarding), an ad-hoc call carries its own purpose and description.
+- **Client books the manager (Flow A):** on **Calls → Book a call** the client states a **purpose**, a **description** of what to discuss, picks an **open time** (held so no one else can take it), and chooses whether the **notetaker bot** joins. The manager is notified. The manager then **confirms with a Google Meet link**, **proposes another open time**, or **declines with a note**. The client can **accept**, **suggest another time**, or **decline** — a negotiation that loops until both agree. On confirmation the client is notified, sees the link, and both can add it to their calendar.
+- **Manager books the client (Flow B):** the client has no availability of their own, so the manager agrees a time in **messages** first, then on the client's page uses **Book a call** to create it with the time and **link** ready. The client **accepts** (or suggests another time / declines) to confirm.
+- **Reschedule:** either side can change a confirmed call's time (same propose-and-confirm mechanism), even shortly before it.
+- **Slot-locking:** a held or booked time disappears from everyone's picker, so a manager is never double-booked.
+- **After the call:** like every call, the manager fills in the note/transcript/insights, shares them with the client, and the insights feed the strategy.
+- **States:** requested (awaiting manager), proposed (awaiting the other side), confirmed (link ready), declined/cancelled (with reason, slot freed), done (notes shared).
+
 ### C4. Choose a plan, sign, pay now or later
 
 - **Rule:** the contract must be signed before the free 2 weeks start. Paying is optional at this point.
