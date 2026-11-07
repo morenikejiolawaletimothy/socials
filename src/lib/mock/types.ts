@@ -412,13 +412,20 @@ export type Call = {
   /** Whether the account manager's notetaker bot joins the call. */
   recording: boolean;
   /**
-   * booked = agreed by both sides with a link; pending = awaiting the other party (request, proposal or reschedule);
-   * done = happened; cancelled = called off or declined.
+   * booked = both agreed on one time and the link is set; pending = being negotiated (awaiting one party);
+   * done = the time has passed and the outcome is recorded; cancelled = an onboarding call sent back to re-book.
    */
   status: "booked" | "pending" | "done" | "cancelled";
-  /** While pending: whose turn it is to act, and who made the current proposal. */
-  pending?: { awaiting: "client" | "manager"; by: "client" | "manager"; note?: string };
-  /** Why a call was declined or cancelled, shown to the other party. */
+  /**
+   * While pending: whose turn it is, who made the current proposal, their reason note, and the one-or-more
+   * times they offered (all drawn from the manager's open availability).
+   */
+  pending?: { awaiting: "client" | "manager"; by: "client" | "manager"; note?: string; options: string[] };
+  /** Post-call: whether the call actually happened. Set when the manager records the outcome. */
+  outcome?: "held" | "missed";
+  /** Reason the call did not hold (when outcome is "missed"). */
+  outcomeNote?: string;
+  /** Legacy reason kept for onboarding reschedules. */
   cancelReason?: string;
   /** #42: the raw call transcript, only present when the call was recorded (the AM's own notetaker, with consent). */
   transcript?: string;

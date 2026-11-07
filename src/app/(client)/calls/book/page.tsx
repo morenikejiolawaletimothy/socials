@@ -7,7 +7,7 @@ import { availableTimes, takenTimes, TimePicker } from "@/components/calls/TimeP
 import { Columns } from "@/components/layout/Columns";
 import { ManagerCard } from "@/components/rails/ManagerCard";
 import { Banner, Breadcrumbs, Button, Card, Input, Meta, Textarea, useTask } from "@/components/ui";
-import { dayTimeIn, fullName } from "@/lib/format";
+import { fullName } from "@/lib/format";
 import { act, useData, useMyClient } from "@/lib/mock";
 
 /** Client: ask for an ad-hoc check-in call. State the purpose, pick an open time; the manager confirms and adds the link. */
@@ -23,12 +23,13 @@ export default function BookCallPage() {
   );
   const [title, setTitle] = useState("");
   const [agenda, setAgenda] = useState("");
-  const [at, setAt] = useState<string | null>(null);
+  const [picks, setPicks] = useState<string[]>([]);
   const [record, setRecord] = useState(true);
   const [errors, setErrors] = useState<{ title?: string; agenda?: string; at?: string }>({});
   if (!client || !user) return null;
 
   const mgrName = managerUser ? fullName(managerUser) : "your account manager";
+  const toggle = (t: string) => setPicks((p) => (p.includes(t) ? p.filter((x) => x !== t) : [...p, t]));
 
   return (
     <Columns right={<ManagerCard />} rightLabel="Your manager">
@@ -45,10 +46,10 @@ export default function BookCallPage() {
             const next: typeof errors = {};
             if (title.trim().length < 3) next.title = "Add a short purpose, so your manager can prepare.";
             if (agenda.trim().length < 10) next.agenda = "Say a little more about what you want to discuss.";
-            if (!at) next.at = "Pick a time for your call.";
+            if (!picks.length) next.at = "Pick one or more times that work for you.";
             setErrors(next);
             if (Object.keys(next).length) return;
-            if (await run("book", () => act.requestCall(client.id, { title: title.trim(), agenda: agenda.trim(), at: at!, recording: record }), `Call requested for ${dayTimeIn(at!)}. ${managerUser ? managerUser.firstName : "Your manager"} will confirm and add the link.`)) {
+            if (await run("book", () => act.requestCall(client.id, { title: title.trim(), agenda: agenda.trim(), times: picks, recording: record }), `Call requested. ${managerUser ? managerUser.firstName : "Your manager"} will confirm a time and add the link.`)) {
               router.push("/calls");
             }
           }}
@@ -72,10 +73,10 @@ export default function BookCallPage() {
           {times.length ? (
             <>
               <div className="flex flex-col gap-2">
-                <span className="text-body-sm font-medium text-primary">Pick a time</span>
+                <span className="text-body-sm font-medium text-primary">Pick one or more times that suit you</span>
                 <Meta icon={Globe}>Times are in your time zone ({user.timeZone.replace("_", " ")})</Meta>
               </div>
-              <TimePicker times={times} value={at} onChange={(t) => { setAt(t); setErrors({ ...errors, at: undefined }); }} />
+              <TimePicker times={times} selected={picks} onChange={(t) => { toggle(t); setErrors({ ...errors, at: undefined }); }} />
               {errors.at && <p className="text-body-sm text-danger">{errors.at}</p>}
 
               <fieldset className="flex flex-col gap-2 border-t border-border pt-6">

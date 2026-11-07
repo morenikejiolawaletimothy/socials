@@ -6,6 +6,8 @@ import { useState } from "react";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
 import { quietLink } from "@/components/rails/NextCallCard";
+import { CallDetails } from "@/components/calls/CallDetails";
+import { CallFeedback } from "@/components/calls/CallFeedback";
 import { ManagerCallActions } from "@/components/calls/ManagerCallActions";
 import { availableTimes, takenTimes } from "@/components/calls/TimePicker";
 import { Avatar, Badge, Banner, Button, Card, EmptyState, IconButton, Meta, Pill, Segmented, TextButton, textActionClass, Tile, TileFooter, useConfirm, useTask } from "@/components/ui";
@@ -175,7 +177,7 @@ export default function CallsPage() {
   // Open times as calendar slots ("2026-11-12T10"). A weekly pattern from sign-up is spread over the next 8 weeks.
   const [saved, setSaved] = useState<string[]>(() => weeklyToDates(manager?.slots ?? [], Date.now(), AHEAD));
   const [slots, setSlots] = useState<string[]>(saved);
-  const [view, setView] = useState<"booked" | "slots">("booked");
+  const [viewPick, setViewPick] = useState<"requests" | "booked" | "slots" | null>(null);
   const calls = db.calls.filter((c) => c.managerId === manager?.id && c.status === "booked").sort((a, b) => a.at.localeCompare(b.at));
   const byDay = calls.reduce<Record<string, Call[]>>((acc, c) => {
     (acc[day(c.at)] ??= []).push(c);
@@ -186,46 +188,19 @@ export default function CallsPage() {
   const pendingCalls = db.calls.filter((c) => c.managerId === manager?.id && c.status === "pending" && c.kind === "check-in").sort((a, b) => a.at.localeCompare(b.at));
   const needsMe = pendingCalls.filter((c) => c.pending?.awaiting === "manager");
   const times = manager ? availableTimes(manager.slots ?? [], Date.now(), takenTimes(db.calls, manager.id)) : [];
+  const view = viewPick ?? (needsMe.length ? "requests" : "booked");
 
   return (
     <Columns {...rails.managerSettings}>
-      {pendingCalls.length > 0 && (
-        <Card title="Call requests" action={<Pill>{needsMe.length} to confirm</Pill>} info="Clients ask to meet here. Confirm a time with a Google Meet link, propose another time, or decline.">
-          <ul className="flex flex-col gap-3">
-            {pendingCalls.map((c) => (
-              <li key={c.id}>
-                <Tile>
-                  <div className="flex items-start gap-4">
-                    <Avatar name={clientName(c)} size="md" />
-                    <div className="flex min-w-0 flex-1 flex-col gap-1">
-                      <span className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-body font-medium text-primary">{c.title ?? "Check-in"} · {clientName(c)}</span>
-                        <Badge status={c.pending?.awaiting === "manager" ? "warning" : "info"}>{c.pending?.awaiting === "manager" ? "Needs you" : "Waiting on client"}</Badge>
-                      </span>
-                      {c.agenda && <span className="text-body-sm text-secondary">{c.agenda}</span>}
-                    </div>
-                  </div>
-                  <TileFooter>
-                    <Meta icon={Clock}>{dateTime(c.at)} · {c.recording ? "bot joins" : "no bot"}</Meta>
-                  </TileFooter>
-                  <div className="mt-3 border-t border-border pt-3">
-                    <ManagerCallActions call={c} times={times} clientName={clientName(c)} />
-                  </div>
-                </Tile>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
-
-      {/* Same switch as the manager home (Feed / Board): one card at a time. */}
+      {/* One card at a time: Requests first, then Booked and Open slots. */}
       <Card padding="sm">
         <div className="p-2">
           <Segmented
             label="Calls view"
             value={view}
-            onChange={setView}
+            onChange={setViewPick}
             options={[
+              { value: "requests", label: pendingCalls.length ? `Requests (${pendingCalls.length})` : "Requests" },
               { value: "booked", label: "Booked" },
               { value: "slots", label: "Open slots" },
             ]}
@@ -233,7 +208,41 @@ export default function CallsPage() {
         </div>
       </Card>
 
-      {view === "booked" ? (
+      {view === "requests" && (
+        <Card title="Call requests" action={pendingCalls.length > 0 && <Pill>{needsMe.length} to confirm</Pill>} info="Clients ask to meet here. Confirm a time with a Google Meet link, or suggest other times with a reason.">
+          {pendingCalls.length ? (
+            <ul className="flex flex-col gap-3">
+              {pendingCalls.map((c) => (
+                <li key={c.id}>
+                  <Tile>
+                    <div className="flex items-start gap-4">
+                      <Avatar name={clientName(c)} size="md" />
+                      <div className="flex min-w-0 flex-1 flex-col gap-1">
+                        <span className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="text-body font-medium text-primary">{c.title ?? "Check-in"} · {clientName(c)}</span>
+                          <Badge status={c.pending?.awaiting === "manager" ? "warning" : "info"}>{c.pending?.awaiting === "manager" ? "Needs you" : "Waiting on client"}</Badge>
+                        </span>
+                        {c.agenda && <span className="line-clamp-1 text-body-sm text-secondary">{c.agenda}</span>}
+                      </div>
+                    </div>
+                    <TileFooter>
+                      <Meta icon={Clock}>{(c.pending?.options ?? [c.at]).map(dateTime).join(" · ")}</Meta>
+                    </TileFooter>
+                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-border pt-3">
+                      <ManagerCallActions call={c} times={times} clientName={clientName(c)} />
+                      <CallDetails call={c} who={c.openedBy === "manager" ? "You proposed" : `${clientName(c)} asked`} />
+                    </div>
+                  </Tile>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyState title="No requests">When a client asks to meet, or you propose a call, it shows here until you both agree a time.</EmptyState>
+          )}
+        </Card>
+      )}
+
+      {view === "booked" && (
       <Card title="Booked calls" action={calls.length > 0 && <Pill>{plural(calls.length, "call")}</Pill>}>
         {calls.length ? (
           <div className="flex flex-col gap-6">
@@ -243,15 +252,17 @@ export default function CallsPage() {
                 <ul className="flex flex-col gap-3">
                   {list.map((c) => (
                     <li key={c.id}>
-                      {/* As on the client's calls card: the whole tile opens the Meet link (a covering link); the footer actions sit above it. */}
-                      <Tile className="group relative transition-colors hover:border-primary-300 hover:bg-primary-50">
-                        <a
-                          href={c.meetUrl}
-                          target="_blank"
-                          rel="noreferrer"
-                          aria-label={`Join the ${kind[c.kind].toLowerCase()} with ${clientName(c)} on Google Meet`}
-                          className="absolute inset-0 rounded-md focus-visible:focus-ring"
-                        />
+                      {(() => { const past = new Date(c.at).getTime() < Date.now(); return (
+                      <Tile className={past ? "" : "group relative transition-colors hover:border-primary-300 hover:bg-primary-50"}>
+                        {!past && (
+                          <a
+                            href={c.meetUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            aria-label={`Join the ${kind[c.kind].toLowerCase()} with ${clientName(c)} on Google Meet`}
+                            className="absolute inset-0 rounded-md focus-visible:focus-ring"
+                          />
+                        )}
                         <div className="flex items-start gap-4">
                           <Avatar name={clientName(c)} size="md" />
                           <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -259,21 +270,14 @@ export default function CallsPage() {
                               <span className="text-body font-medium text-primary">
                                 {kind[c.kind]} with {clientName(c)}
                               </span>
-                              {c.recording ? (
-                                <Badge status="info">
-                                  Record<span className="sr-only">: recorded with the client&apos;s consent</span>
-                                </Badge>
-                              ) : (
-                                <Badge>
-                                  Don&apos;t record<span className="sr-only">: not recorded, take notes</span>
-                                </Badge>
-                              )}
+                              <Badge status={c.recording ? "info" : "neutral"}>{c.recording ? "Bot" : "No bot"}</Badge>
                             </span>
-                            <span className="text-body-sm text-secondary">{c.recording ? "Recorded with the client's consent." : "Not recorded. Take notes during the call."}</span>
+                            <span className="text-body-sm text-secondary">{c.recording ? "Notetaker bot joins, with the client's consent." : "No bot. Take notes during the call."}</span>
                           </div>
                         </div>
                         <TileFooter>
                           <Meta icon={Clock}>{dateTime(c.at)} · {c.minutes} min</Meta>
+                          {!past && (
                           <span className="relative z-10 flex flex-wrap items-center gap-4">
                             <a href={c.meetUrl} target="_blank" rel="noreferrer" className={textActionClass}>
                               Join call
@@ -304,8 +308,11 @@ export default function CallsPage() {
                               </>
                             )}
                           </span>
+                          )}
                         </TileFooter>
+                        {past && <CallFeedback call={c} />}
                       </Tile>
+                    ); })()}
                     </li>
                   ))}
                 </ul>
@@ -316,7 +323,9 @@ export default function CallsPage() {
           <EmptyState title="No calls booked">Clients book inside your open slots. New bookings appear here.</EmptyState>
         )}
       </Card>
-      ) : (
+      )}
+
+      {view === "slots" && (
       <Card title="Open call slots" info={`Clients can only book inside these times, in your time zone (${user?.timeZone.replace("_", " ")}). Once a client books, you attend or reschedule from your side.`}>
         <OpenSlots slots={slots} setSlots={setSlots} />
         <div className="mt-6 flex flex-col gap-4 border-t border-border pt-6">

@@ -190,13 +190,16 @@ There is **no Connect LinkedIn step** and no LinkedIn OAuth anywhere: self-serve
 
 ### C3b. Ongoing calls (ad-hoc, after onboarding) — Built
 
-- **Goal:** beyond the two fixed onboarding calls, either side can arrange a call whenever something needs discussing. Unlike goals/strategy (fixed purpose, tied to onboarding), an ad-hoc call carries its own purpose and description.
-- **Client books the manager (Flow A):** on **Calls → Book a call** the client states a **purpose**, a **description** of what to discuss, picks an **open time** (held so no one else can take it), and chooses whether the **notetaker bot** joins. The manager is notified. The manager then **confirms with a Google Meet link**, **proposes another open time**, or **declines with a note**. The client can **accept**, **suggest another time**, or **decline** — a negotiation that loops until both agree. On confirmation the client is notified, sees the link, and both can add it to their calendar.
-- **Manager books the client (Flow B):** the client has no availability of their own, so the manager agrees a time in **messages** first, then on the client's page uses **Book a call** to create it with the time and **link** ready. The client **accepts** (or suggests another time / declines) to confirm.
-- **Reschedule:** either side can change a confirmed call's time (same propose-and-confirm mechanism), even shortly before it.
-- **Slot-locking:** a held or booked time disappears from everyone's picker, so a manager is never double-booked.
-- **After the call:** like every call, the manager fills in the note/transcript/insights, shares them with the client, and the insights feed the strategy.
-- **States:** requested (awaiting manager), proposed (awaiting the other side), confirmed (link ready), declined/cancelled (with reason, slot freed), done (notes shared).
+- **Goal:** beyond the two fixed onboarding calls, either side arranges a call whenever something needs discussing. Unlike goals/strategy (fixed purpose, tied to onboarding), an ad-hoc call carries its own purpose and description, and is agreed by negotiation.
+- **Two moves only, for both sides.** You **accept** a time, or you **suggest other times** — and suggesting *always* needs a short **reason plus one or more alternative times**. There is no bare cancel or decline: turning a time down means proposing other times with a reason. The same rule covers rescheduling a booked call.
+- **Times come from the manager's availability.** The manager picks from their own open slots; the client, who has no calendar, also picks from the manager's open slots. Either can offer several times at once.
+- **Not booked until both agree.** Each suggestion notifies the other side; it ping-pongs until they agree on one time **and the manager has attached the Google Meet link** (only the manager makes the link). Then both can add it to their calendar. A held or booked time disappears from everyone's picker (no double-booking).
+- **Client books the manager (Flow A):** on **Calls → Book a call** the client gives a **purpose**, a **description**, one or more **open times**, and whether the **notetaker bot** joins → the manager **confirms one time with a link** or **suggests other times**.
+- **Manager books the client (Flow B):** after agreeing a time in **messages**, the manager offers one or more times (link optional until one is chosen); the client **accepts one** or **suggests others**.
+- **Reschedule window:** either side can change a booked call up to **30 minutes before** it starts; inside 30 minutes the time is locked.
+- **Navigation:** the manager's Calls page is tabbed **Requests · Booked · Open slots**; the client's is **Upcoming · Requests · Past**. Long notes stay out of the card behind **View details**.
+- **After the call:** once the time passes, the manager records the outcome — **it held** (transcript from the bot if it joined, plus insights that feed the strategy, shared with the client) or **did not hold** (with a short note).
+- **States:** pending (awaiting one side, carrying the reason and the offered times), booked (agreed + link), done (outcome recorded: held or missed).
 
 ### C4. Choose a plan, sign, pay now or later
 

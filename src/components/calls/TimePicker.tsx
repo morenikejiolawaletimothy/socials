@@ -20,18 +20,22 @@ export const availableTimes = (slots: string[], from: number, taken: Set<string>
   openTimes(slots, from, days).filter((t) => !taken.has(t));
 
 /**
- * Times grouped by day: one bordered group, a row per day with the day on the left and its
- * times in an even grid. Shared by onboarding (C3) and the ongoing "book a call" flow.
+ * Times grouped by day: one bordered group, a row per day with the day on the left and its times in an
+ * even grid. Shared by onboarding (C3), booking and the negotiation flow. Pass `selected` (an array) to
+ * let the person pick several times; otherwise it is a single-choice picker.
  */
 export function TimePicker({
   times,
   value,
   onChange,
+  selected,
   maxDays = 6,
 }: {
   times: string[];
-  value: string | null;
+  value?: string | null;
   onChange: (t: string) => void;
+  /** When given, the picker is multi-select and highlights every time in this list. */
+  selected?: string[];
   maxDays?: number;
 }) {
   const days = times.reduce<Record<string, string[]>>((acc, t) => {
@@ -39,6 +43,7 @@ export function TimePicker({
     (acc[k] ??= []).push(t);
     return acc;
   }, {});
+  const isOn = (t: string) => (selected ? selected.includes(t) : value === t);
   return (
     <div className="flex flex-col divide-y divide-border rounded-md border border-border">
       {Object.entries(days)
@@ -51,10 +56,10 @@ export function TimePicker({
                 <button
                   key={t}
                   type="button"
-                  aria-pressed={value === t}
+                  aria-pressed={isOn(t)}
                   onClick={() => onChange(t)}
                   className={`min-h-11 w-full rounded-md border px-3 text-body-sm font-medium transition-colors focus-visible:focus-ring ${
-                    value === t ? "border-primary-600 bg-primary-600 text-inverse" : "border-border-strong bg-card text-primary-700 hover:border-primary-300 hover:bg-primary-50"
+                    isOn(t) ? "border-primary-600 bg-primary-600 text-inverse" : "border-border-strong bg-card text-primary-700 hover:border-primary-300 hover:bg-primary-50"
                   }`}
                 >
                   {time(t)}

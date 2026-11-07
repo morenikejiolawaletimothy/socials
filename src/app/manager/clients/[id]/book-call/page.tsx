@@ -8,7 +8,7 @@ import { availableTimes, takenTimes, TimePicker } from "@/components/calls/TimeP
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
 import { Banner, Breadcrumbs, Button, buttonClass, Card, EmptyState, Input, Meta, Textarea, useTask } from "@/components/ui";
-import { dayTimeIn, fullName } from "@/lib/format";
+import { fullName } from "@/lib/format";
 import { act, clientBundle, useMyManager } from "@/lib/mock";
 
 /** Flow B: the manager books a call with a client after agreeing a time in messages, with the link ready. */
@@ -24,8 +24,9 @@ export default function BookCallForClientPage({ params }: { params: Promise<{ id
     [manager, db.calls, now],
   );
   const [form, setForm] = useState({ title: "", agenda: "", link: "", record: true });
-  const [at, setAt] = useState<string | null>(null);
-  const [errors, setErrors] = useState<{ title?: string; link?: string; at?: string }>({});
+  const [picks, setPicks] = useState<string[]>([]);
+  const [errors, setErrors] = useState<{ title?: string; at?: string }>({});
+  const toggle = (t: string) => setPicks((p) => (p.includes(t) ? p.filter((x) => x !== t) : [...p, t]));
 
   if (!b.client || !b.user || !manager) {
     return <EmptyState title="Client not found" action={<Link href="/manager/clients" className={buttonClass("secondary")}>Go to Clients</Link>}>This client is not on your list.</EmptyState>;
@@ -46,11 +47,10 @@ export default function BookCallForClientPage({ params }: { params: Promise<{ id
             e.preventDefault();
             const next: typeof errors = {};
             if (form.title.trim().length < 3) next.title = "Add a short purpose.";
-            if (!/^https?:\/\/\S+$/.test(form.link.trim())) next.link = "Paste the meeting link (starts with https://).";
-            if (!at) next.at = "Pick a time from your open slots.";
+            if (!picks.length) next.at = "Pick one or more times from your open slots.";
             setErrors(next);
             if (Object.keys(next).length) return;
-            if (await run("book", () => act.createCallForClient(id, { title: form.title.trim(), agenda: form.agenda.trim() || undefined, at: at!, meetUrl: form.link.trim(), recording: form.record }), `Call sent to ${first} for ${dayTimeIn(at!)}. They accept to confirm.`)) {
+            if (await run("book", () => act.createCallForClient(id, { title: form.title.trim(), agenda: form.agenda.trim() || undefined, times: picks, meetUrl: form.link.trim() || undefined, recording: form.record }), `Sent ${picks.length > 1 ? `${picks.length} times` : "a time"} to ${first}. They accept to confirm.`)) {
               router.push(`/manager/clients/${id}`);
             }
           }}
@@ -61,13 +61,13 @@ export default function BookCallForClientPage({ params }: { params: Promise<{ id
           {times.length ? (
             <>
               <div className="flex flex-col gap-2">
-                <span className="text-body-sm font-medium text-primary">Pick a time from your open slots</span>
+                <span className="text-body-sm font-medium text-primary">Offer one or more times from your open slots</span>
                 <Meta icon={Globe}>Times are in your time zone ({user?.timeZone.replace("_", " ")})</Meta>
               </div>
-              <TimePicker times={times} value={at} onChange={(t) => { setAt(t); setErrors({ ...errors, at: undefined }); }} />
+              <TimePicker times={times} selected={picks} onChange={(t) => { toggle(t); setErrors({ ...errors, at: undefined }); }} />
               {errors.at && <p className="text-body-sm text-danger">{errors.at}</p>}
 
-              <Input label="Google Meet link" value={form.link} onChange={(e) => { setForm({ ...form, link: e.target.value }); setErrors({ ...errors, link: undefined }); }} placeholder="https://meet.google.com/..." error={errors.link} help="Create it in Google Calendar for this time, then paste it here." />
+              <Input label="Google Meet link (optional)" value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} placeholder="https://meet.google.com/..." help="Add it now if you offered one time. If you offered several, add it once the client picks one." />
 
               <fieldset className="flex flex-col gap-2 border-t border-border pt-6">
                 <legend className="mb-2 text-body font-medium text-primary">Will your notetaker bot join?</legend>
