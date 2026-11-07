@@ -8,6 +8,7 @@ import { rails } from "@/components/rails";
 import { Banner, Button, Card, Dialog, ProgressBar, TextButton, Textarea, useConfirm, useTask } from "@/components/ui";
 import { ago, daysFrom } from "@/lib/format";
 import { act, useMyClient } from "@/lib/mock";
+import { pageScore, profileScore } from "@/lib/scorecard";
 
 /** C9 Progress: plain words first, numbers second. This week's targets, what is waiting, and every update. */
 export default function ProgressPage() {
@@ -48,13 +49,10 @@ export default function ProgressPage() {
       {week && (
         <Card title="This week" action={<span className="text-caption text-secondary">From your strategy</span>}>
           <div className="flex flex-col gap-6">
+            {pageScore(week).length > 0 && <span className="text-caption font-medium text-secondary">Your profile</span>}
             <ul className="flex flex-col gap-4">
-              {[
-                { label: "Posts", ...week.posts },
-                { label: "Comments on the right posts", ...week.comments },
-                { label: "Connection requests", ...week.connections },
-              ].map((r) => (
-                <li key={r.label} className="flex flex-col gap-2">
+              {profileScore(week).map((r) => (
+                <li key={r.key} className="flex flex-col gap-2">
                   <span className="flex justify-between text-body-sm">
                     <span className="text-primary">{r.label}</span>
                     <span className="text-secondary">
@@ -65,6 +63,24 @@ export default function ProgressPage() {
                 </li>
               ))}
             </ul>
+            {pageScore(week).length > 0 && (
+              <div className="flex flex-col gap-4 border-t border-border pt-6">
+                <span className="text-caption font-medium text-secondary">Company Page</span>
+                <ul className="flex flex-col gap-4">
+                  {pageScore(week).map((r) => (
+                    <li key={r.key} className="flex flex-col gap-2">
+                      <span className="flex justify-between text-body-sm">
+                        <span className="text-primary">{r.label}</span>
+                        <span className="text-secondary">
+                          {r.done} of {r.target} done
+                        </span>
+                      </span>
+                      <ProgressBar value={r.done} max={r.target} tone={r.done >= r.target ? "success" : "brand"} />
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
             {week.held.length > 0 && (
               <Banner tone="warning" title="Waiting on you">
                 <ul className="flex flex-col gap-1">

@@ -1,5 +1,6 @@
+import { AGREEMENT_VERSION } from "../amAgreement";
 import { weeklyToDates } from "../slots";
-import type { Client, Db, Permissions, ReviewSettings, Strategy, WeekProgress } from "./types";
+import type { Client, Db, Permissions, ReviewSettings, Scorecard, ScoreLine, Strategy, WeekProgress } from "./types";
 
 // Realistic dummy data. Names, companies and people are fictional. Photos are stock images from the landing page.
 
@@ -49,7 +50,7 @@ export function seed(): Db {
     managerId: null,
     service: "self-serve",
     setupProgress: 100,
-    setupDone: ["service", "permissions", "goals-call", "strategy-call", "plan", "review"],
+    setupDone: ["service", "permissions", "discovery-call", "strategy-call", "plan", "review"],
     linkedin: "connected",
     postingPaused: false,
     permissions: allOn,
@@ -80,17 +81,30 @@ export function seed(): Db {
     frameworkVersion: "v3",
   });
 
-  const week = (clientId: string, p: [number, number], c: [number, number], k: [number, number], held: string[] = []): WeekProgress => ({
+  const line = (v: [number, number]): ScoreLine => ({ target: v[0], done: v[1] });
+  const week = (
+    clientId: string,
+    p: [number, number],
+    c: [number, number],
+    k: [number, number],
+    held: string[] = [],
+    extra: Partial<{ reactions: [number, number]; follows: [number, number]; saves: [number, number]; profileTasks: [number, number]; page: Scorecard }> = {},
+  ): WeekProgress => ({
     clientId,
     weekOf: at(-((new Date(now).getDay() + 6) % 7)),
-    posts: { target: p[0], done: p[1] },
-    comments: { target: c[0], done: c[1] },
-    connections: { target: k[0], done: k[1] },
+    posts: line(p),
+    comments: line(c),
+    connections: line(k),
+    reactions: line(extra.reactions ?? [0, 0]),
+    follows: line(extra.follows ?? [0, 0]),
+    saves: line(extra.saves ?? [0, 0]),
+    profileTasks: line(extra.profileTasks ?? [0, 0]),
+    page: extra.page,
     held,
   });
 
   return {
-    version: 27,
+    version: 33,
     session: {
       role: "client",
       userIds: { client: "u-chidi", manager: "u-ada", owner: "u-fola" },
@@ -98,11 +112,14 @@ export function seed(): Db {
     },
     users: [
       { id: "u-fola", role: "owner", firstName: "Fola", lastName: "Morenikeji", email: "fola@bluecut.example", title: "Founder", timeZone: "Africa/Lagos", twoStep: true },
+      { id: "u-ngozi", role: "owner", firstName: "Ngozi", lastName: "Umeh", email: "ngozi@bluecut.example", title: "Operations lead", timeZone: "Africa/Lagos", twoStep: true },
+      { id: "u-dayo", role: "owner", firstName: "Dayo", lastName: "Cole", email: "dayo@bluecut.example", title: "Finance", timeZone: "Africa/Lagos", twoStep: true },
+      { id: "u-sam", role: "owner", firstName: "Sam", lastName: "Idris", email: "sam@bluecut.example", title: "Content and quality", timeZone: "Africa/Lagos", twoStep: false },
       { id: "u-ada", role: "manager", firstName: "Ada", lastName: "Obi", email: "ada@bluecut.example", title: "Account manager", photo: "/landing/leaders/05.jpg", timeZone: "Africa/Lagos", twoStep: true },
       { id: "u-tunde", role: "manager", firstName: "Tunde", lastName: "Bakare", email: "tunde@bluecut.example", title: "Account manager", timeZone: "Europe/London", twoStep: true },
       { id: "u-bisi", role: "manager", firstName: "Bisi", lastName: "Adebayo", email: "bisi@bluecut.example", title: "Account manager", timeZone: "Africa/Lagos", twoStep: false },
       { id: "u-kola", role: "manager", firstName: "Kola", lastName: "Daniels", email: "kola@bluecut.example", title: "Account manager", timeZone: "Africa/Lagos", twoStep: true },
-      { id: "u-chidi", role: "client", firstName: "Chidi", lastName: "Okeke", email: "chidi@paystream.example", title: "CEO, Paystream", timeZone: "Africa/Lagos", twoStep: false , whatsapp: { number: "+234 802 555 0187", confirmed: true }, channels: { email: true, whatsapp: true, timing: "now", quietNights: true } },
+      { id: "u-chidi", role: "client", firstName: "Chidi", lastName: "Okeke", email: "chidi@paystream.example", title: "CEO, Paystream", timeZone: "Africa/Lagos", twoStep: false , linkedinUrl: "https://www.linkedin.com/in/chidi-okeke", whatsapp: { number: "+234 802 555 0187", confirmed: true }, channels: { email: true, whatsapp: true, timing: "now", quietNights: true } },
       { id: "u-sarah", role: "client", firstName: "Sarah", lastName: "Mensah", email: "sarah@lumenhealth.example", title: "Co-founder, Lumen Health", timeZone: "Africa/Accra", twoStep: false },
       { id: "u-david", role: "client", firstName: "David", lastName: "Adeyemi", email: "david@adeyemilaw.example", title: "Managing partner, Adeyemi & Co", timeZone: "Africa/Lagos", twoStep: false },
       { id: "u-kemi", role: "client", firstName: "Kemi", lastName: "Ola", email: "kemi@northwind.example", title: "Head of product, Northwind", timeZone: "America/Toronto", twoStep: false },
@@ -123,7 +140,7 @@ export function seed(): Db {
       client({ id: "c-kemi", userId: "u-kemi", managerId: "m-tunde", company: "Northwind", role: "Head of product", country: "Canada", industry: "Software", status: "paused", pausedReason: "unpaid", pausedAt: at(-12), goal: "Grow visibility for a move into a VP role.", joinedAt: at(-26), atRisk: "Paused for 12 days, unpaid" }),
       client({ id: "c-tobi", userId: "u-tobi", managerId: "m-tunde", company: "Ledgerly", role: "CTO", country: "United Kingdom", industry: "Fintech", status: "active", goal: "Hire senior engineers and be known for engineering culture.", joinedAt: at(-120), atRisk: "Open complaint about post quality" }),
       client({ id: "c-musa", userId: "u-musa", managerId: "m-tunde", company: "Sahel Ventures", role: "Partner", country: "Nigeria", industry: "Venture capital", status: "active", goal: "Attract strong founders in the Sahel to pitch.", joinedAt: at(-40) }),
-      client({ id: "c-tari", userId: "u-tari", managerId: "m-ada", company: "Delmont Group", role: "CEO", country: "Nigeria", industry: "Real estate", status: "active", service: "full-service", setupDone: ["service", "permissions", "access", "goals-call", "strategy-call", "plan", "review"], permissions: { ...allOn, companyPage: true }, fullService: { since: at(-30), pageManagement: true, pageGrant: "granted", access: { credentials: "set", twoFactor: true } }, goal: "Be the best-known name in West African commercial real estate and attract institutional investors.", joinedAt: at(-38) }),
+      client({ id: "c-tari", userId: "u-tari", managerId: "m-ada", company: "Delmont Group", role: "CEO", country: "Nigeria", industry: "Real estate", status: "active", service: "full-service", setupDone: ["service", "permissions", "access", "discovery-call", "strategy-call", "plan", "review"], permissions: { ...allOn, companyPage: true }, companyPage: { since: at(-30) }, fullService: { since: at(-30), access: { credentials: "set", twoFactor: true } }, goal: "Be the best-known name in West African commercial real estate and attract institutional investors.", joinedAt: at(-38) }),
     ],
     managers: [
       { id: "m-ada", userId: "u-ada", status: "active", intro: "I help founders in fintech and health tell their story on LinkedIn. Six years in communications, based in Lagos.",
@@ -143,10 +160,10 @@ export function seed(): Db {
           ],
           approach: "I learn how you talk, then write like you on a good day. You get posts that sound like you, a clear plan each week, and honest advice on what is working.",
         },
-        maxClients: 10, industries: ["Fintech", "Health", "Energy"], slots: weeklyToDates(["mon-morning", "tue-afternoon", "wed-morning", "thu-morning", "fri-afternoon"], now), stats: { onTime: 96, firstTimeApproval: 81, missed: 1, complaints: 0 } },
-      { id: "m-tunde", userId: "u-tunde", status: "active", intro: "I work with product and tech leaders in North America and the UK.", maxClients: 10, industries: ["Software", "Fintech", "Venture capital"], slots: weeklyToDates(["mon-afternoon", "wed-afternoon", "thu-afternoon"], now), stats: { onTime: 88, firstTimeApproval: 72, missed: 4, complaints: 1 } },
+        maxClients: 10, agreement: { fullName: "Ada Obi", signedAt: at(-200), version: AGREEMENT_VERSION }, industries: ["Fintech", "Health", "Energy"], slots: weeklyToDates(["mon-morning", "tue-afternoon", "wed-morning", "thu-morning", "fri-afternoon"], now), stats: { onTime: 96, firstTimeApproval: 81, missed: 1, complaints: 0, avgGrade: "very good", responseHours: 3, strikes: 0 } },
+      { id: "m-tunde", userId: "u-tunde", status: "active", intro: "I work with product and tech leaders in North America and the UK.", maxClients: 10, agreement: { fullName: "Tunde Bakare", signedAt: at(-260), version: AGREEMENT_VERSION }, industries: ["Software", "Fintech", "Venture capital"], slots: weeklyToDates(["mon-afternoon", "wed-afternoon", "thu-afternoon"], now), stats: { onTime: 88, firstTimeApproval: 72, missed: 4, complaints: 1, avgGrade: "good", responseHours: 6, strikes: 1 } },
       { id: "m-bisi", userId: "u-bisi", status: "invited", intro: "", maxClients: 10, industries: [], inviteToken: "demo-invite", inviteExpiresAt: new Date(now + 6 * DAY).toISOString(), stats: { onTime: 0, firstTimeApproval: 0, missed: 0, complaints: 0 } },
-      { id: "m-kola", userId: "u-kola", status: "waiting-for-training", intro: "Former journalist. I write about law, policy and public life.", maxClients: 10, industries: ["Law", "Public sector"], trainingAt: at(2, 11), slots: ["tue-morning", "thu-afternoon"], stats: { onTime: 0, firstTimeApproval: 0, missed: 0, complaints: 0 } },
+      { id: "m-kola", userId: "u-kola", status: "waiting-for-training", intro: "Former journalist. I write about law, policy and public life.", maxClients: 10, agreement: { fullName: "Kola Daniels", signedAt: at(-3), version: AGREEMENT_VERSION }, industries: ["Law", "Public sector"], trainingAt: at(2, 11), slots: ["tue-morning", "thu-afternoon"], stats: { onTime: 0, firstTimeApproval: 0, missed: 0, complaints: 0 } },
     ],
     notifications: [
       { id: "n1", userId: "u-chidi", text: "3 posts are ready for your review. Due tomorrow at 5pm.", href: "/content/review", createdAt: hoursAgo(2), read: false, by: "Ada Obi (manager)" },
@@ -182,6 +199,9 @@ export function seed(): Db {
         text: "How to pick a payments partner for West Africa, in 5 questions. A short guide for founders who are about to choose.", why: "A practical post for founders on your target list." },
       { id: "p-c5", clientId: "c-chidi", status: "scheduled", scheduledAt: hoursAgo(6), scheduledFor: at(5, 8, 30), topic: "Team", format: "story",
         text: "Our first engineer joined Paystream from a bank queue. Literally. Here is the story.", why: "A team story to support hiring next quarter.", image: { src: IMG.desk, alt: "A Paystream engineer at her desk" } },
+      // Tari (full-service): a scheduled post the account team posts and marks done
+      { id: "p-tari-1", clientId: "c-tari", status: "scheduled", scheduledAt: hoursAgo(4), scheduledFor: at(2, 9), topic: "Commercial real estate", format: "opinion",
+        text: "Institutional capital is finally looking hard at West African commercial real estate. Here is what the smart money asks before it commits, in 4 points.", why: "Ties to your goal of attracting institutional investors." },
       // Chidi: live
       { id: "p-c6", clientId: "c-chidi", status: "published", publishedAt: hoursAgo(20), topic: "Cross-border payments", format: "opinion",
         text: "Cross-border payments in Africa are not slow because of technology. They are slow because of rules written for a different decade.\n\nThree changes regulators could make this year:\n\n1. One licence that works across ECOWAS, not fifteen.\n2. Shared rules for checking who sent the money.\n3. Settlement in local currency by default.\n\nThe @[Central Bank of Nigeria] report on mobile money says the same. Worth a read: https://www.cbn.gov.ng/reports\n\n#Payments #Africa #Fintech",
@@ -288,15 +308,21 @@ export function seed(): Db {
     ],
 
     calls: [
-      { id: "cl-chidi-1", clientId: "c-chidi", managerId: "m-ada", kind: "goals", at: at(-60, 10), minutes: 30, meetUrl: "https://meet.google.com/example-abc", recording: true, status: "done", summary: "Goal: be known for payments in West Africa and open investor conversations before the Series A. Audience: investors, bank partners, fintech press." },
-      { id: "cl-chidi-2", clientId: "c-chidi", managerId: "m-ada", kind: "strategy", at: at(-56, 10), minutes: 30, meetUrl: "https://meet.google.com/example-def", recording: true, status: "done", summary: "Agreed 3 topics, 2 posts a week for 2 weeks, then 3. Added FirstBank to off limits." },
+      { id: "cl-chidi-1", clientId: "c-chidi", managerId: "m-ada", kind: "discovery", at: at(-60, 10), minutes: 30, meetUrl: "https://meet.google.com/example-abc", recording: true, status: "done", transcript: "AM: What do you most want to be known for?\nChidi: Payments across West Africa, and I want investors to notice me before we raise.\nAM: Who matters most to reach?\nChidi: Investors, a few bank partners, and the fintech press.", insights: "Goal: be known for payments in West Africa and open investor conversations before the Series A. Audience: investors, bank partners, fintech press.", sharedAt: at(-60, 11) },
+      { id: "cl-chidi-2", clientId: "c-chidi", managerId: "m-ada", kind: "strategy", at: at(-56, 10), minutes: 30, meetUrl: "https://meet.google.com/example-def", recording: true, status: "done", transcript: "AM: We'll run three topics, start at two posts a week for two weeks, then move to three.\nChidi: Good. One thing, keep FirstBank off limits for now.", insights: "Agreed 3 topics, 2 posts a week for 2 weeks, then 3. Added FirstBank to off limits.", sharedAt: at(-56, 11) },
       { id: "cl-chidi-3", clientId: "c-chidi", managerId: "m-ada", kind: "check-in", at: at(6, 11), minutes: 30, meetUrl: "https://meet.google.com/example-ghi", recording: true, status: "booked" },
       { id: "cl-chidi-4", clientId: "c-chidi", managerId: "m-ada", kind: "check-in", title: "Monthly review", at: at(20, 14, 30), minutes: 30, meetUrl: "https://meet.google.com/example-yza", recording: true, status: "booked" },
-      { id: "cl-ngozi-1", clientId: "c-ngozi", managerId: "m-ada", kind: "goals", at: at(0, 15), minutes: 30, meetUrl: "https://meet.google.com/example-jkl", recording: true, status: "booked",
+      // Client asked to meet, offering two times; waiting on Ada to confirm one and add the link.
+      { id: "cl-chidi-req", clientId: "c-chidi", managerId: "m-ada", kind: "check-in", openedBy: "client", title: "Last week's engagement dip", agenda: "Reactions dropped on the last two posts. I'd like to understand why and adjust the plan.", at: at(4, 10), minutes: 30, meetUrl: "", recording: true, status: "pending", pending: { awaiting: "manager", by: "client", options: [at(4, 10), at(5, 13)] } },
+      // Ada suggested two times with a reason; waiting on Chidi to accept one or suggest again.
+      { id: "cl-chidi-prop", clientId: "c-chidi", managerId: "m-ada", kind: "check-in", openedBy: "manager", title: "Catch-up on investor posts", agenda: "Plan the next run of posts aimed at investors.", at: at(7, 15), minutes: 30, meetUrl: "", recording: false, status: "pending", pending: { awaiting: "client", by: "manager", note: "Moved us later so we have the fresh week's numbers. Either of these work for me.", options: [at(7, 15), at(8, 11)] } },
+      // A past check-in that still needs the manager's feedback (held or did not hold).
+      { id: "cl-chidi-past", clientId: "c-chidi", managerId: "m-ada", kind: "check-in", openedBy: "client", title: "Quick question on a post", agenda: "Wanted a fast read on the cross-border draft before it went out.", at: at(-2, 11), minutes: 30, meetUrl: "https://meet.google.com/example-past", recording: true, status: "booked" },
+      { id: "cl-ngozi-1", clientId: "c-ngozi", managerId: "m-ada", kind: "discovery", at: at(0, 15), minutes: 30, meetUrl: "https://meet.google.com/example-jkl", recording: true, status: "booked",
         prep: ["Her headline still says \"Founder\" only. Ask what she wants to be known for.", "Last post was 8 months ago, a product launch with 40 reactions.", "Ask about distribution partners she would most like to reach.", "Ask what is off limits: competitors, suppliers, politics."] },
       { id: "cl-ngozi-2", clientId: "c-ngozi", managerId: "m-ada", kind: "strategy", at: at(4, 10), minutes: 30, meetUrl: "https://meet.google.com/example-mno", recording: true, status: "booked" },
-      { id: "cl-femi-1", clientId: "c-femi", managerId: "m-ada", kind: "goals", at: at(-4, 11), minutes: 30, meetUrl: "https://meet.google.com/example-pqr", recording: false, status: "done", summary: "Written notes (no recording). Goal: Series A in 9 months. Wants to be the voice on off-grid solar." },
-      { id: "cl-femi-2", clientId: "c-femi", managerId: "m-ada", kind: "strategy", at: at(-1, 11), minutes: 30, meetUrl: "https://meet.google.com/example-stu", recording: false, status: "done", summary: "Written notes. Femi asked to make topic 3 about the team, not fundraising, and to start with 2 posts a week." },
+      { id: "cl-femi-1", clientId: "c-femi", managerId: "m-ada", kind: "discovery", at: at(-4, 11), minutes: 30, meetUrl: "https://meet.google.com/example-pqr", recording: false, status: "done", insights: "Goal: Series A in 9 months. Wants to be the voice on off-grid solar.", sharedAt: at(-4, 12) },
+      { id: "cl-femi-2", clientId: "c-femi", managerId: "m-ada", kind: "strategy", at: at(-1, 11), minutes: 30, meetUrl: "https://meet.google.com/example-stu", recording: false, status: "done", insights: "Femi asked to make topic 3 about the team, not fundraising, and to start with 2 posts a week.", sharedAt: at(-1, 12) },
       { id: "cl-sarah-3", clientId: "c-sarah", managerId: "m-ada", kind: "check-in", at: at(0, 17, 30), minutes: 30, meetUrl: "https://meet.google.com/example-vwx", recording: true, status: "booked", prep: ["First week review: 1 post approved, 1 changed.", "Ask about the image for the team post."] },
     ],
 
@@ -328,12 +354,18 @@ export function seed(): Db {
     ],
 
     progress: [
-      week("c-chidi", [3, 1], [15, 11], [15, 6], ["3 posts waiting for your review, due tomorrow 5pm", "1 post held last week: not reviewed in time"]),
+      week("c-chidi", [3, 1], [15, 11], [15, 6], ["3 posts waiting for your review, due tomorrow 5pm", "1 post held last week: not reviewed in time"], { reactions: [20, 14], follows: [5, 3], saves: [5, 4], profileTasks: [1, 1] }),
       week("c-sarah", [2, 0], [10, 4], [15, 0], ["1 post waiting for your review"]),
       week("c-zainab", [3, 1], [15, 13], [10, 10], ["2 posts held, waiting for review"]),
       week("c-tobi", [3, 2], [15, 9], [10, 7]),
       week("c-musa", [2, 2], [10, 10], [10, 4]),
-      week("c-tari", [2, 2], [12, 12], [8, 8]),
+      week("c-tari", [2, 2], [12, 12], [8, 8], [], {
+        reactions: [15, 15],
+        follows: [4, 4],
+        saves: [3, 2],
+        profileTasks: [1, 1],
+        page: { posts: { target: 2, done: 2 }, comments: { target: 8, done: 6 }, reactions: { target: 10, done: 10 }, follows: { target: 3, done: 3 }, connections: { target: 5, done: 4 }, saves: { target: 2, done: 1 } },
+      }),
     ],
 
     updates: [
@@ -452,7 +484,7 @@ export function seed(): Db {
     ],
 
     contracts: [
-      { id: "k-chidi", clientId: "c-chidi", months: 6, videoAddon: { maker: "both", since: at(-49) }, monthlyCents: 80000, signedAt: at(-63), signedName: "Chidi Okeke", freeEndsAt: at(-49), startsAt: at(-49), endsAt: at(133), status: "active", paid: true, card: { brand: "Visa", last4: "4242" } },
+      { id: "k-chidi", clientId: "c-chidi", months: 6, monthlyCents: 80000, signedAt: at(-63), signedName: "Chidi Okeke", freeEndsAt: at(-49), startsAt: at(-49), endsAt: at(133), status: "active", paid: true, card: { brand: "Visa", last4: "4242" } },
       { id: "k-sarah", clientId: "c-sarah", months: 3, monthlyCents: 90000, signedAt: at(-10), signedName: "Sarah Mensah", freeEndsAt: at(4), startsAt: at(4), endsAt: at(95), status: "free", paid: false },
       { id: "k-ngozi", clientId: "c-ngozi", months: 3, monthlyCents: 90000, signedAt: at(-2), signedName: "Ngozi Eze", freeEndsAt: at(12), startsAt: at(12), endsAt: at(103), status: "free", paid: false },
       { id: "k-femi", clientId: "c-femi", months: 12, monthlyCents: 70000, signedAt: at(-6), signedName: "Femi Lawal", freeEndsAt: at(8), startsAt: at(8), endsAt: at(373), status: "free", paid: true, card: { brand: "Mastercard", last4: "8810" } },
@@ -512,13 +544,13 @@ export function seed(): Db {
       { id: "mt16", managerId: "m-tunde", clientId: "c-kemi", group: "work", column: "done", title: "Draft next week's posts", detail: "Sent a day late.", dueAt: at(-20, 17), action: "Open", href: "/manager/clients/c-kemi/content", missed: { reason: "", at: at(-19, 9) } },
     ],
     leads: [
-      { id: "l1", clientId: "c-chidi", kind: "post", action: "comment", name: "Ibrahim Sule", detail: "Investment director, Sahel Growth Fund · Post, 2 hours ago, 84 comments", url: "https://www.linkedin.com/posts/example-1", post: "The new mobile money report is out. Three numbers every payments founder should read before their next raise...", fit: "strong", why: "Investor on Chidi's list, writing about his topic.", draft: "The report misses one thing: settlement time. Our data shows mobile money users wait 3x longer for cross-border funds. Happy to share the numbers.", status: "suggested" },
+      { id: "l1", clientId: "c-chidi", kind: "post", action: "comment", name: "Ibrahim Sule", detail: "Investment director, Sahel Growth Fund · Post, 2 hours ago, 84 comments", url: "https://www.linkedin.com/posts/example-1", post: "The new mobile money report is out. Three numbers every payments founder should read before their next raise...", fit: "strong", why: "Investor on Chidi's list, writing about his topic.", draft: "The report misses one thing: settlement time. Our data shows mobile money users wait 3x longer for cross-border funds. Happy to share the numbers.", status: "kept" },
       { id: "l2", clientId: "c-chidi", kind: "post", action: "comment", name: "Kwame Asante", detail: "Head of payments, Accra Commercial Bank · Post, yesterday, 22 comments", url: "https://www.linkedin.com/posts/example-2", post: "Ghana to Nigeria corridors will not scale until banks on both sides hold local liquidity.", fit: "good", why: "Likely bank partner for the Ghana corridor.", draft: "Agree on liquidity. The corridor works when both sides hold local funds.", status: "kept" },
-      { id: "l3", clientId: "c-chidi", kind: "post", action: "react", name: "FirstBank", detail: "Company Page · Post, today, 310 comments", url: "https://www.linkedin.com/posts/example-3", fit: "weak", why: "Popular post about payments.", warning: "FirstBank is on Chidi's off-limits list.", reaction: "like", status: "suggested" },
-      { id: "l5", clientId: "c-chidi", kind: "post", action: "react", name: "Amaka Nwosu", detail: "Partner, Lagos Angel Network · Post, today", url: "https://www.linkedin.com/posts/example-5", post: "We just closed our fourth fund. 40% goes to fintech outside Lagos.", fit: "strong", why: "Investor who commented on Chidi's settlement post. Celebrating the news keeps Chidi in view.", reaction: "celebrate", status: "suggested" },
-      { id: "l6", clientId: "c-chidi", kind: "post", action: "save", name: "Tolu Bamidele", detail: "Policy lead, Central Bank fintech office · Post, 3 days ago", url: "https://www.linkedin.com/posts/example-6", post: "A plain-language guide to the new cross-border payment rules, with the dates that matter.", fit: "good", why: "Reference for Chidi's post on the new rules next week.", status: "suggested" },
-      { id: "l7", clientId: "c-chidi", kind: "person", action: "follow", name: "Africa Fintech Summit", detail: "Company Page · 48k followers", url: "https://www.linkedin.com/company/example-afs", fit: "strong", why: "Chidi is registering for their summit. Following shows their updates and speaker calls.", status: "suggested" },
-      { id: "l8", clientId: "c-chidi", kind: "person", action: "message", name: "Ruth Mensah", detail: "COO, Volta Logistics · Connected last week", url: "https://www.linkedin.com/in/example-ruth", fit: "strong", why: "Accepted Chidi's request. A short thank-you starts the conversation.", draft: "Hi Ruth, thanks for connecting. If late payments from Ghana are ever a headache for Volta, I would be glad to show you how we fix it.", status: "suggested" },
+      { id: "l3", clientId: "c-chidi", kind: "post", action: "react", name: "FirstBank", detail: "Company Page · Post, today, 310 comments", url: "https://www.linkedin.com/posts/example-3", fit: "weak", why: "Popular post about payments.", warning: "FirstBank is on Chidi's off-limits list.", reaction: "like", status: "kept" },
+      { id: "l5", clientId: "c-chidi", kind: "post", action: "react", name: "Amaka Nwosu", detail: "Partner, Lagos Angel Network · Post, today", url: "https://www.linkedin.com/posts/example-5", post: "We just closed our fourth fund. 40% goes to fintech outside Lagos.", fit: "strong", why: "Investor who commented on Chidi's settlement post. Celebrating the news keeps Chidi in view.", reaction: "celebrate", status: "kept" },
+      { id: "l6", clientId: "c-chidi", kind: "post", action: "save", name: "Tolu Bamidele", detail: "Policy lead, Central Bank fintech office · Post, 3 days ago", url: "https://www.linkedin.com/posts/example-6", post: "A plain-language guide to the new cross-border payment rules, with the dates that matter.", fit: "good", why: "Reference for Chidi's post on the new rules next week.", status: "kept" },
+      { id: "l7", clientId: "c-chidi", kind: "person", action: "follow", name: "Africa Fintech Summit", detail: "Company Page · 48k followers", url: "https://www.linkedin.com/company/example-afs", fit: "strong", why: "Chidi is registering for their summit. Following shows their updates and speaker calls.", status: "kept" },
+      { id: "l8", clientId: "c-chidi", kind: "person", action: "message", name: "Ruth Mensah", detail: "COO, Volta Logistics · Connected last week", url: "https://www.linkedin.com/in/example-ruth", fit: "strong", why: "Accepted Chidi's request. A short thank-you starts the conversation.", draft: "Hi Ruth, thanks for connecting. If late payments from Ghana are ever a headache for Volta, I would be glad to show you how we fix it.", status: "kept" },
       { id: "l4", clientId: "c-chidi", kind: "person", action: "connect", name: "Funmi Adebayo", detail: "Fintech reporter, TechCabal", url: "https://www.linkedin.com/in/example-funmi", fit: "strong", why: "Writes about cross-border payments every month.", draft: "Hi Funmi, I enjoy your payments coverage. Happy to share data from our cross-border work if it is ever useful.", status: "done" },
     ],
     signals: [
@@ -563,13 +595,7 @@ export function seed(): Db {
       { id: "au8", who: "Fola Morenikeji", action: "Invited Bisi Adebayo as a manager", target: "Managers", at: at(-1, 12), kind: "account" },
       { id: "au9", who: "Ada Obi", action: "Took down a post at the client's request", target: "Zainab Bello", at: at(-20, 9), kind: "content" },
     ],
-    payouts: [
-      { id: "po1", managerId: "m-ada", period: "This month", clients: 5, amountCents: 125000, status: "to-approve" },
-      { id: "po2", managerId: "m-tunde", period: "This month", clients: 3, amountCents: 75000, status: "to-approve" },
-      { id: "po3", managerId: "m-ada", period: "Last month", clients: 4, amountCents: 100000, status: "paid" },
-      { id: "po4", managerId: "m-tunde", period: "Last month", clients: 3, amountCents: 75000, status: "paid" },
-    ],
-    settings: { freeDays: 14, autoRefundLimitCents: 100000, reminderDays: [5, 3, 0], pauseWarningDays: 15, removalDays: 30, goAheadHours: 24, maxClientsPerManager: 10, daysBetweenCalls: 3, sessionTimeoutMinutes: 60, videoAddonCents: 30000, fullServiceCents: 80000, pageManagementCents: 40000 },
+    settings: { freeDays: 14, autoRefundLimitCents: 100000, reminderDays: [5, 3, 0], pauseWarningDays: 15, removalDays: 30, goAheadHours: 24, maxClientsPerManager: 10, daysBetweenCalls: 3, sessionTimeoutMinutes: 60, fullServiceCents: 80000, pageManagementCents: 40000 },
     changeRequests: [{ id: "cr1", clientId: "c-zainab", reason: "I would like a manager with a health background.", at: at(-1, 16), status: "open" }],
     accessLog: [
       { id: "ac1", clientId: "c-tari", who: "Ada Obi", at: hoursAgo(6), action: "Posted your approved update and replied to comments on your Page", minutes: 25 },
@@ -578,6 +604,36 @@ export function seed(): Db {
     ],
     accessAlerts: [{ id: "al1", clientId: "c-tari", managerName: "Ada Obi", at: hoursAgo(5), kind: "security-page", detail: "Opened LinkedIn Sign-in & security during a session. Blocked automatically.", resolved: false }],
     assistants: [{ id: "as-amaka", clientId: "c-chidi", name: "Amaka Obi", role: "EA", email: "amaka@paystream.example", whatsapp: "+234 803 555 0142", auto: [] }],
+    services: [
+      { id: "sv-profile-audit", name: "Profile audit", description: "A full review of your LinkedIn profile against your goal, with what to change.", bucket: "included", active: true },
+      { id: "sv-profile-optimization", name: "Profile optimization", description: "We rewrite and tidy your headline, about, experience and skills so your profile works harder.", bucket: "included", active: true },
+      { id: "sv-cover-banner", name: "Cover banner design", description: "A branded LinkedIn cover banner, designed to match how you want to be seen.", bucket: "included", active: true },
+      { id: "sv-video", name: "Video content creation", description: "We script, film or edit short videos for your posts. Priced for your brief.", bucket: "extra", active: true },
+      { id: "sv-portfolio", name: "Portfolio website", description: "A simple personal site to point your audience to, designed and built for you.", bucket: "extra", active: true },
+      { id: "sv-brand-identity", name: "Brand identity design", description: "Logo, colours and type for your personal or company brand.", bucket: "extra", active: true },
+      { id: "sv-brand-audit", name: "Brand audit", description: "A review of how your brand looks and reads across the places people find you.", bucket: "extra", active: true },
+      { id: "sv-product-audit", name: "Product audit", description: "A review of your product's story and positioning, so your content lands.", bucket: "extra", active: true },
+      { id: "sv-content-studio", name: "Content studio design", description: "A simple home-studio setup plan for better photos and video.", bucket: "extra", active: true },
+      { id: "sv-consultation", name: "Consultation", description: "A focused session with our team on a question or decision you are working through.", bucket: "extra", active: true },
+      { id: "sv-pr", name: "PR features and mentions", description: "We place your story in newspapers, magazines, articles and publications.", bucket: "extra", active: true },
+      { id: "sv-research", name: "Research", description: "Deeper research on your market, audience or competitors to shape your plan.", bucket: "extra", active: true },
+      { id: "sv-training", name: "Training", description: "A session to train you or your team on showing up well on LinkedIn.", bucket: "extra", active: true },
+      { id: "sv-digital-products", name: "Digital products", description: "We help you design and package a lead magnet, guide or other digital product.", bucket: "extra", active: true },
+    ],
+    serviceRequests: [],
+    adminRoles: [
+      { id: "ar-owner", name: "Owner", description: "Full access to everything, including roles, team, money and settings.", owner: true, access: { clients: "manage", managers: "manage", framework: "manage", services: "manage", money: "manage", complaints: "manage", settings: "manage", audit: "manage", roles: "manage" } },
+      { id: "ar-ops", name: "Operations lead", description: "Runs the account managers and their clients.", access: { clients: "manage", managers: "manage", framework: "view", services: "view", money: "none", complaints: "view", settings: "none", audit: "view", roles: "none" } },
+      { id: "ar-finance", name: "Finance", description: "Payments, refunds, and manager performance for pay.", access: { clients: "view", managers: "view", framework: "none", services: "none", money: "manage", complaints: "none", settings: "view", audit: "view", roles: "none" } },
+      { id: "ar-care", name: "Client care", description: "Complaints and client issues.", access: { clients: "view", managers: "view", framework: "none", services: "none", money: "none", complaints: "manage", settings: "none", audit: "none", roles: "none" } },
+      { id: "ar-content", name: "Content / Quality", description: "The strategy framework and the services catalogue.", access: { clients: "view", managers: "none", framework: "manage", services: "manage", money: "none", complaints: "none", settings: "none", audit: "none", roles: "none" } },
+    ],
+    adminMembers: [
+      { id: "am-fola", userId: "u-fola", roleIds: ["ar-owner"], status: "active" },
+      { id: "am-ngozi", userId: "u-ngozi", roleIds: ["ar-ops"], status: "active" },
+      { id: "am-dayo", userId: "u-dayo", roleIds: ["ar-finance", "ar-care"], status: "active" },
+      { id: "am-sam", userId: "u-sam", roleIds: ["ar-content"], status: "invited", invitedAt: hoursAgo(20) },
+    ],
     outbox: [
       { id: "o1", to: "Chidi Okafor", userId: "u-chidi", channel: "email", address: "chidi@paystream.example", text: "3 posts are ready for your review. Due tomorrow at 5pm.", href: "/content/review", at: hoursAgo(2), by: "Ada Obi (manager)" },
       { id: "o2", to: "Chidi Okafor", userId: "u-chidi", channel: "whatsapp", address: "+234 802 555 0110", text: "3 posts are ready for your review. Due tomorrow at 5pm.", href: "/content/review", at: hoursAgo(2), by: "Ada Obi (manager)" },

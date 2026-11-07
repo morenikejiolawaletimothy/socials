@@ -4,7 +4,6 @@ import { CalendarBlank, CreditCard, DownloadSimple, Gift, Receipt, Signature } f
 import Link from "next/link";
 import { useState } from "react";
 import { PayDialog } from "@/components/client/PayDialog";
-import { VideoAddonCard, contractTotal } from "@/components/client/VideoAddon";
 import { Columns } from "@/components/layout/Columns";
 import { rails } from "@/components/rails";
 import { Avatar, Badge, Banner, Button, buttonClass, Card, Dialog, EmptyState, IconButton, Pill, Row, Rows, Textarea, useConfirm, useTask } from "@/components/ui";
@@ -26,7 +25,6 @@ const invoiceBadge = { paid: { label: "Paid", tone: "success" as const }, due: {
 export default function ContractPage() {
   const { client, contract, invoices, managerUser, manager } = useMyClient();
   const db = useData();
-  const addonCents = db.settings.videoAddonCents;
   const confirm = useConfirm();
   const { run, pending } = useTask();
   const [paying, setPaying] = useState(false);
@@ -53,13 +51,18 @@ export default function ContractPage() {
   const changeRequest = db.changeRequests.find((r) => r.clientId === client.id && r.status === "open");
   const unpaid = !contract.paid && (contract.status === "free" || contract.status === "paused");
   const fs = client.fullService;
-  const fsMonthly = fs ? db.settings.fullServiceCents + (fs.pageManagement ? db.settings.pageManagementCents : 0) : 0;
-  // Contracts are paid once, up front: the plan for all its months. Full-service add-ons are billed each month.
+  const pageOn = !!client.companyPage;
+  const addonsMonthly = (fs ? db.settings.fullServiceCents : 0) + (pageOn ? db.settings.pageManagementCents : 0);
+  const monthsLeft = Math.max(0, Math.ceil((new Date(contract.endsAt).getTime() - Date.now()) / (30 * 86_400_000)));
+  const pageProrated = monthsLeft * db.settings.pageManagementCents;
+  const ended = ["cancelled", "completed"].includes(contract.status);
+  const pagePrice = money(db.settings.pageManagementCents);
+  // Contracts are paid once, up front: the plan for all its months. Add-ons (full-service, company Page) are billed each month.
   const planCents = contract.monthlyCents * contract.months;
   const priceRows: [string, string][] = [
     [`${tier} plan, ${contract.months} months`, `${money(planCents)} (${money(contract.monthlyCents)} a month)`],
     ...(fs ? ([["Full-service", `+${money(db.settings.fullServiceCents)} a month`]] as [string, string][]) : []),
-    ...(fs?.pageManagement ? ([["Company Page management", `+${money(db.settings.pageManagementCents)} a month`]] as [string, string][]) : []),
+    ...(pageOn ? ([["Company Page management", `+${money(db.settings.pageManagementCents)} a month`]] as [string, string][]) : []),
   ];
   const dateRows = [
     { icon: Signature, label: "Signed", value: `${date(contract.signedAt)} by ${contract.signedName}` },
@@ -114,16 +117,16 @@ export default function ContractPage() {
               <dt className="text-body font-semibold text-primary">Contract, paid once</dt>
               <dd className="text-body font-semibold text-primary">{money(planCents)}</dd>
             </div>
-            {fs && (
+            {(fs || pageOn) && (
               <div className="flex items-center justify-between gap-4 bg-neutral-25 px-4 py-3">
                 <dt className="text-body font-semibold text-primary">Add-ons a month</dt>
-                <dd className="text-body font-semibold text-primary">{money(fsMonthly)}</dd>
+                <dd className="text-body font-semibold text-primary">{money(addonsMonthly)}</dd>
               </div>
             )}
           </dl>
           {unpaid && (
             <div className="border-t border-border pt-6">
-              <Button onClick={() => setPaying(true)}>Pay {money(contractTotal(contract, addonCents))}</Button>
+              <Button onClick={() => setPaying(true)}>Pay {money(planCents)}</Button>
             </div>
           )}
         </div>
@@ -147,7 +150,48 @@ export default function ContractPage() {
         </Rows>
       </Card>
 
-      <VideoAddonCard clientId={client.id} contract={contract} priceCents={addonCents} />
+      <Card
+        title="Company Page"
+        action={<Badge status={pageOn ? "success" : "neutral"}>{pageOn ? "On" : "Off"}</Badge>}
+        info="We manage your company Page: posts, comments and replies. On full-service we do it through your delegated access; on self-serve we prepare it for you as tasks. Billed on top of your plan."
+      >
+        <div className="flex flex-col gap-4">
+          {pageOn ? (
+            <p className="text-body text-primary">
+              {pagePrice} a month on top of your plan. On since {date(client.companyPage!.since)}.
+            </p>
+          ) : (
+            <p className="text-body-sm text-secondary">
+              Add your company Page for {pagePrice} a month.{monthsLeft > 0 ? ` You pay ${money(pageProrated)} for the rest of your contract.` : ""}
+            </p>
+          )}
+          {!ended &&
+            (pageOn ? (
+              <Button
+                variant="remove"
+                size="sm"
+                className="self-start"
+                onClick={() =>
+                  confirm({
+                    title: "Remove the company Page add-on?",
+                    body: "We stop managing your company Page.",
+                    warning: monthsLeft > 0 ? `We refund the unused Page fee, ${money(pageProrated)}.` : undefined,
+                    confirmLabel: "Remove",
+                    tone: "danger",
+                    action: () => act.setCompanyPage(client.id, false),
+                    success: "Company Page removed.",
+                  })
+                }
+              >
+                Remove
+              </Button>
+            ) : (
+              <Button variant="secondary" size="sm" className="self-start" loading={pending("page")} onClick={() => run("page", () => act.setCompanyPage(client.id, true), "Company Page added. Your manager is told.")}>
+                Add company Page
+              </Button>
+            ))}
+        </div>
+      </Card>
 
       {manager && managerUser && (
         <Card title="Your account manager">
@@ -267,7 +311,7 @@ export default function ContractPage() {
         </Card>
       )}
 
-      <PayDialog open={paying} onClose={() => setPaying(false)} clientId={client.id} amountCents={contractTotal(contract, addonCents)} title={contract.card ? "Pay or update your card" : "Pay now"} />
+      <PayDialog open={paying} onClose={() => setPaying(false)} clientId={client.id} amountCents={planCents} title={contract.card ? "Pay or update your card" : "Pay now"} />
 
       <Dialog open={changing} onClose={() => setChanging(false)} title="Ask for a different manager">
         <p className="text-body-sm text-secondary">The owner reads this and gets back to you within 1 working day. Your new manager receives a full handover, so nothing is lost.</p>

@@ -47,7 +47,7 @@ function CardHead({ title, pill, tone }: { title: string; pill: string; tone: st
 function SetupCard() {
   const rows = [
     { icon: LinkedinLogo, label: "LinkedIn connected", note: "Done" },
-    { icon: CalendarBlank, label: "Goals call", note: "Mon, 10am" },
+    { icon: CalendarBlank, label: "Discovery call", note: "Mon, 10am" },
     { icon: CalendarBlank, label: "Strategy call", note: "Thu, 10am" },
   ];
   return (

@@ -5,10 +5,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { PayDialog } from "@/components/client/PayDialog";
 import { SetupFrame } from "@/components/client/SetupFrame";
-import { VideoAddonPicker, addonCents, addonReady, type AddonChoice } from "@/components/client/VideoAddon";
 import { Button, Input, useTask } from "@/components/ui";
 import { date, fullName, money } from "@/lib/format";
-import { act, useData, useMyClient } from "@/lib/mock";
+import { act, useMyClient } from "@/lib/mock";
 import { included, plans, type PlanId } from "@/lib/pricing";
 
 const DAY = 86_400_000;
@@ -19,10 +18,6 @@ export default function PlanPage() {
   const { client, user, contract } = useMyClient();
   const [step, setStep] = useState(contract && client?.setupDone.includes("plan") ? 2 : 0);
   const [planId, setPlanId] = useState<PlanId>("6m");
-  const [video, setVideo] = useState<AddonChoice>({ on: false, maker: "client", understood: false });
-  const [videoError, setVideoError] = useState(false);
-  const videoPrice = useData().settings.videoAddonCents;
-  const videoMonthly = video.on ? addonCents(video.maker, videoPrice) : 0;
   const [name, setName] = useState("");
   const [error, setError] = useState<string>();
   const { run, pending } = useTask();
@@ -83,7 +78,6 @@ export default function PlanPage() {
               );
             })}
           </div>
-          <VideoAddonPicker value={video} priceCents={videoPrice} onChange={setVideo} />
           <section className="flex flex-col rounded-md border border-border">
             <h3 className="border-b border-border px-4 py-3 text-body font-medium text-primary">Every plan includes</h3>
             <ul className="flex flex-col divide-y divide-border">
@@ -95,8 +89,7 @@ export default function PlanPage() {
               ))}
             </ul>
           </section>
-          {videoError && !addonReady(video) && <p className="text-body-sm text-danger">Tick that you understand video production is quoted separately, or choose &ldquo;I will supply the videos&rdquo;.</p>}
-          <Button className="self-start" onClick={() => (addonReady(video) ? setStep(1) : setVideoError(true))}>
+          <Button className="self-start" onClick={() => setStep(1)}>
             Continue
           </Button>
         </div>
@@ -112,7 +105,7 @@ export default function PlanPage() {
             const ok = await run(
               "sign",
               async () => {
-                await act.signContract(client.id, plan.months, plan.monthlyUsdCents, name.trim(), video.on ? video.maker : undefined);
+                await act.signContract(client.id, plan.months, plan.monthlyUsdCents, name.trim());
                 await act.completeSetupStep(client.id, "plan");
               },
               "Signed. Your free 2 weeks have started.",
@@ -123,7 +116,6 @@ export default function PlanPage() {
           <dl className="flex flex-col divide-y divide-border overflow-hidden rounded-md border border-border">
             {[
               { label: "Plan", value: `${plan.label}, ${money(plan.monthlyUsdCents)} a month` },
-              { label: "Video add-on", value: !video.on ? "Not added" : video.maker === "bluecut" ? "Quoted after your onboarding call" : `${money(videoPrice)} a month` },
               { label: "Free 2 weeks", value: `Today to ${date(freeEnds)}` },
               { label: "Contract", value: `${date(freeEnds)} to ${date(ends)}` },
             ].map((row) => (
@@ -134,7 +126,7 @@ export default function PlanPage() {
             ))}
             <div className="flex items-center justify-between gap-6 bg-neutral-25 px-5 py-4">
               <dt className="text-body font-semibold text-primary">Total</dt>
-              <dd className="text-right font-display text-display-lg text-primary">{money((plan.monthlyUsdCents + videoMonthly) * plan.months)}</dd>
+              <dd className="text-right font-display text-display-lg text-primary">{money(plan.monthlyUsdCents * plan.months)}</dd>
             </div>
           </dl>
           <Input
@@ -207,7 +199,7 @@ export default function PlanPage() {
           setStep(3);
         }}
         clientId={client.id}
-        amountCents={plan.monthlyUsdCents + videoMonthly}
+        amountCents={plan.monthlyUsdCents}
       />
     </SetupFrame>
   );

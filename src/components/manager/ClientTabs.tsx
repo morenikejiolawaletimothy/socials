@@ -11,19 +11,16 @@ import { MediaThumb } from "@/components/content/MediaThumb";
 import { duration } from "@/lib/linkedin";
 import { act, type ClientBundle, type Lead, type LinkedInReaction, type Update } from "@/lib/mock";
 import { ReactionLabel } from "@/components/client/EngageItemTile";
+import { CallFeedback } from "@/components/calls/CallFeedback";
 import { progressWord, reactions, taskProgress } from "@/lib/engage";
+import { pageScore, profileScore, type ScoreRow } from "@/lib/scorecard";
 
 
-function Targets({ b }: { b: ClientBundle }) {
-  if (!b.week) return <p className="text-body-sm text-secondary">Targets start once the strategy is approved.</p>;
+function ScoreLines({ rows }: { rows: ScoreRow[] }) {
   return (
     <ul className="flex flex-col gap-4">
-      {[
-        { label: "Posts", ...b.week.posts },
-        { label: "Comments", ...b.week.comments },
-        { label: "Connection requests", ...b.week.connections },
-      ].map((r) => (
-        <li key={r.label} className="flex flex-col gap-2">
+      {rows.map((r) => (
+        <li key={r.key} className="flex flex-col gap-2">
           <span className="flex justify-between text-body-sm">
             <span className="text-primary">{r.label}</span>
             <span className="text-secondary">
@@ -34,6 +31,23 @@ function Targets({ b }: { b: ClientBundle }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+function Targets({ b }: { b: ClientBundle }) {
+  if (!b.week) return <p className="text-body-sm text-secondary">Targets start once the strategy is approved.</p>;
+  const page = pageScore(b.week);
+  return (
+    <div className="flex flex-col gap-4">
+      {page.length > 0 && <span className="text-caption font-medium text-secondary">Profile</span>}
+      <ScoreLines rows={profileScore(b.week)} />
+      {page.length > 0 && (
+        <div className="flex flex-col gap-4 border-t border-border pt-4">
+          <span className="text-caption font-medium text-secondary">Company Page</span>
+          <ScoreLines rows={page} />
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -122,7 +136,7 @@ function FullServiceCard({ b }: { b: ClientBundle }) {
           </section>
         )}
 
-        {fs.pageManagement && (
+        {b.client?.companyPage && (
           <section className={`flex flex-col gap-3 ${canSignIn ? "border-t border-border pt-6" : ""}`} aria-labelledby="fs-page">
             <h3 id="fs-page" className="text-body font-semibold text-primary">
               Company Page
@@ -132,8 +146,8 @@ function FullServiceCard({ b }: { b: ClientBundle }) {
                 <span className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700">
                   <Buildings className="size-5" aria-hidden />
                 </span>
-                <span className="min-w-0 flex-1 text-body-sm text-secondary">{fs.pageGrant === "granted" ? "Admin access granted" : "Waiting for the client to add us as a Page admin"}</span>
-                <Badge status={fs.pageGrant === "granted" ? "success" : "warning"}>{fs.pageGrant === "granted" ? "Admin" : "Waiting"}</Badge>
+                <span className="min-w-0 flex-1 text-body-sm text-secondary">You manage their company Page through their delegated access.</span>
+                <Badge status="success">On</Badge>
               </Row>
             </Rows>
           </section>
@@ -141,7 +155,7 @@ function FullServiceCard({ b }: { b: ClientBundle }) {
 
         {!fs.paused && (
           <form
-            className={`flex flex-col gap-4 ${canSignIn || fs.pageManagement ? "border-t border-border pt-6" : ""}`}
+            className={`flex flex-col gap-4 ${canSignIn || b.client?.companyPage ? "border-t border-border pt-6" : ""}`}
             aria-labelledby="fs-log"
             onSubmit={async (e) => {
               e.preventDefault();
@@ -292,7 +306,7 @@ export function PlanTab({ b, id }: { b: ClientBundle; id: string }) {
     return (
       <Card title="Plan">
         <div className="flex flex-col gap-4">
-          <Banner tone="info">No strategy yet. It is drafted after the goals call.</Banner>
+          <Banner tone="info">No strategy yet. It is drafted after the discovery call.</Banner>
           <Link href={`/manager/clients/${id}/onboard`} className={`${buttonClass("primary")} self-start`}>
             Open onboarding
           </Link>
@@ -577,10 +591,9 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
   const [url, setUrl] = useState("");
   const [action, setAction] = useState<Lead["action"]>("comment");
   const [urlError, setUrlError] = useState<string>();
-  const [view, setView] = useState<EngageView>("check");
+  const [view, setView] = useState<EngageView>("add");
   const [due, setDue] = useState(() => dueOptions()[1].value);
   const firstName = b.user?.firstName ?? "the client";
-  const toCheck = b.leads.filter((l) => l.status === "suggested");
   const ready = b.leads.filter((l) => l.status === "kept");
   const closed = b.leads.filter((l) => l.status === "sent" || l.status === "done" || l.status === "dropped");
   const kinds = new Set(ready.map((l) => l.action)).size;
@@ -591,13 +604,13 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
         action={<Pill>Suggested</Pill>}
         info={
           fullService
-            ? `${firstName} is on full-service, so you engage from their account. Open each suggestion on LinkedIn to check it, adjust the text, then do it while signed in as them and mark it done. Each action is logged for ${firstName} to see.`
-            : `${firstName} is on self-serve. LinkedIn lets us post for them, nothing else. Open each suggestion on LinkedIn with your own account to check it, adjust the text, then send it to ${firstName} as a quick task. Each one takes seconds to do.`
+            ? `${firstName} is on full-service, so you engage from their account. Use these topics to guide your own research on LinkedIn, bring what you find into Add what you find and we grade it, then do it while signed in as them and mark it done. Each action is logged for ${firstName} to see.`
+            : `${firstName} is on self-serve. Use these topics to guide your research on LinkedIn with your own account, bring what you find into Add what you find and we grade it, then send it to ${firstName} as a quick task.`
         }
       >
         <div className="flex flex-col gap-4">
           <p className="text-body text-primary">
-            Look for investors and bank partners talking about cross-border payments and the new mobile money report. Join conversations where {firstName} can add data. Skip anything on the off-limits list.
+            Topics and signals to guide your research: investors and bank partners talking about cross-border payments and the new mobile money report. Join conversations where {firstName} can add data. Skip anything on the off-limits list.
           </p>
         </div>
       </Card>
@@ -610,7 +623,6 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
           onChange={setView}
           className="max-w-none w-full bg-neutral-50!"
           tabs={[
-            { value: "check", label: "To check", count: toCheck.length },
             { value: "add", label: "Add new" },
             { value: "ready", label: fullService ? "To do" : "To send", count: ready.length },
             ...(fullService ? [] : [{ value: "tasks" as const, label: "Quick tasks", count: b.tasks.filter((t) => !t.done).length }]),
@@ -619,20 +631,6 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
           ]}
         />
       </div>
-
-      {view === "check" && (
-      <Card title="To check" action={toCheck.length > 0 && <Pill>{plural(toCheck.length, "suggestion")}</Pill>}>
-        {toCheck.length ? (
-          <ul className="flex flex-col gap-3">
-            {toCheck.map((l) => (
-              <LeadTile key={l.id} l={l} fullService={fullService} />
-            ))}
-          </ul>
-        ) : (
-          <EmptyState title="All checked">New suggestions arrive as the field moves. Add your own in Add new.</EmptyState>
-        )}
-      </Card>
-      )}
 
       {view === "add" && (
       <Card title="Add what you find" info={`Paste a LinkedIn post or profile link and pick what ${firstName} should do. We draft any text in their voice and put it in ${fullService ? "To do" : "To send"}.`}>
@@ -684,7 +682,7 @@ export function EngagementTab({ b }: { b: ClientBundle }) {
               ))}
             </ul>
           ) : (
-            <EmptyState title="Nothing ready yet">Check suggestions in To check, or add your own in Add new. They wait here until you {fullService ? "do them" : "send them"}.</EmptyState>
+            <EmptyState title="Nothing ready yet">Bring what you find into Add new. It waits here until you {fullService ? "do it" : "send it"}.</EmptyState>
           )}
           {ready.length > 0 && (
             <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-end sm:justify-between">
@@ -1040,22 +1038,27 @@ export function BrandTab({ b }: { b: ClientBundle }) {
 
 /* ---------- Calls and notes ---------- */
 
-const callName = { goals: "Goals call", strategy: "Strategy call", "check-in": "Check-in" };
+const callName = { discovery: "Discovery call", strategy: "Strategy call", "check-in": "Check-in" };
 
 export function CallsTab({ b }: { b: ClientBundle }) {
+  const callStatus = (c: ClientBundle["calls"][number]) =>
+    c.status === "done" ? { tone: "success" as const, label: "Done" }
+    : c.status === "cancelled" ? { tone: "neutral" as const, label: "Cancelled" }
+    : c.status === "pending" ? (c.pending?.awaiting === "manager" ? { tone: "warning" as const, label: "Needs you" } : { tone: "info" as const, label: "Waiting on client" })
+    : { tone: "info" as const, label: "Booked" };
   return (
-    <Card title="Calls and notes" action={b.calls.length > 0 && <Pill>{plural(b.calls.length, "call")}</Pill>}>
+    <Card title="Calls and notes" action={b.client && <TextLink href={`/manager/clients/${b.client.id}/book-call`}>Book a call</TextLink>}>
       {b.calls.length ? (
         <ul className="flex flex-col gap-3">
-          {b.calls.map((c) => (
+          {b.calls.map((c) => {
+            const s = callStatus(c);
+            return (
             <li key={c.id}>
               <Tile done={c.status === "cancelled"}>
                 <span className="flex flex-col gap-1">
-                  <span className="flex items-center gap-2">
-                    <span className="text-body font-medium text-primary">{callName[c.kind]}</span>
-                    {c.summary && <InfoTip label={`Summary of the ${callName[c.kind].toLowerCase()}`}>{c.summary}</InfoTip>}
-                  </span>
-                  <span className="text-body-sm text-secondary">{c.recording ? "Recorded, transcript in the notetaker." : "Not recorded. Written notes."}</span>
+                  <span className="text-body font-medium text-primary">{c.kind === "check-in" ? c.title ?? callName[c.kind] : callName[c.kind]}</span>
+                  {c.agenda && <span className="text-body-sm text-secondary">{c.agenda}</span>}
+                  <span className="text-body-sm text-secondary">{c.recording ? "Notetaker bot joins (with the client's consent)." : "No bot. Write what you heard."}</span>
                 </span>
                 {c.prep && (
                   <ul className="flex list-disc flex-col gap-1 pl-5 text-body-sm text-primary">
@@ -1066,14 +1069,16 @@ export function CallsTab({ b }: { b: ClientBundle }) {
                 )}
                 <TileFooter>
                   <Meta icon={Clock}>{dayTime(c.at)} · {c.minutes} min</Meta>
-                  <Badge status={c.status === "done" ? "success" : c.status === "cancelled" ? "neutral" : "info"}>{c.status === "done" ? "Done" : c.status === "cancelled" ? "Cancelled" : "Booked"}</Badge>
+                  <Badge status={s.tone}>{s.label}</Badge>
                 </TileFooter>
+                <CallFeedback call={c} />
               </Tile>
             </li>
-          ))}
+            );
+          })}
         </ul>
       ) : (
-        <p className="text-body-sm text-secondary">No calls booked yet.</p>
+        <p className="text-body-sm text-secondary">No calls yet. Book one with {b.user?.firstName ?? "the client"} after you agree a time in messages.</p>
       )}
     </Card>
   );

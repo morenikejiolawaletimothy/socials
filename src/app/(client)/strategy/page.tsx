@@ -42,7 +42,7 @@ export default function StrategyPage() {
   if (!strategy || !client) {
     return (
       <Columns {...rails.clientMain}>
-        <EmptyState title="Your strategy is not ready yet">Your manager writes it after your goals call. We will tell you as soon as it is ready.</EmptyState>
+        <EmptyState title="Your strategy is not ready yet">Your manager writes it after your discovery call. We will tell you as soon as it is ready.</EmptyState>
       </Columns>
     );
   }

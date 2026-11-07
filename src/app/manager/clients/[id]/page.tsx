@@ -1,6 +1,5 @@
 "use client";
 
-import { VideoCamera } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, use } from "react";
@@ -17,10 +16,20 @@ import {
   PlanTab,
   UpdatesTab,
 } from "@/components/manager/ClientTabs";
-import { Avatar, Badge, Breadcrumbs, buttonClass, Card, EmptyState, Pill, ProgressBar, Tabs } from "@/components/ui";
+import { Avatar, Badge, Breadcrumbs, Button, buttonClass, Card, EmptyState, ProgressBar, Tabs, useTask } from "@/components/ui";
 import { fullName } from "@/lib/format";
-import { clientBundle, useMyManager } from "@/lib/mock";
+import { act, clientBundle, useMyManager } from "@/lib/mock";
 import { statusBadge } from "@/lib/status";
+
+/** #43: re-read the client's name/photo from their stored LinkedIn URL, on demand. */
+function SyncProfileButton({ userId }: { userId: string }) {
+  const { run, pending } = useTask();
+  return (
+    <Button variant="secondary" size="sm" loading={pending("sync")} onClick={() => run("sync", () => act.syncLinkedIn(userId), "Client profile updated from LinkedIn.")}>
+      Update profile
+    </Button>
+  );
+}
 
 const tabs = [
   { value: "overview", label: "Overview" },
@@ -64,11 +73,6 @@ function ClientPage({ id }: { id: string }) {
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
               <h1 className="font-display text-display-xl text-primary">{fullName(b.user)}</h1>
               <span className="flex flex-wrap items-center gap-2">
-                {b.contract?.videoAddon && (
-                  <Pill>
-                    <VideoCamera className="size-4" aria-hidden /> Video add-on
-                  </Pill>
-                )}
                 <Badge status={badge.tone}>{badge.label}</Badge>
               </span>
             </div>
@@ -96,6 +100,7 @@ function ClientPage({ id }: { id: string }) {
             <Link href={`/manager/clients/${id}/onboard`} className={buttonClass("secondary", "sm")}>
               Onboarding and strategy
             </Link>
+            {b.user.linkedinUrl && <SyncProfileButton userId={b.user.id} />}
           </div>
         </div>
       </Card>
