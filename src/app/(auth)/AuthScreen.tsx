@@ -1,28 +1,42 @@
-import { LockSimple } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
-import { Logo } from "@/components/ui";
+import { InfoTip, Logo } from "@/components/ui";
 
-/** One auth screen: logo mark, title, optional intro, then the form. `above` sits between logo and title (the invite Stepper). */
+/** The password rule, shown under every new-password field. */
+export const PASSWORD_RULE = "At least 12 characters long and combine uppercase and lowercase letters, numbers, and special symbols.";
+
+/** Checks a new password against PASSWORD_RULE. Returns the error to show, or nothing. */
+export function passwordError(pw: string) {
+  if (pw.length < 12) return "Use at least 12 characters, so your account stays safe.";
+  if (!/[a-z]/.test(pw) || !/[A-Z]/.test(pw) || !/\d/.test(pw) || !/[^A-Za-z0-9]/.test(pw)) return "Add an uppercase letter, a lowercase letter, a number and a symbol.";
+  return undefined;
+}
+
+/** One auth screen: logo mark, title (with an optional InfoTip), optional intro, then the form. `above` sits between logo and title (the invite Stepper). */
 export function AuthScreen({
   title,
+  info,
   description,
   above,
   children,
 }: {
   title: string;
+  info?: React.ReactNode;
   description?: React.ReactNode;
   above?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-8">
+    <div className="flex flex-col gap-6">
       <title>{`${title} · Bluecut Socials`}</title>
       <Link href="/" aria-label="Bluecut Socials home" className="self-start rounded-full focus-visible:focus-ring">
-        <Logo size={44} />
+        <Logo size={40} />
       </Link>
       {above}
       <div className="flex flex-col gap-2">
-        <h1 className="font-display text-display-2xl text-primary">{title}</h1>
+        <h1 className="flex items-center gap-2 font-display text-display-xl text-primary">
+          {title}
+          {info && <InfoTip label={`About ${title.toLowerCase()}`}>{info}</InfoTip>}
+        </h1>
         {description && <p className="text-body text-secondary">{description}</p>}
       </div>
       <div className="flex flex-col gap-6">{children}</div>
@@ -30,16 +44,11 @@ export function AuthScreen({
   );
 }
 
-/** The line under every sign-in and sign-up form: the switch link, a divider, then a reassurance. */
+/** The line under every sign-in and sign-up form: a divider, then the switch link. */
 export function AuthFooter({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 border-t border-border pt-4">
       <p className="text-center text-body-sm text-secondary">{children}</p>
-      <div className="h-px bg-border" />
-      <p className="flex items-center justify-center gap-2 text-caption text-secondary">
-        <LockSimple className="size-4" aria-hidden />
-        We never see or store your LinkedIn password.
-      </p>
     </div>
   );
 }

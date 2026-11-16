@@ -7,23 +7,21 @@ import { money } from "@/lib/format";
 import { act } from "@/lib/mock";
 
 /**
- * Card payment. Phase 1 fakes it: any card works except 4000 0000 0000 0002, which is declined, so the
- * "payment failed" state can be seen. Phase 2 uses Stripe's own card form.
+ * The card form on its own (Figma Payment step, and inside PayDialog): amount due, one grouped card field,
+ * then the buttons the caller renders with `actions(busy)`. Submitting charges the card.
  */
-export function PayDialog({
-  open,
-  onClose,
-  onPaid,
+export function PayForm({
   clientId,
   amountCents,
-  title = "Pay now",
+  onPaid,
+  actions,
+  id: formId,
 }: {
-  open: boolean;
-  onClose: () => void;
-  onPaid?: () => void;
   clientId: string;
   amountCents: number;
-  title?: string;
+  onPaid?: () => void;
+  actions: (busy: boolean) => React.ReactNode;
+  id?: string;
 }) {
   const toast = useToast();
   const [card, setCard] = useState("4242 4242 4242 4242");
@@ -33,8 +31,8 @@ export function PayDialog({
   const [busy, setBusy] = useState(false);
 
   return (
-    <Dialog open={open} onClose={onClose} title={title} info="Payments are handled by Stripe. We never store your card number." infoIcon={LockSimple}>
       <form
+        id={formId}
         noValidate
         className="flex flex-col gap-5"
         onSubmit={async (e) => {
@@ -54,7 +52,6 @@ export function PayDialog({
             return setError("We could not reach the payment service. Nothing was charged. Try again in a moment.");
           }
           setBusy(false);
-          onClose();
           onPaid?.();
           toast("Payment received. Your receipt is in Contract.");
         }}
@@ -100,15 +97,47 @@ export function PayDialog({
           )}
         </fieldset>
 
-        <div className="flex flex-col gap-3 pt-2">
-          <Button type="submit" fullWidth loading={busy}>
-            {busy ? "Paying" : `Pay ${money(amountCents)}`}
-          </Button>
-          <Button variant="cancel" fullWidth onClick={onClose}>
-            Cancel
-          </Button>
-        </div>
+        {actions(busy)}
       </form>
+  );
+}
+
+/** Card payment in a dialog. Phase 1 fakes it: any card works except 4000 0000 0000 0002, which is declined. Phase 2 uses Stripe's own card form. */
+export function PayDialog({
+  open,
+  onClose,
+  onPaid,
+  clientId,
+  amountCents,
+  title = "Pay now",
+}: {
+  open: boolean;
+  onClose: () => void;
+  onPaid?: () => void;
+  clientId: string;
+  amountCents: number;
+  title?: string;
+}) {
+  return (
+    <Dialog open={open} onClose={onClose} title={title} info="Payments are handled by Stripe. We never store your card number." infoIcon={LockSimple}>
+      <PayForm
+        clientId={clientId}
+        amountCents={amountCents}
+        onPaid={() => {
+          onClose();
+          onPaid?.();
+        }}
+        actions={(busy) => (
+          <div className="flex flex-col gap-3 pt-2">
+            <Button type="submit" fullWidth loading={busy}>
+              {busy ? "Paying" : `Pay ${money(amountCents)}`}
+            </Button>
+            <Button variant="cancel" fullWidth onClick={onClose}>
+              Cancel
+            </Button>
+          </div>
+        )}
+      />
     </Dialog>
   );
 }

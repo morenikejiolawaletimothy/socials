@@ -1,10 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { Banner, Button, PasswordInput, TextLink } from "@/components/ui";
+import { Button, buttonClass, PasswordInput } from "@/components/ui";
 import { auth } from "@/lib/mock";
-import { AuthScreen } from "../../AuthScreen";
+import { AuthScreen, PASSWORD_RULE, passwordError } from "../../AuthScreen";
 
+/** Figma: Set a new password → Your password is changed. */
 export default function NewPasswordPage() {
   const [pw, setPw] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -14,7 +16,8 @@ export default function NewPasswordPage() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (pw.length < 12) return setErrors({ pw: "Use at least 12 characters, so your account stays safe." });
+    const bad = passwordError(pw);
+    if (bad) return setErrors({ pw: bad });
     if (pw !== confirm) return setErrors({ confirm: "The two passwords do not match. Type it again." });
     setBusy(true);
     await auth.setNewPassword();
@@ -24,22 +27,19 @@ export default function NewPasswordPage() {
 
   if (done) {
     return (
-      <AuthScreen title="Your password is changed">
-        <Banner tone="success" title="You are signed out everywhere else">
-          For your safety, any other device signed in to your account has been signed out.
-        </Banner>
-        <TextLink href="/signin" className="self-start">
-          Sign in
-        </TextLink>
+      <AuthScreen title="Your password is changed" description="For your safety, we signed you out on every other device.">
+        <Link href="/signin" className={`${buttonClass("primary", "md")} w-full`}>
+          Go to sign in
+        </Link>
       </AuthScreen>
     );
   }
 
   return (
-    <AuthScreen title="Set a new password" description="Choose a password you have not used for Bluecut before.">
+    <AuthScreen title="Set a new password">
       <form onSubmit={submit} noValidate className="flex flex-col gap-4">
-        <PasswordInput label="New password" autoComplete="new-password" value={pw} onChange={(e) => setPw(e.target.value)} help="At least 12 characters." error={errors.pw} />
-        <PasswordInput label="Type it again" autoComplete="new-password" value={confirm} onChange={(e) => setConfirm(e.target.value)} error={errors.confirm} />
+        <PasswordInput label="New password" autoComplete="new-password" value={pw} onChange={(e) => { setPw(e.target.value); setErrors({}); }} help={PASSWORD_RULE} error={errors.pw} />
+        <PasswordInput label="Type it again" autoComplete="new-password" value={confirm} onChange={(e) => { setConfirm(e.target.value); setErrors({}); }} error={errors.confirm} />
         <Button type="submit" fullWidth loading={busy}>
           {busy ? "Saving" : "Save password"}
         </Button>

@@ -3,19 +3,17 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Avatar, Banner, Button, Divider, Input, PasswordInput, TextButton, TextLink } from "@/components/ui";
-import { fullName } from "@/lib/format";
+import { Button, Divider, Input, PasswordInput, TextLink } from "@/components/ui";
 import { auth } from "@/lib/mock";
-import { AuthFooter, AuthScreen, EmailRow } from "../AuthScreen";
+import { AuthFooter, AuthScreen, EmailRow, PASSWORD_RULE, passwordError } from "../AuthScreen";
 import { GoogleButton } from "../GoogleButton";
 import { step } from "../step";
 
-type Stage = "email" | "password" | "linkedin";
-type Profile = { kind: "person"; firstName: string; lastName: string } | { kind: "company"; company: string };
+type Stage = "email" | "password" | "name";
 
 /**
- * #43: frictionless sign-up. Email → password → LinkedIn URL → code, or Google → LinkedIn URL → code.
- * The name and photo come from the LinkedIn link (mocked in Phase 1). A bad link never blocks sign-up: you add your name instead.
+ * Figma sign-up: email → password → your name → code. Google skips the password and pre-fills the name.
+ * The LinkedIn link is asked for later, in Manage account access.
  */
 export default function SignUpPage() {
   const router = useRouter();
@@ -23,13 +21,10 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [viaGoogle, setViaGoogle] = useState(false);
-  const [linkedinUrl, setLinkedinUrl] = useState("");
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [manual, setManual] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [error, setError] = useState<React.ReactNode>();
-  const [busy, setBusy] = useState<"google" | "extract" | "create" | null>(null);
+  const [busy, setBusy] = useState<"google" | "create" | null>(null);
 
   const taken = (
     <>
@@ -45,11 +40,12 @@ export default function SignUpPage() {
     setStage("password");
   }
 
-  function toLinkedin(ev: React.FormEvent) {
+  function toName(ev: React.FormEvent) {
     ev.preventDefault();
-    if (password.length < 12) return setError("Use at least 12 characters, so your account stays safe.");
+    const bad = passwordError(password);
+    if (bad) return setError(bad);
     setError(undefined);
-    setStage("linkedin");
+    setStage("name");
   }
 
   async function onGoogle() {
@@ -60,40 +56,20 @@ export default function SignUpPage() {
     setEmail(g.email);
     setFirstName(g.firstName);
     setLastName(g.lastName);
-    setStage("linkedin");
+    setStage("name");
   }
 
-  async function onExtract(ev: React.FormEvent) {
+  async function create(ev: React.FormEvent) {
     ev.preventDefault();
     setError(undefined);
-    if (!linkedinUrl.trim()) return setError("Paste your LinkedIn profile link, or add your name instead.");
-    setBusy("extract");
-    const p = await auth.fetchLinkedInProfile(linkedinUrl);
-    setBusy(null);
-    if (!p) {
-      setManual(true);
-      setProfile(null);
-      return setError("We could not read that link. Check it, or add your name to carry on.");
-    }
-    setProfile(p);
-    setManual(false);
-    if (p.kind === "person") {
-      setFirstName(p.firstName);
-      setLastName(p.lastName);
-    }
-  }
-
-  async function create() {
-    setError(undefined);
     if (!firstName.trim()) return setError("Add your first name to finish.");
+    if (!lastName.trim()) return setError("Add your last name to finish.");
     setBusy("create");
     const res = await auth.createAccount({
       firstName: firstName.trim(),
       lastName: lastName.trim(),
       email: email.trim(),
       password: viaGoogle ? undefined : password,
-      linkedinUrl: linkedinUrl.trim() || undefined,
-      company: profile?.kind === "company" ? profile.company : undefined,
     });
     setBusy(null);
     if (!res.ok) {
@@ -103,11 +79,8 @@ export default function SignUpPage() {
     router.push(`/signup/verify?email=${encodeURIComponent(email.trim())}`);
   }
 
-  const needName = manual || (profile ? profile.kind === "company" : false);
-  const foundPerson = profile?.kind === "person" && !manual;
-
   return (
-    <AuthScreen title="Create your account">
+    <AuthScreen title={stage === "password" ? "Choose a password" : stage === "name" ? "Your name" : "Create your account"}>
       <AnimatePresence mode="wait" initial={false}>
         {stage === "email" ? (
           <motion.div key="email" {...step} className="flex flex-col gap-6">
@@ -121,73 +94,28 @@ export default function SignUpPage() {
             </form>
           </motion.div>
         ) : stage === "password" ? (
-          <motion.form key="password" {...step} onSubmit={toLinkedin} noValidate className="flex flex-col gap-4">
+          <motion.form key="password" {...step} onSubmit={toName} noValidate className="flex flex-col gap-4">
             <EmailRow email={email.trim()} onChange={() => { setStage("email"); setError(undefined); }} />
-            <PasswordInput label="Choose a password" autoComplete="new-password" autoFocus value={password} onChange={(e) => { setPassword(e.target.value); setError(undefined); }} help="At least 12 characters." error={error} />
-            <Button type="submit" fullWidth disabled={busy !== null}>
+            <PasswordInput label="Password" autoComplete="new-password" autoFocus value={password} onChange={(e) => { setPassword(e.target.value); setError(undefined); }} help={PASSWORD_RULE} error={error} />
+            <Button type="submit" fullWidth>
               Continue
             </Button>
           </motion.form>
         ) : (
-          <motion.div key="linkedin" {...step} className="flex flex-col gap-4">
+          <motion.form key="name" {...step} onSubmit={create} noValidate className="flex flex-col gap-4">
             <EmailRow email={email.trim()} onChange={() => { setStage(viaGoogle ? "email" : "password"); setError(undefined); }} />
-
-            {foundPerson ? (
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center gap-3 rounded-md border border-border bg-neutral-25 p-4">
-                  <Avatar name={fullName({ firstName, lastName })} size="md" />
-                  <span className="flex min-w-0 flex-1 flex-col">
-                    <span className="text-caption text-secondary">We found your profile</span>
-                    <span className="text-body font-medium text-primary">{fullName({ firstName, lastName })}</span>
-                  </span>
-                  <TextButton onClick={() => setManual(true)}>Not you?</TextButton>
-                </div>
-                {error && <p className="text-body-sm text-danger">{error}</p>}
-                <Button fullWidth loading={busy === "create"} onClick={create}>
-                  Create account
-                </Button>
-              </div>
-            ) : needName ? (
-              <div className="flex flex-col gap-4">
-                {profile?.kind === "company" ? (
-                  <Banner tone="info" icon={false}>That link is a company page. Add your name as the person on the account; we keep {profile.company} on your profile.</Banner>
-                ) : (
-                  <Banner tone="neutral" icon={false}>Add your name to carry on. You can add your LinkedIn link later from your account.</Banner>
-                )}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <Input label="First name" autoComplete="given-name" autoFocus value={firstName} onChange={(e) => { setFirstName(e.target.value); setError(undefined); }} error={error && !firstName.trim() ? error : undefined} />
-                  <Input label="Last name" autoComplete="family-name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-                </div>
-                <Button fullWidth loading={busy === "create"} onClick={create}>
-                  Create account
-                </Button>
-                <TextButton onClick={() => { setManual(false); setProfile(null); setError(undefined); }}>Use my LinkedIn link</TextButton>
-              </div>
-            ) : (
-              <form onSubmit={onExtract} noValidate className="flex flex-col gap-4">
-                <Input
-                  label="Your LinkedIn profile link"
-                  type="url"
-                  inputMode="url"
-                  placeholder="https://www.linkedin.com/in/your-name"
-                  value={linkedinUrl}
-                  onChange={(e) => { setLinkedinUrl(e.target.value); setError(undefined); }}
-                  help="We use it to set up your name and photo. You can change it later."
-                  error={error}
-                />
-                <Button type="submit" fullWidth loading={busy === "extract"}>
-                  {busy === "extract" ? "Reading your profile" : "Continue"}
-                </Button>
-                <TextButton onClick={() => { setManual(true); setError(undefined); }} className="self-center">
-                  Add my name instead
-                </TextButton>
-              </form>
-            )}
-
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Input label="First name" autoComplete="given-name" autoFocus value={firstName} onChange={(e) => { setFirstName(e.target.value); setError(undefined); }} error={error && !firstName.trim() ? error : undefined} />
+              <Input label="Last name" autoComplete="family-name" value={lastName} onChange={(e) => { setLastName(e.target.value); setError(undefined); }} error={error && firstName.trim() && !lastName.trim() ? error : undefined} />
+            </div>
+            {error && firstName.trim() && lastName.trim() && <p className="text-body-sm text-danger">{error}</p>}
+            <Button type="submit" fullWidth loading={busy === "create"}>
+              {busy === "create" ? "Creating your account" : "Create account"}
+            </Button>
             <p className="text-caption text-secondary">
               By creating an account you agree to our <TextLink href="/terms">terms</TextLink> and <TextLink href="/privacy">privacy policy</TextLink>.
             </p>
-          </motion.div>
+          </motion.form>
         )}
       </AnimatePresence>
 

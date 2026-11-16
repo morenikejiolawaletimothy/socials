@@ -23,7 +23,7 @@ export const plans: Plan[] = [
 
 export const included = [
   "A dedicated account manager",
-  "Your strategy, with weekly targets you can track",
+  "Audit and strategy, with weekly targets you can track",
   "Posts written in your voice, approved by you",
   "Engagement with the right people",
   "Weekly and monthly progress updates",
@@ -40,4 +40,26 @@ export function formatPrice(cents: number, currency = displayCurrency()) {
 
 export function planTotalCents(plan: Plan) {
   return plan.monthlyUsdCents * plan.months;
+}
+
+/** Figma "Add-ons": optional extras chosen with the plan. Charged once, on top of the contract total. */
+export type AddOnId = "company-page" | "sales-navigator" | "recruiter" | "learning";
+export type AddOn = { id: AddOnId; label: string; summary: string; cents: number; perPage?: boolean };
+
+export const addOns: AddOn[] = [
+  { id: "company-page", label: "Company page", summary: "We run your company page too", cents: 40000, perPage: true },
+  { id: "sales-navigator", label: "Sales Navigator", summary: "Find and reach the right buyers", cents: 30000 },
+  { id: "recruiter", label: "Recruiter tools", summary: "Hire through LinkedIn Recruiter", cents: 20000 },
+  { id: "learning", label: "LinkedIn Learning and creator", summary: "Courses, creator mode and newsletters", cents: 100000 },
+];
+
+/** Account types, as the Figma names them. Regular = self-serve, Premium = full-service. */
+export const accountTypes = [
+  { id: "self-serve" as const, label: "Regular", tagline: "You do it yourself", summary: "We prepare everything. You post, comment and update yourself in a few taps." },
+  { id: "full-service" as const, label: "Premium", tagline: "We do it for you", summary: "We prepare and do everything on your LinkedIn. You only approve what goes out." },
+];
+
+/** The whole contract, paid up front: the months plus any add-ons. */
+export function contractTotalCents(k: { monthlyCents: number; months: number; addOns?: { cents: number }[] }) {
+  return k.monthlyCents * k.months + (k.addOns ?? []).reduce((s, a) => s + a.cents, 0);
 }

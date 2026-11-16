@@ -1,6 +1,6 @@
 "use client";
 
-import { BookmarkSimple, CalendarBlank, CalendarStar, ChatCircleText, CheckCircle, Circle, Clock, GraduationCap, LinkedinLogo, MagnifyingGlass, PaperPlaneTilt, Repeat, ThumbsUp, Timer, UserCirclePlus, UserPlus, VideoCamera, X } from "@phosphor-icons/react";
+import { BookmarkSimple, CalendarBlank, CalendarStar, ChatCircleText, CheckCircle, Circle,  GraduationCap, LinkedinLogo, MagnifyingGlass, PaperPlaneTilt, Repeat, ThumbsUp, Timer, UserCirclePlus, UserPlus, VideoCamera, X } from "@phosphor-icons/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
@@ -8,18 +8,18 @@ import { PostThumb } from "@/components/content/PostMedia";
 import { plainText } from "@/components/content/PostText";
 import { PostPreview } from "@/components/content/PostPreview";
 import { callTitle, upcomingCalls } from "@/components/rails/NextCallCard";
-import { Avatar, Badge, Banner, Button, buttonClass, Card, Meta, Pill, ProgressBar, Select, TextButton, textActionClass, Tile, TileAction, TileFooter, TileIcon, useToast } from "@/components/ui";
+import { Avatar, Badge, Banner, Button, buttonClass, Card, Meta, Pill, ProgressBar, Select, TextButton, textActionClass, Tile, TileAction, TileFooter, TileIcon, useTask, useToast } from "@/components/ui";
+import { contractTotalCents } from "@/lib/pricing";
 import { isOverdue } from "@/lib/status";
 import { isEngage, progressWord, taskProgress } from "@/lib/engage";
-import { ago, agoIn, date, dateTime, day, dayIn, dayTimeIn, daysFrom, fullName, money, plural, time } from "@/lib/format";
-import { type ClientBundle, type Post, type QuickTask, type TaskEvent } from "@/lib/mock";
+import { ago, agoIn, day, dayIn, dayTimeIn, daysFrom, fullName, money, plural, time } from "@/lib/format";
+import { act, type ClientBundle, type Post, type QuickTask, type TaskEvent } from "@/lib/mock";
 import { LivePostActions } from "./LivePostActions";
 import { PayDialog } from "./PayDialog";
 import { reportActivity } from "./reportActivity";
 import { nextSetupStep, stepsFor } from "./setup";
 
 const linkClass = textActionClass;
-const buttonLink = (primary: boolean) => `self-start ${buttonClass(primary ? "primary" : "secondary")}`;
 
 /* ---------- States at the top of Home ---------- */
 
@@ -75,249 +75,64 @@ export function PausedCard({ b }: { b: ClientBundle }) {
           onClose={() => setPaying(false)}
           onPaid={() => toast("Your account is active again. Scheduled posts are back on.")}
           clientId={client.id}
-          amountCents={contract.monthlyCents * contract.months}
+          amountCents={contractTotalCents(contract)}
         />
       )}
     </Card>
   );
 }
 
-/** C1 states: free 2 weeks, posting paused. */
+/** Must-know states at the top of Home. The free period has its own card in the feed (FreePeriodCard). */
 export function StateBanners({ b }: { b: ClientBundle }) {
-  const { client, contract } = b;
-  if (!client || client.status === "paused") return null;
-  const daysLeft = contract ? daysFrom(contract.freeEndsAt) : 99;
+  const { client } = b;
+  if (!client || client.status === "paused" || !client.postingPaused) return null;
   return (
-    <>
-      {client.postingPaused && (
-        <Banner tone="warning" title="You paused all posting" action={<Link href="/control" className={linkClass}>Turn it back on</Link>}>
-          Scheduled posts are held until you turn posting back on.
-        </Banner>
-      )}
-      {client.status === "free" && contract && !contract.paid && daysLeft <= 5 && <FreeEndingCard b={b} />}
-      {client.status === "free" && contract && (contract.paid || daysLeft > 5) && !showsCallsCard(client) && <FreeWeeksNote b={b} />}
-    </>
-  );
-}
-
-/** C1: the free period ends in 5 days or less and nothing is paid. Laid out like Account paused: what happens, the facts, then Pay. */
-function FreeEndingCard({ b }: { b: ClientBundle }) {
-  const { contract } = b;
-  if (!contract) return null;
-  const facts = [
-    { label: "Free until", value: date(contract.freeEndsAt) },
-    { label: "Amount due", value: `${money(contract.monthlyCents * contract.months)} for ${contract.months} months` },
-  ];
-  return (
-    <Card
-      title="Your free period is ending"
-      padding="none"
-      action={<Badge status="warning">Ends {dayIn(contract.freeEndsAt)}</Badge>}
-      info="The contract is paid once, up front. You can pull out any time."
-    >
-      <div className="flex flex-col divide-y divide-border">
-        <p className="px-6 py-5 text-body text-primary">
-          Pay to keep going. If we have not received payment by {date(contract.freeEndsAt)}, your account pauses until you pay.
-        </p>
-        <ul className="flex flex-col divide-y divide-border">
-          {facts.map((f) => (
-            <li key={f.label} className="flex items-center justify-between gap-4 px-6 py-4">
-              <span className="text-body-sm text-secondary">{f.label}</span>
-              <span className="text-right text-body-sm font-medium text-primary">{f.value}</span>
-            </li>
-          ))}
-        </ul>
-        <div className="px-6 py-5">
-          <Link href="/contract" className={buttonClass("primary")}>
-            Pay now
-          </Link>
-        </div>
-      </div>
-    </Card>
-  );
-}
-
-/** The free 2 weeks note as one line, for the info tooltip on Your two calls. */
-function freeWeeksInfo({ client, contract }: ClientBundle) {
-  if (client?.status !== "free" || !contract || (!contract.paid && daysFrom(contract.freeEndsAt) <= 5)) return undefined;
-  return `Your first 2 weeks are free, until ${date(contract.freeEndsAt)}. ${contract.paid ? "You have paid already, so nothing changes when they end." : "You get the full service. We will remind you before they end."}`;
-}
-
-/** The free 2 weeks note. Sits at the top of Your two calls while that card shows, otherwise with the state banners. */
-function FreeWeeksNote({ b }: { b: ClientBundle }) {
-  const { client, contract } = b;
-  if (client?.status !== "free" || !contract || (!contract.paid && daysFrom(contract.freeEndsAt) <= 5)) return null;
-  return (
-    <Banner tone="info" title={`Your first 2 weeks are free, until ${date(contract.freeEndsAt)}`}>
-      {contract.paid ? "You have paid already, so nothing changes when they end." : "You get the full service. We will remind you before they end."}
+    <Banner tone="warning" title="You paused all posting" action={<Link href="/control" className={linkClass}>Turn it back on</Link>}>
+      Scheduled posts are held until you turn posting back on.
     </Banner>
   );
 }
 
 /* ---------- Setting up ---------- */
 
-/** C1: setup progress with its steps and one button (steps depend on self-serve vs full-service). */
+/**
+ * Figma "Account setup": a short checklist joined by a line (done steps struck through), and one button.
+ * At 100% the button is Complete setup, which opens the feed and asks the manager to offer call times.
+ */
 export function SetupCard({ b }: { b: ClientBundle }) {
   const { client } = b;
-  if (!client || client.status !== "setting-up") return null;
+  const { run, pending } = useTask();
+  if (!client || client.stage !== "setup") return null;
   const steps = stepsFor(client.service);
   const next = nextSetupStep(client.setupDone, client.service);
   return (
-    <Card id="setup" title="Account setup" info="Do it now or come back later. We save your progress and remind you by email.">
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-2">
-          <span className="flex items-center justify-between text-body-sm">
-            <span className="text-primary">{client.setupProgress}% done</span>
-            <span className="text-secondary">{plural(steps.length - client.setupDone.length, "step")} left</span>
-          </span>
-          <ProgressBar value={client.setupProgress} />
-        </div>
-        <ol className="flex flex-col">
-          {steps.map((s, i) => {
-            const done = client.setupDone.includes(s.step);
-            const isNext = next?.step === s.step;
-            const row = (
-              <>
-                {done ? <CheckCircle className="size-6 shrink-0 text-success" aria-label="Done" /> : <Circle className={`size-6 shrink-0 ${isNext ? "text-primary-600" : "text-neutral-300"}`} aria-label="Not done" />}
-                <span className={`flex-1 text-body ${done ? "text-secondary line-through" : "text-primary"}`}>{s.label}</span>
-              </>
-            );
-            return (
-              <li key={s.step} className={i < steps.length - 1 ? "border-b border-border" : ""}>
-                {done ? (
-                  // Done steps open their page again, so the person can change what they chose.
-                  <Link href={s.href} className="-mx-2 flex items-center gap-3 rounded-md px-2 py-3 transition-colors hover:bg-primary-50 focus-visible:focus-ring">
-                    {row}
-                    <span className="text-caption text-secondary">
-                      Done<span className="sr-only">. Open to change {s.label.toLowerCase()}</span>
-                    </span>
-                  </Link>
-                ) : (
-                  <div className="flex items-center gap-3 py-3">
-                    {row}
-                    <span className="text-caption text-secondary">{s.minutes}</span>
-                  </div>
-                )}
-              </li>
-            );
-          })}
-        </ol>
-        {next && (
-          <Link href={next.href} className={buttonLink(true)}>
+    <Card id="setup" title="Account setup" info="Two short steps. Do them now or come back later: we save your progress." padding="none">
+      <ol className="flex flex-col px-6 py-2">
+        {steps.map((s, i) => {
+          const done = client.setupDone.includes(s.step);
+          const last = i === steps.length - 1;
+          return (
+            <li key={s.step} className="relative">
+              {!last && <span aria-hidden className={`absolute -bottom-3 left-3 top-9 w-px ${done ? "bg-success" : "bg-border-strong"}`} />}
+              <Link href={s.href} className={`-mx-2 flex items-center gap-3 rounded-md px-2 py-3 transition-colors hover:bg-primary-50 focus-visible:focus-ring ${!last ? "border-b border-border" : ""}`}>
+                {done ? <CheckCircle className="size-6 shrink-0 text-success" aria-label="Done" /> : <Circle className={`size-6 shrink-0 ${next?.step === s.step ? "text-primary-600" : "text-neutral-300"}`} aria-label="Not done" />}
+                <span className={`flex-1 text-body-sm ${done ? "text-secondary line-through" : "text-primary"}`}>{s.label}</span>
+                <span className="text-caption text-secondary">{done ? "Done" : s.minutes}</span>
+              </Link>
+            </li>
+          );
+        })}
+      </ol>
+      <div className="flex justify-end border-t border-border px-6 py-4">
+        {next ? (
+          <Link href={next.href} className={buttonClass("primary")}>
             Continue setup
           </Link>
+        ) : (
+          <Button loading={pending("finish")} onClick={() => run("finish", () => act.finishSetup(client.id), "Setup complete. Your account manager will offer times for your first call.")}>
+            Complete setup
+          </Button>
         )}
-      </div>
-    </Card>
-  );
-}
-
-/* ---------- Before the calls ---------- */
-
-const callInfo = {
-  discovery: { name: "Discovery call", covers: "We agree what you want from LinkedIn: who you want to reach and what success looks like." },
-  strategy: { name: "Strategy call", covers: "We walk you through your strategy and content plan, and agree it together." },
-  "check-in": { name: "Check-in call", covers: "How things are going, and what to change." },
-};
-
-/** Your two calls shows after setup, until the account is running. */
-const showsCallsCard = (client: NonNullable<ClientBundle["client"]>) => client.stage !== "running" && client.status !== "setting-up" && client.status !== "paused";
-
-/** C1 after setup: the two booked calls with the manager. */
-export function CallsCard({ b }: { b: ClientBundle }) {
-  const { client, calls, managerUser } = b;
-  if (!client || !showsCallsCard(client)) return null;
-  const intro = calls.filter((c) => c.kind !== "check-in");
-  return (
-    <Card title="Your two calls" info={freeWeeksInfo(b)}>
-      <div className="flex flex-col gap-4">
-        {managerUser && (
-          <div className="flex items-start gap-3">
-            <Avatar name={fullName(managerUser)} src={managerUser?.photo} size="md" />
-            <p className="text-body-sm text-secondary">
-              You will meet <span className="font-medium text-primary">{fullName(managerUser)}</span>, your account manager. 30 minutes each, on Google Meet.
-            </p>
-          </div>
-        )}
-        <ul className="flex flex-col gap-3">
-          {intro.map((c) => {
-            const booked = c.status === "booked";
-            return (
-              <li key={c.id}>
-                {/* A booked call opens its Meet link from anywhere on the tile (a covering link), so Join call and Reschedule can sit in the footer. */}
-                <Tile done={c.status === "done"} className={booked ? "group relative transition-colors hover:border-primary-300 hover:bg-primary-50" : ""}>
-                  {booked && (
-                    <a href={c.meetUrl} target="_blank" rel="noreferrer" aria-label={`Join the ${callInfo[c.kind].name.toLowerCase()} on Google Meet`} className="absolute inset-0 rounded-md focus-visible:focus-ring" />
-                  )}
-                  <div className="flex items-start gap-4">
-                    <span className="flex size-12 shrink-0 items-center justify-center rounded-md bg-primary-50 text-primary-700">
-                      <VideoCamera className="size-5" aria-hidden />
-                    </span>
-                    <div className="flex min-w-0 flex-1 flex-col gap-1">
-                      <span className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-body font-medium text-primary">{callInfo[c.kind].name}</span>
-                        {c.status === "done" && <Badge status="success">Done</Badge>}
-                        {c.status === "booked" &&
-                          (c.recording ? (
-                            <Badge status="info">
-                              Record<span className="sr-only">: recorded with your consent</span>
-                            </Badge>
-                          ) : (
-                            <Badge>
-                              Don&apos;t record<span className="sr-only">: not recorded, your manager takes notes</span>
-                            </Badge>
-                          ))}
-                      </span>
-                      <span className="text-body-sm text-secondary">{c.status === "done" ? (c.sharedAt && c.insights ? c.insights : "Your account manager will share the notes soon.") : callInfo[c.kind].covers}</span>
-                    </div>
-                  </div>
-                  <TileFooter>
-                    <Meta icon={Clock}>
-                      {dateTime(c.at)} · {c.minutes} min
-                    </Meta>
-                    {booked && (
-                      <span className="relative z-10 flex items-center gap-4">
-                        <a href={c.meetUrl} target="_blank" rel="noreferrer" className={linkClass}>
-                          Join call
-                        </a>
-                        <Link
-                          href={`/setup/calls${c.kind === "strategy" ? "?step=2" : ""}`}
-                          className="inline-flex items-center gap-2 rounded-sm text-body-sm font-medium text-secondary hover:text-primary hover:underline focus-visible:focus-ring"
-                        >
-                          Reschedule
-                        </Link>
-                      </span>
-                    )}
-                  </TileFooter>
-                </Tile>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
-    </Card>
-  );
-}
-
-/** C6: the strategy is ready to read before the strategy call. */
-export function StrategyReadyCard({ b }: { b: ClientBundle }) {
-  const { strategy, calls } = b;
-  if (!strategy || (strategy.status !== "shared" && strategy.status !== "agreed-sent")) return null;
-  const call = calls.find((c) => c.kind === "strategy");
-  return (
-    <Card
-      title={strategy.status === "agreed-sent" ? "Approve your strategy" : "Strategy ready"}
-      info={
-        strategy.status === "agreed-sent"
-          ? "Your manager added what you changed on the call. Work starts once you approve."
-          : `Read it before your strategy call${call ? ` ${dayTimeIn(call.at)}` : ""}. Bring any questions.`
-      }
-    >
-      <div className="flex flex-col gap-4">
-        <p className="text-body text-primary">{strategy.goal}</p>
-        <Link href="/strategy" className={buttonLink(true)}>
-          Read your strategy
-        </Link>
       </div>
     </Card>
   );

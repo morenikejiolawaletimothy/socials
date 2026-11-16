@@ -29,6 +29,7 @@ export function Tabs<T extends string>({
   label,
   align = "start",
   showZero = false,
+  fill = false,
   className = "gap-1",
 }: {
   /** `live` marks a "happening now" tab. Its count uses the same colours as the others. */
@@ -39,6 +40,8 @@ export function Tabs<T extends string>({
   align?: "start" | "center";
   /** Show the count tag even when it is 0. */
   showZero?: boolean;
+  /** Tabs share the full width evenly (the Figma Home tab card). */
+  fill?: boolean;
   className?: string;
 }) {
   const row = useRef<HTMLDivElement>(null);
@@ -71,7 +74,7 @@ export function Tabs<T extends string>({
             aria-label={t.count !== undefined ? `${t.label}, ${t.count}` : undefined}
             tabIndex={active ? 0 : -1}
             onClick={() => onChange(t.value)}
-            className={`flex shrink-0 items-center gap-2 rounded-sm px-4 py-2 text-body-sm font-medium transition-colors focus-visible:focus-ring ${
+            className={`flex shrink-0 items-center gap-2 whitespace-nowrap rounded-sm py-2 text-body-sm ${fill ? "flex-1 justify-center px-3" : "px-4"} font-medium transition-colors focus-visible:focus-ring ${
               active ? "bg-card text-primary shadow-sm" : "text-secondary hover:text-primary"
             }`}
           >

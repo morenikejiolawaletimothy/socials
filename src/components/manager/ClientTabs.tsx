@@ -280,7 +280,7 @@ export function OverviewTab({ b }: { b: ClientBundle }) {
             [
               ["How often", { weekly: "Once a week", "twice-weekly": "Twice a week", "every-post": "Every post" }[r.frequency]],
               ["How they are told", [r.channels.email && "Email", r.channels.whatsapp && b.user?.whatsapp?.confirmed && "WhatsApp", r.channels.app && "In the app"].filter(Boolean).join(", ")],
-              ["If no reply", r.ifNoReply === "wait" ? "Wait for them" : "Go ahead after 24 hours"],
+              ["If no reply", r.ifNoReply === "wait" ? "Wait for them" : r.ifNoReply === "follow-up" ? "Follow up after 24 hours" : "Go ahead after 24 hours"],
               ["Posts", r.approval.posts === "go" ? "Go ahead" : "Ask first"],
             ] as const
           ).map(([label, value]) => (

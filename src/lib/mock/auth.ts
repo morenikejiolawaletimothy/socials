@@ -77,7 +77,7 @@ function newClient({ firstName, lastName, email, linkedinUrl, company }: { first
         linkedin: "not-connected",
         postingPaused: false,
         permissions: { post: true, engage: true, companyPage: false, connectionDrafts: true, profileDrafts: true },
-        review: { frequency: "weekly", channels: { email: true, app: true }, approval: { posts: "ask", comments: "go", connectionNotes: "ask" }, ifNoReply: "wait" },
+        review: { frequency: "weekly", channels: { email: true, app: true }, approval: { posts: "ask" }, ifNoReply: "wait" },
         joinedAt: new Date().toISOString(),
       },
     ],

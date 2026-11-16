@@ -4,6 +4,7 @@ import { engageKinds, isEngage } from "../engage";
 import { dayTimeIn, money, plural } from "../format";
 import { extractLinkedIn } from "./auth";
 import { delay, getDb, update } from "./store";
+import { addOns as addOnCatalog, contractTotalCents, type AddOnId } from "../pricing";
 import type { Activity, AdminMember, AdminRole, Assistant, Call, Channels, Client, Db, EngageAction, Handoff, Message, Permissions, PostStatus, Reaction, ReviewSettings, SetupStep, User } from "./types";
 
 /*
@@ -1233,7 +1234,9 @@ export async function setAdminStatus(memberId: string, status: "active" | "deact
 /* ---------- Client: setup (C2 to C6) ---------- */
 
 /** The setup steps for a client, in order. Full-service adds a secure-access step; neither uses the LinkedIn API. */
-const setupOrder = (service?: Client["service"]): SetupStep[] => ["service", "permissions", ...(service === "full-service" ? ["access" as const] : []), "discovery-call", "strategy-call", "plan", "review"];
+// Figma onboarding: two steps for both account types. The plan step also picks Regular or Premium and the add-ons;
+// the access step holds the LinkedIn link, permissions, how we notify, and (Premium) delegated access.
+const setupOrder = (): SetupStep[] => ["plan", "access"];
 
 /** B: the client chooses their service at onboarding: self-serve (hands-on) or full-service (done-for-you). */
 export async function setService(clientId: string, service: "self-serve" | "full-service") {
@@ -1250,17 +1253,108 @@ export async function completeSetupStep(clientId: string, step: SetupStep) {
   await delay(300);
   update((db) => {
     const next = patchClient(db, clientId, (c) => {
-      const order = setupOrder(c.service);
+      const order = setupOrder();
       const done = c.setupDone.includes(step) ? c.setupDone : order.filter((s) => s === step || c.setupDone.includes(s));
-      const finished = done.length === order.length;
       return {
         setupDone: done,
         setupProgress: Math.round((done.length / order.length) * 100),
-        ...(finished && c.status === "setting-up" ? { status: "free" as const, stage: "calls" as const } : {}),
       };
     });
-    const c = clientOf(next, clientId);
-    return c?.status === "free" && clientOf(db, clientId)?.status === "setting-up" ? notify(next, OWNER, `${nameOf(clientUser(db, clientId))} finished setup.`, "/admin/clients", { email: false }) : next;
+    return next;
+  });
+}
+
+/**
+ * Figma plan step: Regular or Premium, add-ons, contract length, signed with the full name. Signing starts the
+ * free 2 weeks and assigns the account manager, who shows on Home from now on.
+ */
+export async function choosePlan(
+  clientId: string,
+  data: { service: "self-serve" | "full-service"; addOns: { id: AddOnId; qty: number }[]; months: 3 | 6 | 12; monthlyCents: number; signedName: string },
+) {
+  await delay(700);
+  const DAY = 86_400_000;
+  const now = Date.now();
+  update((db) => {
+    const lines = data.addOns.map((a) => {
+      const def = addOnCatalog.find((x) => x.id === a.id)!;
+      return { id: a.id, label: def.label, cents: def.cents * a.qty, qty: a.qty };
+    });
+    const hasPage = data.addOns.some((a) => a.id === "company-page");
+    // Assign the manager with the most room (Phase 2: the owner's matching rules).
+    const current = clientOf(db, clientId)?.managerId;
+    const managerId = current ?? [...db.managers].filter((m) => m.status !== "suspended").sort((a, b) => db.clients.filter((c) => c.managerId === a.id).length / (a.maxClients || 1) - db.clients.filter((c) => c.managerId === b.id).length / (b.maxClients || 1))[0]?.id ?? null;
+    let next = patchClient(db, clientId, (c) => ({
+      service: data.service,
+      managerId,
+      addOns: data.addOns.map((a) => a.id),
+      companyPage: hasPage ? { since: c.companyPage?.since ?? nowIso() } : undefined,
+      permissions: { ...c.permissions, companyPage: hasPage },
+      fullService: data.service === "full-service" ? { since: c.fullService?.since ?? nowIso(), access: c.fullService?.access ?? { credentials: "none", twoFactor: false } } : undefined,
+    }));
+    next = {
+      ...next,
+      contracts: [
+        ...next.contracts.filter((k) => k.clientId !== clientId),
+        {
+          id: id("k"), clientId, months: data.months, monthlyCents: data.monthlyCents, signedAt: nowIso(), signedName: data.signedName,
+          freeEndsAt: new Date(now + 14 * DAY).toISOString(), startsAt: new Date(now + 14 * DAY).toISOString(), endsAt: new Date(now + 14 * DAY + data.months * 30 * DAY).toISOString(),
+          status: "free", paid: false, addOns: lines,
+        },
+      ],
+    };
+    const who = nameOf(clientUser(db, clientId));
+    const type = data.service === "full-service" ? "Premium" : "Regular";
+    next = log(next, clientId, "you", "account", `Chose ${type}, ${data.months} months, and signed the contract`);
+    next = notify(next, OWNER, `${who} signed a ${data.months}-month ${type} plan${lines.length ? ` with ${lines.map((l) => l.label).join(", ")}` : ""}.`, `/admin/clients/${clientId}`, { email: false });
+    const mu = db.users.find((u) => u.id === db.managers.find((m) => m.id === managerId)?.userId);
+    if (!current && mu) next = notify(next, mu.id, `You have a new client: ${who} (${type}). They are setting up access now.`, `/manager/clients/${clientId}`, { email: true });
+    return notify(next, clientUser(db, clientId)?.id, "Your contract is signed. Your free 2 weeks have started.", "/contract");
+  });
+  await completeSetupStep(clientId, "plan");
+}
+
+/**
+ * Figma access step: the LinkedIn link, what we may do, how we notify, and for Premium the delegated login
+ * (consent, authenticator 2FA, login saved to the vault).
+ */
+export async function saveAccountAccess(
+  clientId: string,
+  data: {
+    linkedinUrl: string;
+    permissions: Permissions;
+    channels: { email: boolean; whatsapp: boolean; app: boolean };
+    whatsappNumber?: string;
+    ifNoReply: ReviewSettings["ifNoReply"];
+    delegated?: { twoFactor: boolean; credentials: boolean };
+  },
+) {
+  await delay(700);
+  update((db) => {
+    const u = clientUser(db, clientId);
+    let next = patchClient(db, clientId, (c) => ({
+      permissions: data.permissions,
+      review: { ...c.review, channels: { email: data.channels.email, app: true, whatsapp: data.channels.whatsapp }, ifNoReply: data.ifNoReply },
+      fullService: c.fullService && data.delegated ? { ...c.fullService, access: { ...(c.fullService.access ?? { credentials: "none", twoFactor: false }), twoFactor: data.delegated.twoFactor, credentials: data.delegated.credentials ? "set" : "none" } } : c.fullService,
+    }));
+    if (u) next = { ...next, users: next.users.map((x) => (x.id === u.id ? { ...x, linkedinUrl: data.linkedinUrl, whatsapp: data.whatsappNumber ? { number: data.whatsappNumber, confirmed: true } : x.whatsapp, channels: { ...channelsOf(u, clientOf(db, clientId)), email: data.channels.email, whatsapp: data.channels.whatsapp } } : x)) };
+    next = log(next, clientId, "you", "setting", "Set up account access");
+    if (data.delegated?.credentials) next = access(next, clientId, u?.firstName ?? "Client", "Saved their LinkedIn login to the secure vault");
+    return notify(next, managerUserOf(db, clientId)?.id, `${u?.firstName} set up account access.`, `/manager/clients/${clientId}`, { email: false });
+  });
+  await completeSetupStep(clientId, "access");
+}
+
+/** Figma Home at 100%: "Complete setup" opens the feed. The manager is asked to propose times for the discovery call. */
+export async function finishSetup(clientId: string) {
+  await delay(400);
+  update((db) => {
+    const c = clientOf(db, clientId);
+    if (!c || c.stage !== "setup") return db;
+    let next = patchClient(db, clientId, () => ({ status: "free" as const, stage: "calls" as const, setupProgress: 100 }));
+    const who = nameOf(clientUser(db, clientId));
+    next = notify(next, OWNER, `${who} finished setup.`, "/admin/clients", { email: false });
+    return notify(next, managerUserOf(db, clientId)?.id, `${who} finished setup. Offer times for their discovery call.`, `/manager/clients/${clientId}/book-call?kind=discovery`, { email: true });
   });
 }
 
@@ -1311,12 +1405,12 @@ export async function requestCall(clientId: string, data: { kind?: Call["kind"];
 }
 
 /** Flow B: the manager offers the client one or more times (agreed in chat first). Pending the client's acceptance. */
-export async function createCallForClient(clientId: string, data: { title: string; agenda?: string; times: string[]; meetUrl?: string; recording: boolean }) {
+export async function createCallForClient(clientId: string, data: { kind?: Call["kind"]; title: string; agenda?: string; times: string[]; meetUrl?: string; recording: boolean }) {
   await delay(600);
   update((db) => {
     const managerId = clientOf(db, clientId)?.managerId ?? "m-ada";
     const call: Db["calls"][number] = {
-      id: id("cl"), clientId, managerId, kind: "check-in", openedBy: "manager",
+      id: id("cl"), clientId, managerId, kind: data.kind ?? "check-in", openedBy: "manager",
       title: data.title.trim(), agenda: data.agenda?.trim() || undefined, at: data.times[0], minutes: 30, meetUrl: data.meetUrl?.trim() ?? "",
       recording: data.recording, status: "pending", pending: { awaiting: "client", by: "manager", options: data.times },
     };
@@ -1330,6 +1424,18 @@ export async function createCallForClient(clientId: string, data: { title: strin
  * times (from the manager's open slots). The other side must accept one or suggest again — the call is not
  * booked until both agree. Also used to reschedule a booked call.
  */
+/** The client withdraws the times they suggested (Figma "Revert"): the call goes back to the manager's last offer. */
+export async function revertProposal(callId: string) {
+  await delay(400);
+  update((db) => {
+    const call = db.calls.find((c) => c.id === callId);
+    const prev = call?.previous;
+    if (!call?.pending || call.pending.by !== "client" || !prev) return db;
+    const next: Db = { ...db, calls: db.calls.map((c) => (c.id === callId ? { ...c, status: prev.status, at: prev.at, meetUrl: prev.meetUrl, pending: prev.pending, previous: undefined } : c)) };
+    return notify(next, managerUserOf(db, call.clientId)?.id, `${nameOf(clientUser(db, call.clientId))} withdrew their new times for “${callTitleOf(call)}”. Your times stand.`, "/manager/calls", { email: false });
+  });
+}
+
 export async function proposeTimes(callId: string, by: "client" | "manager", times: string[], note: string) {
   await delay(500);
   update((db) => {
@@ -1337,7 +1443,7 @@ export async function proposeTimes(callId: string, by: "client" | "manager", tim
     if (!call) return db;
     const awaiting = otherSide(by);
     // A new time is on the table, so any old link no longer applies until the manager confirms again.
-    const next: Db = { ...db, calls: db.calls.map((c) => (c.id === callId ? { ...c, at: times[0], status: "pending" as const, meetUrl: "", pending: { awaiting, by, note: note.trim() || undefined, options: times } } : c)) };
+    const next: Db = { ...db, calls: db.calls.map((c) => (c.id === callId ? { ...c, at: times[0], status: "pending" as const, meetUrl: "", pending: { awaiting, by, note: note.trim() || undefined, options: times }, previous: by === "client" && (c.status === "booked" || c.status === "pending") ? { status: c.status, at: c.at, meetUrl: c.meetUrl, pending: c.pending } : undefined } : c)) };
     return notify(next, sideUser(db, call.clientId, awaiting), `${sideName(db, call.clientId, by)} suggested ${times.length > 1 ? `${times.length} new times` : "a new time"} for “${callTitleOf(call)}”.`, sideHref(awaiting), { email: true });
   });
 }
@@ -1360,7 +1466,12 @@ export async function acceptTime(callId: string, chosenAt: string) {
   update((db) => {
     const call = db.calls.find((c) => c.id === callId);
     if (!call) return db;
-    const next: Db = { ...db, calls: db.calls.map((c) => (c.id === callId ? { ...c, at: chosenAt, status: "pending" as const, pending: { awaiting: "manager" as const, by: "client" as const, options: [chosenAt] } } : c)) };
+    // The manager already gave the meeting link with their times, so agreeing a time books the call.
+    if (call.meetUrl) {
+      const booked: Db = { ...db, calls: db.calls.map((c) => (c.id === callId ? { ...c, at: chosenAt, status: "booked" as const, pending: undefined, previous: undefined } : c)) };
+      return notify(booked, managerUserOf(db, call.clientId)?.id, `${nameOf(clientUser(db, call.clientId))} accepted ${dayTimeIn(chosenAt)} for “${callTitleOf(call)}”. It is booked.`, "/manager/calls", { email: true });
+    }
+    const next: Db = { ...db, calls: db.calls.map((c) => (c.id === callId ? { ...c, at: chosenAt, status: "pending" as const, pending: { awaiting: "manager" as const, by: "client" as const, options: [chosenAt] }, previous: undefined } : c)) };
     return notify(next, managerUserOf(db, call.clientId)?.id, `${nameOf(clientUser(db, call.clientId))} agreed ${dayTimeIn(chosenAt)} for “${callTitleOf(call)}”. Add the meeting link to confirm.`, "/manager/calls", { email: true });
   });
 }
@@ -1433,7 +1544,7 @@ export async function payNow(clientId: string) {
       ...db,
       contracts: db.contracts.map((x) => (x.clientId === clientId ? { ...x, paid: true, card: { brand: "Visa", last4: "4242" }, status: x.status === "paused" ? "active" : x.status } : x)),
       // Contracts are paid up front: one invoice for the whole contract.
-      invoices: k ? [{ id: id("i"), clientId, number: `BC-${1200 + db.invoices.length}`, amountCents: k.monthlyCents * k.months, at: nowIso(), status: "paid", label: `${k.months} months, paid in full` }, ...db.invoices] : db.invoices,
+      invoices: k ? [{ id: id("i"), clientId, number: `BC-${1200 + db.invoices.length}`, amountCents: contractTotalCents(k), at: nowIso(), status: "paid", label: `${k.months} months${k.addOns?.length ? " and add-ons" : ""}, paid in full` }, ...db.invoices] : db.invoices,
     };
     const c = next.clients.find((x) => x.id === clientId);
     if (c?.status === "paused") {
@@ -1846,7 +1957,7 @@ export async function rescheduleCall(callId: string) {
   update((db) => {
     const c = db.calls.find((x) => x.id === callId);
     const next: Db = { ...db, calls: db.calls.map((x) => (x.id === callId ? { ...x, status: "cancelled" } : x)) };
-    return c ? notify(next, clientUser(db, c.clientId)?.id, "Your manager needs to move your call. Pick a new time.", "/setup/calls", { urgent: true }) : next;
+    return c ? notify(next, clientUser(db, c.clientId)?.id, "Your manager needs to move your call. Pick a new time.", "/calls", { urgent: true }) : next;
   });
 }
 

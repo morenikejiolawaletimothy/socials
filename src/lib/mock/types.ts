@@ -56,7 +56,8 @@ export type ReviewSettings = {
   /** For each kind of work: ask first, or go ahead without asking. */
   /** Engagement and connection notes are done by the client themselves (quick tasks), so only posts need a setting. */
   approval: { posts: "ask" | "go" };
-  ifNoReply: "wait" | "go";
+  /** If the client does not reply within 24 hours: wait, follow up with a reminder, or (Premium only) go ahead. */
+  ifNoReply: "wait" | "follow-up" | "go";
 };
 
 /** C1: the six setup steps, in order. */
@@ -94,6 +95,8 @@ export type Client = {
   fullService?: FullService;
   /** #41: the company Page add-on (either tier). Presence means it is on. Billed pro-rated, on top of the plan. */
   companyPage?: { since: string };
+  /** Figma plan step: add-ons chosen with the plan (company page, Sales Navigator, ...). */
+  addOns?: import("@/lib/pricing").AddOnId[];
 };
 
 /**
@@ -342,6 +345,10 @@ export type QuickTask = {
   event?: TaskEvent;
   /** "video" tasks: what to record (suggested by the system from the strategy, edited by the manager), and the clip once uploaded. */
   video?: VideoBrief;
+  /** Figma task card: what to do, with numbered steps if needed (Premium: what we are about to do). */
+  body?: string;
+  /** Figma "Task resource": a file or folder the manager shared for this task. */
+  resource?: { label: string; href: string };
   done: boolean;
   sentAt: string;
   /** C19: handed to the client's assistant, who works on it from a private link. */
@@ -421,6 +428,8 @@ export type Call = {
    * times they offered (all drawn from the manager's open availability).
    */
   pending?: { awaiting: "client" | "manager"; by: "client" | "manager"; note?: string; options: string[] };
+  /** The state before the client's last reschedule, so they can revert it (Figma "Revert"). */
+  previous?: { status: "booked" | "pending"; at: string; meetUrl: string; pending?: Call["pending"] };
   /** Post-call: whether the call actually happened. Set when the manager records the outcome. */
   outcome?: "held" | "missed";
   /** Reason the call did not hold (when outcome is "missed"). */
@@ -638,6 +647,8 @@ export type Contract = {
   cancelledFrom?: Exclude<Contract["status"], "cancelled">;
   paid: boolean;
   card?: { brand: string; last4: string };
+  /** Add-ons chosen with the plan, charged once on top of the months. */
+  addOns?: { id: string; label: string; cents: number; qty: number }[];
 };
 
 export type Invoice = {
