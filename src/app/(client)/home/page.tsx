@@ -9,27 +9,31 @@ import {
   StateBanners,
   StrategyReadyCard,
 } from "@/components/client/HomeCards";
-import { HomeFeed } from "@/components/client/HomeFeed";
+import { HomeTabs } from "@/components/client/HomeTabs";
 import { useMyClient } from "@/lib/mock";
 
 /**
- * C1 Home. Changes with where the client is:
- * setting up (setup card), before the calls (the two calls), strategy ready, then a feed of cards.
- * Paused accounts lead with the paused card (C16).
+ * C1 Home (Figma feed-tab model). Before the account is running it leads with setup, the two calls
+ * and the strategy-ready card. Once running, the centre becomes the tabbed feed: Feed · Calls ·
+ * Coming up · Reports · History.
  */
 export default function HomePage() {
   const b = useMyClient();
   const running = b.client?.stage === "running";
-  const paused = b.client?.status === "paused";
 
   return (
-    <Columns {...rails.clientFeed}>
+    <Columns {...rails.clientHome}>
       <PausedCard b={b} />
       <StateBanners b={b} />
-      <SetupCard b={b} />
-      <StrategyReadyCard b={b} />
-      <CallsCard b={b} />
-      {running && <HomeFeed b={b} primary={!paused} />}
+      {running ? (
+        <HomeTabs b={b} />
+      ) : (
+        <>
+          <SetupCard b={b} />
+          <StrategyReadyCard b={b} />
+          <CallsCard b={b} />
+        </>
+      )}
     </Columns>
   );
 }

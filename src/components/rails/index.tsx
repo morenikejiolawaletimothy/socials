@@ -8,10 +8,23 @@ import { ManagerCard } from "./ManagerCard";
 import { clientAccountMenu, managerAccountMenu } from "./menus";
 import { NextCallCard } from "./NextCallCard";
 import { ProfileCard } from "./ProfileCard";
+import { ResourcesCard } from "./ResourcesCard";
 import { WeekCard } from "./WeekCard";
 
 /** Named column sets so every page of a kind is laid out the same way. */
 export const rails = {
+  /** The Figma Home: profile + resources on the left, the account manager on the right, the tabbed feed in the middle. */
+  clientHome: {
+    left: (
+      <>
+        <ProfileCard />
+        <ResourcesCard />
+      </>
+    ),
+    leftLabel: "Your profile and resources",
+    right: <ManagerCard />,
+    rightLabel: "Your account manager",
+  },
   clientFeed: {
     left: (
       <>

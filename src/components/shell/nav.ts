@@ -7,7 +7,6 @@ import {
   House,
   IdentificationBadge,
   ListChecks,
-  Megaphone,
   ShieldCheck,
   SquaresFour,
   UserCircle,
@@ -24,7 +23,6 @@ export type NavItem = { label: string; href: string; icon: Icon; exact?: boolean
 export const mainNav: Record<Exclude<Role, "owner">, NavItem[]> = {
   client: [
     { label: "Home", href: "/home", icon: House },
-    { label: "Content", href: "/content", icon: Megaphone },
     { label: "Messages", href: "/messages", icon: ChatCircle },
   ],
   manager: [
@@ -37,6 +35,8 @@ export const mainNav: Record<Exclude<Role, "owner">, NavItem[]> = {
 /** Items under the profile menu (desktop) and the Me page (mobile). */
 export const profileNav: Record<Exclude<Role, "owner">, { label: string; href: string; description: string }[]> = {
   client: [
+    { label: "Content", href: "/content", description: "All your posts across the week" },
+    { label: "Strategy", href: "/strategy", description: "Your goal, audience, topics and targets" },
     { label: "Your brand", href: "/brand", description: "Photos, voice, Moments and what is off limits" },
     { label: "Full-service", href: "/full-service", description: "Hand the work to us, or manage your team access" },
     { label: "Control", href: "/control", description: "What we do for you, how you review, activity" },
