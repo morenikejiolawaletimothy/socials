@@ -1,12 +1,13 @@
 import {
   BookOpen,
+  Briefcase,
   ChatCircle,
   CurrencyCircleDollar,
   Gear,
   House,
   IdentificationBadge,
   ListChecks,
-  Megaphone,
+  ShieldCheck,
   SquaresFour,
   UserCircle,
   Users,
@@ -22,7 +23,6 @@ export type NavItem = { label: string; href: string; icon: Icon; exact?: boolean
 export const mainNav: Record<Exclude<Role, "owner">, NavItem[]> = {
   client: [
     { label: "Home", href: "/home", icon: House },
-    { label: "Content", href: "/content", icon: Megaphone },
     { label: "Messages", href: "/messages", icon: ChatCircle },
   ],
   manager: [
@@ -35,10 +35,13 @@ export const mainNav: Record<Exclude<Role, "owner">, NavItem[]> = {
 /** Items under the profile menu (desktop) and the Me page (mobile). */
 export const profileNav: Record<Exclude<Role, "owner">, { label: string; href: string; description: string }[]> = {
   client: [
+    { label: "Content", href: "/content", description: "All your posts across the week" },
+    { label: "Strategy", href: "/strategy", description: "Your goal, audience, topics and targets" },
     { label: "Your brand", href: "/brand", description: "Photos, voice, Moments and what is off limits" },
-    { label: "Full-service", href: "/full-service", description: "Hand the work to us, or manage your team access" },
+    { label: "Account access", href: "/full-service", description: "Regular or Premium, and your team's access to LinkedIn" },
     { label: "Control", href: "/control", description: "What we do for you, how you review, activity" },
     { label: "Contract", href: "/contract", description: "Your plan, payments and invoices" },
+    { label: "Services", href: "/services", description: "What comes with your plan, and more you can add" },
     { label: "Assistants", href: "/assistants", description: "Hand quick tasks to your EA or PA" },
     { label: "Account", href: "/account", description: "Profile, sign-in and notifications" },
   ],
@@ -56,9 +59,11 @@ export const ownerNav: NavItem[] = [
   { label: "Clients", href: "/admin/clients", icon: Users },
   { label: "Managers", href: "/admin/managers", icon: IdentificationBadge },
   { label: "Framework", href: "/admin/framework", icon: BookOpen },
+  { label: "Services", href: "/admin/services", icon: Briefcase },
   { label: "Money", href: "/admin/money", icon: CurrencyCircleDollar },
   { label: "Complaints", href: "/admin/complaints", icon: WarningCircle },
   { label: "Settings", href: "/admin/settings", icon: Gear },
+  { label: "Roles & team", href: "/admin/roles", icon: ShieldCheck },
   { label: "Audit log", href: "/admin/audit-log", icon: ListChecks },
 ];
 
@@ -97,18 +102,18 @@ const pageNames: [RegExp, string][] = [
   [/^\/control$/, "Control"],
   [/^\/contract\/cancel$/, "Pull out of your contract"],
   [/^\/contract$/, "Contract"],
+  [/^\/services$/, "Services"],
   [/^\/account$/, "Account"],
   [/^\/assistants$/, "Assistants"],
+  [/^\/calls\/book$/, "Book a call"],
+  [/^\/calls\/reschedule$/, "Reschedule"],
+  [/^\/home\/request-change$/, "Request change"],
   [/^\/calls$/, "Calls"],
-  [/^\/full-service$/, "Full-service"],
+  [/^\/full-service$/, "Account access"],
   [/^\/account-manager$/, "Your account manager"],
   [/^\/me$/, "Me"],
-  [/^\/setup\/service$/, "How can we help you?"],
-  [/^\/setup\/permissions$/, "What we do for you"],
-  [/^\/setup\/access$/, "Set up secure access"],
-  [/^\/setup\/calls$/, "Book your calls"],
-  [/^\/setup\/plan$/, "Choose a plan"],
-  [/^\/setup\/review$/, "Set how you review"],
+  [/^\/setup\/access$/, "Manage account access"],
+  [/^\/setup\/plan$/, "Choose your preferred plan"],
   [/^\/manager$/, "Home"],
   [/^\/manager\/clients\/[^/]+\/content$/, "Client content"],
   [/^\/manager\/clients\/[^/]+\/onboard$/, "Onboarding"],
@@ -124,6 +129,13 @@ const pageNames: [RegExp, string][] = [
   [/^\/admin\/managers\/[^/]+$/, "Manager"],
   [/^\/admin\/complaints\/[^/]+$/, "Complaint"],
   [/^\/admin\/notifications$/, "Notifications"],
+  [/^\/admin\/services\/new$/, "Add a service"],
+  [/^\/admin\/services\/[^/]+$/, "Service"],
+  [/^\/admin\/services$/, "Services"],
+  [/^\/admin\/roles\/new$/, "Add a role"],
+  [/^\/admin\/roles\/invite$/, "Invite an admin"],
+  [/^\/admin\/roles\/[^/]+$/, "Role"],
+  [/^\/admin\/roles$/, "Roles & team"],
 ];
 
 export function pageName(pathname: string) {

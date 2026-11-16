@@ -9,7 +9,8 @@ import { NotifySettings } from "@/components/account/NotifySettings";
 import { PhotoField } from "@/components/account/PhotoField";
 import { Badge, Button, Card, Input, Select, Switch, Textarea, TextButton, textActionClass, useConfirm, useTask } from "@/components/ui";
 import { timeZones, zoneLabel } from "@/lib/timezones";
-import { fullName } from "@/lib/format";
+import { day, fullName } from "@/lib/format";
+import { downloadAgreement } from "@/lib/amAgreement";
 import { act, useMyManager } from "@/lib/mock";
 
 const allSessions = [
@@ -187,6 +188,22 @@ export default function ManagerProfile() {
           </li>
         </ul>
       </Card>
+
+      {manager.agreement && (
+        <Card title="Account manager agreement" info="The terms you signed when you joined. Keep a copy for your records.">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <dl className="flex flex-col gap-1">
+              <dt className="text-body-sm text-secondary">Signed</dt>
+              <dd className="text-body font-medium text-primary">
+                {manager.agreement.fullName} · {day(manager.agreement.signedAt)}
+              </dd>
+            </dl>
+            <Button variant="secondary" size="sm" onClick={() => downloadAgreement(manager.agreement!, { name: fullName(user), email: user.email })}>
+              Download signed terms
+            </Button>
+          </div>
+        </Card>
+      )}
 
       <NotifySettings user={user}>
         <ul className="flex flex-col">

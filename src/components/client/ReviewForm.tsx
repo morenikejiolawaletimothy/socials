@@ -173,6 +173,6 @@ export function reviewSummary(r: ReviewSettings) {
     frequency: freq.find((f) => f.value === r.frequency)?.label ?? "",
     channels: [r.channels.email && "Email", r.channels.whatsapp && "WhatsApp", r.channels.app && "In the app"].filter(Boolean).join(", ").replace(/, ([^,]*)$/, " and $1"),
     approval: kinds.map((k) => ({ label: k.label, ask: r.approval[k.key] === "ask" })),
-    noReply: r.ifNoReply === "wait" ? "Wait for me" : "Go ahead after 24 hours",
+    noReply: r.ifNoReply === "wait" ? "Wait for me" : r.ifNoReply === "follow-up" ? "Follow up after 24 hours" : "Go ahead after 24 hours",
   };
 }

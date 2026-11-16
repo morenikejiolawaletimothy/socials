@@ -5,6 +5,7 @@ import { rails } from "@/components/rails";
 import { Avatar, Badge, Card, Pill, ProgressBar, Tile } from "@/components/ui";
 import { fullName } from "@/lib/format";
 import { useMyManager } from "@/lib/mock";
+import { scoreTotals } from "@/lib/scorecard";
 import { statusBadge } from "@/lib/status";
 
 /**
@@ -30,8 +31,9 @@ export default function ClientsPage() {
             const u = db.users.find((x) => x.id === c.userId);
             const b = statusBadge[c.status];
             const week = db.progress.find((p) => p.clientId === c.id);
-            const done = week ? week.posts.done + week.comments.done + week.connections.done : 0;
-            const target = week ? week.posts.target + week.comments.target + week.connections.target : 0;
+            const totals = week ? scoreTotals(week) : { done: 0, target: 0 };
+            const done = totals.done;
+            const target = totals.target;
             const p = pace(done, target);
             return (
               <li key={c.id}>
@@ -43,7 +45,10 @@ export default function ClientsPage() {
                       <span className="truncate text-body font-medium text-primary">{fullName(u)}</span>
                       {u?.title && <span className="truncate text-body-sm text-secondary">{u.title}</span>}
                     </div>
-                    <Badge status={b.tone}>{b.label}</Badge>
+                    <span className="flex flex-wrap items-center justify-end gap-2">
+                      <Pill>{c.service === "full-service" ? "Premium" : "Regular"}</Pill>
+                      <Badge status={b.tone}>{b.label}</Badge>
+                    </span>
                   </div>
                   {week && target > 0 && (
                     <div className="flex items-center justify-between gap-3 border-t border-border pt-3 text-body-sm group-hover:border-primary-200">

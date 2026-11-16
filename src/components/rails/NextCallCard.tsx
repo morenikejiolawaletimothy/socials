@@ -3,12 +3,12 @@
 import { CalendarBlank, Clock, VideoCamera } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { Card, Meta, textActionClass, useTask } from "@/components/ui";
+import { Card, Meta, textActionClass } from "@/components/ui";
 import { day, time } from "@/lib/format";
-import { act, useMyClient, type Call } from "@/lib/mock";
+import { useMyClient, type Call } from "@/lib/mock";
 
 /** Fallback names when a call has no title of its own. */
-const callName = { goals: "Goals call", strategy: "Strategy call", "check-in": "Check-in call" };
+const callName = { discovery: "Discovery call", strategy: "Strategy call", "check-in": "Check-in call" };
 export const callTitle = (c: Call) => c.title ?? callName[c.kind];
 
 export const quietLink = "rounded-sm text-body-sm font-medium text-secondary hover:text-primary hover:underline focus-visible:focus-ring";
@@ -25,8 +25,6 @@ export function upcomingCalls(calls: Call[]) {
 
 /** One booked call: its title, day and time, Join call and Reschedule. Used in the carousel and on the Calls page. */
 export function CallRow({ call: c }: { call: Call }) {
-  const { managerUser } = useMyClient();
-  const task = useTask();
   return (
     <div className="flex flex-col gap-2">
       <span className="text-body font-medium text-primary">{callTitle(c)}</span>
@@ -34,26 +32,16 @@ export function CallRow({ call: c }: { call: Call }) {
         {day(c.at)} · {time(c.at)} · {c.minutes} min
       </Meta>
       <span className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <a href={c.meetUrl} target="_blank" rel="noreferrer" className={textActionClass}>
-          <VideoCamera className="size-4" aria-hidden />
-          Join call
-        </a>
-        {c.kind === "check-in" ? (
-          // No self-serve picker for check-ins yet: the manager is asked to offer a new time.
-          <button
-            type="button"
-            disabled={task.pending(c.id)}
-            aria-busy={task.pending(c.id) || undefined}
-            onClick={() => task.run(c.id, () => act.askToMoveCall(c.id), `${managerUser?.firstName ?? "Your manager"} is asked to offer a new time. Your call stays booked until then.`)}
-            className={`${quietLink} disabled:cursor-not-allowed disabled:opacity-60`}
-          >
-            Reschedule
-          </button>
-        ) : (
-          <Link href={`/setup/calls${c.kind === "strategy" ? "?step=2" : ""}`} className={quietLink}>
-            Reschedule
-          </Link>
+        {c.meetUrl && (
+          <a href={c.meetUrl} target="_blank" rel="noreferrer" className={textActionClass}>
+            <VideoCamera className="size-4" aria-hidden />
+            Join call
+          </a>
         )}
+        {/* All calls are rescheduled on the Calls page: change the time (with a reason), the other side agrees. */}
+        <Link href="/calls" className={quietLink}>
+          Reschedule
+        </Link>
       </span>
     </div>
   );

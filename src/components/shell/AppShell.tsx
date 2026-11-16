@@ -164,7 +164,7 @@ export function AppShell({ role, children }: { role: "client" | "manager"; child
         )}</main>
 
       <nav aria-label="Main" data-bottom-bar className="fixed inset-x-4 bottom-4 z-30 rounded-xl border border-border bg-card px-2 shadow-lg md:hidden">
-        <ul className="grid grid-cols-4">
+        <ul className="grid" style={{ gridTemplateColumns: `repeat(${mainNav[role].length + 1}, minmax(0, 1fr))` }}>
           {[...mainNav[role], { label: "Me", href: meHref[role], icon: MeIcon }].map((item) => {
             const active = item.label === "Me" ? meActive : isActive(pathname, item);
             const count = countFor(item.href);

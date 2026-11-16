@@ -1,6 +1,5 @@
 "use client";
 
-import { VideoCamera } from "@phosphor-icons/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, use } from "react";
@@ -17,10 +16,22 @@ import {
   PlanTab,
   UpdatesTab,
 } from "@/components/manager/ClientTabs";
-import { Avatar, Badge, Breadcrumbs, buttonClass, Card, EmptyState, Pill, ProgressBar, Tabs } from "@/components/ui";
+import { ClientFeedCard } from "@/components/manager/ClientFeedCard";
+import { Avatar, Badge, Breadcrumbs, Button, buttonClass, Card, EmptyState, Pill, ProgressBar, Tabs, useTask } from "@/components/ui";
+import { accountTypes, addOns } from "@/lib/pricing";
 import { fullName } from "@/lib/format";
-import { clientBundle, useMyManager } from "@/lib/mock";
+import { act, clientBundle, useMyManager } from "@/lib/mock";
 import { statusBadge } from "@/lib/status";
+
+/** #43: re-read the client's name/photo from their stored LinkedIn URL, on demand. */
+function SyncProfileButton({ userId }: { userId: string }) {
+  const { run, pending } = useTask();
+  return (
+    <Button variant="secondary" size="sm" loading={pending("sync")} onClick={() => run("sync", () => act.syncLinkedIn(userId), "Client profile updated from LinkedIn.")}>
+      Update profile
+    </Button>
+  );
+}
 
 const tabs = [
   { value: "overview", label: "Overview" },
@@ -64,26 +75,25 @@ function ClientPage({ id }: { id: string }) {
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
               <h1 className="font-display text-display-xl text-primary">{fullName(b.user)}</h1>
               <span className="flex flex-wrap items-center gap-2">
-                {b.contract?.videoAddon && (
-                  <Pill>
-                    <VideoCamera className="size-4" aria-hidden /> Video add-on
-                  </Pill>
-                )}
+                <Pill>{accountTypes.find((t) => t.id === (b.client?.service ?? "self-serve"))?.label}</Pill>
                 <Badge status={badge.tone}>{badge.label}</Badge>
               </span>
             </div>
             <span className="text-body text-primary">
               {b.user.title}
-              {b.client.company ? ` at ${b.client.company}` : ""}
+              {b.client.company && !b.user.title?.includes(b.client.company) ? ` at ${b.client.company}` : ""}
             </span>
             <span className="text-body-sm text-secondary">
               {b.client.industry} · {b.client.country}
             </span>
           </div>
-          {b.client.status === "setting-up" && (
+          {(b.client.addOns?.length ?? 0) > 0 && (
+            <span className="text-body-sm text-secondary">Add-ons: {b.client.addOns!.map((a) => addOns.find((x) => x.id === a)?.label).filter(Boolean).join(", ")}</span>
+          )}
+          {b.client.stage === "setup" && (
             <div className="flex flex-col gap-2">
               <span className="flex items-center justify-between gap-2 text-body-sm">
-                <span className="text-secondary">Setup</span>
+                <span className="text-secondary">Setup: {b.client.setupDone.includes("plan") ? "plan signed, account access next" : "choosing a plan"}</span>
                 <span className="font-medium text-primary">{b.client.setupProgress}% done</span>
               </span>
               <ProgressBar value={b.client.setupProgress} />
@@ -93,9 +103,15 @@ function ClientPage({ id }: { id: string }) {
             <Link href={`/manager/messages?client=${id}`} className={buttonClass("primary", "sm")}>
               Message {b.user.firstName}
             </Link>
+            {b.client.stage === "calls" && !b.calls.some((c) => c.kind === "discovery" && c.status !== "cancelled") && (
+              <Link href={`/manager/clients/${id}/book-call?kind=discovery`} className={buttonClass("secondary", "sm")}>
+                Offer discovery call times
+              </Link>
+            )}
             <Link href={`/manager/clients/${id}/onboard`} className={buttonClass("secondary", "sm")}>
               Onboarding and strategy
             </Link>
+            {b.user.linkedinUrl && <SyncProfileButton userId={b.user.id} />}
           </div>
         </div>
       </Card>
@@ -111,7 +127,12 @@ function ClientPage({ id }: { id: string }) {
         />
       </div>
 
-      {tab === "overview" && <OverviewTab b={b} />}
+      {tab === "overview" && (
+        <>
+          <ClientFeedCard b={b} id={id} />
+          <OverviewTab b={b} />
+        </>
+      )}
       {tab === "plan" && <PlanTab b={b} id={id} />}
       {tab === "content" && <ContentTab b={b} id={id} />}
       {tab === "engagement" && <EngagementTab b={b} />}

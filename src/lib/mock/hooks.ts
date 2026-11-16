@@ -42,6 +42,7 @@ export function clientBundle(db: Db, clientId: string | undefined) {
     accessLog: byClient(db.accessLog ?? []),
     accessAlerts: byClient(db.accessAlerts ?? []),
     assistants: byClient(db.assistants ?? []),
+    serviceRequests: byClient(db.serviceRequests ?? []),
   };
 }
 export type ClientBundle = ReturnType<typeof clientBundle>;

@@ -2,9 +2,10 @@ export const clientAccountMenu = {
   title: "Your account",
   items: [
     { label: "Your brand", href: "/brand" },
-    { label: "Full-service", href: "/full-service" },
+    { label: "Account access", href: "/full-service" },
     { label: "Control", href: "/control" },
     { label: "Contract", href: "/contract" },
+    { label: "Services", href: "/services" },
     { label: "Assistants", href: "/assistants" },
     { label: "Account", href: "/account" },
   ],

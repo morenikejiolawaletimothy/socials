@@ -36,6 +36,7 @@ export default function AccountPage() {
   const [firstName, setFirstName] = useState(user?.firstName ?? "");
   const [lastName, setLastName] = useState(user?.lastName ?? "");
   const [zone, setZone] = useState(user?.timeZone ?? "Africa/Lagos");
+  const [linkedin, setLinkedin] = useState(user?.linkedinUrl ?? "");
   const [nameError, setNameError] = useState<string>();
   const [deleting, setDeleting] = useState(false);
   const [confirmText, setConfirmText] = useState("");
@@ -76,6 +77,46 @@ export default function AccountPage() {
             {pending("profile") ? "Saving" : "Save"}
           </Button>
         </form>
+      </Card>
+
+      <Card title="LinkedIn" info="Your name and photo come from your LinkedIn profile. Update pulls the latest; we only read what is on your public profile.">
+        <div className="flex flex-col gap-4">
+          {user.linkedinUrl ? (
+            <>
+              <div className="flex flex-col gap-1">
+                <span className="text-body-sm text-secondary">Your profile</span>
+                <a href={user.linkedinUrl} target="_blank" rel="noreferrer" className={`break-all ${textActionClass}`}>
+                  {user.linkedinUrl}
+                </a>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Button variant="secondary" className="self-start" loading={pending("sync")} onClick={() => run("sync", () => act.syncLinkedIn(user.id), "Profile updated from LinkedIn.")}>
+                  Update my profile
+                </Button>
+                <Button variant="remove" className="self-start" loading={pending("unlink")} onClick={() => run("unlink", () => act.saveProfile(user.id, { linkedinUrl: "" }), "LinkedIn link removed.")}>
+                  Remove link
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-body-sm text-secondary">Add your LinkedIn profile link so we keep your name and photo up to date.</p>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div className="flex-1">
+                  <Input label="LinkedIn profile link" type="url" placeholder="https://www.linkedin.com/in/your-name" value={linkedin} onChange={(e) => setLinkedin(e.target.value)} />
+                </div>
+                <Button
+                  variant="secondary"
+                  disabled={!linkedin.trim()}
+                  loading={pending("linkedin")}
+                  onClick={() => run("linkedin", async () => { await act.saveProfile(user.id, { linkedinUrl: linkedin.trim() }); await act.syncLinkedIn(user.id); }, "LinkedIn link saved and your profile updated.")}
+                >
+                  Save and update
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
       </Card>
 
       <Card title="Sign-in and security">

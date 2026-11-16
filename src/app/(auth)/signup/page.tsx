@@ -5,98 +5,116 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button, Divider, Input, PasswordInput, TextLink } from "@/components/ui";
 import { auth } from "@/lib/mock";
-import { AuthFooter, AuthScreen, EmailRow } from "../AuthScreen";
+import { AuthFooter, AuthScreen, EmailRow, PASSWORD_RULE, passwordError } from "../AuthScreen";
 import { GoogleButton } from "../GoogleButton";
 import { step } from "../step";
 
-type Errors = Partial<Record<"firstName" | "lastName" | "email" | "password", React.ReactNode>>;
+type Stage = "email" | "password" | "name";
 
-/** Email first, then name and password, like Lovable. Then a code to confirm the email (/signup/verify). */
+/**
+ * Figma sign-up: email → password → your name → code. Google skips the password and pre-fills the name.
+ * The LinkedIn link is asked for later, in Manage account access.
+ */
 export default function SignUpPage() {
   const router = useRouter();
-  const [stage, setStage] = useState<"email" | "details">("email");
-  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", password: "" });
-  const [errors, setErrors] = useState<Errors>({});
-  const [busy, setBusy] = useState<"google" | "email" | null>(null);
-  const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [k]: e.target.value });
-  const taken = <>An account already uses this email. <TextLink href="/signin">Sign in instead</TextLink>.</>;
+  const [stage, setStage] = useState<Stage>("email");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [viaGoogle, setViaGoogle] = useState(false);
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [error, setError] = useState<React.ReactNode>();
+  const [busy, setBusy] = useState<"google" | "create" | null>(null);
 
-  function toDetails(ev: React.FormEvent) {
+  const taken = (
+    <>
+      An account already uses this email. <TextLink href="/signin">Sign in instead</TextLink>.
+    </>
+  );
+
+  function toPassword(ev: React.FormEvent) {
     ev.preventDefault();
-    if (!/^\S+@\S+\.\S+$/.test(form.email.trim())) return setErrors({ email: "Enter an email address like name@company.com." });
-    if (auth.isEmailTaken(form.email)) return setErrors({ email: taken });
-    setErrors({});
-    setStage("details");
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) return setError("Enter an email address like name@company.com.");
+    if (auth.isEmailTaken(email)) return setError(taken);
+    setError(undefined);
+    setStage("password");
   }
 
-  async function submit(ev: React.FormEvent) {
+  function toName(ev: React.FormEvent) {
     ev.preventDefault();
-    const e: Errors = {};
-    if (!form.firstName.trim()) e.firstName = "Enter your first name.";
-    if (!form.lastName.trim()) e.lastName = "Enter your last name.";
-    if (form.password.length < 12) e.password = "Use at least 12 characters, so your account stays safe.";
-    setErrors(e);
-    if (Object.keys(e).length) return;
-    setBusy("email");
-    const res = await auth.createAccount(form);
+    const bad = passwordError(password);
+    if (bad) return setError(bad);
+    setError(undefined);
+    setStage("name");
+  }
+
+  async function onGoogle() {
+    setBusy("google");
+    const g = await auth.continueWithGoogle();
+    setBusy(null);
+    setViaGoogle(true);
+    setEmail(g.email);
+    setFirstName(g.firstName);
+    setLastName(g.lastName);
+    setStage("name");
+  }
+
+  async function create(ev: React.FormEvent) {
+    ev.preventDefault();
+    setError(undefined);
+    if (!firstName.trim()) return setError("Add your first name to finish.");
+    if (!lastName.trim()) return setError("Add your last name to finish.");
+    setBusy("create");
+    const res = await auth.createAccount({
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim(),
+      password: viaGoogle ? undefined : password,
+    });
     setBusy(null);
     if (!res.ok) {
       setStage("email");
-      return setErrors({ email: taken });
+      return setError(taken);
     }
-    router.push(`/signup/verify?email=${encodeURIComponent(form.email.trim())}`);
+    router.push(`/signup/verify?email=${encodeURIComponent(email.trim())}`);
   }
 
   return (
-    <AuthScreen title="Create your account">
+    <AuthScreen title={stage === "password" ? "Choose a password" : stage === "name" ? "Your name" : "Create your account"}>
       <AnimatePresence mode="wait" initial={false}>
         {stage === "email" ? (
           <motion.div key="email" {...step} className="flex flex-col gap-6">
-            <GoogleButton
-              loading={busy === "google"}
-              onClick={async () => {
-                setBusy("google");
-                await auth.continueWithGoogle();
-                router.push("/home");
-              }}
-            />
+            <GoogleButton loading={busy === "google"} onClick={onGoogle} />
             <Divider label="or" />
-            <form onSubmit={toDetails} noValidate className="flex flex-col gap-4">
-              <Input
-                label="Email"
-                type="email"
-                autoComplete="email"
-                placeholder="name@company.com"
-                value={form.email}
-                onChange={set("email")}
-                error={errors.email}
-              />
+            <form onSubmit={toPassword} noValidate className="flex flex-col gap-4">
+              <Input label="Email" type="email" autoComplete="email" placeholder="name@company.com" value={email} onChange={(e) => { setEmail(e.target.value); setError(undefined); }} error={error} />
               <Button type="submit" fullWidth disabled={busy !== null}>
                 Continue
               </Button>
             </form>
           </motion.div>
+        ) : stage === "password" ? (
+          <motion.form key="password" {...step} onSubmit={toName} noValidate className="flex flex-col gap-4">
+            <EmailRow email={email.trim()} onChange={() => { setStage("email"); setError(undefined); }} />
+            <PasswordInput label="Password" autoComplete="new-password" autoFocus value={password} onChange={(e) => { setPassword(e.target.value); setError(undefined); }} help={PASSWORD_RULE} error={error} />
+            <Button type="submit" fullWidth>
+              Continue
+            </Button>
+          </motion.form>
         ) : (
-          <motion.form key="details" {...step} onSubmit={submit} noValidate className="flex flex-col gap-4">
-            <EmailRow email={form.email.trim()} onChange={() => { setStage("email"); setErrors({}); }} />
+          <motion.form key="name" {...step} onSubmit={create} noValidate className="flex flex-col gap-4">
+            <EmailRow email={email.trim()} onChange={() => { setStage(viaGoogle ? "email" : "password"); setError(undefined); }} />
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Input label="First name" autoComplete="given-name" autoFocus value={form.firstName} onChange={set("firstName")} error={errors.firstName} />
-              <Input label="Last name" autoComplete="family-name" value={form.lastName} onChange={set("lastName")} error={errors.lastName} />
+              <Input label="First name" autoComplete="given-name" autoFocus value={firstName} onChange={(e) => { setFirstName(e.target.value); setError(undefined); }} error={error && !firstName.trim() ? error : undefined} />
+              <Input label="Last name" autoComplete="family-name" value={lastName} onChange={(e) => { setLastName(e.target.value); setError(undefined); }} error={error && firstName.trim() && !lastName.trim() ? error : undefined} />
             </div>
-            <PasswordInput
-              label="Password"
-              autoComplete="new-password"
-              value={form.password}
-              onChange={set("password")}
-              help="At least 12 characters."
-              error={errors.password}
-            />
+            {error && firstName.trim() && lastName.trim() && <p className="text-body-sm text-danger">{error}</p>}
+            <Button type="submit" fullWidth loading={busy === "create"}>
+              {busy === "create" ? "Creating your account" : "Create account"}
+            </Button>
             <p className="text-caption text-secondary">
               By creating an account you agree to our <TextLink href="/terms">terms</TextLink> and <TextLink href="/privacy">privacy policy</TextLink>.
             </p>
-            <Button type="submit" fullWidth disabled={busy !== null} loading={busy === "email"}>
-              {busy === "email" ? "Creating your account" : "Create account"}
-            </Button>
           </motion.form>
         )}
       </AnimatePresence>

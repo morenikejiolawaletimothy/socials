@@ -302,7 +302,7 @@ export default function BrandPage() {
           </form>
         ) : (
           <div className="flex flex-col gap-4">
-            <p className="text-body text-primary">{brand.voice || "Not written yet. Your manager fills this in after your goals call, and you can change it."}</p>
+            <p className="text-body text-primary">{brand.voice || "Not written yet. Your manager fills this in after your discovery call, and you can change it."}</p>
             {(
               [
                 { label: "Words you use", words: brand.wordsUse, bg: "bg-success-bg", icon: <CheckCircle className="size-4 shrink-0 text-success" aria-hidden /> },
@@ -509,6 +509,15 @@ export default function BrandPage() {
         ) : (
           <p className="text-body-sm text-secondary">A brand guide, a speaker bio or a personal brand strategy you already have.</p>
         )}
+      </Card>
+
+      <Card title="More from Bluecut" info="Extra services you can add when you need them, like brand identity design or a brand audit. We agree the work and a price with you first, and nothing is charged here.">
+        <div className="flex flex-col gap-4">
+          <p className="text-body-sm text-secondary">Need more than your plan covers? See what we offer and send a request. Your account manager and the Bluecut team take it from there.</p>
+          <Link href="/services" className={`self-start ${buttonClass("secondary")}`}>
+            See services
+          </Link>
+        </div>
       </Card>
 
     </Columns>
