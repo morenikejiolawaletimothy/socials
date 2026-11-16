@@ -30,7 +30,7 @@ import { ShareDialog } from "./ShareDialog";
 type Tab = "feed" | "calls" | "coming" | "reports" | "history";
 type Range = "any" | "today" | "week" | "month";
 /** `at` is the date shown (due); `sent` orders the feed (newest first = most recently sent). */
-type Item =
+export type FeedItemData =
   | { key: string; type: "post"; status: FeedStatus; at: string; sent: string; title: string; post: Post }
   | { key: string; type: "task"; status: FeedStatus; at: string; sent: string; title: string; task: QuickTask }
   | { key: string; type: "strategy"; status: FeedStatus; at: string; sent: string; title: string };
@@ -39,7 +39,7 @@ const CUTOFF_MS = 30 * 60_000;
 const DAY = 86_400_000;
 
 const taskIcon: Record<string, Icon> = { profile: UserCircleGear, connect: UsersThree, event: CalendarStar, video: VideoCamera };
-const iconFor = (i: Item): Icon => (i.type === "post" ? Article : i.type === "strategy" ? Target : (taskIcon[i.task.kind] ?? ChatCircleText));
+export const iconFor = (i: FeedItemData): Icon => (i.type === "post" ? Article : i.type === "strategy" ? Target : (taskIcon[i.task.kind] ?? ChatCircleText));
 
 /** What each post status means in the feed. */
 function postStatus(p: Post, premium: boolean): FeedStatus | null {
@@ -51,8 +51,8 @@ function postStatus(p: Post, premium: boolean): FeedStatus | null {
 }
 
 /** Everything the client acts on or should know, as one feed (Figma Feed tab). */
-function buildFeed(b: ClientBundle, premium: boolean): Item[] {
-  const out: Item[] = [];
+export function buildFeed(b: ClientBundle, premium: boolean): FeedItemData[] {
+  const out: FeedItemData[] = [];
   for (const p of b.posts) {
     const status = postStatus(p, premium);
     if (status) {
@@ -111,7 +111,7 @@ function FreePeriodCard({ b }: { b: ClientBundle }) {
 }
 
 /** One feed item with its actions. Regular clients do the work; Premium clients only approve, and see the rest as notices. */
-function FeedItem({ item, b, premium }: { item: Item; b: ClientBundle; premium: boolean }) {
+function FeedItem({ item, b, premium }: { item: FeedItemData; b: ClientBundle; premium: boolean }) {
   const { run, pending } = useTask();
   const [sharing, setSharing] = useState(false);
   const first = b.managerUser?.firstName ?? "your account manager";

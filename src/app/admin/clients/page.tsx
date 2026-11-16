@@ -117,7 +117,7 @@ function ClientsPage() {
                   <td className={tdFlush}>
                     <span className="flex flex-wrap items-center gap-2">
                       <Badge status={b.tone}>{c.status === "paused" ? `Paused ${-daysFrom(c.pausedAt ?? c.joinedAt)} days` : b.label}</Badge>
-                      {c.service === "full-service" && <Pill>Full-service</Pill>}
+                      <Pill>{c.service === "full-service" ? "Premium" : "Regular"}</Pill>
                     </span>
                   </td>
                 </tr>

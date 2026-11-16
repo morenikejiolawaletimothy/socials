@@ -8,7 +8,7 @@ import { ActivityTab, BrandTab, CallsTab, ContentTab, EngagementTab, OverviewTab
 import { Avatar, Badge, Button, Card, EmptyState, PageHeader, Pill, Row, Rows, RowText, Tabs, buttonClass, useConfirm, useToast } from "@/components/ui";
 import { ago, date, fullName, money, plural } from "@/lib/format";
 import { act, clientBundle, useData } from "@/lib/mock";
-import { plans } from "@/lib/pricing";
+import { contractTotalCents, plans } from "@/lib/pricing";
 import { statusBadge } from "@/lib/status";
 
 const tabs = [
@@ -115,7 +115,15 @@ export default function OwnerClientPage({ params }: { params: Promise<{ id: stri
                       },
                       {
                         label: "Paid",
-                        value: b.contract.paid ? `${money(b.contract.monthlyCents * b.contract.months)} up front` : "Not paid yet",
+                        value: b.contract.paid ? `${money(contractTotalCents(b.contract))} up front` : `Not paid yet (${money(contractTotalCents(b.contract))} due)`,
+                      },
+                      {
+                        label: "Account type",
+                        value: b.client?.service === "full-service" ? "Premium (we do it for them)" : "Regular (they do it themselves)",
+                      },
+                      {
+                        label: "Add-ons",
+                        value: b.contract.addOns?.length ? b.contract.addOns.map((a) => `${a.label} ×${a.qty}`).join(", ") : "None",
                       },
                       { label: "Dates", value: `${date(b.contract.startsAt)} to ${date(b.contract.endsAt)}` },
                     ]

@@ -9,7 +9,7 @@ import { rails } from "@/components/rails";
 import { Avatar, Badge, Banner, Button, buttonClass, Card, Dialog, EmptyState, IconButton, Pill, Row, Rows, Textarea, useConfirm, useTask } from "@/components/ui";
 import { date, dateTime, daysFrom, fullName, money } from "@/lib/format";
 import { act, useData, useMyClient } from "@/lib/mock";
-import { plans } from "@/lib/pricing";
+import { contractTotalCents, plans } from "@/lib/pricing";
 
 const contractBadge = {
   free: { label: "Free", tone: "info" as const },
@@ -59,7 +59,13 @@ export default function ContractPage() {
   const pagePrice = money(db.settings.pageManagementCents);
   // Contracts are paid once, up front: the plan for all its months. Add-ons (full-service, company Page) are billed each month.
   const planCents = contract.monthlyCents * contract.months;
-  const priceRows: [string, string][] = [
+  const dueCents = contractTotalCents(contract);
+  // Contracts signed in the Figma plan step carry their add-ons (charged once with the plan); older ones bill extras monthly.
+  const priceRows: [string, string][] = contract.addOns ? [
+    [`${tier} plan, ${contract.months} months`, `${money(planCents)} (${money(contract.monthlyCents)} a month)`],
+    ["Account type", fs ? "Premium (We do it for you)" : "Regular (You do it yourself)"],
+    ...contract.addOns.map((a) => [`Add-on (${a.label})`, `${money(a.cents)} (x${a.qty})`] as [string, string]),
+  ] : [
     [`${tier} plan, ${contract.months} months`, `${money(planCents)} (${money(contract.monthlyCents)} a month)`],
     ...(fs ? ([["Full-service", `+${money(db.settings.fullServiceCents)} a month`]] as [string, string][]) : []),
     ...(pageOn ? ([["Company Page management", `+${money(db.settings.pageManagementCents)} a month`]] as [string, string][]) : []),
@@ -115,9 +121,9 @@ export default function ContractPage() {
             ))}
             <div className="flex items-center justify-between gap-4 border-b border-border bg-neutral-25 px-4 py-3 last:border-b-0">
               <dt className="text-body font-semibold text-primary">Contract, paid once</dt>
-              <dd className="text-body font-semibold text-primary">{money(planCents)}</dd>
+              <dd className="text-body font-semibold text-primary">{money(dueCents)}</dd>
             </div>
-            {(fs || pageOn) && (
+            {!contract.addOns && (fs || pageOn) && (
               <div className="flex items-center justify-between gap-4 bg-neutral-25 px-4 py-3">
                 <dt className="text-body font-semibold text-primary">Add-ons a month</dt>
                 <dd className="text-body font-semibold text-primary">{money(addonsMonthly)}</dd>
@@ -126,7 +132,7 @@ export default function ContractPage() {
           </dl>
           {unpaid && (
             <div className="border-t border-border pt-6">
-              <Button onClick={() => setPaying(true)}>Pay {money(planCents)}</Button>
+              <Button onClick={() => setPaying(true)}>Pay {money(dueCents)}</Button>
             </div>
           )}
         </div>
@@ -311,7 +317,7 @@ export default function ContractPage() {
         </Card>
       )}
 
-      <PayDialog open={paying} onClose={() => setPaying(false)} clientId={client.id} amountCents={planCents} title={contract.card ? "Pay or update your card" : "Pay now"} />
+      <PayDialog open={paying} onClose={() => setPaying(false)} clientId={client.id} amountCents={dueCents} title={contract.card ? "Pay or update your card" : "Pay now"} />
 
       <Dialog open={changing} onClose={() => setChanging(false)} title="Ask for a different manager">
         <p className="text-body-sm text-secondary">The owner reads this and gets back to you within 1 working day. Your new manager receives a full handover, so nothing is lost.</p>

@@ -1345,6 +1345,36 @@ export async function saveAccountAccess(
   await completeSetupStep(clientId, "access");
 }
 
+/**
+ * Figma task card from the manager: a title, what to do (or, for Premium, what we are about to do), an optional
+ * resource link and a due date. Lands in the client's Feed. Edit keeps the same task; withdraw removes it.
+ */
+export async function saveClientTask(clientId: string, data: { id?: string; title: string; body: string; resource?: { label: string; href: string }; dueAt: string }) {
+  await delay(500);
+  update((db) => {
+    const premium = clientOf(db, clientId)?.service === "full-service";
+    if (data.id) {
+      const next: Db = { ...db, tasks: db.tasks.map((t) => (t.id === data.id ? { ...t, title: data.title, body: data.body, resource: data.resource, dueAt: data.dueAt } : t)) };
+      return notify(next, clientUser(db, clientId)?.id, `${managerUserOf(db, clientId)?.firstName ?? "Your account manager"} updated “${data.title}”.`, "/home", { email: false });
+    }
+    const task: Db["tasks"][number] = { id: id("t"), clientId, kind: "profile", title: data.title, body: data.body, resource: data.resource, dueAt: data.dueAt, done: false, sentAt: nowIso() };
+    let next: Db = { ...db, tasks: [task, ...db.tasks] };
+    next = log(next, clientId, "team", "profile", premium ? `Told you about: ${data.title}` : `Sent you a task: ${data.title}`);
+    return notify(next, clientUser(db, clientId)?.id, premium ? `${managerUserOf(db, clientId)?.firstName ?? "Your account manager"} is about to: ${data.title}.` : `New task from ${managerUserOf(db, clientId)?.firstName ?? "your account manager"}: ${data.title}.`, "/home", { email: true });
+  });
+}
+
+/** The manager withdraws a task the client has not done yet. */
+export async function withdrawTask(taskId: string) {
+  await delay(400);
+  update((db) => {
+    const t = db.tasks.find((x) => x.id === taskId);
+    if (!t || t.done) return db;
+    const next: Db = { ...db, tasks: db.tasks.filter((x) => x.id !== taskId) };
+    return notify(next, clientUser(db, t.clientId)?.id, `${managerUserOf(db, t.clientId)?.firstName ?? "Your account manager"} withdrew “${t.title}”. Nothing to do.`, "/home", { email: false });
+  });
+}
+
 /** Figma Home at 100%: "Complete setup" opens the feed. The manager is asked to propose times for the discovery call. */
 export async function finishSetup(clientId: string) {
   await delay(400);

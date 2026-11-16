@@ -12,8 +12,10 @@ import { fullName } from "@/lib/format";
 import { act, clientBundle, useMyManager } from "@/lib/mock";
 
 /** Flow B: the manager books a call with a client after agreeing a time in messages, with the link ready. */
-export default function BookCallForClientPage({ params }: { params: Promise<{ id: string }> }) {
+export default function BookCallForClientPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ kind?: string }> }) {
   const { id } = use(params);
+  // After setup the client's first call is the discovery call: the manager offers times with the Meet link.
+  const discovery = use(searchParams).kind === "discovery";
   const router = useRouter();
   const { db, manager, user } = useMyManager();
   const b = clientBundle(db, id);
@@ -23,9 +25,9 @@ export default function BookCallForClientPage({ params }: { params: Promise<{ id
     () => (manager ? availableTimes(manager.slots ?? [], now, takenTimes(db.calls, manager.id)) : []),
     [manager, db.calls, now],
   );
-  const [form, setForm] = useState({ title: "", agenda: "", link: "", record: true });
+  const [form, setForm] = useState({ title: discovery ? "Discovery call" : "", agenda: discovery ? "We agree what you want from LinkedIn: who you want to reach and what success looks like." : "", link: "", record: true });
   const [picks, setPicks] = useState<string[]>([]);
-  const [errors, setErrors] = useState<{ title?: string; at?: string }>({});
+  const [errors, setErrors] = useState<{ title?: string; at?: string; link?: string }>({});
   const toggle = (t: string) => setPicks((p) => (p.includes(t) ? p.filter((x) => x !== t) : [...p, t]));
 
   if (!b.client || !b.user || !manager) {
@@ -36,7 +38,7 @@ export default function BookCallForClientPage({ params }: { params: Promise<{ id
   return (
     <Columns {...rails.managerMain}>
       <Card
-        title={`Book a call with ${first}`}
+        title={discovery ? `Offer ${first} times for the discovery call` : `Book a call with ${first}`}
         eyebrow={<Breadcrumbs items={[{ label: "Clients", href: "/manager/clients" }, { label: fullName(b.user), href: `/manager/clients/${id}` }, { label: "Book a call" }]} />}
         info="Agree a time with the client in messages first, then book it here with the Meet link. They accept to confirm."
       >
@@ -48,9 +50,10 @@ export default function BookCallForClientPage({ params }: { params: Promise<{ id
             const next: typeof errors = {};
             if (form.title.trim().length < 3) next.title = "Add a short purpose.";
             if (!picks.length) next.at = "Pick one or more times from your open slots.";
+            if (discovery && !/^https?:\/\/\S+$/.test(form.link.trim())) next.link = "Add the Google Meet link, so the call is booked as soon as they accept.";
             setErrors(next);
             if (Object.keys(next).length) return;
-            if (await run("book", () => act.createCallForClient(id, { title: form.title.trim(), agenda: form.agenda.trim() || undefined, times: picks, meetUrl: form.link.trim() || undefined, recording: form.record }), `Sent ${picks.length > 1 ? `${picks.length} times` : "a time"} to ${first}. They accept to confirm.`)) {
+            if (await run("book", () => act.createCallForClient(id, { kind: discovery ? "discovery" : undefined, title: form.title.trim(), agenda: form.agenda.trim() || undefined, times: picks, meetUrl: form.link.trim() || undefined, recording: form.record }), `Sent ${picks.length > 1 ? `${picks.length} times` : "a time"} to ${first}. They accept to confirm.`)) {
               router.push(`/manager/clients/${id}`);
             }
           }}
@@ -67,7 +70,7 @@ export default function BookCallForClientPage({ params }: { params: Promise<{ id
               <TimePicker times={times} selected={picks} onChange={(t) => { toggle(t); setErrors({ ...errors, at: undefined }); }} />
               {errors.at && <p className="text-body-sm text-danger">{errors.at}</p>}
 
-              <Input label="Google Meet link (optional)" value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} placeholder="https://meet.google.com/..." help="Add it now if you offered one time. If you offered several, add it once the client picks one." />
+              <Input label={discovery ? "Google Meet link" : "Google Meet link (optional)"} value={form.link} onChange={(e) => { setForm({ ...form, link: e.target.value }); setErrors({ ...errors, link: undefined }); }} placeholder="https://meet.google.com/..." help={discovery ? "With the link added, the call is booked as soon as they accept a time." : "Add it now and the call is booked as soon as they accept. Otherwise add it once they pick a time."} error={errors.link} />
 
               <fieldset className="flex flex-col gap-2 border-t border-border pt-6">
                 <legend className="mb-2 text-body font-medium text-primary">Will your notetaker bot join?</legend>

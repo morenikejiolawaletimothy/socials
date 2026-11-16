@@ -122,9 +122,22 @@ Same card language: scheduled posts, weekly/monthly reports, completed items.
 
 One card "Messages" + Pill "3 conversations". Left: New conversation · Search conversations · Recent list (by subject). Right: header avatar + Ada Obi, Account manager · subject + "2 messages" · thread with attachments ("Add to your brand") · composer "Message Ada", hint "Enter to send. Shift and Enter for a new line.", text link "Need to talk? Book a call".
 
-## Implications for the manager and owner
+## Implications for the manager and owner (built)
 
 - The manager is the source of every feed item: posts to review, tasks (Regular) or notices (Premium), call times, call notes, reports. Manager screens use the same item card and the same five statuses, so both sides read the same state.
 - Calls start from the manager proposing times after setup (the discovery call). The client accepts or reschedules.
 - Setup is two steps; the manager sees plan, add-ons and access status on the client page.
 - The owner sees add-ons and account type per client, and plan revenue includes add-ons.
+
+What was built for this:
+
+- Manager client page: header shows Regular or Premium, add-ons and setup stage; Overview opens with **{Name}'s feed**, the same cards and statuses the client sees; "Send a task" (Regular) or "Add a notice" (Premium) opens `/manager/clients/[id]/task` (title, what to do, task resource, due), with Edit and Withdraw.
+- After Complete setup the manager gets "Offer times for their discovery call" → `/manager/clients/[id]/book-call?kind=discovery` (Meet link required, so the call books as soon as the client accepts).
+- Manager and owner client lists show Regular or Premium. Owner client detail shows account type, add-ons and the full amount due (plan plus add-ons).
+- Contract page and payments charge the plan plus add-ons once (`contractTotalCents`).
+
+Open questions for the product owner:
+
+- Premium has no separate price in the Figma plan step. Today Premium costs the same as Regular; the owner Settings still has a monthly full-service price used only by older contracts.
+- Add-on prices are fixed in `src/lib/pricing.ts`; they could move to owner Settings.
+- "Share with assistant" on posts (Figma Regular post card): assistants work on tasks only, so posts show Request changes and Approve.

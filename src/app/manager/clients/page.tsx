@@ -45,7 +45,10 @@ export default function ClientsPage() {
                       <span className="truncate text-body font-medium text-primary">{fullName(u)}</span>
                       {u?.title && <span className="truncate text-body-sm text-secondary">{u.title}</span>}
                     </div>
-                    <Badge status={b.tone}>{b.label}</Badge>
+                    <span className="flex flex-wrap items-center justify-end gap-2">
+                      <Pill>{c.service === "full-service" ? "Premium" : "Regular"}</Pill>
+                      <Badge status={b.tone}>{b.label}</Badge>
+                    </span>
                   </div>
                   {week && target > 0 && (
                     <div className="flex items-center justify-between gap-3 border-t border-border pt-3 text-body-sm group-hover:border-primary-200">

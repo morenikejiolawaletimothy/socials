@@ -33,7 +33,7 @@ These sign in to the dummy data on the preview site and on `npm run dev`. They s
 
 ## Reset password
 
-- `/reset`, enter any email, then follow "Demo: open the link from the email".
+- `/reset`, enter any email. The screen says a link was sent; open `/reset/new` to set the new password (the link from the email). No demo hint shows on screen.
 
 ## Notifications and assistants (C18, C19)
 
@@ -56,6 +56,15 @@ These sign in to the dummy data on the preview site and on `npm run dev`. They s
 ## Full-service and delegated access (C20)
 
 - Tari Briggs (Delmont Group) is the full-service demo client, in the switcher as "Tari: active (full-service)". No Tasks tab; delegated access Ready; company Page managed; access log seeded.
-- Chidi stays self-serve. Open Full-service as Chidi to see the activation screen, or David (setting up) to see the onboarding fork at /setup/service.
+- Chidi is Regular (self-serve); Tari is Premium (full-service). Open Account access as Chidi to see the switch screen. David (setting up) starts the two-step onboarding: Choose your preferred plan (pick Regular or Premium there) then Manage account access.
 - Manager view: Tari is Ada's client. Open Tari to see the Account access card and the Notify-and-request-sign-in handshake.
 - Owner: the Overview has one seeded Account access alert (a security-page attempt) to show the monitoring surface.
+
+## Figma onboarding (both account types)
+
+- Sign up at `/signup`: email, password (12+ characters with upper, lower, number and symbol, e.g. `Str0ng!Password`), first and last name, then the 6-digit code (pre-filled).
+- Home shows Account setup with two steps. Choose your preferred plan: Regular or Premium, add-ons, contract length, sign with your full name, then Pay or Pay later. Signing assigns the account manager.
+- Manage account access: paste any `linkedin.com/in/...` link, check the profile, permissions, notifications; Premium adds delegate, 2FA and the vault login (any email and password).
+- Complete setup opens the feed. The manager is notified to offer discovery call times (Manager view, the client page, "Offer discovery call times"); the client accepts one in the Calls tab.
+- Feed items: Chidi (Regular) has posts to approve, a "Profile management" task with steps and a resource link, and Share with assistant. Tari (Premium) sees the same task as a notice of what we are about to do.
+- Manager view, a client page, Overview: the client's feed exactly as they see it, with "Send a task" (Regular) or "Add a notice" (Premium), Edit and Withdraw.

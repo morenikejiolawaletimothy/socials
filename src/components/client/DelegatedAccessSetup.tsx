@@ -28,7 +28,7 @@ export function DelegatedAccessSetup({ inSetup = false }: { inSetup?: boolean })
       <Card
         title="Set up secure access"
         info="Your LinkedIn login is kept in an encrypted vault that Bluecut and your account manager can never read. You turn on your own authenticator 2FA, so every sign-in needs your approval on your phone. We can never change your account security, and you can pause or remove access in one click, any time."
-        eyebrow={<Breadcrumbs items={inSetup ? [{ label: "Home", href: "/home" }, { label: "Set up", href: "/home#setup" }, { label: "Secure access" }] : [{ label: "Full-service", href: "/full-service" }, { label: "Secure access" }]} />}
+        eyebrow={<Breadcrumbs items={inSetup ? [{ label: "Home", href: "/home" }, { label: "Set up", href: "/home#setup" }, { label: "Secure access" }] : [{ label: "Account access", href: "/full-service" }, { label: "Secure access" }]} />}
       >
         <div className="flex flex-col gap-6">
           <Stepper steps={steps} current={step} />
